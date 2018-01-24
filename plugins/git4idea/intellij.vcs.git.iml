@@ -11,39 +11,39 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="lvcs-api" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="git4idea-rt" />
-    <orderEntry type="module" module-name="images" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.vcs.git.rt" />
+    <orderEntry type="module" module-name="intellij.platform.images" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="dvcs-impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs.impl" exported="" />
     <orderEntry type="library" scope="TEST" name="cucumber-core" level="project" />
     <orderEntry type="library" name="JSch" level="project" />
-    <orderEntry type="module" module-name="vcs-log-api" />
-    <orderEntry type="module" module-name="vcs-log-impl" />
-    <orderEntry type="module" module-name="vcs-log-graph" />
-    <orderEntry type="module" module-name="dvcs-api" exported="" />
-    <orderEntry type="module" module-name="built-in-server" scope="TEST" />
-    <orderEntry type="module" module-name="built-in-server-api" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.log.graph.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="cucumber-java" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
-    <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
-    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
     <orderEntry type="library" name="ini4j" level="project" />
-    <orderEntry type="module" module-name="tasks-platform-impl" />
-    <orderEntry type="module" module-name="tasks-platform-api" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.impl" />
+    <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

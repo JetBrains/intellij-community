@@ -7,13 +7,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="aether-dependency-resolver" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="jna" level="project" />
   </component>

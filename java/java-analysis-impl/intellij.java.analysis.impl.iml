@@ -10,17 +10,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="analysis-impl" exported="" />
-    <orderEntry type="module" module-name="java-indexing-impl" exported="" />
-    <orderEntry type="module" module-name="java-psi-impl" exported="" />
-    <orderEntry type="module" module-name="projectModel-impl" exported="" />
-    <orderEntry type="module" module-name="java-analysis-api" exported="" />
-    <orderEntry type="module" module-name="resources-en" />
-    <orderEntry type="module" module-name="xml-psi-impl" />
-    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>

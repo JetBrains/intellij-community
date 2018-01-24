@@ -7,11 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="python-psi-api" exported="" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="intellij.python.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
-

@@ -8,12 +8,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xdebugger-api" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="script-debugger-backend" />
-    <orderEntry type="module" module-name="xdebugger-impl" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.scriptDebugger.backend" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
 </module>

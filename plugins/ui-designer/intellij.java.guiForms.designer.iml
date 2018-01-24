@@ -8,29 +8,29 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="forms-compiler" />
-    <orderEntry type="module" module-name="forms_rt" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.compiler" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="module" module-name="java-i18n" exported="" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="spellchecker" />
-    <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="properties-psi-api" />
+    <orderEntry type="module" module-name="intellij.java.i18n" exported="" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

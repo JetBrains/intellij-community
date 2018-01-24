@@ -7,10 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="jps-model-api" />
-    <orderEntry type="module" module-name="instrumentation-util" />
-    <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
   </component>
 </module>
-

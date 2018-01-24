@@ -8,11 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xml-psi-impl" />
-    <orderEntry type="module" module-name="analysis-impl" />
-    <orderEntry type="module" module-name="core-impl" />
-    <orderEntry type="module" module-name="xml-analysis-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
   </component>
 </module>
-

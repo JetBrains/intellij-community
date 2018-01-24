@@ -7,14 +7,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="python-psi-api" />
-    <orderEntry type="module" module-name="python-community" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="java-psi-api" />
-    <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="python-community-plugin-core" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.python.psi" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" />
   </component>
 </module>

@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xslt-rt" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
     <orderEntry type="module-library">
       <library name="RMI Stubs">
         <CLASSES>
@@ -21,4 +21,3 @@
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
   </component>
 </module>
-

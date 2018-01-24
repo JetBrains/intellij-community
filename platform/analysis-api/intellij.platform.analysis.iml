@@ -7,11 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="extensions" />
-    <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="projectModel-api" />
-    <orderEntry type="module" module-name="editor-ui-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.editor" exported="" />
   </component>
 </module>

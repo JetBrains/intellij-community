@@ -7,11 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="module" module-name="projectModel-api" />
-    <orderEntry type="module" module-name="indexing-api" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

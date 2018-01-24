@@ -7,21 +7,21 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="debugger-openapi" exported="" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="resources" />
-    <orderEntry type="module" module-name="xdebugger-api" />
-    <orderEntry type="module" module-name="xdebugger-impl" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="intellij.java.debugger" exported="" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java.resources" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.jsp" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
   </component>
   <component name="copyright">
     <Base>

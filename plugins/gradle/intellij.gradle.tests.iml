@@ -12,12 +12,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="gradle" scope="TEST" />
-    <orderEntry type="module" module-name="gradle-tooling-extension-tests" scope="TEST" />
-    <orderEntry type="module" module-name="compiler-impl" scope="TEST" />
-    <orderEntry type="module" module-name="maven-server-api" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.server" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
   </component>
 </module>

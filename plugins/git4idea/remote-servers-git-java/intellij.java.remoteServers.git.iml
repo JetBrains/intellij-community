@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="remote-servers-git" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="intellij.platform.remoteServers.git" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>

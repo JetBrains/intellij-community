@@ -8,11 +8,11 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="jps-builders" exported="" />
-    <orderEntry type="module" module-name="jps-model-api" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="module" module-name="jps-model-serialization" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" exported="" />
     <orderEntry type="library" scope="PROVIDED" name="gant-groovy" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
   </component>

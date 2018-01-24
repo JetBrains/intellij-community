@@ -8,15 +8,15 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="java-psi-api" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
   </component>
 </module>

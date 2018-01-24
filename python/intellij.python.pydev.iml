@@ -7,11 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="xpp3-1.1.4-min" level="project" />
-    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

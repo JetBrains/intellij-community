@@ -17,36 +17,36 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="lang-impl" exported="" />
-    <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntry type="module" module-name="jsp-spi" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="module" module-name="dom-impl" />
-    <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.jsp" />
+    <orderEntry type="module" module-name="intellij.jsp.spi" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" name="jcip" level="project" />
-    <orderEntry type="module" module-name="java-psi-impl" exported="" />
-    <orderEntry type="module" module-name="RegExpSupport" />
-    <orderEntry type="module" module-name="java-indexing-impl" exported="" />
-    <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="jps-model-impl" />
-    <orderEntry type="module" module-name="java-analysis-impl" exported="" />
-    <orderEntry type="module" module-name="external-system-api" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.regexp" />
+    <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
-    <orderEntry type="module" module-name="java-structure-view" exported="" />
-    <orderEntry type="module" module-name="spellchecker" />
+    <orderEntry type="module" module-name="intellij.java.structureView" exported="" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="library" name="nekohtml" level="project" />
-    <orderEntry type="module" module-name="built-in-server" />
-    <orderEntry type="module" module-name="uast-java" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module-library">
       <library>

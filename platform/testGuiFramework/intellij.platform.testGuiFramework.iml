@@ -9,22 +9,22 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="library" exported="" name="fest" level="project" />
     <orderEntry type="library" exported="" name="fest-swing" level="project" />
     <orderEntry type="library" exported="" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="testRunner" />
-    <orderEntry type="module" module-name="xdebugger-impl" />
-    <orderEntry type="module" module-name="external-system-rt" />
-    <orderEntry type="module" module-name="external-system-impl" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="library" name="jsr305" level="project" />
-    <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="diff-impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
   </component>
 </module>

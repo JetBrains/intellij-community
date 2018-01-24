@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="dom-impl" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" />
     <orderEntry type="library" name="CGLIB" level="project" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="testFramework-java" />
-    <orderEntry type="module" module-name="java-psi-impl" />
-    <orderEntry type="module" module-name="java-impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

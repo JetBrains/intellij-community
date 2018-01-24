@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="community-main" />
-    <orderEntry type="module" module-name="testGuiFramework" />
-    <orderEntry type="module" module-name="diff-impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.ideaCommunity.main" />
+    <orderEntry type="module" module-name="intellij.platform.testGuiFramework" />
+    <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
   </component>
 </module>

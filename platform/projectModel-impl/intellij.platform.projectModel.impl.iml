@@ -7,11 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="projectModel-api" exported="" />
-    <orderEntry type="module" module-name="core-impl" />
-    <orderEntry type="module" module-name="jps-model-api" />
-    <orderEntry type="module" module-name="jps-model-impl" />
-    <orderEntry type="module" module-name="jps-model-serialization" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" exported="" />
     <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>

@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="javacvs-src" />
-    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="intellij.vcs.cvs.javacvs" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
   <component name="copyright">
     <Base>
@@ -16,4 +16,3 @@
     </Base>
   </component>
 </module>
-

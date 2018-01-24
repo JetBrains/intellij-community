@@ -11,22 +11,21 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="debugger-openapi" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.debugger" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="xml" scope="TEST" />
-    <orderEntry type="module" module-name="appEngine-runtime" />
-    <orderEntry type="module" module-name="google-app-engine-jps-plugin" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="remote-servers-java-api" />
-    <orderEntry type="module" module-name="maven" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.googleAppEngine.runtime" />
+    <orderEntry type="module" module-name="intellij.java.googleAppEngine.jps" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.remoteServers" />
+    <orderEntry type="module" module-name="intellij.maven" />
   </component>
 </module>
-

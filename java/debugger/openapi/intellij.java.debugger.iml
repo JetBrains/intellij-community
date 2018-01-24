@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntry type="module" module-name="java-psi-api" />
-    <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.jsp" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" />
   </component>
   <component name="copyright">
     <Base>
@@ -165,4 +165,3 @@
     </LanguageOptions>
   </component>
 </module>
-

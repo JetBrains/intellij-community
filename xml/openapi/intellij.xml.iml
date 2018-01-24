@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="xml-psi-api" exported="" />
-    <orderEntry type="module" module-name="xml-analysis-api" exported="" />
-    <orderEntry type="module" module-name="xml-structure-view-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.xml.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.structureView" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
   <component name="copyright">

@@ -8,24 +8,24 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="debugger-impl" />
-    <orderEntry type="module" module-name="debugger-openapi" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="library" scope="TEST" name="JUnit3" level="project" />
-    <orderEntry type="module" module-name="testRunner" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="testng_rt" />
-    <orderEntry type="module" module-name="java-i18n" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="jsp-openapi" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.testng.rt" />
+    <orderEntry type="module" module-name="intellij.java.i18n" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.jsp" />
     <orderEntry type="library" name="TestNG" level="project" />
-    <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="xml" scope="TEST" />
-    <orderEntry type="module" module-name="smRunner" exported="" />
-    <orderEntry type="module" module-name="typeMigration" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
+    <orderEntry type="module" module-name="intellij.java.typeMigration" />
   </component>
   <component name="copyright">
     <Base>

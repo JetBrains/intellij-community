@@ -9,14 +9,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="editor-ui-api" />
-    <orderEntry type="module" module-name="analysis-api" />
-    <orderEntry type="module" module-name="indexing-api" />
-    <orderEntry type="module" module-name="xml-psi-api" />
-    <orderEntry type="module" module-name="projectModel-api" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="boot" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.boot" />
   </component>
 </module>

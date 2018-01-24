@@ -8,14 +8,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-api" exported="" />
-    <orderEntry type="module" module-name="lvcs-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs" exported="" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
-    <orderEntry type="module" module-name="indexing-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
-    <orderEntry type="module" module-name="analysis-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

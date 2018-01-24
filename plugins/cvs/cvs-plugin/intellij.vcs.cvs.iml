@@ -7,14 +7,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="cvs-core" />
-    <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="javacvs-src" />
-    <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="smartcvs-src" />
+    <orderEntry type="module" module-name="intellij.vcs.cvs.core" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.vcs.cvs.javacvs" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.vcs.cvs.smartcvs" />
     <orderEntry type="library" name="microba" level="project" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>
-

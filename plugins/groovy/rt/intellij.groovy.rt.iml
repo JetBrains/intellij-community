@@ -8,8 +8,8 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="groovy-rt-constants" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.groovy.constants.rt" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="griffon-rt">
         <CLASSES>

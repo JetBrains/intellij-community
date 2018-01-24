@@ -7,21 +7,21 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="module" module-name="python-psi-api" scope="TEST" />
-    <orderEntry type="module" module-name="python-community" scope="TEST" />
-    <orderEntry type="module" module-name="xdebugger-api" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.python.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" scope="TEST" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="spellchecker" scope="TEST" />
-    <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
-    <orderEntry type="module" module-name="python-pydev" scope="TEST" />
-    <orderEntry type="module" module-name="smRunner" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pydev" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="library" exported="" scope="TEST" name="hamcrest" level="project" />
-    <orderEntry type="module" module-name="lang-tests" scope="TEST" />
-    <orderEntry type="module" module-name="python-community-tools" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.tools" scope="TEST" />
   </component>
 </module>

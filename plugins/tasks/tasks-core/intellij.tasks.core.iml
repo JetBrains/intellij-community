@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="tasks-api" exported="" />
-    <orderEntry type="module" module-name="platform-api" exported="" />
-    <orderEntry type="module" module-name="platform-impl" exported="" />
-    <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="intellij.tasks" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module-library" exported="">
       <library name="axis-1.4">
         <CLASSES>
@@ -28,9 +28,9 @@
     <orderEntry type="library" exported="" name="http-client-3.1" level="project" />
     <orderEntry type="library" exported="" name="XmlRPC" level="project" />
     <orderEntry type="library" exported="" name="gson" level="project" />
-    <orderEntry type="module" module-name="xml" exported="" />
-    <orderEntry type="module" module-name="core-api" exported="" />
-    <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="intellij.xml.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core" exported="" />
+    <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -58,11 +58,11 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="xdebugger-api" />
-    <orderEntry type="module" module-name="xdebugger-impl" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="library" exported="" name="markdownj" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
-    <orderEntry type="module" module-name="tasks-platform-impl" exported="" />
-    <orderEntry type="module" module-name="tasks-platform-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.tasks" exported="" />
   </component>
 </module>

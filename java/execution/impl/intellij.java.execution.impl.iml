@@ -7,17 +7,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="execution-openapi" exported="" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="debugger-impl" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.execution" exported="" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="module" module-name="testRunner" exported="" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="smRunner" />
-    <orderEntry type="module" module-name="jshell-protocol" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" />
+    <orderEntry type="module" module-name="intellij.java.jshell.protocol" />
     <orderEntry type="library" name="Coverage" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="precompiled_jshell-frontend" level="project" />
   </component>

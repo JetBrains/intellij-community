@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="core-api" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>

@@ -7,13 +7,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="java-psi-api" exported="" />
-    <orderEntry type="module" module-name="java-psi-impl" exported="" />
-    <orderEntry type="module" module-name="indexing-api" exported="" />
-    <orderEntry type="module" module-name="indexing-impl" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-impl" />
-    <orderEntry type="module" module-name="java-indexing-api" exported="" />
+    <orderEntry type="module" module-name="intellij.java.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.java.indexing" exported="" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>

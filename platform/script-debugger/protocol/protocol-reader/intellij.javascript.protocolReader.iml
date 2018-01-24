@@ -9,8 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="protocol-reader-runtime" exported="" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="intellij.platform.scriptDebugger.protocolReaderRuntime" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

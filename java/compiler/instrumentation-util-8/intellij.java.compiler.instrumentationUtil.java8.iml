@@ -7,6 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="instrumentation-util" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
   </component>
 </module>

@@ -9,25 +9,25 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" name="Ant" level="project" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="properties" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="dom-openapi" exported="" />
-    <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="ant-jps-plugin" />
-    <orderEntry type="module" module-name="dom-impl" />
-    <orderEntry type="module" module-name="properties-psi-api" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.properties" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.xml.dom" exported="" />
+    <orderEntry type="module" module-name="intellij.xml" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.ant.jps" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" />
+    <orderEntry type="module" module-name="intellij.properties.psi" />
   </component>
   <component name="copyright">
     <Base>
@@ -35,4 +35,3 @@
     </Base>
   </component>
 </module>
-

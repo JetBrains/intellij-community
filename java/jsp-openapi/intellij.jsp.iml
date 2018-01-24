@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="jsp-base-openapi" exported="" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.jsp.base" exported="" />
   </component>
   <component name="copyright">
     <Base>
@@ -164,4 +164,3 @@
     </LanguageOptions>
   </component>
 </module>
-

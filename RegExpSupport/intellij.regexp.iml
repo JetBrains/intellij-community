@@ -10,15 +10,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
-    <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
-    <orderEntry type="module" module-name="xdebugger-impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="xml-psi-api" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.psi" />
   </component>
 </module>

@@ -8,8 +8,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library" exported="">
       <library name="jgit">
         <ANNOTATIONS>
@@ -24,8 +24,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="projectModel-impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
@@ -48,9 +48,9 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Slf4j" level="project" />
-    <orderEntry type="module" module-name="configuration-store-impl" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
-    <orderEntry type="module" module-name="credential-store" />
+    <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

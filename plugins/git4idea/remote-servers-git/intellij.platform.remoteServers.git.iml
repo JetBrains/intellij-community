@@ -7,15 +7,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="remote-servers-agent-rt" />
-    <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="remote-servers-api" exported="" />
-    <orderEntry type="module" module-name="git4idea" exported="" />
-    <orderEntry type="module" module-name="remote-servers-impl" exported="" />
-    <orderEntry type="module" module-name="lang-api" exported="" />
-    <orderEntry type="module" module-name="lang-impl" exported="" />
-    <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="dvcs-api" />
+    <orderEntry type="module" module-name="intellij.platform.remoteServers.agent.rt" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.platform.remoteServers" exported="" />
+    <orderEntry type="module" module-name="intellij.vcs.git" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.dvcs" />
   </component>
 </module>

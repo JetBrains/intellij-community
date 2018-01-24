@@ -7,17 +7,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="extensions" />
-    <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
     <orderEntry type="library" exported="" name="ASM" level="project" />
     <orderEntry type="library" exported="" name="Coverage" level="project" />
     <orderEntry type="library" exported="" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="testRunner" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="lvcs-api" />
-    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
   </component>
 </module>

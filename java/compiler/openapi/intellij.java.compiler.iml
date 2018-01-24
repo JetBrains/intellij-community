@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
   <component name="copyright">
     <Base>

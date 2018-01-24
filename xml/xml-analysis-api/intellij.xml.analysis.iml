@@ -7,12 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xml-psi-api" exported="" />
-    <orderEntry type="module" module-name="analysis-api" exported="" />
-    <orderEntry type="module" module-name="annotations" exported="" />
-    <orderEntry type="module" module-name="core-api" exported="" />
-    <orderEntry type="module" module-name="extensions" exported="" />
-    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
   </component>
 </module>
-

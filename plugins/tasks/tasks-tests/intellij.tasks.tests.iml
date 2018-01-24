@@ -7,23 +7,23 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="tasks-api" />
-    <orderEntry type="module" module-name="tasks-core" />
-    <orderEntry type="module" module-name="tasks-java" />
+    <orderEntry type="module" module-name="intellij.tasks" />
+    <orderEntry type="module" module-name="intellij.tasks.core" />
+    <orderEntry type="module" module-name="intellij.tasks.java" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
-    <orderEntry type="module" module-name="xslt-debugger" />
-    <orderEntry type="module" module-name="xdebugger-impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="jira" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="git4idea" scope="TEST" />
-    <orderEntry type="module" module-name="hg4idea" scope="TEST" />
-    <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
-    <orderEntry type="module" module-name="tasks-platform-api" scope="TEST" />
-    <orderEntry type="module" module-name="tasks-platform-impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tasks.jira" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.git" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.vcs.hg" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="TEST" />
   </component>
 </module>

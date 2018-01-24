@@ -9,18 +9,18 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="properties" exported="" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="spellchecker" />
-    <orderEntry type="module" module-name="java-impl" exported="" />
-    <orderEntry type="module" module-name="jsp-base-openapi" />
-    <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="properties-psi-api" />
-    <orderEntry type="module" module-name="properties-psi-impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.properties" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.java.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.jsp.base" />
+    <orderEntry type="module" module-name="intellij.jsp" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.psi" />
+    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
   </component>
 </module>

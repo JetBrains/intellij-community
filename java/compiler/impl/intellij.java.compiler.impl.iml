@@ -7,26 +7,26 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="compiler-openapi" exported="" />
+    <orderEntry type="module" module-name="intellij.java.compiler" exported="" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="openapi" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="instrumentation-util" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
     <orderEntry type="library" name="ASM" level="project" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="jps-launcher" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.jsp" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.launcher" />
     <orderEntry type="library" name="Netty" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="jps-model-impl" />
-    <orderEntry type="module" module-name="java-analysis-impl" />
-    <orderEntry type="module" module-name="built-in-server" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
   <component name="copyright">

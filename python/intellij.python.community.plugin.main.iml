@@ -4,16 +4,16 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="python-community-plugin-core" exported="" />
-    <orderEntry type="module" module-name="python-community-plugin-java" exported="" />
-    <orderEntry type="module" module-name="python-community" exported="" />
-    <orderEntry type="module" module-name="python-community-plugin-resources" exported="" />
-    <orderEntry type="module" module-name="python-community-configure" exported="" />
-    <orderEntry type="module" module-name="python-community-plugin-minor" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.tools.content" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin" exported="" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.java" exported="" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.resources" exported="" />
+    <orderEntry type="module" module-name="intellij.python.configure" exported="" />
+    <orderEntry type="module" module-name="intellij.python.community.plugin.minor" exported="" />
   </component>
 </module>

@@ -8,8 +8,8 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xslt-rt" />
-    <orderEntry type="module" module-name="xslt-debugger-engine" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger.engine" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library name="Saxon-6.5.5">
@@ -41,4 +41,3 @@
     </orderEntry>
   </component>
 </module>
-

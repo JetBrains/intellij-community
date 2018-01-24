@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="extensions" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="platform-resources" />
+    <orderEntry type="module" module-name="intellij.xml" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.resources" />
   </component>
   <component name="copyright">
     <Base>
@@ -167,4 +167,3 @@
     </LanguageOptions>
   </component>
 </module>
-

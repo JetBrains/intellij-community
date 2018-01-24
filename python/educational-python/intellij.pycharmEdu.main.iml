@@ -4,18 +4,18 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="colorSchemes" />
-    <orderEntry type="module" module-name="svn4idea" />
-    <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="module" module-name="relaxng" />
-    <orderEntry type="module" module-name="rest" />
-    <orderEntry type="module" module-name="python-helpers" />
-    <orderEntry type="module" module-name="python-community-ide" />
-    <orderEntry type="module" module-name="platform-main" />
-    <orderEntry type="module" module-name="ShortcutPromoter" />
-    <orderEntry type="module" module-name="educational-python" />
-    <orderEntry type="module" module-name="hg4idea" />
-    <orderEntry type="module" module-name="ipnb" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
+    <orderEntry type="module" module-name="intellij.vcs.svn" />
+    <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="module" module-name="intellij.relaxng" />
+    <orderEntry type="module" module-name="intellij.reStructuredText" />
+    <orderEntry type="module" module-name="intellij.python.helpers" />
+    <orderEntry type="module" module-name="intellij.pycharmCommunity" />
+    <orderEntry type="module" module-name="intellij.platform.main" />
+    <orderEntry type="module" module-name="intellij.shortcutPromoter" />
+    <orderEntry type="module" module-name="intellij.pycharmEdu" />
+    <orderEntry type="module" module-name="intellij.vcs.hg" />
+    <orderEntry type="module" module-name="intellij.python.ipnb" />
   </component>
 </module>

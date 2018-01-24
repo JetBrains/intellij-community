@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="RegExpSupport" />
-    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.regexp" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="module" module-name="intellilang-jps-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.langInjection.jps" scope="RUNTIME" />
   </component>
   <component name="copyright">
     <Base>

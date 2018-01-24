@@ -7,9 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="xml-openapi" exported="" />
-    <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.xml" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
   </component>
 </module>
-

@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="library" exported="" name="JDOM" level="project" />
     <orderEntry type="module-library" exported="">
       <library>

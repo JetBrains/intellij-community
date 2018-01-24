@@ -7,12 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="platform-resources" />
-    <orderEntry type="module" module-name="RegExpSupport" exported="" scope="RUNTIME" />
-    <orderEntry type="module" module-name="images" exported="" />
-    <orderEntry type="module" module-name="community-resources" exported="" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="platform-resources-en" />
+    <orderEntry type="module" module-name="intellij.platform.resources" />
+    <orderEntry type="module" module-name="intellij.regexp" exported="" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.images" exported="" />
+    <orderEntry type="module" module-name="intellij.ideaCommunity.resources" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.resources.en" />
   </component>
   <component name="copyright">
     <Base>
@@ -20,4 +20,3 @@
     </Base>
   </component>
 </module>
-

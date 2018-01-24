@@ -10,19 +10,19 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="xslt-rt" />
-    <orderEntry type="module" module-name="lvcs-impl" />
-    <orderEntry type="module" module-name="annotations" />
+    <orderEntry type="module" module-name="intellij.xml" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
     <orderEntry type="library" name="Jaxen" level="project" />
-    <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="RUNTIME" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
   </component>
 </module>

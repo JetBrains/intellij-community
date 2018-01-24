@@ -8,17 +8,17 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="xml" />
-    <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="idea-ui" scope="TEST" />
-    <orderEntry type="module" module-name="java-impl" scope="TEST" />
-    <orderEntry type="module" module-name="ant" scope="TEST" />
-    <orderEntry type="module" module-name="xpath" scope="TEST" />
-    <orderEntry type="module" module-name="dom-impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.ant" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xpath" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" scope="TEST" />
     <orderEntry type="library" name="XmlBeans" level="project" />
-    <orderEntry type="module" module-name="platform-tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>

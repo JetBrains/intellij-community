@@ -11,19 +11,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="junit" scope="TEST" />
-    <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="java-psi-impl" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="core-impl" />
-    <orderEntry type="module" module-name="extensions" />
-    <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="module" module-name="xml-psi-impl" />
-    <orderEntry type="module" module-name="editor-ui-ex" />
-    <orderEntry type="module" module-name="java-analysis-impl" />
-    <orderEntry type="module" module-name="java-structure-view" />
-    <orderEntry type="module" module-name="properties-psi-impl" />
-    <orderEntry type="module" module-name="properties-psi-api" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.java.structureView" />
+    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
+    <orderEntry type="module" module-name="intellij.properties.psi" />
   </component>
 </module>

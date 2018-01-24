@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="annotations" />
-    <orderEntry type="module" module-name="core-api" />
-    <orderEntry type="module" module-name="editor-ui-api" />
-    <orderEntry type="module" module-name="diff-api" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.editor" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
   </component>
 </module>

@@ -4,25 +4,25 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="colorSchemes" />
-    <orderEntry type="module" module-name="cvs-plugin" />
-    <orderEntry type="module" module-name="hg4idea" />
-    <orderEntry type="module" module-name="svn4idea" />
-    <orderEntry type="module" module-name="git4idea" />
-    <orderEntry type="module" module-name="relaxng" />
-    <orderEntry type="module" module-name="github" />
-    <orderEntry type="module" module-name="rest" />
-    <orderEntry type="module" module-name="python-rest" />
-    <orderEntry type="module" module-name="python-helpers" />
-    <orderEntry type="module" module-name="terminal" />
-    <orderEntry type="module" module-name="python-community-ide" />
-    <orderEntry type="module" module-name="platform-main" />
-    <orderEntry type="module" module-name="jira" />
-    <orderEntry type="module" module-name="ShortcutPromoter" />
-    <orderEntry type="module" module-name="ipnb" />
-    <orderEntry type="module" module-name="settings-repository" />
-    <orderEntry type="module" module-name="python-terminal" />
-    <orderEntry type="module" module-name="properties" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
+    <orderEntry type="module" module-name="intellij.vcs.cvs" />
+    <orderEntry type="module" module-name="intellij.vcs.hg" />
+    <orderEntry type="module" module-name="intellij.vcs.svn" />
+    <orderEntry type="module" module-name="intellij.vcs.git" />
+    <orderEntry type="module" module-name="intellij.relaxng" />
+    <orderEntry type="module" module-name="intellij.vcs.github" />
+    <orderEntry type="module" module-name="intellij.reStructuredText" />
+    <orderEntry type="module" module-name="intellij.python.reStructuredText" />
+    <orderEntry type="module" module-name="intellij.python.helpers" />
+    <orderEntry type="module" module-name="intellij.terminal" />
+    <orderEntry type="module" module-name="intellij.pycharmCommunity" />
+    <orderEntry type="module" module-name="intellij.platform.main" />
+    <orderEntry type="module" module-name="intellij.tasks.jira" />
+    <orderEntry type="module" module-name="intellij.shortcutPromoter" />
+    <orderEntry type="module" module-name="intellij.python.ipnb" />
+    <orderEntry type="module" module-name="intellij.settingsRepository" />
+    <orderEntry type="module" module-name="intellij.python.terminal" />
+    <orderEntry type="module" module-name="intellij.properties" />
   </component>
 </module>

@@ -8,14 +8,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="javaFX" exported="" />
-    <orderEntry type="module" module-name="platform-impl" scope="TEST" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="xml" scope="TEST" />
-    <orderEntry type="module" module-name="jetgroovy" scope="TEST" />
-    <orderEntry type="module" module-name="common-javaFX-plugin" scope="TEST" />
-    <orderEntry type="module" module-name="java-tests" scope="TEST" />
-    <orderEntry type="module" module-name="structuralsearch-groovy" scope="TEST" />
-    <orderEntry type="module" module-name="compiler-openapi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javaFX" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.javaFX.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.structuralSearch" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.compiler" scope="TEST" />
   </component>
 </module>

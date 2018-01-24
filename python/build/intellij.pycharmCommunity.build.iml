@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="jps-standalone-builder" />
-    <orderEntry type="module" module-name="build" />
+    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
+    <orderEntry type="module" module-name="intellij.ideaCommunity.build" />
   </component>
 </module>

@@ -7,13 +7,12 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="analysis-impl" exported="" />
-    <orderEntry type="module" module-name="annotations" exported="" />
-    <orderEntry type="module" module-name="extensions" exported="" />
-    <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="indexing-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.annotations.java5" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
   </component>
 </module>
-

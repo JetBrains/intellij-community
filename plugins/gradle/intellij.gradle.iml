@@ -8,29 +8,29 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="external-system-api" exported="" />
-    <orderEntry type="module" module-name="external-system-impl" exported="" />
-    <orderEntry type="module" module-name="gradle-tooling-extension-api" exported="" />
-    <orderEntry type="module" module-name="gradle-tooling-extension-impl" />
-    <orderEntry type="module" module-name="gradle-jps-plugin" />
-    <orderEntry type="module" module-name="idea-ui" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="jetgroovy" />
-    <orderEntry type="module" module-name="lang-impl" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="maven" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension" exported="" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
+    <orderEntry type="module" module-name="intellij.gradle.jps" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.groovy" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
-    <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="coverage" />
-    <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="intellij.java.coverage" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
   </component>
 </module>

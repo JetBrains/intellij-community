@@ -8,12 +8,12 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="picocontainer" level="project" />
-    <orderEntry type="module" module-name="vcs-api" />
-    <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module" module-name="lvcs-api" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="diff-api" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lvcs" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
   </component>
   <component name="copyright">
     <Base>

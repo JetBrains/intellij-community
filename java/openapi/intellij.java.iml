@@ -8,26 +8,26 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="forms_rt" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="extensions" exported="" />
-    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
     <orderEntry type="library" exported="" name="microba" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="module" module-name="xml-openapi" exported="" />
-    <orderEntry type="module" module-name="platform-api" exported="" />
-    <orderEntry type="module" module-name="lang-api" exported="" />
-    <orderEntry type="module" module-name="vcs-api" exported="" />
+    <orderEntry type="module" module-name="intellij.xml" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" exported="" />
     <orderEntry type="library" name="XmlRPC" level="project" />
-    <orderEntry type="module" module-name="dom-openapi" />
-    <orderEntry type="module" module-name="resources-en" exported="" />
-    <orderEntry type="module" module-name="java-psi-api" exported="" />
-    <orderEntry type="module" module-name="java-indexing-api" exported="" />
-    <orderEntry type="module" module-name="java-analysis-api" exported="" />
+    <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.java.resources.en" exported="" />
+    <orderEntry type="module" module-name="intellij.java.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.java.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
   </component>
   <component name="copyright">
     <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />

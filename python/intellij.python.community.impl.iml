@@ -9,23 +9,23 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="python-openapi" exported="" />
-    <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="intellij.python.community" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="python-pydev" />
+    <orderEntry type="module" module-name="intellij.python.pydev" />
     <orderEntry type="library" exported="" name="XmlRPC" level="project" />
-    <orderEntry type="module" module-name="xdebugger-api" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
-    <orderEntry type="module" module-name="RegExpSupport" exported="" />
-    <orderEntry type="module" module-name="testRunner" />
-    <orderEntry type="module" module-name="smRunner" />
-    <orderEntry type="module" module-name="spellchecker" />
-    <orderEntry type="module" module-name="xdebugger-impl" />
-    <orderEntry type="module" module-name="xml-psi-impl" />
+    <orderEntry type="module" module-name="intellij.regexp" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.testRunner" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="module" module-name="vcs-api" />
+    <orderEntry type="module" module-name="intellij.xml" />
+    <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module-library">
       <library name="jsoup" type="repository">
         <properties maven-id="org.jsoup:jsoup:1.10.3" />

@@ -18,13 +18,13 @@
     <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="antlayout" />
-    <orderEntry type="module" module-name="jps-model-api" exported="" />
-    <orderEntry type="module" module-name="jps-standalone-builder" exported="" />
-    <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="groovy-jps-plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="groovy_rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.tools.jps.antTasks" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" exported="" />
+    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="gant-groovy" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
   </component>

@@ -7,10 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="core-impl" />
-    <orderEntry type="module" module-name="indexing-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-impl" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" exported="" name="NanoXML" level="project" />
   </component>
 </module>
-

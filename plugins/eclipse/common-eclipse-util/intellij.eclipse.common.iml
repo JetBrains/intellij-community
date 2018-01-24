@@ -7,9 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
   </component>
 </module>
-

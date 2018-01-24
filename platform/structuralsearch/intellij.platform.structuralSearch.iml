@@ -8,16 +8,16 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="platform-api" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="duplicates-analysis" />
-    <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.platform.duplicates.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
   <component name="copyright">
     <Base>
@@ -25,4 +25,3 @@
     </Base>
   </component>
 </module>
-

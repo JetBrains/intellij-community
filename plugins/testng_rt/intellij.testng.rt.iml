@@ -8,6 +8,6 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="TestNG" level="project" />
-    <orderEntry type="module" module-name="java-runtime" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
   </component>
 </module>

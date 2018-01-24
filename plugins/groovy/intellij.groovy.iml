@@ -9,37 +9,37 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="debugger-openapi" />
-    <orderEntry type="module" module-name="groovy_rt" />
-    <orderEntry type="module" module-name="compiler-impl" />
-    <orderEntry type="module" module-name="debugger-impl" />
-    <orderEntry type="module" module-name="lang-api" />
-    <orderEntry type="module" module-name="properties" />
-    <orderEntry type="module" module-name="execution-impl" />
-    <orderEntry type="module" module-name="compiler-openapi" />
-    <orderEntry type="module" module-name="execution-openapi" />
-    <orderEntry type="module" module-name="idea-ui" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.java.debugger" />
+    <orderEntry type="module" module-name="intellij.groovy.rt" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.properties" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="copyright" />
-    <orderEntry type="module" module-name="IntelliLang" />
-    <orderEntry type="module" module-name="ant" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.copyright" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection" />
+    <orderEntry type="module" module-name="intellij.ant" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
-    <orderEntry type="module" module-name="IntelliLang-java" />
-    <orderEntry type="module" module-name="IntelliLang-xml" scope="TEST" />
-    <orderEntry type="module" module-name="jps-builders" />
-    <orderEntry type="module" module-name="spellchecker" />
-    <orderEntry type="module" module-name="junit" scope="TEST" />
-    <orderEntry type="module" module-name="java-indexing-api" />
-    <orderEntry type="module" module-name="groovy-jps-plugin" />
-    <orderEntry type="module" module-name="ByteCodeViewer" />
-    <orderEntry type="module" module-name="properties-psi-api" />
-    <orderEntry type="module" module-name="groovy-psi" exported="" />
-    <orderEntry type="module" module-name="external-system-api" />
-    <orderEntry type="module" module-name="RegExpSupport" />
-    <orderEntry type="module" module-name="external-system-impl" scope="TEST" />
-    <orderEntry type="module" module-name="lang-tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.langInjection" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.groovy.jps" />
+    <orderEntry type="module" module-name="intellij.java.byteCodeViewer" />
+    <orderEntry type="module" module-name="intellij.properties.psi" />
+    <orderEntry type="module" module-name="intellij.groovy.psi" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="module" module-name="intellij.regexp" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
   </component>
 </module>

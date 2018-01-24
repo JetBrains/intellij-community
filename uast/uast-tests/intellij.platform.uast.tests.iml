@@ -8,15 +8,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="uast-common" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.uast" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="core-impl" />
-    <orderEntry type="module" module-name="uast-java" exported="" />
-    <orderEntry type="module" module-name="java-runtime" />
-    <orderEntry type="module" module-name="java-psi-impl" />
-    <orderEntry type="module" module-name="testFramework" />
-    <orderEntry type="module" module-name="java-tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="testFramework-java" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.java.uast" exported="" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
   </component>
 </module>

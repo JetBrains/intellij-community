@@ -9,11 +9,11 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="schema-reader-generator" />
-    <orderEntry type="module" module-name="protocol-reader" />
+    <orderEntry type="module" module-name="intellij.javascript.schemaReaderGenerator" />
+    <orderEntry type="module" module-name="intellij.javascript.protocolReader" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="util-rt" />
-    <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

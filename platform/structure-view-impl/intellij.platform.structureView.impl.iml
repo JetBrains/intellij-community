@@ -7,16 +7,16 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="editor-ui-api" exported="" />
-    <orderEntry type="module" module-name="util" exported="" />
-    <orderEntry type="module" module-name="extensions" exported="" />
-    <orderEntry type="module" module-name="core-api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.editor" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core" exported="" />
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
-    <orderEntry type="module" module-name="bootstrap" />
-    <orderEntry type="module" module-name="platform-resources-en" exported="" />
-    <orderEntry type="module" module-name="icons" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="module" module-name="intellij.platform.resources.en" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons" />
     <orderEntry type="library" name="automaton" level="project" />
-    <orderEntry type="module" module-name="projectModel-api" exported="" />
-    <orderEntry type="module" module-name="platform-api" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
   </component>
 </module>
