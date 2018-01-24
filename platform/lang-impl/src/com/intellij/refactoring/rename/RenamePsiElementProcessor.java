@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringSettings;
@@ -24,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.psi.search.searches.ReferencesSearch.SearchParameters;
 
 /**
  * @author yole
@@ -55,7 +58,14 @@ public abstract class RenamePsiElementProcessor {
 
   @NotNull
   public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
-    return ReferencesSearch.search(new RenamePsiElementSearchParameters(element)).findAll();
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(element.getProject());
+    final SearchParameters searchParameters = new SearchParameters(element, scope, false) {
+      @Override
+      public boolean isDirectSearch() {
+        return true;
+      }
+    };
+    return ReferencesSearch.search(searchParameters).findAll();
   }
 
   @Nullable

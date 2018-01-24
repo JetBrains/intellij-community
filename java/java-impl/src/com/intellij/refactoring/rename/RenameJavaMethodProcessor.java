@@ -8,10 +8,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.search.searches.MethodReferencesSearch.SearchParameters;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
@@ -151,7 +153,14 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
 
   @NotNull
   public Collection<PsiReference> findReferences(@NotNull final PsiElement element) {
-    return MethodReferencesSearch.search(new RenameJavaMethodSearchParameters((PsiMethod)element)).findAll();
+    final GlobalSearchScope scope = GlobalSearchScope.projectScope(element.getProject());
+    final SearchParameters searchParameters = new SearchParameters((PsiMethod)element, scope, true) {
+      @Override
+      public boolean isDirectSearch() {
+        return true;
+      }
+    };
+    return MethodReferencesSearch.search(searchParameters).findAll();
   }
 
   public void findCollisions(@NotNull final PsiElement element, @NotNull final String newName, @NotNull final Map<? extends PsiElement, String> allRenames,
