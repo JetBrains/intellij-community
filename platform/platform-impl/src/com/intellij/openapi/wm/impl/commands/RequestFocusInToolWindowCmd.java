@@ -155,6 +155,8 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
             } else {
               result.setRejected();
             }
+          } else {
+            result.setRejected();
           }
           myManager.getFocusManager().doWhenFocusSettlesDown(() -> updateToolWindow(c));
         }
