@@ -348,19 +348,34 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
     for (Iterator<Map.Entry<String, Couple<Method>>> iterator = candidates.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, Couple<Method>> candidate = iterator.next();
-      // (getter,setter)
       Couple<Method> methods = candidate.getValue();
-      if (methods.first != null && methods.second != null &&
-          methods.first.getReturnType().equals(methods.second.getParameterTypes()[0]) &&
-          methods.first.getAnnotation(Transient.class) == null &&
-          methods.second.getAnnotation(Transient.class) == null) {
-        accessors.add(new PropertyAccessor(candidate.getKey(), methods.first.getReturnType(), methods.first, methods.second));
+      Method getter = methods.first;
+      Method setter = methods.second;
+      if (isAcceptableProperty(getter, setter)) {
+        accessors.add(new PropertyAccessor(candidate.getKey(), getter.getReturnType(), getter, setter));
       }
       else {
         iterator.remove();
       }
     }
     return candidates;
+  }
+
+  private static boolean isAcceptableProperty(@Nullable Method getter, @Nullable Method setter) {
+    if (getter == null || getter.getAnnotation(Transient.class) != null) {
+      return false;
+    }
+
+    if (setter == null) {
+      // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
+      return (List.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) && hasStoreAnnotations(getter);
+    }
+
+    if (setter.getAnnotation(Transient.class) != null || !getter.getReturnType().equals(setter.getParameterTypes()[0])) {
+      return false;
+    }
+
+    return true;
   }
 
   private static boolean hasStoreAnnotations(@NotNull AccessibleObject object) {
