@@ -10,6 +10,7 @@ import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -73,7 +74,7 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
       else {
         command = getRubyAwareCommand(sdk, env);
         if (SystemInfoRt.isWindows) {
-          command = "cmd /c " + command;
+          command = ExecUtil.getWindowsShellName() + " /c " + command;
         }
       }
     }
