@@ -32,12 +32,12 @@ import java.util.stream.Stream;
 public enum LanguageLevel {
 
   /**
-   * @deprecated This level will be removed in 2018.2.
+   * @deprecated This level is not supported since 2018.1.
    */
   @Deprecated
   PYTHON24(24, false, true, false, false),
   /**
-   * @deprecated This level will be removed in 2018.2.
+   * @deprecated This level is not supported since 2018.1.
    */
   @Deprecated
   PYTHON25(25, false, true, false, false),
@@ -123,6 +123,12 @@ public enum LanguageLevel {
 
   public static LanguageLevel fromPythonVersion(@NotNull String pythonVersion) {
     if (pythonVersion.startsWith("2")) {
+      if (pythonVersion.startsWith("2.4")) {
+        return PYTHON24;
+      }
+      if (pythonVersion.startsWith("2.5")) {
+        return PYTHON25;
+      }
       if (pythonVersion.startsWith("2.6")) {
         return PYTHON26;
       }
