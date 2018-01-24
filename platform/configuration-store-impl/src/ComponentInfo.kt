@@ -1,15 +1,22 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.util.ModificationTracker
 
 internal fun createComponentInfo(component: Any, stateSpec: State?): ComponentInfo {
-  return when (component) {
+  val componentInfo = when (component) {
     is ModificationTracker -> ComponentWithModificationTrackerInfo(component, stateSpec)
     is PersistentStateComponentWithModificationTracker<*> -> ComponentWithStateModificationTrackerInfo(component, stateSpec!!)
     else -> ComponentInfoImpl(component, stateSpec)
   }
+
+  if (stateSpec != null && stateSpec.storages.all { it.roamingType === RoamingType.DISABLED }) {
+    componentInfo.lastSaved = (System.currentTimeMillis() / 1000).toInt()
+  }
+
+  return componentInfo
 }
 
 internal abstract class ComponentInfo {
@@ -21,7 +28,7 @@ internal abstract class ComponentInfo {
 
   abstract val isModificationTrackingSupported: Boolean
 
-  var lastSaved = -1L
+  var lastSaved: Int = -1
 
   open fun updateModificationCount(newCount: Long = currentModificationCount) {
   }

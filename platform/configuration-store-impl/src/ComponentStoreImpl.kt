@@ -54,6 +54,7 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
+import java.util.concurrent.TimeUnit
 import com.intellij.openapi.util.Pair as JBPair
 
 internal val LOG = Logger.getInstance(ComponentStoreImpl::class.java)
@@ -63,6 +64,8 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   val w2 = if (o2.deprecated) 1 else 0
   w1 - w2
 }
+
+private val NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = TimeUnit.MINUTES.toSeconds(4)
 
 private class PersistenceStateAdapter(val component: Any) : PersistentStateComponent<Any> {
   override fun getState() = component
@@ -129,7 +132,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>) {
+  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean) {
     var errors: MutableList<Throwable>? = null
 
     // component state uses scheme manager in an ipr project, so, we must save it before
@@ -148,10 +151,9 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
-      errors = doSaveComponents(isUseModificationCount, externalizationSession, errors)
+      errors = doSaveComponents(isForce, externalizationSession, errors)
     }
 
     for (settingsSavingComponent in settingsSavingComponents) {
@@ -174,12 +176,17 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  private fun doSaveComponents(isUseModificationCount: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+  private fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+    val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
+
     var errors = _errors
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
     val timeLogPrefix = "Saving"
     val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+
+    // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
+    val nowInSeconds: Int = (System.currentTimeMillis() / 1000).toInt()
     for (name in names) {
       val start = if (timeLog == null) 0 else System.currentTimeMillis()
 
@@ -195,6 +202,11 @@ abstract class ComponentStoreImpl : IComponentStore {
               continue
             }
           }
+        }
+
+        if (!isForce && info.lastSaved != -1 && (nowInSeconds - info.lastSaved) < NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD) {
+          LOG.debug { "Skip $name: was already saved in last 5 minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
+          continue
         }
 
         commitComponent(externalizationSession, info, name)

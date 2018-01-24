@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -233,12 +219,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     if (manager == null) {
-      saveSettings();
+      saveSettings(true);
     }
     else {
       final boolean[] canClose = {true};
       try {
         CommandProcessor.getInstance().executeCommand(null, () -> {
+          saveSettings(true);
           if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
             canClose[0] = false;
           }
@@ -1408,12 +1395,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveSettings() {
-    if (myDoNotSave) return;
+    saveSettings(false);
+  }
+
+  @Override
+  public void saveSettings(boolean isForce) {
+    if (myDoNotSave) {
+      return;
+    }
 
     if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
       try {
-        StoreUtil.save(ServiceKt.getStateStore(this), null);
+        StoreUtil.save(ServiceKt.getStateStore(this), null, isForce);
       }
       finally {
         mySaveSettingsIsInProgress.set(false);
@@ -1423,9 +1417,9 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveAll() {
-    if (myDoNotSave) return;
-
-    StoreUtil.saveDocumentsAndProjectsAndApp();
+    if (!myDoNotSave) {
+      StoreUtil.saveDocumentsAndProjectsAndApp(false);
+    }
   }
 
   @Override

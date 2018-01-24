@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
@@ -33,8 +31,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
@@ -48,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -619,7 +614,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   // return true if successful
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
-    ApplicationManager.getApplication().saveSettings();
     for (Project project : getOpenProjects()) {
       if (!closeProject(project, true, false, true, checkCanClose)) {
         return false;
@@ -667,7 +661,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
         if (saveApp) {
-          app.saveSettings();
+          app.saveSettings(true);
         }
       }
 
