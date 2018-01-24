@@ -36,12 +36,12 @@ public class FUStatisticsPersistence {
   // 3.  method requests actual "approved" usages collectors (see FUStatisticsWhiteListGroupsService) to be invoked.
   //     if FUStatisticsWhiteListGroupsService is OFFLINE the data will NOT collected.
   // 4. collected data are persisted in system cache. one file for one project session. the session is pair: project + IJ build number
-  public static void persistProjectUsages(@NotNull Project project) {
+  public static String persistProjectUsages(@NotNull Project project) {
     Set<String> groups = FUStatisticsSettingsService.getInstance().getApprovedGroups();
-    if (groups.isEmpty()) return;
+    if (groups.isEmpty()) return null;
     FUStatisticsAggregator aggregator = FUStatisticsAggregator.create();
     Map<String, Set<UsageDescriptor>> usages = aggregator.getProjectUsages(project, groups);
-    if (usages.isEmpty()) return;
+    if (usages.isEmpty()) return null;
 
     FUSession fuSession = FUSession.create(project);
 
@@ -58,6 +58,7 @@ public class FUStatisticsPersistence {
     } catch (IOException e) {
       LOG.info(e);
     }
+    return fileName;
   }
 
   @NotNull
@@ -112,7 +113,7 @@ public class FUStatisticsPersistence {
   }
 
   @Nullable
-  private static File getStatisticsSystemCacheDirectory() {
+  public static File getStatisticsSystemCacheDirectory() {
     return Paths.get(PathManager.getSystemPath()).resolve(FUS_CACHE_PATH).toFile();
   }
 
