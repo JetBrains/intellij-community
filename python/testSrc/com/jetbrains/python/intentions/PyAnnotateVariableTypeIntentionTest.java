@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -59,47 +60,47 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testAnnotationLocalSimpleAssignmentTarget() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationLocalSimpleAssignmentTargetInParentheses() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationLocalUnpackedAssignmentTarget() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationLocalChainedAssignmentTarget() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationLocalForTarget() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationLocalWithTarget() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationInstanceAttribute() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationInstanceAttributeDocstring() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationInstanceAttributeClassLevelAssignment() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testAnnotationInstanceAttributeClassLevelAssignmentInAncestor() {
-    doTestAnnotation();
+    doAnnotationTest();
   }
 
   public void testTypeCommentInstanceAttribute() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentInstanceAttributePy3() {
@@ -107,70 +108,102 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testTypeCommentInstanceAttributeDocstring() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentInstanceAttributeClassLevelAssignment() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentInstanceAttributeClassLevelAssignmentInAncestor() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalSimpleAssignmentTarget() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalSimpleAssignmentTargetInParentheses() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalUnpackedAssignmentTarget() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentComplexUnpackedAssignmentTarget() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalChainedAssignmentTarget() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalForTarget() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalWithTarget() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalSimpleAssignmentTargetWithExistingComment() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalForTargetWithExistingComment() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
   public void testTypeCommentLocalWithTargetWithExistingComment() {
-    doTestTypeComment();
+    doTypeCommentTest();
   }
 
-  private void doTestAnnotation() {
+  public void testAnnotationImportTypingAny() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationImportTypingUnion() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationImportTypingOptional() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationImportClassName() {
+    doMultiFileAnnotationTest();
+  }
+
+  private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
 
-  private void doTestTypeComment() {
+  private void doTypeCommentTest() {
     doTest(LanguageLevel.PYTHON27);
-  }
-
-  private void doTest(@NotNull LanguageLevel languageLevel) {
-    doTest(PyBundle.message("INTN.annotate.types"), languageLevel);
   }
 
   private void doNegativeTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.annotate.types")));
+  }
+
+  public void doMultiFileAnnotationTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      doMultiFileTest(PyBundle.message("INTN.annotate.types"));
+    });
+  }
+
+  private void doMultiFileTest(@NotNull String hint) {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    final IntentionAction intentionAction = myFixture.findSingleIntention(hint);
+    assertNotNull(intentionAction);
+    assertSdkRootsNotParsed(myFixture.getFile());
+    myFixture.launchAction(intentionAction);
+    myFixture.checkResultByFile(getTestName(false) + "/main_after.py", true);
+  }
+
+  private void doTest(@NotNull LanguageLevel languageLevel) {
+    doTest(PyBundle.message("INTN.annotate.types"), languageLevel);
   }
 }
