@@ -84,7 +84,7 @@ public class SemanticEditorPosition {
     return copyAnd(position -> position.moveAfterOptionalMix(elements));
   }
 
-    public boolean isAtMultiline() {
+  public boolean isAtMultiline() {
     if (!myIterator.atEnd()) {
       return CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
     }
@@ -175,17 +175,22 @@ public class SemanticEditorPosition {
     return copyAnd(
       position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, terminationCondition));
   }
-  
+
   public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
+    return elementAfterOnSameLine(syntaxElements) != null;
+  }
+
+  @Nullable
+  public SyntaxElement elementAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
     myIterator.retreat();
     while (!myIterator.atEnd() && !isAtMultiline()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
       for (SyntaxElement element : syntaxElements) {
-        if (element.equals(currElement)) return true;
+        if (element.equals(currElement)) return element;
       }
       myIterator.retreat();
     }
-    return false;
+    return null;
   }
   
   public boolean isAt(@NotNull SyntaxElement syntaxElement) {
