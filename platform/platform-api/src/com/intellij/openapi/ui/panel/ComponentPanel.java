@@ -19,7 +19,7 @@ public abstract class ComponentPanel {
   public static final String DECORATED_PANEL_PROPERTY = "JComponent.decoratedPanel";
 
   /**
-   * Takes ComponentPanel instance accossiated with the given <code>JComponent</code>
+   * Takes ComponentPanel instance associated with the given <code>JComponent</code>
    * @param component is the owner
    * @return instance of <code>ComponentPanel</code> or <code>null</code> there is no
    * <code>ComponentPanel</code> associated with the owner.
