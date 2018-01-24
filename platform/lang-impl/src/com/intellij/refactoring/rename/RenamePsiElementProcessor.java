@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringSettings;
@@ -56,7 +55,7 @@ public abstract class RenamePsiElementProcessor {
 
   @NotNull
   public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
-    return ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.getProject())).findAll();
+    return ReferencesSearch.search(new RenamePsiElementSearchParameters(element)).findAll();
   }
 
   @Nullable
