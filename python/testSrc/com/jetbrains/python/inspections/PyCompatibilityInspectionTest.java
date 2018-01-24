@@ -96,12 +96,12 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   // PY-7763
   public void testEllipsisAsStatementPy2() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-8606
   public void testEllipsisInSubscriptionPy2() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-15390

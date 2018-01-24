@@ -1062,7 +1062,7 @@ public class PyUtil {
     final LanguageLevel level = anchor != null ?
                                 LanguageLevel.forElement(anchor) :
                                 getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
-    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+    if (!level.isPython2()) {
       return true;
     }
     return checkSetupToolsPackages && isSetuptoolsNamespacePackage(directory);

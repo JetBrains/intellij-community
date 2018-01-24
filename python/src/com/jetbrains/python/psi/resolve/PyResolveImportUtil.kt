@@ -231,7 +231,7 @@ private fun findFirstResults(results: List<PsiElement>, module: Module?) =
 private fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
     val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
-    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+    if (!level.isPython2) {
       return PyUtil.turnDirIntoInit(element) == null
     }
   }

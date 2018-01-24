@@ -277,16 +277,16 @@ public class  PyIntentionTest extends PyTestCase {
 
   // PY-8989
   public void testConvertTripleQuotedStringDoesNotReplacePythonEscapes() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 
   // PY-8989
   public void testConvertTripleQuotedStringMultilineGluedString() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 
   public void testConvertTripleQuotedEmptyString() {
-    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 
   public void testTransformConditionalExpression() { //PY-3094
@@ -406,7 +406,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeAssertion3() {                   //PY-7403
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doNegativeTest(PyBundle.message("INTN.insert.assertion")));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doNegativeTest(PyBundle.message("INTN.insert.assertion")));
   }
 
   public void testTypeAssertion4() {  //PY-7971
@@ -700,7 +700,7 @@ public class  PyIntentionTest extends PyTestCase {
 
   // PY-7383
   public void testYieldFrom() {
-    doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.yield.from"), LanguageLevel.PYTHON34);
   }
 
   public void testConvertStaticMethodToFunction() {

@@ -161,7 +161,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-6703
   public void testUnicode33() {
-    doTest(LanguageLevel.PYTHON33, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testParenthesizedGenerator() {
@@ -169,7 +169,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testStarInGenerator() {  // PY-10177
-    doTest(LanguageLevel.PYTHON33, false, false);
+    doTest(LanguageLevel.PYTHON34, false, false);
   }
 
   public void testStarArgs() {  // PY-6456

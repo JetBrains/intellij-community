@@ -222,7 +222,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7389
@@ -232,7 +232,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7516

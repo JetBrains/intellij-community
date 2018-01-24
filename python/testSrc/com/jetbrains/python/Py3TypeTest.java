@@ -23,7 +23,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-6702
   public void testYieldFromType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("Union[str, int, float]",
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("Union[str, int, float]",
            "def subgen():\n" +
            "    for i in [1, 2, 3]:\n" +
            "        yield i\n" +
@@ -39,7 +39,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-12944
   public void testYieldFromReturnType() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("None",
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("None",
            "def a():\n" +
            "    yield 1\n" +
            "    return 'a'\n" +
@@ -49,7 +49,7 @@ public class Py3TypeTest extends PyTestCase {
            "def b():\n" +
            "    expr = yield from y\n" +
            "    return expr\n"));
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("str",
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("str",
            "def a():\n" +
            "    yield 1\n" +
            "    return 'a'\n" +
@@ -57,7 +57,7 @@ public class Py3TypeTest extends PyTestCase {
            "def b():\n" +
            "    expr = yield from a()\n" +
            "    return expr\n"));
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest("int",
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int",
            "def g():\n" +
            "    yield 1\n" +
            "    return 'abc'\n" +

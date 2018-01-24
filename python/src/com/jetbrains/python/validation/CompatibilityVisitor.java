@@ -373,7 +373,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       return;
     }
 
-    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON33),
+    registerOnFirstMatchingVersion(LanguageLevel::isPython2,
                                    "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
                                    "Python 3.3; use explicit iteration over subgenerator instead.",
                                    node);
@@ -381,7 +381,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyReturnStatement(PyReturnStatement node) {
-    if (myVersionsToProcess.stream().anyMatch(level -> level.isOlderThan(LanguageLevel.PYTHON33))) {
+    if (ContainerUtil.exists(myVersionsToProcess, LanguageLevel::isPython2)) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
       if (function != null && node.getExpression() != null) {
         final YieldVisitor visitor = new YieldVisitor();

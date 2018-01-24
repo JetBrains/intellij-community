@@ -338,12 +338,12 @@ public class PythonParsingTest extends ParsingTestCase {
 
   // PY-6702
   public void testYieldFrom() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-6733
   public void testYieldFromNoExpr() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-6734
@@ -390,7 +390,7 @@ public class PythonParsingTest extends ParsingTestCase {
 
   // PY-8752
   public void testEllipsisPython3() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-8948
@@ -440,7 +440,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testNotClosedBraceSet() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testEmptyBlockInFunctionBeforeFunction() {

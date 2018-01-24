@@ -794,7 +794,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpacesAfterFromInYieldFrom() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-24220
