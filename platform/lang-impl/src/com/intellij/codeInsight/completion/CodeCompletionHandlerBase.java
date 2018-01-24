@@ -500,7 +500,7 @@ public class CodeCompletionHandlerBase {
       });
     }
     else {
-      ApplicationManager.getApplication().runWriteAction(() -> PsiDocumentManager.getInstance(project).commitDocument(copyDocument));
+      PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
       if (isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
         Disposer.dispose(translator);
         return;
