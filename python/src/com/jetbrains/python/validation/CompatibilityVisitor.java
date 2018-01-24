@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ASTNode;
@@ -36,23 +35,19 @@ import java.util.stream.Stream;
 public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @NotNull
-  private static final Map<LanguageLevel, Set<String>> AVAILABLE_PREFIXES = Maps.newHashMap();
+  private static final Set<String> PYTHON2_PREFIXES = Sets.newHashSet("R", "U", "UR", "B", "BR");
 
   @NotNull
-  private static final Set<String> DEFAULT_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+  private static final Set<String> PYTHON34_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB");
+
+  @NotNull
+  private static final Set<String> PYTHON36_PREFIXES = Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF");
 
   @NotNull
   protected static final String COMMON_MESSAGE = "Python version ";
 
   @NotNull
   protected List<LanguageLevel> myVersionsToProcess;
-
-  static {
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON36, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON37, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
-  }
 
   public CompatibilityVisitor(@NotNull List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -228,12 +223,25 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (prefix.isEmpty()) continue;
 
       final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + prefixLength);
-      registerForAllMatchingVersions(level -> !AVAILABLE_PREFIXES.getOrDefault(level, DEFAULT_PREFIXES).contains(prefix),
+      registerForAllMatchingVersions(level -> !getSupportedStringPrefixes(level).contains(prefix),
                                      " not support a '" + prefix + "' prefix",
                                      node,
                                      range,
                                      new RemovePrefixQuickFix(prefix),
                                      true);
+    }
+  }
+
+  @NotNull
+  private static Set<String> getSupportedStringPrefixes(@NotNull LanguageLevel level) {
+    if (level.isPython2()) {
+      return PYTHON2_PREFIXES;
+    }
+    else if (level.isOlderThan(LanguageLevel.PYTHON36)) {
+      return PYTHON34_PREFIXES;
+    }
+    else {
+      return PYTHON36_PREFIXES;
     }
   }
 
