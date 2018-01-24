@@ -520,4 +520,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingProtocolsInheritorAgainstHashable() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
+
+  // PY-23161
+  public void testGenericWithTypeVarBounds() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 }
