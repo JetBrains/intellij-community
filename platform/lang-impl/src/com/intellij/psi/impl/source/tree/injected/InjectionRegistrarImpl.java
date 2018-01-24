@@ -285,6 +285,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       assert place.isValid();
       assert viewProvider.isValid();
 
+      List<InjectedLanguageUtil.TokenInfo> newTokens = InjectedLanguageUtil.getHighlightTokens(psiFile);
       PsiFile newFile = registerDocument(documentWindow, psiFile, place, hostPsiFile, documentManager);
       boolean mergeHappened = newFile != psiFile;
       Place mergedPlace = place;
@@ -298,6 +299,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
           place.dispose();
           mergedPlace = documentWindow.getShreds();
         }
+        InjectedLanguageUtil.setHighlightTokens(psiFile, newTokens);
       }
 
       assert psiFile.isValid();
