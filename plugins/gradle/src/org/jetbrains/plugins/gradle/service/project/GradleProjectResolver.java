@@ -371,7 +371,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       moduleMap.put(mainModuleId, Pair.create(moduleDataNode, gradleModule));
     }
 
-    executionSettings.getExecutionWorkspace().addModuleMap(moduleMap);
+    executionSettings.getExecutionWorkspace().setModuleMap(moduleMap);
 
     File gradleHomeDir = null;
     // populate modules nodes

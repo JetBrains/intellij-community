@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.util.Pair;
@@ -29,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -36,10 +38,11 @@ import java.util.Map;
  */
 public class GradleExecutionWorkspace implements Serializable {
   private static final long serialVersionUID = 1L;
+  private static final Logger LOG = Logger.getInstance(GradleExecutionWorkspace.class);
 
   @NotNull
   private final List<GradleBuildParticipant> myBuildParticipants = ContainerUtil.newArrayList();
-  private Map<String, Pair<DataNode<ModuleData>, IdeaModule>> myModuleMap;
+  private Map<String, Pair<DataNode<ModuleData>, IdeaModule>> myModuleNameIndex = Collections.emptyMap();
 
   public void addBuildParticipant(GradleBuildParticipant participant) {
     myBuildParticipants.add(participant);
@@ -60,13 +63,11 @@ public class GradleExecutionWorkspace implements Serializable {
     return result;
   }
 
-  public ModuleData findModuleDataByName(String moduleName) {
+  public ModuleData findModuleDataByGradleModuleName(String moduleName) {
     ModuleData result = null;
 
-    Pair<DataNode<ModuleData>, IdeaModule> modulePair = myModuleMap.get(moduleName);
-    if(modulePair == null) {
-      modulePair = myModuleMap.get(":" + moduleName);
-    }
+    Pair<DataNode<ModuleData>, IdeaModule> modulePair = myModuleNameIndex.get(moduleName);
+
     if (modulePair != null) {
       return modulePair.first.getData();
     }
@@ -78,7 +79,11 @@ public class GradleExecutionWorkspace implements Serializable {
     return result;
   }
 
-  public void addModuleMap(Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap) {
-    myModuleMap = moduleMap;
+  public void setModuleMap(Map<String, Pair<DataNode<ModuleData>, IdeaModule>> moduleMap) {
+    try {
+      myModuleNameIndex = moduleMap.values().stream().collect(Collectors.toMap(val -> val.second.getName(), val -> val));
+    } catch (IllegalStateException e) {
+      LOG.warn("Duplicate module names detected during import", e);
+    }
   }
 }

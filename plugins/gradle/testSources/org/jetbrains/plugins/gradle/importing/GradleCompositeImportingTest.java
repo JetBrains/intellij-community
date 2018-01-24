@@ -87,6 +87,32 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
   @Test
   @TargetVersions("3.3+")
+  public void testCompositeBuildWithNestedModules() throws Exception {
+    createSettingsFile("rootProject.name = 'app'\n" +
+                       "includeBuild 'lib'");
+
+    createProjectSubFile("lib/settings.gradle", "rootProject.name = 'lib'\n" +
+                                                "include 'runtime'\n" +
+                                                "include 'runtime:runtime-mod'");
+    createProjectSubFile("lib/runtime/runtime-mod/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group'");
+
+    importProject("apply plugin: 'java'\n" +
+                                                  "dependencies {\n" +
+                                                  "  compile 'my.group:runtime-mod'\n" +
+                                                  "}");
+
+    assertModules("app", "app_main", "app_test",
+                  "lib",
+                  "runtime",
+                  "runtime-mod", "runtime-mod_main", "runtime-mod_test");
+
+    assertModuleModuleDepScope("app_main", "runtime-mod_main", COMPILE);
+  }
+
+  @Test
+  @TargetVersions("3.3+")
   public void testCompositeBuildWithProjectNameDuplicates() throws Exception {
     IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
     modelsProvider.newModule(getProjectPath() + "/api.iml", StdModuleTypes.JAVA.getId());
