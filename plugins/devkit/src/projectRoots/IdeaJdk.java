@@ -350,8 +350,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     boolean isUltimate = vfsManager.findFileByUrl(VfsUtilCore.pathToUrl(sdkHome + "/ultimate/ultimate-resources")) != null;
     Set<String> suppressedModules = ContainerUtil.newTroveSet("jps-plugin-system");
     Set<String> ultimateModules = ContainerUtil.newTroveSet(
-      "platform-ultimate", "ultimate-resources", "ultimate-verifier",
-      "diagram-api", "diagram-impl", "uml-plugin");
+      "intellij.platform.commercial", "intellij.ideaUltimate.resources", "intellij.platform.commercial.verifier",
+      "intellij.diagram", "intellij.diagram.impl", "intellij.uml");
     List<JpsModule> modules = JBIterable.from(model.getProject().getModules())
       .filter(o -> {
         if (suppressedModules.contains(o.getName())) return false;

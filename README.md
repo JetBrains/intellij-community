@@ -19,6 +19,6 @@ To run tests apply these setting to the **default** JUnit run configuration type
 * Working dir: 
   `<IDEA_HOME>\bin`
 * VM parameters: 
-  `-ea -Xbootclasspath/p:../out/classes/production/boot -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
+  `-ea -Xbootclasspath/p:../out/classes/production/intellij.platform.boot -Xmx128M -Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader -Didea.config.path=../test-config -Didea.system.path=../test-system`
 
 You can find other useful information at [http://www.jetbrains.org](http://www.jetbrains.org). [Contribute section](http://www.jetbrains.org/display/IJOS/Contribute) of that site describes how you can contribute to IntelliJ IDEA.
