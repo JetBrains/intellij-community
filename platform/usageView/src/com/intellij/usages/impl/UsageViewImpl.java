@@ -12,6 +12,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -22,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +51,7 @@ import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.Queue;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -77,9 +76,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -158,6 +155,7 @@ public class UsageViewImpl implements UsageView {
   private Usage myOriginUsage;
   @Nullable private Runnable myRerunActivity;
   private boolean myDisposeSmartPointersOnClose = true;
+  private final Queue<Future<?>> updateRequests = new Queue<>(10); // guarded by insertionRequests
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -469,6 +467,7 @@ public class UsageViewImpl implements UsageView {
       Rectangle visibleRect = myTree.getVisibleRect();
       int rowForLocation = myTree.getClosestRowForLocation(0, visibleRect.y);
       int visibleRowCount = getVisibleRowCount();
+      List<Node> toUpdate = new ArrayList<>();
       for (int i = rowForLocation + visibleRowCount + 1; i >= rowForLocation; i--) {
         final TreePath eachPath = myTree.getPathForRow(i);
         if (eachPath == null) continue;
@@ -476,10 +475,14 @@ public class UsageViewImpl implements UsageView {
         treeState.invalidatePathBounds(eachPath);
         Object node = eachPath.getLastPathComponent();
         if (node instanceof UsageNode) {
-          ((UsageNode)node).update(this, edtNodeChangedQueue);
+          toUpdate.add((Node)node);
         }
       }
-      myTree.repaint(visibleRect);
+      queueUpdateBulk(toUpdate, ()->{
+        if (!isDisposed()) {
+          myTree.repaint(visibleRect);
+        }
+      });
     }
     else {
       myTree.setCellRenderer(myUsageViewTreeCellRenderer);
@@ -637,7 +640,9 @@ public class UsageViewImpl implements UsageView {
         if (component instanceof Node) {
           Node node = (Node)component;
           if (!expandingAll && node.needsUpdate()) {
-            checkNodeValidity(node, path);
+            List<Node> toUpdate = new ArrayList<>();
+            checkNodeValidity(node, path, toUpdate);
+            queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
           }
         }
       }
@@ -886,17 +891,17 @@ public class UsageViewImpl implements UsageView {
     reset();
     myBuilder.setGroupingRules(getActiveGroupingRules(myProject, getUsageViewSettings()));
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
-    ApplicationManager.getApplication().runReadAction(() -> {
-      for (Usage usage : allUsages) {
-        if (!usage.isValid()) {
-          continue;
-        }
-        if (usage instanceof MergeableUsage) {
-          ((MergeableUsage)usage).reset();
-        }
-        appendUsage(usage);
+    for (int i = allUsages.size() - 1; i >= 0; i--) {
+      Usage usage = allUsages.get(i);
+      if (!usage.isValid()) {
+        allUsages.remove(i);
+        continue;
       }
-    });
+      if (usage instanceof MergeableUsage) {
+        ((MergeableUsage)usage).reset();
+      }
+    }
+    appendUsagesInBulk(allUsages);
     if (myTree != null) {
       excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
     }
@@ -1081,10 +1086,50 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void appendUsage(@NotNull Usage usage) {
-    doAppendUsage(usage);
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> doAppendUsage(usage))));
+    }
+    else {
+      doAppendUsage(usage);
+    }
+  }
+
+  private void addUpdateRequest(@NotNull Future<?> request) {
+    synchronized (updateRequests) {
+      while (!updateRequests.isEmpty() && updateRequests.peekFirst().isDone()) {
+        updateRequests.pullFirst();
+      }
+      updateRequests.addLast(request);
+    }
+  }
+
+  void waitForUpdateRequestsCompletion() {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    while (true) {
+      Future<?> request;
+      synchronized (updateRequests) {
+        request = updateRequests.isEmpty() ? null : updateRequests.pullFirst();
+      }
+      if (request == null) break;
+      try {
+        request.get();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  void appendUsagesInBulk(@NotNull Collection<Usage> usages) {
+    addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+      for (Usage usage : usages) {
+        doAppendUsage(usage);
+      }
+    })));
   }
 
   public UsageNode doAppendUsage(@NotNull Usage usage) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
     // invoke in ReadAction to be be sure that usages are not invalidated while the tree is being built
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!usage.isValid()) {
@@ -1175,28 +1220,46 @@ public class UsageViewImpl implements UsageView {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
-    checkNodeValidity(root, new TreePath(root));
+    List<Node> toUpdate = new ArrayList<>();
+    checkNodeValidity(root, new TreePath(root), toUpdate);
+    queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
     updateOnSelectionChanged();
+  }
+
+  private void queueUpdateBulk(@NotNull List<Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
+    if (toUpdate.isEmpty()) return;
+    addUpdateRequest(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      for (Node node : toUpdate) {
+        try {
+          if (isDisposed()) break;
+          ReadAction.run(() -> node.update(this, edtNodeChangedQueue));
+        }
+        catch (IndexNotReadyException ignore) {
+        }
+      }
+      ApplicationManager.getApplication().invokeLater(onCompletedInEdt);
+    }));
   }
 
   private void updateImmediatelyNodesUpToRoot(@NotNull Collection<Node> nodes) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myProject.isDisposed()) return;
     TreeNode root = (TreeNode)myTree.getModel().getRoot();
-    Set<Node> updated = new HashSet<>();
+    Set<Node> queued = new HashSet<>();
+    List<Node> toUpdate = new ArrayList<>();
     while (true) {
       Set<Node> parents = new HashSet<>();
       for (Node node : nodes) {
-        node.update(this, edtNodeChangedQueue);
+        toUpdate.add(node);
         TreeNode parent = node.getParent();
-        if (parent != root && parent instanceof Node && updated.add((Node)parent)) {
+        if (parent != root && parent instanceof Node && queued.add((Node)parent)) {
           parents.add((Node)parent);
         }
       }
       if (parents.isEmpty()) break;
       nodes = parents;
     }
-    
+    queueUpdateBulk(toUpdate, EmptyRunnable.getInstance());
     updateImmediately();
   }
 
@@ -1212,7 +1275,7 @@ public class UsageViewImpl implements UsageView {
     }
   }
 
-  private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path) {
+  private void checkNodeValidity(@NotNull TreeNode node, @NotNull TreePath path, @NotNull List<Node> result) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     boolean shouldCheckChildren = true;
     if (myTree.isCollapsed(path)) {
@@ -1230,17 +1293,13 @@ public class UsageViewImpl implements UsageView {
     if (shouldCheckChildren && isVisible != UsageViewTreeCellRenderer.RowLocation.AFTER_VISIBLE_RECT) {
       for (int i=0; i < node.getChildCount(); i++) {
         TreeNode child = node.getChildAt(i);
-        checkNodeValidity(child, path.pathByAddingChild(child));
+        checkNodeValidity(child, path.pathByAddingChild(child), result);
       }
     }
 
     // call update last, to let children a chance to update their cache first
     if (node instanceof Node && node != getModelRoot() && isVisible == UsageViewTreeCellRenderer.RowLocation.INSIDE_VISIBLE_RECT) {
-      try {
-        ((Node)node).update(this, edtNodeChangedQueue);
-      }
-      catch (IndexNotReadyException ignore) {
-      }
+      result.add((Node)node);
     }
   }
 
