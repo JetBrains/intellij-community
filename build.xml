@@ -49,7 +49,11 @@
     <call_gant script="${project.home}/build/scripts/tests_in_community.gant"/>
   </target>
 
-  <target name="uitest" depends="init">
+  <target name="aswb">
+    <ant antfile="${project.home}/../adt/idea/android/build.xml" target="unzip_aswb" />
+  </target>
+
+  <target name="uitest" depends="init,aswb">
     <call_gant script="${project.home}/build/scripts/uitests_in_studio.gant"/>
   </target>
 

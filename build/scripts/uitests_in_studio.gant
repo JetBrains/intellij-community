@@ -36,7 +36,7 @@ target("default": "Run UI tests") {
     "-XX:ReservedCodeCacheSize=96m",
     "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
     "-XX:+UseCodeCacheFlushing",
-    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin",
+    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin,${home}/../../bazel-genfiles/tools/adt/idea/android-uitests/aswb",
     "-Denable.nav.editor=true"
   ]
 
