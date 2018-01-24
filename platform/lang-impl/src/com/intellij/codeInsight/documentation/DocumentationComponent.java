@@ -690,13 +690,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private void showHint() {
     LookupEx lookup = LookupManager.getActiveLookup(myManager.getEditor());
     if (myHint != null && myHint.getDimensionServiceKey() == null) {
-      final int width = definitionPreferredWidth();
-      if (width >= 0) {
-        myResizing = true;
-        int maxWidth = JBUI.scale(lookup != null ? 435 : 650);
-        int height = myEditorPane.getPreferredSize().height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-        myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(JBUI.scale(300), width)), Math.max(JBUI.scale(59), height)));
-      }
+      Dimension preferredSize = myEditorPane.getPreferredSize();
+      int width = definitionPreferredWidth();
+      width = width < 0 ? preferredSize.width : width;
+      myResizing = true;
+      int maxWidth = JBUI.scale(lookup != null ? 435 : 650);
+      int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
+      myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(JBUI.scale(300), width)),
+                                   Math.min(JBUI.scale(500), Math.max(JBUI.scale(59), height))));
     }
 
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
