@@ -37,7 +37,7 @@ public class FUStatisticsWhiteListGroupsService {
                             .readString(null);
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
     if (content == null) return Collections.emptySet();
 
@@ -46,7 +46,7 @@ public class FUStatisticsWhiteListGroupsService {
       groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.info(e);
     }
 
     return groups == null ? Collections.emptySet() :

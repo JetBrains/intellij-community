@@ -56,7 +56,7 @@ public class FUStatisticsPersistence {
     try {
       FileUtil.writeToFile(new File(directory, "/" + fileName), gsonContent);
     } catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 
@@ -74,7 +74,7 @@ public class FUStatisticsPersistence {
               mergeContent(persistedSessions, FileUtil.loadFile(child));
             }
             catch (IOException e) {
-              LOG.error(e);
+              LOG.info(e);
             }
           }
         }
@@ -99,7 +99,7 @@ public class FUStatisticsPersistence {
               child.delete();
             }
           } catch (IOException e) {
-            LOG.error(e);
+            LOG.info(e);
           }
         }
       }
@@ -126,7 +126,7 @@ public class FUStatisticsPersistence {
         allSessions.addAll(sessions);
       }
     }  catch (Exception e) {
-      LOG.error(e);
+      LOG.info(e);
     }
   }
 
