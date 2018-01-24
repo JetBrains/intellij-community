@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.project.isDirectoryBased
@@ -152,48 +151,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
-      val names = ArrayUtilRt.toStringArray(components.keys)
-      Arrays.sort(names)
-      val timeLogPrefix = "Saving"
-      val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
-      for (name in names) {
-        val start = if (timeLog == null) 0 else System.currentTimeMillis()
-
-        try {
-          val info = components.get(name)!!
-          var currentModificationCount = -1L
-
-          if (info.isModificationTrackingSupported) {
-            currentModificationCount = info.currentModificationCount
-            if (currentModificationCount == info.lastModificationCount) {
-              LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
-              if (isUseModificationCount) {
-                continue
-              }
-            }
-          }
-
-          commitComponent(externalizationSession, info, name)
-          info.updateModificationCount(currentModificationCount)
-        }
-        catch (e: Throwable) {
-          if (errors == null) {
-            errors = SmartList<Throwable>()
-          }
-          errors!!.add(Exception("Cannot get $name component state", e))
-        }
-
-        timeLog?.let {
-          val duration = System.currentTimeMillis() - start
-          if (duration > 10) {
-            it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(((duration % 60000) / 1000)).append("sec")
-          }
-        }
-      }
-
-      if (timeLog != null && timeLog.length > timeLogPrefix.length) {
-        LOG.debug(timeLog.toString())
-      }
+      errors = doSaveComponents(isUseModificationCount, externalizationSession, errors)
     }
 
     for (settingsSavingComponent in settingsSavingComponents) {
@@ -214,6 +172,53 @@ abstract class ComponentStoreImpl : IComponentStore {
       errors = doSave(externalizationSession.createSaveSessions(), readonlyFiles, errors)
     }
     CompoundRuntimeException.throwIfNotEmpty(errors)
+  }
+
+  private fun doSaveComponents(isUseModificationCount: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+    var errors = _errors
+    val names = ArrayUtilRt.toStringArray(components.keys)
+    Arrays.sort(names)
+    val timeLogPrefix = "Saving"
+    val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+    for (name in names) {
+      val start = if (timeLog == null) 0 else System.currentTimeMillis()
+
+      try {
+        val info = components.get(name)!!
+        var currentModificationCount = -1L
+
+        if (info.isModificationTrackingSupported) {
+          currentModificationCount = info.currentModificationCount
+          if (currentModificationCount == info.lastModificationCount) {
+            LOG.debug { "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount ${currentModificationCount} equals to last saved" }
+            if (isUseModificationCount) {
+              continue
+            }
+          }
+        }
+
+        commitComponent(externalizationSession, info, name)
+        info.updateModificationCount(currentModificationCount)
+      }
+      catch (e: Throwable) {
+        if (errors == null) {
+          errors = SmartList<Throwable>()
+        }
+        errors.add(Exception("Cannot get $name component state", e))
+      }
+
+      timeLog?.let {
+        val duration = System.currentTimeMillis() - start
+        if (duration > 10) {
+          it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(((duration % 60000) / 1000)).append("sec")
+        }
+      }
+    }
+
+    if (timeLog != null && timeLog.length > timeLogPrefix.length) {
+      LOG.debug(timeLog.toString())
+    }
+    return errors
   }
 
   override @TestOnly fun saveApplicationComponent(component: PersistentStateComponent<*>) {
@@ -286,12 +291,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun doAddComponent(name: String, component: Any, stateSpec: State?): ComponentInfo {
-    val newInfo = when (component) {
-      is ModificationTracker -> ComponentWithModificationTrackerInfo(component, stateSpec)
-      is PersistentStateComponentWithModificationTracker<*> -> ComponentWithStateModificationTrackerInfo(component, stateSpec!!)
-      else -> ComponentInfoImpl(component, stateSpec)
-    }
-
+    val newInfo = createComponentInfo(component, stateSpec)
     val existing = components.put(name, newInfo)
     if (existing != null && existing.component !== component) {
       components.put(name, existing)
@@ -573,51 +573,4 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
     LOG.debug("Reporting unknown path macros $macros in component $componentName")
     doNotify(macros, project, Collections.singletonMap(substitutor, store))
   }, project.disposed)
-}
-
-private interface ComponentInfo {
-  val component: Any
-  val stateSpec: State?
-
-  val lastModificationCount: Long
-  val currentModificationCount: Long
-
-  val isModificationTrackingSupported: Boolean
-
-  fun updateModificationCount(newCount: Long = currentModificationCount) {
-  }
-}
-
-private class ComponentInfoImpl(override val component: Any, override val stateSpec: State?) : ComponentInfo {
-  override val isModificationTrackingSupported = false
-
-  override val lastModificationCount: Long
-    get() = -1
-
-  override val currentModificationCount: Long
-    get() = -1
-}
-
-private abstract class ModificationTrackerAwareComponentInfo : ComponentInfo {
-  override final val isModificationTrackingSupported = true
-
-  override abstract var lastModificationCount: Long
-
-  override final fun updateModificationCount(newCount: Long) {
-    lastModificationCount = newCount
-  }
-}
-
-private class ComponentWithStateModificationTrackerInfo(override val component: PersistentStateComponentWithModificationTracker<*>, override val stateSpec: State) : ModificationTrackerAwareComponentInfo() {
-  override val currentModificationCount: Long
-    get() = component.stateModificationCount
-
-  override var lastModificationCount = currentModificationCount
-}
-
-private class ComponentWithModificationTrackerInfo(override val component: ModificationTracker, override val stateSpec: State?) : ModificationTrackerAwareComponentInfo() {
-  override val currentModificationCount: Long
-    get() = component.modificationCount
-
-  override var lastModificationCount = currentModificationCount
 }
