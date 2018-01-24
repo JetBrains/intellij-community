@@ -921,6 +921,8 @@ public class AbstractPopup implements JBPopup {
 
     window.setFocusableWindowState(myRequestFocus);
     window.setFocusable(myRequestFocus);
+    // temporary w/a (will be brought back in jdk)
+    window.setType(Window.Type.POPUP);
     // Swing popup default always on top state is set in true
     window.setAlwaysOnTop(false);
 
