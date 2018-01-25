@@ -85,7 +85,9 @@ public class ChangeListWorker {
       myChangeMappings.put(change, newList);
     });
 
-    myPartialChangeTrackers.putAll(worker.myPartialChangeTrackers);
+    for (Map.Entry<FilePath, PartialChangeTracker> entry : worker.myPartialChangeTrackers.entrySet()) {
+      myPartialChangeTrackers.put(entry.getKey(), new PartialChangeTrackerDump(entry.getValue(), myDefault));
+    }
   }
 
   @NotNull
@@ -507,9 +509,7 @@ public class ChangeListWorker {
             ListData fromList = getDataById(fromListId);
 
             if (fromList != null && fromList != targetList) {
-              if (myMainWorker) {
-                tracker.moveChanges(fromList.id, targetList.id);
-              }
+              tracker.moveChanges(fromList.id, targetList.id);
 
               result.putValue(fromList, change);
             }
@@ -519,9 +519,7 @@ public class ChangeListWorker {
             fromLists.remove(targetList);
 
             if (!fromLists.isEmpty()) {
-              if (myMainWorker) {
-                tracker.moveChangesTo(targetList.id);
-              }
+              tracker.moveChangesTo(targetList.id);
 
               for (ListData fromList : fromLists) {
                 result.putValue(fromList, change);
@@ -622,18 +620,14 @@ public class ChangeListWorker {
 
 
   private void fireDefaultListChanged(@NotNull String oldDefaultId, @NotNull String newDefaultId) {
-    if (myMainWorker) {
-      for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
-        tracker.defaultListChanged(oldDefaultId, newDefaultId);
-      }
+    for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
+      tracker.defaultListChanged(oldDefaultId, newDefaultId);
     }
   }
 
   private void fireChangeListRemoved(@NotNull String listId) {
-    if (myMainWorker) {
-      for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
-        tracker.changeListRemoved(listId);
-      }
+    for (PartialChangeTracker tracker : myPartialChangeTrackers.values()) {
+      tracker.changeListRemoved(listId);
     }
   }
 
@@ -1110,6 +1104,52 @@ public class ChangeListWorker {
     }
   }
 
+
+  private static class PartialChangeTrackerDump implements PartialChangeTracker {
+    @NotNull private final Set<String> myChangeListsIds;
+    @NotNull private String myDefaultId;
+
+    public PartialChangeTrackerDump(@NotNull PartialChangeTracker tracker,
+                                    @NotNull ListData defaultList) {
+      myChangeListsIds = new HashSet<>(tracker.getAffectedChangeListsIds());
+      myDefaultId = defaultList.id;
+    }
+
+    @NotNull
+    @Override
+    public List<String> getAffectedChangeListsIds() {
+      return new ArrayList<>(myChangeListsIds);
+    }
+
+    @Override
+    public void initChangeTracking(@NotNull String defaultId, @NotNull List<String> changelistsIds) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void defaultListChanged(@NotNull String oldListId, @NotNull String newListId) {
+      myDefaultId = newListId;
+    }
+
+    @Override
+    public void changeListRemoved(@NotNull String listId) {
+      myChangeListsIds.remove(listId);
+      if (myChangeListsIds.isEmpty()) myChangeListsIds.add(myDefaultId);
+    }
+
+    @Override
+    public void moveChanges(@NotNull String fromListId, @NotNull String toListId) {
+      if (myChangeListsIds.remove(fromListId)) {
+        myChangeListsIds.add(toListId);
+      }
+    }
+
+    @Override
+    public void moveChangesTo(@NotNull String toListId) {
+      myChangeListsIds.clear();
+      myChangeListsIds.add(toListId);
+    }
+  }
 
   public interface PartialChangeTracker {
     @NotNull
