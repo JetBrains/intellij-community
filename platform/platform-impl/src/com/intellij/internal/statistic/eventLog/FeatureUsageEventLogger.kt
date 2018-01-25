@@ -50,6 +50,7 @@ object FeatureUsageEventLogger {
 
   private fun log(logger: Logger, event: LogEvent) {
     if (lastEvent != null && lastEvent!!.shouldMerge(event)) {
+      lastEvent!!.endTimestamp = event.endTimestamp
       count++
     }
     else {
