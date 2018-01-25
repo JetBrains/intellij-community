@@ -57,12 +57,15 @@ public abstract class PyEnvTestCase {
    */
   private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
 
-  protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
+  protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null ||
+                                                        System.getenv().containsKey("PYCHARM_ENV");
 
 
-  public static final boolean RUN_REMOTE = SystemProperties.getBooleanProperty("pycharm.run_remote", false);
+  public static final boolean RUN_REMOTE = SystemProperties.getBooleanProperty("pycharm.run_remote", false)
+                                           || System.getenv().containsKey("PYCHARM_RUN_REMOTE");
 
-  public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
+  public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true)
+                                          || System.getenv().containsKey("PYCHARM_RUN_LOCAL");
 
   private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false) ||
                                              System.getenv().containsKey("PYCHARM_STAGING_ENV");
