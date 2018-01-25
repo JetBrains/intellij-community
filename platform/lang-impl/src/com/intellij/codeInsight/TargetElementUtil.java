@@ -305,7 +305,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiElement parent = element;
 
     int offset = offsetInElement;
-    while (parent != null) {
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
