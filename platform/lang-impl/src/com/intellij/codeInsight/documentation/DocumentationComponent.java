@@ -792,12 +792,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     final String location = getLocationText();
     if (location != null) {
-      text = text + getBottom(hasContent) + location;
+      text = text + getBottom(hasContent) + location + "</div>";
     }
     if (hasExternalDoc() && myEffectiveExternalUrl == null) {
       final PsiElement element = getElement();
       String title = element != null ? myManager.getTitle(element) : "";
-      text = text + getBottom(location != null) + "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a>";
+      text = text + getBottom(location != null) + "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
     }
 
     text = addExternalLinksIcon(text);
