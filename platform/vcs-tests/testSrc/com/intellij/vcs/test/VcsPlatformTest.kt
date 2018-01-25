@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.test
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -43,6 +29,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import java.io.File
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -104,9 +91,9 @@ abstract class VcsPlatformTest : PlatformTestCase() {
    */
   protected open fun getDebugLogCategories(): Collection<String> = emptyList()
 
-  override fun getIprFile(): File {
+  override fun getProjectDirOrFile(): Path {
     val projectRoot = File(testRoot, "project")
-    return FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION)
+    return FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION).toPath()
   }
 
   override fun setUpModule() {
@@ -147,7 +134,7 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     changeListManager.ensureUpToDate(false)
   }
 
-  protected fun waitForPendingTasks() {
+  private fun waitForPendingTasks() {
     for ((name, indicator, future) in asyncTasks) {
       if (!future.isDone) {
         LOG.error("Task $name didn't finish within the test")

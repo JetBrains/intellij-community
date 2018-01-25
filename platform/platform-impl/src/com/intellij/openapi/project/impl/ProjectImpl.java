@@ -315,6 +315,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void save() {
+    save(false);
+  }
+
+  public void save(boolean isForce) {
     if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
       // no need to save
       return;
@@ -327,7 +331,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
     try {
-      StoreUtil.save(ServiceKt.getStateStore(this), this, false);
+      StoreUtil.save(ServiceKt.getStateStore(this), this, isForce);
     }
     finally {
       mySavingInProgress.set(false);
