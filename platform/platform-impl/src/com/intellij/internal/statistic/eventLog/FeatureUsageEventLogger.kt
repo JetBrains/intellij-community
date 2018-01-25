@@ -67,7 +67,7 @@ object FeatureUsageEventLogger {
   private fun logLastEvent(logger: Logger) {
     if (lastEvent != null) {
       if (count > 1) {
-        lastEvent!!.data.put("count", count.toString())
+        lastEvent!!.data.put("count", count)
       }
       logger.info(LogEventSerializer.toString(lastEvent!!))
     }
