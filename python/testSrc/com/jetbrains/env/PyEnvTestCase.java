@@ -64,7 +64,12 @@ public abstract class PyEnvTestCase {
 
   public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
 
-  private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false);
+  private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false) ||
+                                             System.getenv().containsKey("PYCHARM_STAGING_ENV");
+
+  static {
+    LOG.warn(String.format("Staging is: %s", STAGING_ENV));
+  }
 
 
   /**
