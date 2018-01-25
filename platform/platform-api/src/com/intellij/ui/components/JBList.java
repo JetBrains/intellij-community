@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
@@ -394,5 +380,53 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
         return UIUtil.invokeAndWaitIfNeeded(() -> super.getAccessibleRole());
       }
     }
+  }
+
+  @Override
+  public Dimension getPreferredScrollableViewportSize() {
+    return getPreferredScrollableViewportSize(this);
+  }
+
+  @NotNull
+  static Dimension getPreferredScrollableViewportSize(@NotNull JList list) {
+    Dimension size = list.getPreferredSize();
+    if (size == null) return new Dimension();
+    if (JList.VERTICAL != list.getLayoutOrientation()) return size;
+
+    int fixedWidth = list.getFixedCellWidth();
+    int fixedHeight = list.getFixedCellHeight();
+
+    ListModel model = list.getModel();
+    int modelRows = model == null ? 0 : model.getSize();
+    if (modelRows <= 0) {
+      if (fixedWidth <= 0) fixedWidth = Registry.intValue("ide.preferred.scrollable.viewport.fixed.width");
+      if (fixedWidth <= 0) fixedWidth = JBUI.scale(256); // scaled value from JDK
+      if (fixedHeight <= 0) fixedHeight = Registry.intValue("ide.preferred.scrollable.viewport.fixed.height");
+      if (fixedHeight <= 0) fixedHeight = JBUI.scale(16); // scaled value from JDK
+    }
+    int visibleRows = list.getVisibleRowCount();
+    if (visibleRows <= 0) visibleRows = Registry.intValue("ide.preferred.scrollable.viewport.visible.rows");
+
+    boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
+    Insets insets = list.getInsets();
+    if (0 < fixedWidth && 0 < fixedHeight) {
+      size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
+      size.height = fixedHeight * visibleRows;
+      if (addExtraSpace) size.height += fixedHeight / 2;
+    }
+    else if (addExtraSpace) {
+      Rectangle bounds = list.getCellBounds(visibleRows, visibleRows);
+      size.height = bounds != null ? bounds.y + bounds.height / 2 : 0;
+    }
+    else if (visibleRows > 0) {
+      int lastRow = Math.min(visibleRows, modelRows) - 1;
+      Rectangle bounds = list.getCellBounds(lastRow, lastRow);
+      size.height = bounds != null ? bounds.y + bounds.height : 0;
+    }
+    else {
+      size.height = 0;
+    }
+    if (insets != null) size.height += insets.top + insets.bottom;
+    return size;
   }
 }

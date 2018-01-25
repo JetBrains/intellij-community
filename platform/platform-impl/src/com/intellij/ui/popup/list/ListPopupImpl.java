@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -531,19 +531,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     public MyList() {
       super(myListModel);
       HintUpdateSupply.installSimpleHintUpdateSupply(this);
-    }
-
-    @Override
-    public Dimension getPreferredScrollableViewportSize() {
-      Dimension result = super.getPreferredScrollableViewportSize();
-      int rowCount = getVisibleRowCount();
-      int size = getModel().getSize();
-      if (rowCount < size) {
-        // Note: labeled separators are not counted in this branch
-        return result;
-      }
-      result.height = getPreferredSize().height;
-      return result;
     }
 
     @Override
