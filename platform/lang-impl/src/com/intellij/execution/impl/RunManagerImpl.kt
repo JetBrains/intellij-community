@@ -623,6 +623,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
+    projectRunConfigurationFirstLoaded()  // Android Studio: revert Change I22bd641c when commit 3eba342 is merged
   }
 
   override fun loadState(parentNode: Element) {
@@ -702,6 +703,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       loadSharedRunConfigurations()
     }
 
+    projectRunConfigurationFirstLoaded()  // Android Studio: revert Change I22bd641c when commit 3eba342 is merged
     fireBeforeRunTasksUpdated()
 
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
@@ -721,7 +723,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
     }
 
+    /* Android Studio: revert Change I22bd641c when commit 3eba342 is merged
     projectRunConfigurationFirstLoaded()
+    */
   }
 
   private fun projectRunConfigurationFirstLoaded() {
