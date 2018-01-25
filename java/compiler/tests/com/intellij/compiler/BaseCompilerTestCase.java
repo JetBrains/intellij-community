@@ -94,22 +94,6 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return myProject.getBasePath();
   }
 
-  @NotNull
-  protected VirtualFile getBaseDir() {
-    VirtualFile baseDir = myProject.getBaseDir();
-    if (baseDir == null) {
-      String basePath = myProject.getBasePath();
-      try {
-        FileUtil.ensureExists(new File(basePath));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
-    }
-    return baseDir;
-  }
-
   protected void copyToProject(String relativePath) {
     File dir = PathManagerEx.findFileUnderProjectHome(relativePath, getClass());
     final File target = new File(FileUtil.toSystemDependentName(getProjectBasePath()));

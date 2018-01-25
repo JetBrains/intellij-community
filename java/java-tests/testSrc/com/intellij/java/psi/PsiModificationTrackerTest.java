@@ -405,7 +405,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
   }
 
   private PsiFile addFileToProject(String fileName, String text) throws IOException {
-    File file = new File(getProject().getBaseDir().getPath(), fileName);
+    File file = new File(getProject().getBasePath(), fileName);
     file.getParentFile().mkdirs();
     setContentOnDisk(file, null, text, CharsetToolkit.UTF8_CHARSET);
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);

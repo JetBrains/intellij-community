@@ -893,4 +893,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }.execute().throwException();
   }
+
+  @NotNull
+  protected VirtualFile getBaseDir() {
+    VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir == null) {
+      String basePath = myProject.getBasePath();
+      try {
+        FileUtil.ensureExists(new File(Objects.requireNonNull(basePath)));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
+    }
+    return baseDir;
+  }
 }
