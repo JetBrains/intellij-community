@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.FontSize;
@@ -843,6 +844,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       final Module module = fileIndex.getModuleForFile(vfile);
 
       if (module != null) {
+        if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
         return "<icon src='" + ModuleType.get(module).getId() + "'>&nbsp;" + module.getName().replace("<", "&lt;");
       }
       else {
