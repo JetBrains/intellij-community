@@ -122,7 +122,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         if (beforeSemicolon.isAt(BlockClosingBrace)) {
           beforeSemicolon.moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace);
         }
-        int statementStart = getStatementStartOffset(beforeSemicolon, ignoreLabelsAndCaseIndent(beforeSemicolon));
+        int statementStart = getStatementStartOffset(beforeSemicolon, dropIndentAfterReturnLike(beforeSemicolon));
         SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
         if (atStatementStart.isAt(BlockOpeningBrace)) {
           return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language, atStatementStart), this::getDeepBlockStatementStartOffset);
@@ -190,7 +190,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return null;
   }
 
-  protected boolean ignoreLabelsAndCaseIndent(@NotNull SemanticEditorPosition position) {
+  protected boolean dropIndentAfterReturnLike(@NotNull SemanticEditorPosition position) {
     return false;
   }
 
@@ -209,7 +209,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       if (position.isAtMultiline()) return position.after().getStartOffset();
       position.moveBefore();
     }
-    return getStatementStartOffset(position, true);
+    return getStatementStartOffset(position, false);
   }
 
   private int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
