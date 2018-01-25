@@ -1,15 +1,22 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +97,30 @@ public class GitExecutableManager {
   }
 
   /**
+   * Get version of git executable used in project or tell user that it cannot be obtained and cancel the operation
+   * Version identification is done under progress because it can hang in rare cases
+   * Usually this takes milliseconds because version is cached
+   *
+   * @return git version
+   */
+  @CalledInAny
+  @NotNull
+  public GitVersion getVersionOrCancel(@NotNull Project project) throws ProcessCanceledException {
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      return ProgressManager
+        .getInstance()
+        .runProcessWithProgressSynchronously(() -> getVersionOrCancel(project),
+                                             GitBundle.getString("git.executable.version.progress.title"), true, project);
+    }
+    String pathToGit = getPathToGit(project);
+    GitVersion version = identifyVersionOrDisplayError(project, pathToGit);
+    if (version == null) {
+      throw new ProcessCanceledException();
+    }
+    return version;
+  }
+
+  /**
    * Try to identify version of git executable
    *
    * @param pathToGit path to executable file
@@ -115,29 +146,36 @@ public class GitExecutableManager {
    */
   @CalledInBackground
   public boolean testGitExecutableVersionValid(@NotNull Project project) {
+    String pathToGit = getPathToGit(project);
+    GitVersion version = identifyVersionOrDisplayError(project, pathToGit);
+    if (version == null) return false;
+
     GitExecutableProblemsNotifier executableProblemsNotifier = GitExecutableProblemsNotifier.getInstance(project);
-    GitVersion version = getGitVersionAndNotifyErrors(getPathToGit(project), executableProblemsNotifier);
-    if (version == null) {
-      return false;
+    if (version.isSupported()) {
+      executableProblemsNotifier.expireNotifications();
+      return true;
     }
-    else if (!version.isSupported()) {
+    else {
       executableProblemsNotifier.notifyUnsupportedVersion(version);
       return false;
     }
-    return true;
   }
 
   @Nullable
-  private GitVersion getGitVersionAndNotifyErrors(@NotNull String pathToGit, @NotNull GitExecutableProblemsNotifier notifier) {
+  private GitVersion identifyVersionOrDisplayError(@Nullable Project project, @NotNull String pathToGit) {
     try {
-      GitVersion version = identifyVersion(pathToGit);
-      if (version.isSupported()) {
-        notifier.expireNotifications();
-      }
-      return version;
+      return identifyVersion(pathToGit);
     }
     catch (GitVersionIdentificationException e) {
-      notifier.notifyExecutionError(pathToGit, e);
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (project != null
+          && progressIndicator != null
+          && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
+        GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(pathToGit, e);
+      }
+      else {
+        GitExecutableProblemsNotifier.showExecutionErrorDialog(e, pathToGit, project);
+      }
       return null;
     }
   }

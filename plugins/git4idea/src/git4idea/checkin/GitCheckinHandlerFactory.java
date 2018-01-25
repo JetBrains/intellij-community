@@ -42,10 +42,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
-import git4idea.config.GitConfigUtil;
-import git4idea.config.GitVcsSettings;
-import git4idea.config.GitVersion;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.config.*;
 import git4idea.crlf.GitCrlfDialog;
 import git4idea.crlf.GitCrlfProblemsDetector;
 import git4idea.crlf.GitCrlfUtil;
@@ -62,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Prohibits committing with an empty messages, warns if committing into detached HEAD, checks if user name and correct CRLF attributes
  * are set.
-*/
+ */
 public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
   private static final Logger LOG = Logger.getInstance(GitCheckinHandlerFactory.class);
@@ -94,7 +91,11 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
 
       if (commitOrCommitAndPush(executor)) {
-        ReturnResult result = checkUserName();
+        ReturnResult result = checkGitVersionAndEnv();
+        if (result != ReturnResult.COMMIT) {
+          return result;
+        }
+        result = checkUserName();
         if (result != ReturnResult.COMMIT) {
           return result;
         }
@@ -169,6 +170,22 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
     }
 
+    private ReturnResult checkGitVersionAndEnv() {
+      GitVersion version = GitExecutableManager.getInstance().getVersionOrCancel(myProject);
+      if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
+        Messages.showErrorDialog(myProject,
+                                 "You are using Git " +
+                                 version.getPresentation() +
+                                 " which doesn't define %HOME% environment variable properly.\n" +
+                                 "Consider updating Git to a newer version " +
+                                 "or define %HOME% to point to the place where the global .gitconfig is stored \n" +
+                                 "(it is usually %USERPROFILE% or %HOMEDRIVE%%HOMEPATH%).",
+                                 "HOME Variable Is Not Defined");
+        return ReturnResult.CANCEL;
+      }
+      return ReturnResult.COMMIT;
+    }
+
     private ReturnResult checkUserName() {
       final Project project = myPanel.getProject();
       GitVcs vcs = GitVcs.getInstance(project);
@@ -182,17 +199,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
       if (notDefined.isEmpty()) {
         return ReturnResult.COMMIT;
-      }
-
-      GitVersion version = vcs.getVersion();
-      if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
-        Messages.showErrorDialog(project,
-          "You are using Git " + version.getPresentation() + " which doesn't define %HOME% environment variable properly.\n" +
-          "Consider updating Git to a newer version " +
-          "or define %HOME% to point to the place where the global .gitconfig is stored \n" +
-          "(it is usually %USERPROFILE% or %HOMEDRIVE%%HOMEPATH%).",
-          "HOME Variable Is Not Defined");
-        return ReturnResult.CANCEL;
       }
 
       // try to find a root with defined user name among other roots - to propose this user name in the dialog
