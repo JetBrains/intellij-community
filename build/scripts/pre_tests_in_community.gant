@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-includeTargets << new File("tests_in_community.gant")
+includeTargets << new File("$home/build/scripts/tests_in_community.gant")
 includeTool << gant.tools.Execute
 
 /**
