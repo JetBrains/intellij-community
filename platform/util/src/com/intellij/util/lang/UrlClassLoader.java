@@ -95,7 +95,6 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAllowBootstrapResources;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
-    private boolean myErrorOnMissingJar = true;
 
     private Builder() { }
 
@@ -145,9 +144,6 @@ public class UrlClassLoader extends ClassLoader {
     /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
     public Builder preload(boolean preload) { myPreload = preload; return this; }
 
-    // Android Studio: Added to avoid fatal error reports when build jars disappear during a preview render
-    public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
-
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -182,8 +178,7 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar);
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
   }
 
   public static URL internProtocol(@NotNull URL url) {
