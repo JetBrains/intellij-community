@@ -783,7 +783,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         int bodyEnd = findContentEnd(text, bodyStart);
         text = text.substring(0, bodyStart) +
                DocumentationMarkup.CONTENT_START +
-               text.substring(bodyStart, bodyEnd > 0 ? bodyEnd : text.length() - 1) +
+               text.substring(bodyStart, bodyEnd > 0 ? bodyEnd : text.length()) +
                DocumentationMarkup.CONTENT_END;
       } else {
         text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
