@@ -57,6 +57,7 @@ public class GitExecutableManager {
                                                 pathToGit,
                                                 GitCommand.VERSION,
                                                 Collections.emptyList());
+    handler.setPreValidateExecutable(false);
     GitCommandResult result = Git.getInstance().runCommand(handler);
     return GitVersion.parse(result.getOutputOrThrow());
   }

@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
@@ -56,6 +57,8 @@ public abstract class GitHandler {
 
   private final Project myProject;
   private final GitCommand myCommand;
+
+  private boolean myPreValidateExecutable = true;
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
@@ -173,6 +176,11 @@ public abstract class GitHandler {
   @NotNull
   File getWorkingDirectory() {
     return myCommandLine.getWorkDirectory();
+  }
+
+  @NotNull
+  String getExecutablePath() {
+    return myCommandLine.getExePath();
   }
 
   @NotNull
@@ -403,6 +411,20 @@ public abstract class GitHandler {
    */
   public void addCustomEnvironmentVariable(String name, String value) {
     myCustomEnv.put(name, value);
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public void setPreValidateExecutable(boolean preValidateExecutable) {
+    myPreValidateExecutable = preValidateExecutable;
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  boolean isPreValidateExecutable() {
+    return myPreValidateExecutable;
   }
 
   void runInCurrentThread() {

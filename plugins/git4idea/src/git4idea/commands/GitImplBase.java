@@ -3,6 +3,10 @@ package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
@@ -10,6 +14,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitExecutableProblemsNotifier;
+import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +121,9 @@ abstract class GitImplBase implements Git {
    */
   @NotNull
   private static GitCommandResult doRun(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
+    GitCommandResult preValidationResult = preValidateExecutable(handler);
+    if (preValidationResult != null) return preValidationResult;
+
     try (AccessToken ignored = lock(handler)) {
       GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
       handler.addLineListener(resultListener);
@@ -179,6 +189,35 @@ abstract class GitImplBase implements Git {
     abstract void outputLineReceived(@NotNull String line);
 
     abstract void errorLineReceived(@NotNull String line);
+  }
+
+  @Nullable
+  private static GitCommandResult preValidateExecutable(@NotNull GitLineHandler handler) {
+    if (handler.isPreValidateExecutable()) {
+      String executablePath = handler.getExecutablePath();
+      try {
+        GitExecutableManager.getInstance().identifyVersion(executablePath);
+      }
+      catch (Exception e) {
+        // Show notification if it's a project non-modal task and cancel the task
+        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        Project project = handler.project();
+        if (project != null
+            && progressIndicator != null
+            && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
+          GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(handler.getExecutablePath(), e);
+          throw new ProcessCanceledException(e);
+        }
+        else {
+          return GitCommandResult.error(
+            GitBundle.getString("git.executable.validation.error.title") + " \n" +
+            GitBundle.message("git.executable.validation.error.start.subtitle", executablePath) + ": " +
+            GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
+          );
+        }
+      }
+    }
+    return null;
   }
 
   private static void writeOutputToConsole(@NotNull GitLineHandler handler) {
