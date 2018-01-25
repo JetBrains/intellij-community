@@ -57,7 +57,7 @@ public class ProjectDictionary implements EditableDictionary {
   @Nullable
   public Boolean contains(@NotNull String word) {
     if (dictionaries == null) {
-      return false;
+      return null; // still ("WORD_OF_ENTIRELY_UNKNOWN_LETTERS_FOR_ALL");
     }
     int errors = 0;
     for (Dictionary dictionary : dictionaries) {
