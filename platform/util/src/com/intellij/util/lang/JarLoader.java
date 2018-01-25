@@ -44,32 +44,32 @@ class JarLoader extends Loader {
     pair(Resource.Attribute.IMPL_VENDOR, Attributes.Name.IMPLEMENTATION_VENDOR));
 
   private final String myFilePath;
-  private final boolean myCanLockJar; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
+  private final ClassPath myConfiguration;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
   private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
   private final Map<Resource.Attribute, String> myAttributes;
   private volatile SoftReference<Attributes> myCachedManifestAttributes;
 
-  JarLoader(URL url, boolean canLockJar, int index, boolean preloadJarContents, ClassPath classPath) throws IOException {
+  JarLoader(URL url, int index, ClassPath configuration) throws IOException {
     super(new URL("jar", "", -1, url + "!/"), index);
 
     myFilePath = urlToFilePath(url);
-    myCanLockJar = canLockJar;
+    myConfiguration = configuration;
 
     ZipFile zipFile = getZipFile(); // IOException from opening is propagated to caller if zip file isn't valid,
     try {
-      Attributes manifestAttributes = classPath.getManifestData(url);
+      Attributes manifestAttributes = configuration.getManifestData(url);
       if (manifestAttributes == null) {
         ZipEntry entry = zipFile.getEntry(JarFile.MANIFEST_NAME);
         manifestAttributes = loadManifestAttributes(entry != null ? zipFile.getInputStream(entry) : null);
         if (manifestAttributes == null) manifestAttributes = new Attributes(0);
-        classPath.cacheManifestData(url, manifestAttributes);
+        configuration.cacheManifestData(url, manifestAttributes);
       }
 
       myAttributes = getAttributes(manifestAttributes);
       myCachedManifestAttributes = new SoftReference<Attributes>(manifestAttributes);
 
-      if (preloadJarContents) {
+      if (configuration.myPreloadJarContents) {
         JarMemoryLoader loader = JarMemoryLoader.load(zipFile, getBaseURL(), myAttributes);
         if (loader != null) {
           myMemoryLoader = new SoftReference<JarMemoryLoader>(loader);
@@ -211,7 +211,12 @@ class JarLoader extends Loader {
   }
 
   protected void error(String message, Throwable t) {
-    Logger.getInstance(JarLoader.class).error(message, t);
+    if (myConfiguration.myLogErrorOnMissingJar) {
+      Logger.getInstance(JarLoader.class).error(message, t);
+    }
+    else {
+      Logger.getInstance(JarLoader.class).warn(message, t);
+    }
   }
 
   private static final Object ourLock = new Object();
@@ -220,7 +225,7 @@ class JarLoader extends Loader {
   private ZipFile getZipFile() throws IOException {
     // This code is executed at least 100K times (O(number of classes needed to load)) and it takes considerable time to open ZipFile's
     // such number of times so we store reference to ZipFile if we allowed to lock the file (assume it isn't changed)
-    if (myCanLockJar) {
+    if (myConfiguration.myCanLockJars) {
       ZipFile zipFile = SoftReference.dereference(myZipFileSoftReference);
       if (zipFile != null) return zipFile;
 
@@ -241,7 +246,7 @@ class JarLoader extends Loader {
 
   private void releaseZipFile(ZipFile zipFile) throws IOException {
     // Closing of zip file when myCanLockJar=true happens in ZipFile.finalize
-    if (!myCanLockJar) {
+    if (!myConfiguration.myCanLockJars) {
       zipFile.close();
     }
   }
