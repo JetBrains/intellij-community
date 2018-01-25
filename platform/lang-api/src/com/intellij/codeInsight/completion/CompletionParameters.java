@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,17 +32,20 @@ public final class CompletionParameters {
   @Nullable private final Editor myEditor;
   private final int myOffset;
   private final int myInvocationCount;
+  private final CompletionProcess myProcess;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                       @NotNull CompletionType completionType, int offset, final int invocationCount, @Nullable Editor editor) {
+                       @NotNull CompletionType completionType, int offset, int invocationCount, @Nullable Editor editor,
+                       @NotNull CompletionProcess process) {
+    PsiUtilCore.ensureValid(position);
     assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
-    assert position.isValid();
     myOriginalFile = originalFile;
     myCompletionType = completionType;
     myOffset = offset;
     myInvocationCount = invocationCount;
     myEditor = editor;
+    myProcess = process;
   }
 
   @NotNull
@@ -51,12 +55,12 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withType(@NotNull CompletionType type) {
-    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor);
+    return new CompletionParameters(myPosition, myOriginalFile, type, myOffset, myInvocationCount, myEditor, myProcess);
   }
 
   @NotNull
   public CompletionParameters withInvocationCount(int newCount) {
-    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor);
+    return new CompletionParameters(myPosition, myOriginalFile, myCompletionType, myOffset, newCount, myEditor, myProcess);
   }
 
   @NotNull
@@ -99,7 +103,7 @@ public final class CompletionParameters {
 
   @NotNull
   public CompletionParameters withPosition(@NotNull PsiElement element, int offset) {
-    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor);
+    return new CompletionParameters(element, myOriginalFile, myCompletionType, offset, myInvocationCount, myEditor, myProcess);
   }
 
   public boolean isExtendedCompletion() {
@@ -124,4 +128,8 @@ public final class CompletionParameters {
     return myEditor != null;
   }
 
+  @NotNull
+  public CompletionProcess getProcess() {
+    return myProcess;
+  }
 }

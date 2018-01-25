@@ -75,7 +75,7 @@ public class CodeCompletionHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CodeCompletionHandlerBase");
   private static final Key<Boolean> CARET_PROCESSED = Key.create("CodeCompletionHandlerBase.caretProcessed");
 
-  @NotNull private final CompletionType myCompletionType;
+  @NotNull final CompletionType completionType;
   final boolean invokedExplicitly;
   final boolean synchronous;
   final boolean autopopup;
@@ -97,7 +97,7 @@ public class CodeCompletionHandlerBase {
   }
 
   public CodeCompletionHandlerBase(@NotNull CompletionType completionType, boolean invokedExplicitly, boolean autopopup, boolean synchronous) {
-    myCompletionType = completionType;
+    this.completionType = completionType;
     this.invokedExplicitly = invokedExplicitly;
     this.autopopup = autopopup;
     this.synchronous = synchronous;
@@ -151,7 +151,7 @@ public class CodeCompletionHandlerBase {
     }
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
-    boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(myCompletionType, editor);
+    boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
     /*
     if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase.fillInCommonPrefix()) {
       return;
@@ -168,7 +168,7 @@ public class CodeCompletionHandlerBase {
     }
     CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass(), CompletionPhase.CommittingDocuments.class);
 
-    if (invocationCount > 1 && myCompletionType == CompletionType.BASIC) {
+    if (invocationCount > 1 && completionType == CompletionType.BASIC) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
     }
 
@@ -206,7 +206,7 @@ public class CodeCompletionHandlerBase {
 
   private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, @NotNull Caret caret) {
     final Ref<CompletionContributor> current = Ref.create(null);
-    CompletionInitializationContext context = new CompletionInitializationContext(editor, caret, psiFile, myCompletionType, invocationCount) {
+    CompletionInitializationContext context = new CompletionInitializationContext(editor, caret, psiFile, completionType, invocationCount) {
       CompletionContributor dummyIdentifierChanger;
 
       @Override
@@ -290,7 +290,6 @@ public class CodeCompletionHandlerBase {
 
     CompletionContext context = createCompletionContext(initContext.getFile(), hostCopyOffsets);
     LookupImpl lookup = obtainLookup(editor, initContext.getProject());
-    CompletionParameters parameters = createCompletionParameters(invocationCount, context, editor);
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     if (phase instanceof CompletionPhase.CommittingDocuments) {
@@ -302,9 +301,9 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
-    final CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                                  parameters, this,
-                                                                                  initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
+    CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
+                                                                            invocationCount, context, this,
+                                                                            initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
     Disposer.register(indicator, context.getOffsetMap());
     Disposer.register(indicator, translator);
@@ -341,23 +340,6 @@ public class CodeCompletionHandlerBase {
       LOG.error("sync phase survived: " + allItems + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
-  }
-
-  private CompletionParameters createCompletionParameters(int invocationCount,
-                                                          final CompletionContext newContext, Editor editor) {
-    final int offset = newContext.getStartOffset();
-    final PsiFile fileCopy = newContext.file;
-    PsiFile originalFile = fileCopy.getOriginalFile();
-    final PsiElement insertedElement = findCompletionPositionLeaf(newContext, offset, fileCopy, originalFile);
-    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, newContext);
-    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, invocationCount, editor);
-  }
-
-  @NotNull
-  private static PsiElement findCompletionPositionLeaf(CompletionContext newContext, int offset, PsiFile fileCopy, PsiFile originalFile) {
-    final PsiElement insertedElement = newContext.file.findElementAt(offset);
-    CompletionAssertions.assertCompletionPositionPsiConsistent(newContext, offset, fileCopy, originalFile, insertedElement);
-    return insertedElement;
   }
 
   private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, List<LookupElement> items) {
