@@ -40,8 +40,7 @@ public class CaptureStorage {
       if (DEBUG) {
         System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
       }
-      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-      CapturedStack stack = createCapturedStack(exception, currentStacks.isEmpty() ? null : currentStacks.getLast());
+      CapturedStack stack = createCapturedStack(exception, CURRENT_STACKS.get().peekLast());
       WeakKey keyRef = new WeakKey(key);
       synchronized (HISTORY) {
         CapturedStack old = STORAGE.put(keyRef, stack);
