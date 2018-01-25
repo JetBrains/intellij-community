@@ -770,9 +770,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private String decorate(String text) {
-    final boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
+    boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
     if (!hasContent && !text.contains(DocumentationMarkup.DEFINITION_START)) {
-      text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
+      int bodyStart = findContentStart(text);
+      if (bodyStart > 0) {
+        int bodyEnd = findContentEnd(text, bodyStart);
+        text = text.substring(0, bodyStart) +
+               DocumentationMarkup.CONTENT_START +
+               text.substring(bodyStart, bodyEnd > 0 ? bodyEnd : text.length() - 1) +
+               DocumentationMarkup.CONTENT_END;
+      } else {
+        text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
+      }
+      hasContent = true;
     }
     final String location = getLocationText();
     if (location != null) {
@@ -786,6 +796,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     text = addExternalLinksIcon(text);
     return text;
+  }
+
+  private static int findContentEnd(String text, int bodyStart) {
+    int i = StringUtil.indexOfIgnoreCase(text, "</body>", bodyStart);
+    return i >= 0 ? i : StringUtil.indexOfIgnoreCase(text, "</html>", bodyStart);
+  }
+
+  private static int findContentStart(String text) {
+    int index = StringUtil.indexOfIgnoreCase(text, "<body>", 0);
+    if (index >= 0) return index + 6;
+    index = StringUtil.indexOfIgnoreCase(text, "</style>", 0);
+    if (index >= 0) return index + 8;
+    index = StringUtil.indexOfIgnoreCase(text, "<html>", 0);
+    if (index >= 0) return index + 6;
+    return -1;
   }
 
   @NotNull
@@ -810,13 +835,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       final Module module = fileIndex.getModuleForFile(vfile);
 
       if (module != null) {
-        return "<icon src='" + ModuleType.get(module).getId() + "'>&nbsp;" + module.getName();
+        return "<icon src='" + ModuleType.get(module).getId() + "'>&nbsp;" + module.getName().replace("<", "&lt;");
       }
       else {
         final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
         for (OrderEntry order : entries) {
           if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
-            return "<icon src='AllIcons.Nodes.PpLibFolder" + "'>&nbsp;" + order.getPresentableName();
+            return "<icon src='AllIcons.Nodes.PpLibFolder" + "'>&nbsp;" + order.getPresentableName().replace("<", "&lt;");
           }
         }
       }
