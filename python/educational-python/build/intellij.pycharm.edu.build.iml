@@ -9,9 +9,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.ideaCommunity.build" />
-    <orderEntry type="module" module-name="intellij.ideaUltimate.build" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.pycharmCommunity.build" />
+    <orderEntry type="module" module-name="intellij.idea.community.build" />
+    <orderEntry type="module" module-name="intellij.idea.ultimate.build" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.build" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

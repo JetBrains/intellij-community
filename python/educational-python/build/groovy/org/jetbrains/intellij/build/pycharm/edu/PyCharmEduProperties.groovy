@@ -15,14 +15,14 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     pythonCommunityPath = new File(home, "community/python").exists() ? "$home/community/python" : "$home/python"
     productCode = "PE"
     platformPrefix = "PyCharmEdu"
-    applicationInfoModule = "intellij.pycharmEdu"
+    applicationInfoModule = "intellij.pycharm.edu"
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
-    productLayout.mainModules = ["intellij.pycharmEdu.main"]
+    productLayout.mainModules = ["intellij.pycharm.edu.main"]
     productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["intellij.xml.dom"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
-      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharmCommunity.resources",
-      "intellij.pycharmCommunity", "intellij.python.configure", "intellij.pycharmEdu", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
+      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharm.community.resources",
+      "intellij.pycharm.community", "intellij.python.configure", "intellij.pycharm.edu", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
     additionalIDEPropertiesFilePaths = ["$home/community/python/educational-python/build/pycharm-edu.properties".toString()]

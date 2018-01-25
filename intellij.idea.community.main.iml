@@ -55,7 +55,7 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.xml" />
-    <orderEntry type="module" module-name="intellij.ideaCommunity.resources" />
+    <orderEntry type="module" module-name="intellij.idea.community.resources" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" />
     <orderEntry type="module" module-name="intellij.vcs.cvs" />

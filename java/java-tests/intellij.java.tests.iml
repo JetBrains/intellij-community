@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
-    <orderEntry type="module" module-name="intellij.ideaCommunity.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.i18n" exported="" />

@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.ideaCommunity.main" />
+    <orderEntry type="module" module-name="intellij.idea.community.main" />
     <orderEntry type="module" module-name="intellij.platform.testGuiFramework" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" scope="TEST" />
   </component>

@@ -10,7 +10,7 @@
     <option name="ENABLE_SWING_INSPECTOR" value="false" />
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
-    <module name="intellij.pycharmEdu.main" />
+    <module name="intellij.pycharm.edu.main" />
     <option name="VM_PARAMETERS" value="-ea -Xbootclasspath/p:../out/classes/production/intellij.platform.boot -Xmx192m -Didea.is.internal=true -Didea.platform.prefix=PyCharmEdu -Didea.config.path=../config/pycharmEdu -Didea.system.path=../system/pycharmEdu" />
     <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/bin" />
     <method>

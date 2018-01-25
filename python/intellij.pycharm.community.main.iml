@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.python.reStructuredText" />
     <orderEntry type="module" module-name="intellij.python.helpers" />
     <orderEntry type="module" module-name="intellij.terminal" />
-    <orderEntry type="module" module-name="intellij.pycharmCommunity" />
+    <orderEntry type="module" module-name="intellij.pycharm.community" />
     <orderEntry type="module" module-name="intellij.platform.main" />
     <orderEntry type="module" module-name="intellij.tasks.jira" />
     <orderEntry type="module" module-name="intellij.shortcutPromoter" />

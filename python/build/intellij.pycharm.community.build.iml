@@ -9,6 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
-    <orderEntry type="module" module-name="intellij.ideaCommunity.build" />
+    <orderEntry type="module" module-name="intellij.idea.community.build" />
   </component>
 </module>

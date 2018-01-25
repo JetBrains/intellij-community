@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.java.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.pycharmCommunity.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.configure" scope="RUNTIME" />

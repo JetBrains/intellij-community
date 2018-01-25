@@ -13,7 +13,7 @@
     <module old-name="annotations-java8" new-name="intellij.platform.annotations" />
     <module old-name="android-rt" new-name="intellij.android.rt" />
     <module old-name="java-decompiler-engine" new-name="intellij.java.decompiler.engine" />
-    <module old-name="main_pycharm_ce" new-name="intellij.pycharmCommunity.main" />
+    <module old-name="main_pycharm_ce" new-name="intellij.pycharm.community.main" />
     <module old-name="platform-resources" new-name="intellij.platform.resources" />
     <module old-name="svn4idea" new-name="intellij.vcs.svn" />
     <module old-name="remote-servers-git-java" new-name="intellij.java.remoteServers.git" />
@@ -58,7 +58,7 @@
     <module old-name="java-i18n" new-name="intellij.java.i18n" />
     <module old-name="compiler-tests" new-name="intellij.java.compiler.tests" />
     <module old-name="javaFX-CE" new-name="intellij.javaFX.community" />
-    <module old-name="community-main" new-name="intellij.ideaCommunity.main" />
+    <module old-name="community-main" new-name="intellij.idea.community.main" />
     <module old-name="stream-debugger" new-name="intellij.java.debugger.streams" />
     <module old-name="jsp-openapi" new-name="intellij.jsp" />
     <module old-name="execution-openapi" new-name="intellij.java.execution" />
@@ -80,7 +80,7 @@
     <module old-name="ShortcutPromoter" new-name="intellij.shortcutPromoter" />
     <module old-name="github" new-name="intellij.vcs.github" />
     <module old-name="instrumentation-util" new-name="intellij.java.compiler.instrumentationUtil" />
-    <module old-name="python-community-ide-resources" new-name="intellij.pycharmCommunity.resources" />
+    <module old-name="python-community-ide-resources" new-name="intellij.pycharm.community.resources" />
     <module old-name="android-tests" new-name="intellij.android.tests" />
     <module old-name="script-debugger-backend" new-name="intellij.platform.scriptDebugger.backend" />
     <module old-name="remote-servers-git" new-name="intellij.platform.remoteServers.git" />
@@ -146,16 +146,16 @@
     <module old-name="lvcs-api" new-name="intellij.platform.lvcs" />
     <module old-name="java-tests" new-name="intellij.java.tests" />
     <module old-name="layoutinspector" new-name="intellij.android.layoutInspector" />
-    <module old-name="build-debug-binaries" new-name="intellij.pycharmCommunity.build.debugBinaries" />
+    <module old-name="build-debug-binaries" new-name="intellij.pycharm.community.build.debugBinaries" />
     <module old-name="build-common" new-name="intellij.android.buildCommon" />
     <module old-name="java-runtime" new-name="intellij.java.rt" />
-    <module old-name="python-edu-build" new-name="intellij.pycharmEdu.build" />
+    <module old-name="python-edu-build" new-name="intellij.pycharm.edu.build" />
     <module old-name="external-system-rt" new-name="intellij.platform.externalSystem.rt" />
     <module old-name="indexing-api" new-name="intellij.platform.indexing" />
     <module old-name="tasks-core" new-name="intellij.tasks.core" />
     <module old-name="android-annotations" new-name="android.sdktools.android-annotations" />
     <module old-name="draw9patch" new-name="android.sdktools.draw9patch" />
-    <module old-name="pycharm-edu-dependencies" new-name="intellij.pycharmEdu.dependencies" />
+    <module old-name="pycharm-edu-dependencies" new-name="intellij.pycharm.edu.dependencies" />
     <module old-name="projectModel-impl" new-name="intellij.platform.projectModel.impl" />
     <module old-name="bootstrap" new-name="intellij.platform.bootstrap" />
     <module old-name="git4idea" new-name="intellij.vcs.git" />
@@ -194,7 +194,7 @@
     <module old-name="jps-builders-6" new-name="intellij.platform.jps.build.javac.rt" />
     <module old-name="instant-run-annotations" new-name="android.sdktools.instant-run-annotations" />
     <module old-name="lvcs-impl" new-name="intellij.platform.lvcs.impl" />
-    <module old-name="python-community-ide" new-name="intellij.pycharmCommunity" />
+    <module old-name="python-community-ide" new-name="intellij.pycharm.community" />
     <module old-name="builder-model" new-name="android.sdktools.builder-model" />
     <module old-name="idea-ui-tests" new-name="intellij.java.ui.tests" />
     <module old-name="xslt-debugger" new-name="intellij.xslt.debugger" />
@@ -252,7 +252,7 @@
     <module old-name="jps-launcher" new-name="intellij.platform.jps.build.launcher" />
     <module old-name="devkit" new-name="intellij.devkit" />
     <module old-name="jshell-protocol" new-name="intellij.java.jshell.protocol" />
-    <module old-name="educational-python" new-name="intellij.pycharmEdu" />
+    <module old-name="educational-python" new-name="intellij.pycharm.edu" />
     <module old-name="openapi" new-name="intellij.java" />
     <module old-name="chunkio-processor" new-name="android.sdktools.chunkio-processor" />
     <module old-name="pixelprobe" new-name="android.sdktools.pixelprobe" />
@@ -272,7 +272,7 @@
     <module old-name="devkit-kotlin-tests" new-name="intellij.devkit.kotlin.tests" />
     <module old-name="javaFX-jps-plugin" new-name="intellij.javaFX.jps" />
     <module old-name="util-tests" new-name="intellij.platform.util.tests" />
-    <module old-name="python-community-build" new-name="intellij.pycharmCommunity.build" />
+    <module old-name="python-community-build" new-name="intellij.pycharm.community.build" />
     <module old-name="compiler-openapi" new-name="intellij.java.compiler" />
     <module old-name="debugger-impl" new-name="intellij.java.debugger.impl" />
     <module old-name="layoutlib-resources" new-name="android.sdktools.layoutlib-resources" />
@@ -286,7 +286,7 @@
     <module old-name="usageView" new-name="intellij.platform.usageView" />
     <module old-name="debugger-agent-storage" new-name="intellij.java.debugger.agent.storage" />
     <module old-name="cvs-core" new-name="intellij.vcs.cvs.core" />
-    <module old-name="community-guitests" new-name="intellij.ideaCommunity.guiTests" />
+    <module old-name="community-guitests" new-name="intellij.idea.community.guiTests" />
     <module old-name="xml" new-name="intellij.xml.impl" />
     <module old-name="javac2" new-name="intellij.java.compiler.antTasks" />
     <module old-name="external-system-api" new-name="intellij.platform.externalSystem" />
@@ -299,7 +299,7 @@
     <module old-name="python-community-tests" new-name="intellij.python.community.tests" />
     <module old-name="python-community-plugin-build-patches" new-name="intellij.python.community.plugin.buildPatches" />
     <module old-name="jsp-spi" new-name="intellij.jsp.spi" />
-    <module old-name="build" new-name="intellij.ideaCommunity.build" />
+    <module old-name="build" new-name="intellij.idea.community.build" />
     <module old-name="testFramework-java" new-name="intellij.java.testFramework" />
     <module old-name="vcs-log-graph-api" new-name="intellij.platform.vcs.log.graph" />
     <module old-name="structure-view-impl" new-name="intellij.platform.structureView.impl" />
@@ -307,7 +307,7 @@
     <module old-name="appEngine-runtime" new-name="intellij.java.googleAppEngine.runtime" />
     <module old-name="python-community-configure" new-name="intellij.python.configure" />
     <module old-name="profilers-ui" new-name="intellij.android.profilers.ui" />
-    <module old-name="main_pycharm_edu" new-name="intellij.pycharmEdu.main" />
+    <module old-name="main_pycharm_edu" new-name="intellij.pycharm.edu.main" />
     <module old-name="tests_bootstrap" new-name="intellij.tools.testsBootstrap" />
     <module old-name="diff-impl" new-name="intellij.platform.diff.impl" />
     <module old-name="uast-common" new-name="intellij.platform.uast" />
@@ -320,7 +320,7 @@
     <module old-name="perfd-host" new-name="intellij.android.perfdHost" />
     <module old-name="devkit-jps-plugin" new-name="intellij.devkit.jps" />
     <module old-name="ipnb" new-name="intellij.python.ipnb" />
-    <module old-name="community-resources" new-name="intellij.ideaCommunity.resources" />
+    <module old-name="community-resources" new-name="intellij.idea.community.resources" />
     <module old-name="vcs-tests" new-name="intellij.platform.vcs.tests" />
     <module old-name="wizard" new-name="intellij.android.wizard" />
     <module old-name="gradle-tests" new-name="intellij.gradle.tests" />
@@ -451,10 +451,10 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" filepath="$PROJECT_DIR$/plugins/groovy/structuralsearch-groovy/intellij.groovy.structuralSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-uast-tests/intellij.groovy.uast.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/build/intellij.ideaCommunity.build.iml" filepath="$PROJECT_DIR$/build/intellij.ideaCommunity.build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/community-guitests/intellij.ideaCommunity.guiTests.iml" filepath="$PROJECT_DIR$/community-guitests/intellij.ideaCommunity.guiTests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/intellij.ideaCommunity.main.iml" filepath="$PROJECT_DIR$/intellij.ideaCommunity.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/community-resources/intellij.ideaCommunity.resources.iml" filepath="$PROJECT_DIR$/community-resources/intellij.ideaCommunity.resources.iml" />
+      <module fileurl="file://$PROJECT_DIR$/build/intellij.idea.community.build.iml" filepath="$PROJECT_DIR$/build/intellij.idea.community.build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/community-guitests/intellij.idea.community.guiTests.iml" filepath="$PROJECT_DIR$/community-guitests/intellij.idea.community.guiTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/intellij.idea.community.main.iml" filepath="$PROJECT_DIR$/intellij.idea.community.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/community-resources/intellij.idea.community.resources.iml" filepath="$PROJECT_DIR$/community-resources/intellij.idea.community.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/openapi/intellij.java.iml" filepath="$PROJECT_DIR$/java/openapi/intellij.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/aether-dependency-resolver/intellij.java.aetherDependencyResolver.iml" filepath="$PROJECT_DIR$/aether-dependency-resolver/intellij.java.aetherDependencyResolver.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/java-analysis-api/intellij.java.analysis.iml" filepath="$PROJECT_DIR$/java/java-analysis-api/intellij.java.analysis.iml" />
@@ -635,15 +635,15 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/intellij.properties.iml" filepath="$PROJECT_DIR$/plugins/properties/intellij.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.psi.impl.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.psi.impl.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/ide/intellij.pycharmCommunity.iml" filepath="$PROJECT_DIR$/python/ide/intellij.pycharmCommunity.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/build/intellij.pycharmCommunity.build.iml" filepath="$PROJECT_DIR$/python/build/intellij.pycharmCommunity.build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharmCommunity.build.debugBinaries.iml" filepath="$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharmCommunity.build.debugBinaries.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharmCommunity.main.iml" filepath="$PROJECT_DIR$/python/intellij.pycharmCommunity.main.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/python-community-ide-resources/intellij.pycharmCommunity.resources.iml" filepath="$PROJECT_DIR$/python/python-community-ide-resources/intellij.pycharmCommunity.resources.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/intellij.pycharmEdu.iml" filepath="$PROJECT_DIR$/python/educational-python/intellij.pycharmEdu.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/intellij.pycharmEdu.build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/intellij.pycharmEdu.build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/dependencies/intellij.pycharmEdu.dependencies.iml" filepath="$PROJECT_DIR$/python/educational-python/build/dependencies/intellij.pycharmEdu.dependencies.iml" />
-      <module fileurl="file://$PROJECT_DIR$/python/educational-python/intellij.pycharmEdu.main.iml" filepath="$PROJECT_DIR$/python/educational-python/intellij.pycharmEdu.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/ide/intellij.pycharm.community.iml" filepath="$PROJECT_DIR$/python/ide/intellij.pycharm.community.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/build/intellij.pycharm.community.build.iml" filepath="$PROJECT_DIR$/python/build/intellij.pycharm.community.build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharm.community.build.debugBinaries.iml" filepath="$PROJECT_DIR$/python/build/build-debug-binaries/intellij.pycharm.community.build.debugBinaries.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/intellij.pycharm.community.main.iml" filepath="$PROJECT_DIR$/python/intellij.pycharm.community.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-community-ide-resources/intellij.pycharm.community.resources.iml" filepath="$PROJECT_DIR$/python/python-community-ide-resources/intellij.pycharm.community.resources.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.iml" filepath="$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/intellij.pycharm.edu.build.iml" filepath="$PROJECT_DIR$/python/educational-python/build/intellij.pycharm.edu.build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/dependencies/intellij.pycharm.edu.dependencies.iml" filepath="$PROJECT_DIR$/python/educational-python/build/dependencies/intellij.pycharm.edu.dependencies.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.main.iml" filepath="$PROJECT_DIR$/python/educational-python/intellij.pycharm.edu.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/openapi/intellij.python.community.iml" filepath="$PROJECT_DIR$/python/openapi/intellij.python.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/intellij.python.community.impl.iml" filepath="$PROJECT_DIR$/python/intellij.python.community.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" filepath="$PROJECT_DIR$/python/pluginCore/intellij.python.community.plugin.iml" />

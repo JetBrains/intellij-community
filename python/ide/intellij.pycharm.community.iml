@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.python.configure" />
-    <orderEntry type="module" module-name="intellij.pycharmCommunity.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.pycharm.community.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
