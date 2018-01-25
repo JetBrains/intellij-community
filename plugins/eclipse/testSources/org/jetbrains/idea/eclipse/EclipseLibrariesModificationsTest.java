@@ -130,7 +130,7 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
 
   private void doTestExisting(final String[] classRoots, final String[] sourceRoots, final String[] javadocs) throws Exception {
     final Project project = getProject();
-    final String path = project.getBaseDir().getPath() + "/test";
+    final String path = project.getBasePath() + "/test";
     final Module module = EclipseClasspathTest.setUpModule(path, project);
     ApplicationManager.getApplication().runWriteAction(() -> {
       final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
@@ -164,8 +164,8 @@ public class EclipseLibrariesModificationsTest extends EclipseVarsTest {
       model.commit();
     });
 
-    EclipseClasspathTest.checkModule(project.getBaseDir().getPath() + "/expected", module);
-    EclipseEmlTest.checkModule(project.getBaseDir().getPath() + "/expected", module);
+    EclipseClasspathTest.checkModule(project.getBasePath() + "/expected", module);
+    EclipseEmlTest.checkModule(project.getBasePath() + "/expected", module);
   }
 
   @Override
