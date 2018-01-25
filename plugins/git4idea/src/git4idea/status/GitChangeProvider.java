@@ -107,8 +107,7 @@ public class GitChangeProvider implements ChangeProvider {
     }
     catch (VcsException e) {
       LOG.info(e);
-      // most probably the error happened because git is not configured
-      vcs.getExecutableValidator().showNotificationOrThrow(e);
+      throw e;
     }
   }
 
