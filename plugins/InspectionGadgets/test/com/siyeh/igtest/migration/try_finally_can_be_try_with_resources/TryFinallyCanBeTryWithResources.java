@@ -67,8 +67,8 @@ class TryFinallyCanBeTryWithResources {
 
 class Java9 {
   void test() throws FileNotFoundException {
-    PrintStream printStream;
-    printStream = new PrintStream("");
+    PrintStream printStream = new PrintStream("");
+    printStream.print(false);
     <warning descr="'try' can use automatic resource management">try</warning> {
       printStream.print(true);
     } finally {

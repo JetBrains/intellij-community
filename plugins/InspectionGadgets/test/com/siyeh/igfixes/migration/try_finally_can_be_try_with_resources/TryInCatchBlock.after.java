@@ -8,9 +8,8 @@ class X {
 
       try (Reader r = new FileReader("")) {
           r.read();
-      } finally {
-          // 1
-          /*2*/
       }
+      // 1
+      /*2*/
   }
 }

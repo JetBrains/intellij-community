@@ -107,8 +107,14 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
       if(finallyBlock == null) return;
-      if(finallyNonEmpty(finallyBlock)) {
+      if(!ControlFlowUtils.isEmptyCodeBlock(finallyBlock)) {
         sb.append("finally").append(finallyBlock.getText());
+      } else {
+        PsiElement[] finallyBlockChildren = finallyBlock.getChildren();
+        if(!StreamEx.of(finallyBlockChildren).skip(1).limit(finallyBlockChildren.length - 2).allMatch(el -> el instanceof PsiWhiteSpace)) {
+          PsiElement tryParent = tryStatement.getParent();
+          tryParent.addRangeAfter(finallyBlockChildren[1], finallyBlockChildren[finallyBlockChildren.length - 2], tryStatement);
+        }
       }
       tryStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(sb.toString(), tryStatement));
     }
@@ -138,16 +144,6 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         tryStatementParent.addBefore(statement, tryStatement);
         statement.delete();
       }
-    }
-
-    private static boolean finallyNonEmpty(PsiCodeBlock finallyBlock) {
-      PsiElement[] children = finallyBlock.getChildren();
-      for (int i = 1; i < children.length - 1; i++) {
-        if (!(children[i] instanceof PsiWhiteSpace)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 

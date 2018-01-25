@@ -1,6 +1,3 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
 package com.siyeh.igfixes.migration.try_finally_can_be_try_with_resources;
 
 import java.io.*;
