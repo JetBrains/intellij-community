@@ -65,14 +65,25 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   w1 - w2
 }
 
-private val NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = TimeUnit.MINUTES.toSeconds(4)
-
 private class PersistenceStateAdapter(val component: Any) : PersistentStateComponent<Any> {
   override fun getState() = component
 
   override fun loadState(state: Any) {
     XmlSerializerUtil.copyBean(state, component)
   }
+}
+
+private val NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT = TimeUnit.MINUTES.toSeconds(4).toInt()
+private var NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT
+
+@TestOnly
+internal fun restoreDefaultNotRoamableComponentSaveThreshold() {
+  NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD_DEFAULT
+}
+
+@TestOnly
+internal fun setRoamableComponentSaveThreshold(thresholdInSeconds: Int) {
+  NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD = thresholdInSeconds
 }
 
 abstract class ComponentStoreImpl : IComponentStore {
@@ -114,7 +125,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   override fun initPersistencePlainComponent(component: Any, key: String) {
-    initPersistenceStateComponent(PersistenceStateAdapter(component), StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false)), false)
+    initPersistenceStateComponent(PersistenceStateAdapter(component),
+                                  StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false)), false)
   }
 
   private fun initPersistenceStateComponent(component: PersistentStateComponent<*>, stateSpec: State, isService: Boolean): String {
@@ -176,7 +188,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     CompoundRuntimeException.throwIfNotEmpty(errors)
   }
 
-  private fun doSaveComponents(isForce: Boolean, externalizationSession: ExternalizationSession, _errors: MutableList<Throwable>?): MutableList<Throwable>? {
+  private fun doSaveComponents(isForce: Boolean,
+                               externalizationSession: ExternalizationSession,
+                               _errors: MutableList<Throwable>?): MutableList<Throwable>? {
     val isUseModificationCount = Registry.`is`("store.save.use.modificationCount", true)
 
     var errors = _errors
@@ -227,7 +241,8 @@ abstract class ComponentStoreImpl : IComponentStore {
       timeLog?.let {
         val duration = System.currentTimeMillis() - start
         if (duration > 10) {
-          it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(((duration % 60000) / 1000)).append("sec")
+          it.append("\n").append(name).append(" took ").append(duration).append(" ms: ").append((duration / 60000)).append(" min ").append(
+            ((duration % 60000) / 1000)).append("sec")
         }
       }
     }
@@ -238,7 +253,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  override @TestOnly fun saveApplicationComponent(component: PersistentStateComponent<*>) {
+  override @TestOnly
+  fun saveApplicationComponent(component: PersistentStateComponent<*>) {
     val externalizationSession = storageManager.startExternalization() ?: return
 
     val stateSpec = StoreUtil.getStateSpec(component)
@@ -274,7 +290,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
+  protected open fun doSave(saveSessions: List<SaveSession>,
+                            readonlyFiles: MutableList<SaveSessionAndFile> = arrayListOf(),
+                            prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
     var errors = prevErrors
     for (session in saveSessions) {
       errors = executeSave(session, readonlyFiles, prevErrors)
@@ -296,7 +314,9 @@ abstract class ComponentStoreImpl : IComponentStore {
       LOG.error(e)
     }
 
-    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName, Element::class.java, null, false) ?: return null
+    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)?.getState(component, componentName,
+                                                                                                               Element::class.java, null,
+                                                                                                               false) ?: return null
     try {
       component.readExternal(element)
     }
@@ -332,10 +352,14 @@ abstract class ComponentStoreImpl : IComponentStore {
     return false
   }
 
-  private fun doInitComponent(stateSpec: State, component: PersistentStateComponent<Any>, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
+  private fun doInitComponent(stateSpec: State,
+                              component: PersistentStateComponent<Any>,
+                              changedStorages: Set<StateStorage>?,
+                              reloadData: Boolean): Boolean {
     val name = stateSpec.name
     @Suppress("UNCHECKED_CAST")
-    val stateClass: Class<Any> = if (component is PersistenceStateAdapter) component.component::class.java as Class<Any> else ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
+    val stateClass: Class<Any> = if (component is PersistenceStateAdapter) component.component::class.java as Class<Any>
+    else ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled && getDefaultState(component, name, stateClass) != null) {
       LOG.error("$name has default state, but not marked to load it")
     }
@@ -349,7 +373,8 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        val stateGetter = createStateGetter(isUseLoadedStateAsExisting(storage), storage, component, name, stateClass, reloadData = reloadData)
+        val stateGetter = createStateGetter(isUseLoadedStateAsExisting(storage), storage, component, name, stateClass,
+                                            reloadData = reloadData)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && changedStorages.contains(storage)) {
@@ -412,7 +437,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>,
+                                         stateSpec: State,
+                                         operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.size == 1 || component is StateStorageChooserEx) {
       return storages.toList()
@@ -508,7 +535,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   /**
    * You must call it in batch mode (use runBatchUpdate)
    */
-  fun reinitComponents(componentNames: Set<String>, changedStorages: Set<StateStorage> = emptySet(), notReloadableComponents: Collection<String> = emptySet()) {
+  fun reinitComponents(componentNames: Set<String>,
+                       changedStorages: Set<StateStorage> = emptySet(),
+                       notReloadableComponents: Collection<String> = emptySet()) {
     for (componentName in componentNames) {
       if (!notReloadableComponents.contains(componentName)) {
         reloadState(componentName, changedStorages)
@@ -516,12 +545,15 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  @TestOnly fun removeComponent(name: String) {
+  @TestOnly
+  fun removeComponent(name: String) {
     components.remove(name)
   }
 }
 
-internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+internal fun executeSave(session: SaveSession,
+                         readonlyFiles: MutableList<SaveSessionAndFile>,
+                         previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
   var errors = previousErrors
   try {
     session.save()
@@ -540,7 +572,8 @@ internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSe
   return errors
 }
 
-private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
+private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError(
+  "All storages are deprecated")
 
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
