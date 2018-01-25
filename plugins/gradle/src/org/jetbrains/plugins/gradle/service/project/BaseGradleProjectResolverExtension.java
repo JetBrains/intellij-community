@@ -60,14 +60,17 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.UnsupportedMethodException;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.gradle.tooling.model.idea.*;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
 import org.jetbrains.plugins.gradle.service.project.data.GradleExtensionsDataService;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
@@ -880,9 +883,28 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
                                                       @NotNull IdeaModuleDependency dependency,
                                                       @NotNull Map<String, ModuleData>  registeredModulesIndex)
     throws IllegalStateException {
-    final String moduleName = dependency.getTargetModuleName();
 
     final GradleExecutionSettings gradleExecutionSettings = resolverContext.getSettings();
+    if (gradleExecutionSettings != null) {
+      final BuildEnvironment environment = GradleExecutionHelper.getBuildEnvironment(resolverContext);
+      if (environment != null) {
+        final GradleVersion projectGradleVersion = GradleVersion.version(environment.getGradle().getGradleVersion());
+        if (projectGradleVersion.compareTo(GradleVersion.version("4.0")) < 0) {
+          final IdeaModule dependencyModule = dependency.getDependencyModule();
+          if (dependencyModule != null) {
+            final ModuleData moduleData =
+              gradleExecutionSettings.getExecutionWorkspace().findModuleDataByModule(resolverContext, dependencyModule);
+            if (moduleData != null) {
+              return new ModuleDependencyData(ownerModule.getData(), moduleData);
+            }
+          }
+        }
+      }
+    }
+
+
+    final String moduleName = dependency.getTargetModuleName();
+
     if (gradleExecutionSettings != null) {
       ModuleData moduleData = gradleExecutionSettings.getExecutionWorkspace().findModuleDataByGradleModuleName(moduleName);
       if (moduleData != null) {
