@@ -4,14 +4,14 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.MoveConditionToLoopInspection;
+import com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection;
 import org.jetbrains.annotations.NotNull;
 
-public class MoveConditionToLoopInspectionTest extends LightQuickFixParameterizedTestCase {
+public class ConditionalBreakInInfiniteLoopInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new MoveConditionToLoopInspection()};
+    return new LocalInspectionTool[]{new ConditionalBreakInInfiniteLoopInspection()};
   }
 
   public void test() {
@@ -21,6 +21,6 @@ public class MoveConditionToLoopInspectionTest extends LightQuickFixParameterize
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/moveConditionToLoop/";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/conditionalBreakInInfiniteLoop/";
   }
 }

@@ -19,14 +19,14 @@ import javax.swing.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspectionTool {
+public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean noConversionToDoWhile = false;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionsBundle.message("inspection.move.condition.to.loop.no.conversion.to.do.while"), "noConversionToDoWhile");
+    panel.addCheckbox(InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.to.do.while"), "noConversionToDoWhile");
     return panel;
   }
 
@@ -60,13 +60,13 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
         }
         else {
           SetInspectionOptionFix setInspectionOptionFix =
-            new SetInspectionOptionFix(MoveConditionToLoopInspection.this,
+            new SetInspectionOptionFix(ConditionalBreakInInfiniteLoopInspection.this,
                                        "noConversionToDoWhile",
-                                       InspectionsBundle.message("inspection.move.condition.to.loop.no.conversion.to.do.while"),
+                                       InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.to.do.while"),
                                        true);
           fixes = new LocalQuickFix[]{new LoopTransformationFix(), setInspectionOptionFix};
         }
-        holder.registerProblem(keyword, InspectionsBundle.message("inspection.move.condition.to.loop.description"), fixes);
+        holder.registerProblem(keyword, InspectionsBundle.message("inspection.conditional.break.in.infinite.loop.description"), fixes);
       }
     };
   }
@@ -151,7 +151,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.move.condition.to.loop");
+      return InspectionsBundle.message("inspection.conditional.break.in.infinite.loop");
     }
 
     @Override

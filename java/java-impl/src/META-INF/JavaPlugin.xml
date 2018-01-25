@@ -491,10 +491,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
                      bundle="messages.InspectionsBundle" key="inspection.idempotent.loop.body"
                      implementationClass="com.intellij.codeInspection.IdempotentLoopBodyInspection"/>
-    <localInspection language="JAVA" shortName="MoveConditionToLoop" enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="ConditionalBreakInInfiniteLoop" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
-                     bundle="messages.InspectionsBundle" key="inspection.move.condition.to.loop"
-                     implementationClass="com.intellij.codeInspection.MoveConditionToLoopInspection"/>
+                     bundle="messages.InspectionsBundle" key="inspection.conditional.break.in.infinite.loop"
+                     implementationClass="com.intellij.codeInspection.ConditionalBreakInInfiniteLoopInspection"/>
     <localInspection language="JAVA" shortName="JavaReflectionMemberAccess" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
                      bundle="messages.InspectionsBundle" key="inspection.reflection.member.access.name"
