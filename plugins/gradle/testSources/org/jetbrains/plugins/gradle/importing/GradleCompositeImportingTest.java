@@ -183,6 +183,63 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
   }
 
 
+  @Test
+  @TargetVersions("3.3+")
+  // @SuppressWarnings("Duplicates")
+  public void testCompositeBuildWithGradleProjectDuplicatesModulePerSourceSet() throws Exception {
+    createSettingsFile("rootProject.name = 'app'\n" +
+                       "include 'runtime'\n" +
+                       "includeBuild 'lib1'\n" +
+                       "includeBuild 'lib2'");
+
+    createProjectSubFile("runtime/build.gradle",
+                         "apply plugin: 'java'");
+
+
+    createProjectSubFile("lib1/settings.gradle", "rootProject.name = 'lib1'\n" +
+                                                 "include 'runtime'");
+    createProjectSubFile("lib1/runtime/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group.lib_1'");
+
+
+    createProjectSubFile("lib2/settings.gradle", "rootProject.name = 'lib2'\n" +
+                                                 "include 'runtime'");
+    createProjectSubFile("lib2/runtime/build.gradle",
+                         "apply plugin: 'java'\n" +
+                         "group = 'my.group.lib_2'");
+
+
+    importProject("apply plugin: 'java'\n" +
+                  "dependencies {\n" +
+                  "  compile project(':runtime')\n" +
+                  "  compile 'my.group.lib_1:runtime'\n" +
+                  "  compile 'my.group.lib_2:runtime'\n" +
+                  "}");
+
+    if (isGradle40orNewer()) {
+      assertModules("app", "app_main", "app_test",
+                    "app-runtime", "app-runtime_main", "app-runtime_test",
+                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
+                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
+    } else {
+      assertModules("app", "app_main", "app_test",
+                    "runtime", "runtime_main", "runtime_test",
+                    "lib1", "lib1-runtime", "lib1-runtime_main", "lib1-runtime_test",
+                    "lib2", "lib2-runtime", "lib2-runtime_main", "lib2-runtime_test");
+    }
+
+    if (isGradle40orNewer()) {
+      assertModuleModuleDepScope("app_main", "app-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
+    } else {
+      assertModuleModuleDepScope("app_main", "runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib1-runtime_main", COMPILE);
+      assertModuleModuleDepScope("app_main", "lib2-runtime_main", COMPILE);
+    }
+  }
+
 
   @Test
   @TargetVersions("3.3+")
