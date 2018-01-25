@@ -51,6 +51,31 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27398
+  public void testAccessToInitVar() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessInitVar() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testUselessDunderPostInit() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testWrongDunderPostInitSignature() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testFieldDefaultAndDefaultFactory() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(

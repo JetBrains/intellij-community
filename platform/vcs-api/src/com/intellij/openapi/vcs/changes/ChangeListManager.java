@@ -50,6 +50,7 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable String title,
                                          @Nullable ModalityState state);
 
+  @Deprecated
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable String title,

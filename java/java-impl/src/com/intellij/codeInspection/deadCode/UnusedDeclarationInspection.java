@@ -115,9 +115,9 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
     return myUnusedParameters.getQuickFix(hint);
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
+    //noinspection deprecation
     return new UnusedSymbolLocalInspection();
   }
 

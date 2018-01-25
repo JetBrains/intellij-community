@@ -15,13 +15,19 @@ import java.util.Objects;
  */
 public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent {
 
-  private final Kind myKind;
-  private final String myGroup;
+  @NotNull private final Kind myKind;
+  @NotNull private final String myGroup;
 
-  public MessageEventImpl(@NotNull Object parentId, @NotNull Kind kind, @Nullable String group, @NotNull String message) {
+  public MessageEventImpl(@NotNull Object parentId, @NotNull Kind kind, @Nullable String group, @NotNull String message, @Nullable String detailedMessage) {
     super(new Object(), parentId, System.currentTimeMillis(), message);
     myKind = kind;
     myGroup = group == null ? "Other messages" : group;
+    setDescription(detailedMessage);
+  }
+
+  @Override
+  public final void setDescription(@Nullable String description) {
+    super.setDescription(description);
   }
 
   @NotNull
@@ -48,6 +54,11 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
       @Override
       public Kind getKind() {
         return myKind;
+      }
+
+      @Override
+      public String getDetails() {
+        return getDescription();
       }
     };
   }

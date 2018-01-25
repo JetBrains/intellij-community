@@ -120,6 +120,20 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     myTree.setRootVisible(false);
   }
 
+  @NotNull
+  @Override
+  protected String getTextForSpeedSearch(MyNode node) {
+    if (node instanceof ModuleNode) {
+      return ((ModuleNode)node).getFullModuleName();
+    }
+    else if (node instanceof ModuleGroupNodeImpl) {
+      return ((ModuleGroupNodeImpl)node).getModuleGroup().getQualifiedName();
+    }
+    else {
+      return super.getTextForSpeedSearch(node);
+    }
+  }
+
   @Override
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<>();
@@ -615,8 +629,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
-      return myFlattenModules ? ObjectUtils.notNull(myContext.myModulesConfigurator.getModuleModel().getNewName(getModule()), getModule().getName())
-                              : getModuleGrouper().getShortenedName(getModule());
+      return myFlattenModules ? getFullModuleName() : getModuleGrouper().getShortenedName(getModule());
+    }
+
+    @NotNull
+    private String getFullModuleName() {
+      return ObjectUtils.notNull(myContext.myModulesConfigurator.getModuleModel().getNewName(getModule()), getModule().getName());
     }
 
     private ModuleGrouper getModuleGrouper() {
@@ -661,6 +679,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     }
 
     @Override
+    @NotNull
     public ModuleGroup getModuleGroup() {
       return myModuleGroup;
     }

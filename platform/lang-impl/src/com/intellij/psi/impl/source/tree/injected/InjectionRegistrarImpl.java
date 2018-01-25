@@ -277,7 +277,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       PsiFile psiFile = (PsiFile)parsedNode.getPsi();
       InjectedFileViewProvider viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
 
-      cacheEverything(place, documentWindow, viewProvider, psiFile, documentManager);
+      cacheEverything(place, documentWindow, viewProvider, psiFile);
 
       PsiFile cachedPsiFile = documentManager.getCachedPsiFile(documentWindow);
       assert cachedPsiFile == psiFile : "Cached psi :"+ cachedPsiFile +" instead of "+psiFile;
@@ -285,6 +285,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       assert place.isValid();
       assert viewProvider.isValid();
 
+      List<InjectedLanguageUtil.TokenInfo> newTokens = InjectedLanguageUtil.getHighlightTokens(psiFile);
       PsiFile newFile = registerDocument(documentWindow, psiFile, place, hostPsiFile, documentManager);
       boolean mergeHappened = newFile != psiFile;
       Place mergedPlace = place;
@@ -293,11 +294,12 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         psiFile = newFile;
         viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
         documentWindow = (DocumentWindowImpl)viewProvider.getDocument();
-        boolean shredsReused = !cacheEverything(place, documentWindow, viewProvider, psiFile, documentManager);
+        boolean shredsReused = !cacheEverything(place, documentWindow, viewProvider, psiFile);
         if (shredsReused) {
           place.dispose();
           mergedPlace = documentWindow.getShreds();
         }
+        InjectedLanguageUtil.setHighlightTokens(psiFile, newTokens);
       }
 
       assert psiFile.isValid();
@@ -364,8 +366,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   private static boolean cacheEverything(@NotNull Place place,
                                          @NotNull DocumentWindowImpl documentWindow,
                                          @NotNull InjectedFileViewProvider viewProvider,
-                                         @NotNull PsiFile psiFile,
-                                         @NotNull PsiDocumentManagerBase documentManager) {
+                                         @NotNull PsiFile psiFile) {
     FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
     DebugUtil.startPsiModification("MultiHostRegistrar cacheEverything");
@@ -378,7 +379,6 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
     SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = ((ShredImpl)place.get(0)).getSmartPointer();
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
-    documentManager.associatePsi(documentWindow, psiFile);
 
     keepTreeFromChameleoningBack(psiFile);
 
@@ -628,8 +628,6 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
           try {
             DocumentCommitThread.doActualPsiChange(oldInjectedPsi, diffLog);
 
-            PsiDocumentManagerBase documentManagerBase = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
-
             // create new shreds after commit is complete because otherwise the range markers will be changed in MarkerCache.updateMarkers
             Place newPlace = new Place();
             for (int i = 0; i < oldPlace.size(); i++) {
@@ -644,7 +642,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
               newPlace.add(newShred);
             }
 
-            cacheEverything(newPlace, oldDocumentWindow, oldInjectedPsiViewProvider, oldInjectedPsi, documentManagerBase);
+            cacheEverything(newPlace, oldDocumentWindow, oldInjectedPsiViewProvider, oldInjectedPsi);
             String docText = oldDocumentWindow.getText();
             assert docText.equals(newText) : "=\n" + docText + "\n==\n" + newDocumentText + "\n===\n";
           }

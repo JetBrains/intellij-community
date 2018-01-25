@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -58,7 +55,6 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
-  private final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REF_TO_PSI"); // has to be different for each project to avoid mixups
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   protected final Project myProject;
@@ -103,11 +99,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return null;
     }
 
-    final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if (userData != null) {
-      return ensureValidFile(userData, "From hard ref");
-    }
-
     PsiFile psiFile = getCachedPsiFile(document);
     if (psiFile != null) {
       return ensureValidFile(psiFile, "Cached PSI");
@@ -134,18 +125,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   // todo remove when Database Navigator plugin doesn't need that anymore
   // todo to be removed in idea 17
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
-    LOG.warn("Unsupported method");
+    LOG.warn("Unsupported method", new Throwable());
   }
 
   public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
-    document.putUserData(HARD_REF_TO_PSI, file);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public PsiFile getCachedPsiFile(@NotNull Document document) {
-    final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if (userData != null) return userData;
-
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return getCachedPsiFile(virtualFile);
@@ -185,7 +173,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     Document document = getCachedDocument(file);
     if (document != null) {
-      if (!file.getViewProvider().isPhysical() && document.getUserData(HARD_REF_TO_PSI) == null) {
+      if (!file.getViewProvider().isPhysical()) {
         PsiUtilCore.ensureValid(file);
         associatePsi(document, file);
       }
@@ -365,14 +353,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     FileViewProvider viewProvider = forceNoPsiCommit ? null : getCachedViewProvider(document);
 
     myIsCommitInProgress = true;
-    boolean success = true;
+    Ref<Boolean> success = new Ref<>(true);
     try {
-      if (viewProvider == null) {
-        handleCommitWithoutPsi(document);
-      }
-      else {
-        success = commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile, viewProvider);
-      }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        if (viewProvider == null) {
+          handleCommitWithoutPsi(document);
+        }
+        else {
+          success.set(commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile, viewProvider));
+        }
+      });
     }
     catch (Throwable e) {
       try {
@@ -383,13 +373,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     finally {
-      if (success) {
+      if (success.get()) {
         myUncommittedDocuments.remove(document);
       }
       myIsCommitInProgress = false;
     }
 
-    return success;
+    return success.get();
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -357,8 +357,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     PsiElement element = searchContext.getFile();
 
+    final Project project = searchContext.getProject();
     if (element != null && !useLastConfiguration) {
-      final Editor selectedEditor = FileEditorManager.getInstance(searchContext.getProject()).getSelectedTextEditor();
+      final Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
 
       if (selectedEditor != null) {
         int caretPosition = selectedEditor.getCaretModel().getOffset();
@@ -377,19 +378,20 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
     }
 
-    final PsiManager psimanager = PsiManager.getInstance(searchContext.getProject());
-    final Project project = psimanager.getProject();
     final PsiCodeFragment file = createCodeFragment(project, text, element);
-    final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(file);
-    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, false);
-    return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+    assert doc != null;
+    DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
+    return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
   }
 
+  @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return JavaCodeContextType.class;
   }
 
+  @NotNull
   @Override
   public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);

@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -36,7 +35,10 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ConcurrencyUtil;
@@ -179,21 +181,9 @@ public class FileManagerImpl implements FileManager {
 
   @Override
   public FileViewProvider findCachedViewProvider(@NotNull final VirtualFile file) {
-    FileViewProvider viewProvider = getFromInjected(file);
-    if (viewProvider == null) viewProvider = myVFileToViewProviderMap.get(file);
+    FileViewProvider viewProvider = myVFileToViewProviderMap.get(file);
     if (viewProvider == null) viewProvider = file.getUserData(myPsiHardRefKey);
     return viewProvider;
-  }
-
-  @Nullable
-  private FileViewProvider getFromInjected(@NotNull VirtualFile file) {
-    if (file instanceof VirtualFileWindow) {
-      DocumentWindow document = ((VirtualFileWindow)file).getDocumentWindow();
-      PsiFile psiFile = PsiDocumentManager.getInstance(myManager.getProject()).getCachedPsiFile(document);
-      if (psiFile == null) return null;
-      return psiFile.getViewProvider();
-    }
-    return null;
   }
 
   @Override
@@ -211,16 +201,14 @@ public class FileManagerImpl implements FileManager {
       }
     }
 
-    if (!(virtualFile instanceof VirtualFileWindow)) {
-      if (fileViewProvider == null) {
-        myVFileToViewProviderMap.remove(virtualFile);
-      }
-      else if (virtualFile instanceof LightVirtualFile) {
-        virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
-      }
-      else {
-        myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
-      }
+    if (fileViewProvider == null) {
+      myVFileToViewProviderMap.remove(virtualFile);
+    }
+    else if (virtualFile instanceof LightVirtualFile) {
+      virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
+    }
+    else {
+      myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
     }
   }
 
@@ -437,12 +425,7 @@ public class FileManagerImpl implements FileManager {
 
   private void markInvalidated(@NotNull FileViewProvider viewProvider) {
     ((AbstractFileViewProvider)viewProvider).markInvalidated();
-    VirtualFile virtualFile = viewProvider.getVirtualFile();
-    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-    if (document != null) {
-      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).associatePsi(document, null);
-    }
-    virtualFile.putUserData(myPsiHardRefKey, null);
+    viewProvider.getVirtualFile().putUserData(myPsiHardRefKey, null);
   }
 
   @Nullable

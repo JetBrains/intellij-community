@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
@@ -193,9 +194,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final PyFunction function = (PyFunction)owner;
       final String functionName = function.getName();
 
-      return !PyNames.INIT.equals(functionName) &&
-             function.getContainingClass() != null &&
-             PyNames.getBuiltinMethods(LanguageLevel.forElement(function)).containsKey(functionName);
+      final LanguageLevel level = LanguageLevel.forElement(function);
+      final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+        function.getContainingClass() != null ? PyNames.getBuiltinMethods(level) : PyNames.getModuleBuiltinMethods(level);
+
+      return !PyNames.INIT.equals(functionName) && builtinMethods.containsKey(functionName);
     }
 
     return false;

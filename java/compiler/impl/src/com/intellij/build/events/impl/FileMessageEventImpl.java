@@ -23,8 +23,9 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
                               @NotNull Kind kind,
                               @Nullable String group,
                               @NotNull String message,
+                              @Nullable String detailedMessage,
                               @NotNull FilePosition filePosition) {
-    super(parentId, kind, group, message);
+    super(parentId, kind, group, message, detailedMessage);
     myFilePosition = filePosition;
   }
 
@@ -39,6 +40,12 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
       @Override
       public Kind getKind() {
         return FileMessageEventImpl.this.getKind();
+      }
+
+      @Override
+      @Nullable
+      public String getDetails() {
+        return getDescription();
       }
     };
   }

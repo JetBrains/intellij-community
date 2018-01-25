@@ -100,23 +100,23 @@ class DistributionJARsBuilder {
       productLayout.moduleExcludes.entrySet().each {
         layout.moduleExcludes.putAll(it.key, it.value)
       }
-      withModule("util")
-      withModule("util-rt", "util.jar")
-      withModule("annotations")
-      withModule("annotations-common", "annotations.jar")
-      withModule("extensions")
-      withModule("bootstrap")
-      withModule("forms_rt")
-      withModule("icons")
-      withModule("boot")
-      withModule("platform-resources", "resources.jar")
-      withModule("colorSchemes", "resources.jar")
-      withModule("platform-resources-en", productLayout.mainJarName)
-      withModule("jps-model-serialization", "jps-model.jar")
-      withModule("jps-model-impl", "jps-model.jar")
+      withModule("intellij.platform.util")
+      withModule("intellij.platform.util.rt", "util.jar")
+      withModule("intellij.platform.annotations.java5")
+      withModule("intellij.platform.annotations.common", "annotations.jar")
+      withModule("intellij.platform.extensions")
+      withModule("intellij.platform.bootstrap")
+      withModule("intellij.java.guiForms.rt")
+      withModule("intellij.platform.icons")
+      withModule("intellij.platform.boot")
+      withModule("intellij.platform.resources", "resources.jar")
+      withModule("intellij.platform.colorSchemes", "resources.jar")
+      withModule("intellij.platform.resources.en", productLayout.mainJarName)
+      withModule("intellij.platform.jps.model.serialization", "jps-model.jar")
+      withModule("intellij.platform.jps.model.impl", "jps-model.jar")
 
-      if (allProductDependencies.contains("coverage-common") && !productLayout.bundledPluginModules.contains("coverage")) {
-        withModule("coverage-common", productLayout.mainJarName)
+      if (allProductDependencies.contains("intellij.platform.coverage") && !productLayout.bundledPluginModules.contains("intellij.java.coverage")) {
+        withModule("intellij.platform.coverage", productLayout.mainJarName)
       }
 
       projectLibrariesUsedByPlugins.each {
@@ -149,7 +149,7 @@ class DistributionJARsBuilder {
    * @return module names which are required to run necessary tools from build scripts
    */
   static List<String> getToolModules() {
-    ["java-runtime", "platform-main", /*required to build searchable options index*/ "updater"]
+    ["intellij.java.rt", "intellij.platform.main", /*required to build searchable options index*/ "intellij.platform.updater"]
   }
 
   static List<String> getPlatformApiModules(ProductModulesLayout productLayout) {
@@ -200,7 +200,7 @@ class DistributionJARsBuilder {
         arg(value: targetDirectory)
         arg(value: ignoredJarsFile.parent)
         classpath {
-          buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
+          buildContext.getModuleRuntimeClasspath(buildContext.findRequiredModule("intellij.platform.util"), false).each {
             pathelement(location: it)
           }
         }
@@ -221,7 +221,7 @@ class DistributionJARsBuilder {
     if (productProperties.scrambleMainJar) {
       createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
         jar("internalUtilities.jar") {
-          module("internalUtilities")
+          module("intellij.tools.internalUtilities")
         }
       }
     }
@@ -252,7 +252,7 @@ class DistributionJARsBuilder {
 
     if (buildContext.productProperties.reassignAltClickToMultipleCarets) {
       def patchedKeyMapDir = createKeyMapWithAltClickReassignedToMultipleCarets()
-      layoutBuilder.patchModuleOutput("platform-resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
+      layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
     buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
@@ -403,11 +403,17 @@ class DistributionJARsBuilder {
     def resourcesIncluded = RESOURCES_INCLUDED
     def buildContext = buildContext
     checkModuleExcludes(layout.moduleExcludes)
+    MultiValuesMap<String, String> actualModuleJars = new MultiValuesMap<>(true)
+    moduleJars.entrySet().each {
+      def modules = it.value
+      def jarPath = getActualModuleJarPath(it.key, modules)
+      actualModuleJars.putAll(jarPath, modules)
+    }
     layoutBuilder.layout(targetDirectory) {
       dir("lib") {
-        moduleJars.entrySet().each {
+        actualModuleJars.entrySet().each {
           def modules = it.value
-          def jarPath = getActualModuleJarPath(it.key, modules)
+          def jarPath = it.key
           jar(jarPath, true) {
             modules.each { moduleName ->
               modulePatches([moduleName]) {
@@ -433,7 +439,7 @@ class DistributionJARsBuilder {
           }
         }
         def outputResourceJars = new MultiValuesMap<String, String>()
-        moduleJars.values().forEach {
+        actualModuleJars.values().forEach {
           def resourcesJarName = layout.localizableResourcesJarName(it)
           if (resourcesJarName != null) {
             outputResourceJars.put(resourcesJarName, it)
@@ -469,7 +475,7 @@ class DistributionJARsBuilder {
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
-        moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
+        actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
                              .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
@@ -596,7 +602,7 @@ class DistributionJARsBuilder {
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
-    def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("platform-resources"))}/keymaps/\$default.xml")
+    def sourceFile = new File("${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.resources"))}/keymaps/\$default.xml")
     String defaultKeymapContent = sourceFile.text
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt button1\"/>", "")
     defaultKeymapContent = defaultKeymapContent.replace("<mouse-shortcut keystroke=\"alt shift button1\"/>",

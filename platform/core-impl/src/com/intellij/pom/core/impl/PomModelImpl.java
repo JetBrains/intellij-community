@@ -123,12 +123,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   @Override
   public void addModelListener(@NotNull final PomModelListener listener, @NotNull Disposable parentDisposable) {
     addModelListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeModelListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removeModelListener(listener));
   }
 
   @Override
@@ -144,7 +139,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     if (!isAllowPsiModification()) {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
-    List<Throwable> throwables = new ArrayList<>(0);
     final PomModelAspect aspect = transaction.getTransactionAspect();
     startTransaction(transaction);
 
@@ -153,6 +147,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
     }
 
+    List<Throwable> throwables = new ArrayList<>(0);
     try{
       DebugUtil.startPsiModification(null);
       Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();

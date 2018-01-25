@@ -259,11 +259,6 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
-    return true;
-  }
-
-  @Override
   public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     return project != null && EncodingProjectManager.getInstance(project).isNative2Ascii(virtualFile);

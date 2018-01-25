@@ -56,10 +56,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ReferenceRange;
+import com.intellij.psi.*;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
@@ -136,26 +133,21 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final int myStartCaret;
   private CompletionThreadingBase myStrategy;
 
-  public CompletionProgressIndicator(final Editor editor,
-                                     @NotNull Caret caret,
-                                     CompletionParameters parameters,
-                                     CodeCompletionHandlerBase handler,
-                                     final OffsetMap offsetMap,
-                                     OffsetsInFile hostOffsets,
-                                     boolean hasModifiers,
-                                     LookupImpl lookup) {
+  CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount, CompletionContext context,
+                              CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
+                              boolean hasModifiers, LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
-    myParameters = parameters;
     myHandler = handler;
     myOffsetMap = offsetMap;
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
+    myParameters = createCompletionParameters(invocationCount, context, editor);
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = new CompletionLookupArranger(parameters, this);
+    myArranger = new CompletionLookupArranger(myParameters, this);
     myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
@@ -176,6 +168,22 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
     }
+  }
+
+  private CompletionParameters createCompletionParameters(int invocationCount, CompletionContext context, Editor editor) {
+    int offset = context.getStartOffset();
+    PsiFile fileCopy = context.file;
+    PsiFile originalFile = fileCopy.getOriginalFile();
+    PsiElement insertedElement = findCompletionPositionLeaf(context, offset, fileCopy, originalFile);
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
+    return new CompletionParameters(insertedElement, originalFile, myHandler.completionType, offset, invocationCount, editor, this);
+  }
+
+  @NotNull
+  private static PsiElement findCompletionPositionLeaf(CompletionContext context, int offset, PsiFile fileCopy, PsiFile originalFile) {
+    PsiElement insertedElement = context.file.findElementAt(offset);
+    CompletionAssertions.assertCompletionPositionPsiConsistent(context, offset, fileCopy, originalFile, insertedElement);
+    return insertedElement;
   }
 
   public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {

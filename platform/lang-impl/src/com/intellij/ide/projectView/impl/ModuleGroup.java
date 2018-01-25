@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
@@ -102,6 +103,10 @@ public class ModuleGroup {
 
   public String presentableText() {
     return "'" + myGroupPath.get(myGroupPath.size() - 1) + "'";
+  }
+
+  public String getQualifiedName() {
+    return StringUtil.join(myGroupPath, ".");
   }
 
   public String toString() {

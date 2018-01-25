@@ -519,6 +519,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean uniteClasses(int c1Index, int c2Index) {
+    if (!myDistinctClasses.unite(c1Index, c2Index)) return false;
+
     EqClass c1 = myEqClasses.get(c1Index);
     EqClass c2 = myEqClasses.get(c2Index);
 
@@ -555,9 +557,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       addToMap(c, c1Index);
     }
 
-    if (!myDistinctClasses.unite(c1Index, c2Index)) {
-      return false;
-    }
     myEqClasses.set(c2Index, null);
     checkInvariants();
 

@@ -32,7 +32,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
-import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -209,21 +208,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
     Set<PsiMethod> superMethods = new HashSet<>();
+    GlobalSearchScope resolveScope = myArgumentsList.getResolveScope();
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();
       final boolean isInterface = containingClass != null && containingClass.isInterface();
       for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        PsiMethod superMethod = PsiSuperMethodUtil.correctMethodByScope(methodSignature.getMethod(), myArgumentsList.getResolveScope());
-        if (!isInterface) {
-          superMethods.add(superMethod);
-        }
-        else {
-          final PsiClass aClass = superMethod.getContainingClass();
-          if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-            superMethods.add(superMethod);
-          }
-        }
+        collectCorrectedSuperMethods(methodSignature, resolveScope, isInterface, superMethods);
       }
     }
     for (int i = 0; i < conflicts.size(); i++) {
@@ -268,6 +259,29 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
           signatures.put(signature, info);
         }
+      }
+    }
+  }
+
+  private static void collectCorrectedSuperMethods(HierarchicalMethodSignature methodSignature,
+                                                   GlobalSearchScope resolveScope,
+                                                   boolean isInterface,
+                                                   Set<PsiMethod> superMethods) {
+    PsiMethod methodCandidate = methodSignature.getMethod();
+
+    PsiMethod superMethod = PsiSuperMethodUtil.correctMethodByScope(methodCandidate, resolveScope).orElse(null);
+    if (superMethod == null) {
+      for (HierarchicalMethodSignature signature : methodSignature.getSuperSignatures()) {
+        collectCorrectedSuperMethods(signature, resolveScope, isInterface, superMethods);
+      }
+    }
+    else if (!isInterface) {
+      superMethods.add(superMethod);
+    }
+    else {
+      final PsiClass aClass = superMethod.getContainingClass();
+      if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+        superMethods.add(superMethod);
       }
     }
   }

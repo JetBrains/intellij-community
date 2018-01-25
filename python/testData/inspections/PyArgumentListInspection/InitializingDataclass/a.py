@@ -85,3 +85,18 @@ D1(<warning descr="Parameter 'a' unfilled"><warning descr="Parameter 'b' unfille
 D1(1<warning descr="Parameter 'b' unfilled">)</warning>
 D1(1, 2)
 D1(1, 2, <warning descr="Unexpected argument">3</warning>)
+
+
+@dataclasses.dataclass
+class E1:
+    a: int = dataclasses.field()
+    b: int = dataclasses.field(init=True)
+    c: int = dataclasses.field(init=False)
+    d: int = dataclasses.field(default=1)
+    e: int = dataclasses.field(default_factory=int)
+
+E1(1<warning descr="Parameter 'b' unfilled">)</warning>
+E1(1, 2)
+E1(1, 2, 3)
+E1(1, 2, 3, 4)
+E1(1, 2, 3, 4, <warning descr="Unexpected argument">5</warning>)

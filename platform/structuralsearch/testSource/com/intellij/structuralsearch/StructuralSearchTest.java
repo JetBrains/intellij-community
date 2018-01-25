@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -270,6 +270,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertFalse("subexpr match", findMatchesCount(s2, "dialog = new SearchDialog()") == 0);
     assertEquals("search for new ", 0, findMatchesCount(s10, " new XXX()"));
     assertEquals("search for anonymous classes", 1, findMatchesCount(s12, "new Runnable() {}"));
+
+    String source = "import java.util.*;" +
+                    "class X {{" +
+                    "  new ArrayList() {};" +
+                    "  new ArrayList();" +
+                    "  new ArrayList<String>();" +
+                    "  new ArrayList<String>() {}" +
+                    "}}";
+    assertEquals("search for parameterized anonymous class", 1, findMatchesCount(source, "new '_A<'_B>() {}"));
     assertEquals("expr in def initializer", 3, findMatchesCount(s53, "System.getProperty('T)"));
 
     assertEquals("a.class expression", 1, findMatchesCount(s55, "'T.class"));

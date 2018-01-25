@@ -7,6 +7,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -110,7 +111,7 @@ class BuildTasksImpl extends BuildTasks {
   }
 
   private void runApplicationStarter(String tempDir, List<String> modules, List<String> arguments) {
-    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("java-runtime"))}"
+    def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("intellij.java.rt"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
     }
@@ -127,7 +128,7 @@ class BuildTasksImpl extends BuildTasks {
 
     buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
       jvmarg(line: "-ea -Xmx500m")
-      jvmarg(value: "-Xbootclasspath/a:${buildContext.getModuleOutputPath(buildContext.findModule("boot"))}")
+      jvmarg(value: "-Xbootclasspath/a:${buildContext.getModuleOutputPath(buildContext.findModule("intellij.platform.boot"))}")
       sysproperty(key: "java.awt.headless", value: true)
       sysproperty(key: "idea.home.path", value: buildContext.paths.projectHome)
       sysproperty(key: "idea.system.path", value: systemPath)
@@ -542,7 +543,24 @@ idea.fatal.error.notification=disabled
   void buildUpdaterJar() {
     new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater.jar") {
-        module("updater")
+        module("intellij.platform.updater")
+      }
+    }
+  }
+
+  @Override
+  void buildFullUpdaterJar() {
+    String updaterModule = "intellij.platform.updater"
+    def libraryFiles = JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(updaterModule)).productionOnly().runtimeOnly().libraries.collectMany {
+      it.getFiles(JpsOrderRootType.COMPILED)
+    }
+    buildContext.messages.info("Files: $libraryFiles")
+    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
+      jar("updater-full.jar") {
+        module(updaterModule)
+        libraryFiles.each { file ->
+          ant.zipfileset(src: file.absolutePath)
+        }
       }
     }
   }

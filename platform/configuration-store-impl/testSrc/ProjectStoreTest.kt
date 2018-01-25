@@ -75,7 +75,7 @@ internal class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+      val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       project.baseDir.refresh(false, true)
@@ -154,7 +154,7 @@ internal class ProjectStoreTest {
     testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+    val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
     assertThat(file).isRegularFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here

@@ -4,10 +4,13 @@ package com.intellij.build.output;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -158,6 +161,11 @@ public class BuildOutputInstantReaderImpl implements Appendable, Closeable, Buil
   @Override
   public void pushBack() {
     myCurrentIndex--;
+  }
+
+  @Override
+  public void pushBack(int numberOfLines) {
+    myCurrentIndex -= numberOfLines;
   }
 
   @Override

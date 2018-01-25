@@ -46,7 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-// TODO this should eventually replace PackageUtil from java-impl
+// TODO this should eventually replace PackageUtil from intellij.java.impl
 public class PlatformPackageUtil {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.util.PlatformPackageUtil");

@@ -100,9 +100,16 @@ class JpsCompilationRunner {
     runBuild(Collections.<String> emptySet(), true, [], false, false)
   }
 
+  /**
+   * @deprecated use {@link #buildArtifacts(java.util.Collection, boolean)} instead
+   */
   void buildArtifacts(Collection<String> artifactNames) {
+    buildArtifacts(artifactNames, true)
+  }
+
+  void buildArtifacts(Collection<String> artifactNames, boolean buildIncludedModules) {
     Set<JpsArtifact> artifacts = getArtifactsWithIncluded(artifactNames)
-    Set<String> modules = getModulesIncludedInArtifacts(artifacts)
+    Set<String> modules = buildIncludedModules ? getModulesIncludedInArtifacts(artifacts) : [] as Set<String>
     runBuild(modules, false, artifacts.collect {it.name}, false, false)
   }
 

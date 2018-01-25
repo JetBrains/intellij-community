@@ -275,7 +275,7 @@ class BuildContextImpl extends BuildContext {
 
   private boolean isJavaSupportedInProduct() {
     def productLayout = productProperties.productLayout
-    return DistributionJARsBuilder.getIncludedPlatformModules(productLayout).contains("execution-impl")
+    return DistributionJARsBuilder.getIncludedPlatformModules(productLayout).contains("intellij.java.execution.impl")
   }
 
   @CompileDynamic

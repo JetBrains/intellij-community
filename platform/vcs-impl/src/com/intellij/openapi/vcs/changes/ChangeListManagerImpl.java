@@ -341,7 +341,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                 @NotNull InvokeAfterUpdateMode mode,
                                 @Nullable String title,
                                 @Nullable ModalityState state) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode, title, null, state);
+    invokeAfterUpdate(afterUpdate, mode, title, null, state);
   }
 
   @Override
@@ -350,7 +350,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                 @Nullable String title,
                                 @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
                                 @Nullable ModalityState state) {
-    myUpdater.invokeAfterUpdate(afterUpdate, mode, title, dirtyScopeManagerFiller, state);
+    if (dirtyScopeManagerFiller != null && !myProject.isDisposed()) {
+      dirtyScopeManagerFiller.consume(VcsDirtyScopeManager.getInstance(myProject));
+    }
+    myUpdater.invokeAfterUpdate(afterUpdate, mode, title, state);
   }
 
   @Override

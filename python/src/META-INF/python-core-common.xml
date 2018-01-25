@@ -106,9 +106,6 @@
 
     <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
-                    serviceImplementation="com.jetbrains.python.PyDocumentationManager" overrides="true"/>
-
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
@@ -173,6 +170,8 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
+    <runLineMarkerContributor language="Python"
+                              implementationClass="com.jetbrains.python.testing.PyTestLineMarkerProvider"/>
 
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.PyLineMarkerProvider"/>
     <codeInsight.typeInfo language="Python" implementationClass="com.jetbrains.python.actions.PythonExpressionTypeProvider"/>
@@ -700,6 +699,7 @@
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubType"/>
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType"/>
+    <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubType"/>
 
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>

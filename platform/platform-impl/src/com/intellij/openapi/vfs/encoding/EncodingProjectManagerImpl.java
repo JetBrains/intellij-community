@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
@@ -41,6 +38,7 @@ import java.util.*;
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
 public class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
   @NonNls private static final String PROJECT_URL = "PROJECT";
+
   private final Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
@@ -94,12 +92,15 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     myMapping.clear();
     List<Element> files = element.getChildren("file");
     if (!files.isEmpty()) {
-      Map<VirtualFile, Charset> mapping = new HashMap<>();
+      Map<VirtualFile, Charset> mapping = new THashMap<>();
       for (Element fileElement : files) {
         String url = fileElement.getAttributeValue("url");
         String charsetName = fileElement.getAttributeValue("charset");
         Charset charset = CharsetToolkit.forName(charsetName);
-        if (charset == null) continue;
+        if (charset == null) {
+          continue;
+        }
+
         if (url.equals(PROJECT_URL)) {
           myProjectCharset = charset;
         }
@@ -113,12 +114,11 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       myMapping.putAll(mapping);
     }
 
-    String native2AsciiForPropertiesFiles = element.getAttributeValue("native2AsciiForPropertiesFiles");
-    myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(native2AsciiForPropertiesFiles);
+    myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
 
     myModificationTracker.incModificationCount();
-    }
+  }
 
   private void reloadAlreadyLoadedDocuments() {
     for (VirtualFile file : myMapping.keySet()) {
@@ -331,11 +331,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   @Nullable
   public Charset getConfiguredDefaultCharset() {
     return myProjectCharset;
-  }
-
-  @Override
-  public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
-    return true;
   }
 
   private static final ThreadLocal<Boolean> SUPPRESS_RELOAD = new ThreadLocal<>();

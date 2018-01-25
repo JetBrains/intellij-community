@@ -26,6 +26,7 @@ public class JavacOutputParser implements BuildOutputParser {
   private static final char COLON = ':';
   private static final String WARNING_PREFIX = "warning:"; // default value
 
+  @Override
   public boolean parse(@NotNull String line, @NotNull BuildOutputInstantReader reader, @NotNull Consumer<MessageEvent> messageConsumer) {
     int colonIndex1 = line.indexOf(COLON);
     if (colonIndex1 == 1) { // drive letter
@@ -37,18 +38,33 @@ public class JavacOutputParser implements BuildOutputParser {
       if (part1.equalsIgnoreCase("error") /* jikes */ || part1.equalsIgnoreCase("Caused by")) {
         // +1 so we don't include the colon
         String text = line.substring(colonIndex1 + 1).trim();
-        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, text));
+        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, text, line));
         return true;
       }
       if (part1.equalsIgnoreCase("warning")) {
         // +1 so we don't include the colon
         String text = line.substring(colonIndex1 + 1).trim();
-        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP, text));
+        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP, text, line));
         return true;
       }
       if (part1.equalsIgnoreCase("javac")) {
-        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line));
+        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line, line));
         return true;
+      }
+      if (part1.equalsIgnoreCase("Note")) {
+        String message = line.substring(colonIndex1 + 1).trim();
+        int javaFileExtensionIndex = message.indexOf(".java");
+        if (javaFileExtensionIndex > 0) {
+          File file = new File(message.substring(0, javaFileExtensionIndex + ".java".length()));
+          if (file.isFile()) {
+            message = message.substring(javaFileExtensionIndex + ".java".length() + 1);
+            String detailedMessage = amendNextInfoLinesIfNeeded(file.getPath() + ":\n" + message, reader);
+            messageConsumer.accept(new FileMessageEventImpl(reader.getBuildId(), MessageEvent.Kind.INFO, COMPILER_MESSAGES_GROUP,
+                                                            message, detailedMessage,
+                                                            new FilePosition(file, 0, 0)));
+            return true;
+          }
+        }
       }
 
       int colonIndex2 = line.indexOf(COLON, colonIndex1 + 1);
@@ -107,7 +123,7 @@ public class JavacOutputParser implements BuildOutputParser {
           if (column >= 0) {
             messageList = convertMessages(messageList);
             String msgText = StringUtil.join(messageList, SystemProperties.getLineSeparator());
-            messageConsumer.accept(new FileMessageEventImpl(reader.getBuildId(), kind, COMPILER_MESSAGES_GROUP, msgText,
+            messageConsumer.accept(new FileMessageEventImpl(reader.getBuildId(), kind, COMPILER_MESSAGES_GROUP, msgText, msgText,
                                                             new FilePosition(file, lineNumber - 1, column)));
             return true;
           }
@@ -118,23 +134,30 @@ public class JavacOutputParser implements BuildOutputParser {
     }
 
     if (line.endsWith("java.lang.OutOfMemoryError")) {
-      messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, "Out of memory."));
+      messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP,
+                                                  "Out of memory.", line));
       return true;
     }
 
     return false;
   }
 
-  private static void addMessage(@NotNull MessageEvent message, @NotNull List<MessageEvent> messages) {
-    boolean duplicatesPrevious = false;
-    int messageCount = messages.size();
-    if (messageCount > 0) {
-      MessageEvent lastMessage = messages.get(messageCount - 1);
-      duplicatesPrevious = lastMessage.equals(message);
+  private static String amendNextInfoLinesIfNeeded(String str, BuildOutputInstantReader reader) {
+    StringBuilder builder = new StringBuilder(str);
+    String nextLine = reader.readLine();
+    while (nextLine != null) {
+      if (nextLine.startsWith("Note: ")) {
+        int index = nextLine.indexOf(".java");
+        if (index < 0) {
+          builder.append("\n").append(nextLine.substring("Note: ".length()));
+          nextLine = reader.readLine();
+          continue;
+        }
+      }
+      reader.pushBack();
+      break;
     }
-    if (!duplicatesPrevious) {
-      messages.add(message);
-    }
+    return builder.toString();
   }
 
   @Contract("null -> false")

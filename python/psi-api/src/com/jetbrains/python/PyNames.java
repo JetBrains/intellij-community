@@ -463,6 +463,12 @@ public class PyNames {
     .put("__fspath__", _only_self_descr)
     .build();
 
+  @NotNull
+  private static final ImmutableMap<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .put("__getattr__", new BuiltinDescription("(name)"))
+    .put("__dir__", new BuiltinDescription("()"))
+    .build();
+
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
     if (level.isAtLeast(LanguageLevel.PYTHON36)) {
       return PY36_BUILTIN_METHODS;
@@ -476,6 +482,15 @@ public class PyNames {
     else {
       return PY2_BUILTIN_METHODS;
     }
+  }
+
+  @NotNull
+  public static ImmutableMap<String, BuiltinDescription> getModuleBuiltinMethods(@NotNull LanguageLevel level) {
+    if (level.isAtLeast(LanguageLevel.PYTHON37)) {
+      return PY37_MODULE_BUILTIN_METHODS;
+    }
+
+    return ImmutableMap.of();
   }
 
   // canonical names, not forced by interpreter

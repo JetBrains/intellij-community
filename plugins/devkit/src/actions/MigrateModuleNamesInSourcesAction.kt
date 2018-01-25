@@ -146,7 +146,7 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
     }
 
     fun processCodeUsages(moduleName: String, quotedString: String, groovyOnly: Boolean) {
-      val ignoredMethods = listOf("getPluginHomePath(", "getPluginHome(", "getPluginHomePathRelative(")
+      val ignoredMethods = listOf("getPluginHomePath(", "getPluginHome(", "getPluginHomePathRelative(", "dir(", "withProjectLibrary(", "directoryName = ")
       val quotedOccurrencesProcessor = TextOccurenceProcessor { element, offset ->
         if (element.text != quotedString) return@TextOccurenceProcessor true
         if (ignoredMethods.any {
@@ -181,8 +181,10 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
       progress.text2 = "Searching for \"$moduleName\""
       processCodeUsages(moduleName, "\"$moduleName\"", groovyOnly = false)
       processCodeUsages(moduleName, "'$moduleName'", groovyOnly = true)
-      processUsagesInStrings(moduleName, "production/$moduleName")
-      processUsagesInStrings(moduleName, "test/$moduleName")
+      if (moduleName != "resources") {
+        processUsagesInStrings(moduleName, "production/$moduleName")
+        processUsagesInStrings(moduleName, "test/$moduleName")
+      }
 
       val plainOccurrencesProcessor = TextOccurenceProcessor { element, offset ->
         val endOffset = offset + moduleName.length

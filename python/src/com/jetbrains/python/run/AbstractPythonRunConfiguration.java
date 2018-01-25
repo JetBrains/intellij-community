@@ -133,6 +133,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   protected abstract SettingsEditor<T> createConfigurationEditor();
 
+  /**
+   * <strong>Always call super</strong> when overwriting this method
+   */
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();

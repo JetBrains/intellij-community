@@ -96,6 +96,11 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-28017
+  public void testModuleGetAttr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

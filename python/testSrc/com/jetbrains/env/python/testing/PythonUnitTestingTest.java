@@ -16,6 +16,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
@@ -37,6 +38,7 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -60,17 +62,17 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testEmptyValidation() {
-    new ConfigurationTarget("", TestTargetType.PATH).checkValid();
+    new ConfigurationTarget("", PyRunTargetVariant.PATH).checkValid();
   }
 
-  @Test(expected = RuntimeConfigurationWarning.class)
+  @Test(expected = RuntimeConfigurationError.class)
   public void testPythonValidation() {
-    new ConfigurationTarget("c:/bad/", TestTargetType.PYTHON).checkValid();
+    new ConfigurationTarget("c:/bad/", PyRunTargetVariant.PYTHON).checkValid();
   }
 
   @Test
   public void testValidationOk() {
-    new ConfigurationTarget("foo.bar", TestTargetType.PYTHON).checkValid();
+    new ConfigurationTarget("foo.bar", PyRunTargetVariant.PYTHON).checkValid();
   }
 
   /**
@@ -183,7 +185,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void validateConfiguration() {
         final PyUnitTestConfiguration configuration = getConfiguration();
         configuration.setPattern("foo");
-        configuration.getTarget().setTargetType(TestTargetType.PATH);
+        configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("foo.py");
         configuration.checkConfiguration();
       }

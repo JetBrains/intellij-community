@@ -28,27 +28,33 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.actions.GitAbstractRebaseAction;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBrancher;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.branch.GitNewBranchOptions;
+import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.validators.GitNewBranchNameValidator;
 import icons.DvcsImplIcons;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.dvcs.ui.BranchActionGroupPopup.wrapWithMoreActionIfNeeded;
 import static com.intellij.dvcs.ui.BranchActionUtil.FAVORITE_BRANCH_COMPARATOR;
 import static com.intellij.dvcs.ui.BranchActionUtil.getNumOfTopShownBranches;
+import static com.intellij.util.ObjectUtils.notNull;
 import static git4idea.GitStatisticsCollectorKt.reportUsage;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
 import static git4idea.branch.GitBranchType.REMOTE;
+import static java.util.Arrays.asList;
 
 class GitBranchPopupActions {
 
@@ -67,6 +73,12 @@ class GitBranchPopupActions {
   ActionGroup createActions(@Nullable DefaultActionGroup toInsert, @NotNull String repoInfo, boolean firstLevelGroup) {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
+
+    if (myRepository.isRebaseInProgress()) {
+      GitRebaseSpec rebaseSpec = GitRepositoryManager.getInstance(myProject).getOngoingRebaseSpec();
+      popupGroup.addAll(
+        rebaseSpec != null && isSpecForRepo(rebaseSpec, myRepository) ? getRebaseActions() : createPerRepoRebaseActions(myRepository));
+    }
 
     popupGroup.addAction(new GitNewBranchAction(myProject, repositoryList));
     popupGroup.addAction(new CheckoutRevisionActions(myProject, repositoryList));
@@ -105,6 +117,45 @@ class GitBranchPopupActions {
     wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
                                getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
     return popupGroup;
+  }
+
+  private static boolean isSpecForRepo(@NotNull GitRebaseSpec spec, @NotNull GitRepository repository) {
+    Collection<GitRepository> repositoriesFromSpec = spec.getAllRepositories();
+    return repositoriesFromSpec.size() == 1 && repository.equals(ContainerUtil.getFirstItem(repositoriesFromSpec));
+  }
+
+  @NotNull
+  private static List<AnAction> createPerRepoRebaseActions(@NotNull GitRepository repository) {
+    return asList(createRepositoryRebaseAction("Git.Rebase.Abort", repository),
+                  createRepositoryRebaseAction("Git.Rebase.Continue", repository),
+                  createRepositoryRebaseAction("Git.Rebase.Skip", repository));
+  }
+
+  @NotNull
+  static List<AnAction> getRebaseActions() {
+    ActionManager actionManager = ActionManager.getInstance();
+    return asList(actionManager.getAction("Git.Rebase.Abort"),
+                  actionManager.getAction("Git.Rebase.Continue"),
+                  actionManager.getAction("Git.Rebase.Skip"));
+  }
+
+  @NotNull
+  private static AnAction createRepositoryRebaseAction(@NotNull String rebaseActionId, @NotNull GitRepository repository) {
+    GitAbstractRebaseAction rebaseAction = notNull((GitAbstractRebaseAction)ActionManager.getInstance().getAction(rebaseActionId));
+    DumbAwareAction repositoryAction = new DumbAwareAction() {
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabledAndVisible(repository.isRebaseInProgress());
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        rebaseAction.performInBackground(repository);
+      }
+    };
+    repositoryAction.getTemplatePresentation().copyFrom(rebaseAction.getTemplatePresentation());
+    return repositoryAction;
   }
 
   public static class GitNewBranchAction extends NewBranchAction<GitRepository> {

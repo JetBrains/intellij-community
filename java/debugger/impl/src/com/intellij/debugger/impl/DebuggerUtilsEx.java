@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -444,6 +442,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
+  @NotNull
   public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
     DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     if (fileType == null) {

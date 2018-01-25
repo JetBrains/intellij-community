@@ -197,14 +197,14 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         PsiFile psiFile = info.getFile();
         if (psiFile == null) return true;
 
-        return handleUsage(member, memberClass, memberFile, maxLevel, memberPackage, element, psiFile, foundUsage);
+        return handleUsage(member, memberClass, maxLevel, memberPackage, element, psiFile, foundUsage);
       });
 
       if (proceed && member instanceof PsiClass && LambdaUtil.isFunctionalClass((PsiClass)member)) {
         // there can be lambda implementing this interface implicitly
         FunctionalExpressionSearch.search((PsiClass)member).forEach(functionalExpression -> {
           PsiFile psiFile = functionalExpression.getContainingFile();
-          return handleUsage(member, memberClass, memberFile, maxLevel, memberPackage, functionalExpression, psiFile, foundUsage);
+          return handleUsage(member, memberClass, maxLevel, memberPackage, functionalExpression, psiFile, foundUsage);
         });
       }
       if (!foundUsage.get() && !entryPoint) {
@@ -227,7 +227,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
 
     private boolean handleUsage(@NotNull PsiMember member,
                                 @Nullable PsiClass memberClass,
-                                @NotNull PsiFile memberFile,
                                 @NotNull AtomicInteger maxLevel,
                                 @Nullable PsiPackage memberPackage,
                                 @NotNull PsiElement element,
@@ -240,7 +239,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         return false; // referenced from XML, has to be public
       }
       @PsiUtil.AccessLevel
-      int level = getEffectiveLevel(element, psiFile, member, memberFile, memberClass, memberPackage);
+      int level = getEffectiveLevel(element, psiFile, member, memberClass, memberPackage);
       log("    ref in file " + psiFile.getName() + "; level = " + PsiUtil.getAccessModifier(level) + "; (" + element + ")");
       maxLevel.getAndAccumulate(level, Math::max);
 
@@ -251,7 +250,6 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     private int getEffectiveLevel(@NotNull PsiElement element,
                                   @NotNull PsiFile file,
                                   @NotNull PsiMember member,
-                                  @NotNull PsiFile memberFile,
                                   PsiClass memberClass,
                                   PsiPackage memberPackage) {
       PsiClass innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
@@ -312,7 +310,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
   @Nullable
   private static PsiPackage getPackage(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    PsiDirectory directory = file.getContainingDirectory();
+    PsiDirectory directory = file == null ? null : file.getContainingDirectory();
     return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
   }
 

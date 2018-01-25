@@ -46,6 +46,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -67,8 +68,15 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                    @NotNull UsageViewPresentation presentation,
                                    Factory<UsageSearcher> usageSearcherFactory) {
     UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
-    appendUsages(usages, usageView);
+    usageView.appendUsagesInBulk(Arrays.asList(usages));
+    ProgressManager.getInstance().run(new Task.Modal(myProject, "Waiting For Usages", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        usageView.waitForUpdateRequestsCompletion();
+      }
+    });
     usageView.setSearchInProgress(false);
+
     return usageView;
   }
 
@@ -203,14 +211,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (activateWindow && !toolWindow.isActive()) {
       toolWindow.activate(null);
     }
-  }
-
-  protected static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      for (Usage foundUsage : foundUsages) {
-        usageView.appendUsage(foundUsage);
-      }
-    });
   }
 
 

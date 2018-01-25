@@ -108,16 +108,16 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
-      Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
+      Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
-        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
+        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }
-      if (isProblemDescriptorsAcceptable() && descriptors.get().length > 0) {
+      if (isProblemDescriptorsAcceptable() && descriptors.get().size() > 0) {
         doApplyFix(view.getProject(), descriptors.get(), readOnlyFiles, tree.getContext());
       } else {
         doApplyFix(getSelectedElements(view), view);
@@ -136,10 +136,10 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
                           @NotNull Set<PsiElement> ignoredElements) {
   }
 
-  private void doApplyFix(@NotNull final Project project,
-                          @NotNull final CommonProblemDescriptor[] descriptors,
+  private void doApplyFix(@NotNull Project project,
+                          @NotNull List<CommonProblemDescriptor[]> descriptors,
                           @NotNull Set<VirtualFile> readOnlyFiles,
-                          @NotNull final GlobalInspectionContextImpl context) {
+                          @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
     
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
@@ -163,7 +163,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
   
   protected void performFixesInBatch(@NotNull Project project,
-                                     @NotNull CommonProblemDescriptor[] descriptors,
+                                     @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<PsiElement> ignoredElements) {
     final String templatePresentationText = getTemplatePresentation().getText();
@@ -310,7 +310,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     private final Set<PsiElement> myIgnoredElements;
 
     PerformFixesTask(@NotNull Project project,
-                     @NotNull CommonProblemDescriptor[] descriptors,
+                     @NotNull List<CommonProblemDescriptor[]> descriptors,
                      @NotNull Set<PsiElement> ignoredElements,
                      @NotNull GlobalInspectionContextImpl context) {
       super(project, descriptors);

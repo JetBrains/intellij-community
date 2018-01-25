@@ -51,6 +51,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.references.PyFromImportNameReference;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -557,43 +558,43 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (PyNames.COMPARISON_OPERATORS.contains(expr.getReferencedName())) {
             return;
           }
-          final PyExpression qualifier = expr.getQualifier();
-          if (qualifier != null) {
-            PyType type = myTypeEvalContext.getType(qualifier);
-            if (type != null) {
-              if (ignoreUnresolvedMemberForType(type, reference, refName)) {
-                return;
-              }
-              addCreateMemberFromUsageFixes(type, reference, refText, actions);
-              if (type instanceof PyClassType) {
-                final PyClassType classType = (PyClassType)type;
-                if (reference instanceof PyOperatorReference) {
-                  String className = type.getName();
-                  if (classType.isDefinition()) {
-                    final PyClassLikeType metaClassType = classType.getMetaClassType(myTypeEvalContext, true);
-                    if (metaClassType != null) {
-                      className = metaClassType.getName();
-                    }
+        }
+        final PyExpression qualifier = getReferenceQualifier(reference);
+        if (qualifier != null) {
+          final PyType type = myTypeEvalContext.getType(qualifier);
+          if (type != null) {
+            if (ignoreUnresolvedMemberForType(type, reference, refName)) {
+              return;
+            }
+            addCreateMemberFromUsageFixes(type, reference, refText, actions);
+            if (type instanceof PyClassType) {
+              final PyClassType classType = (PyClassType)type;
+              if (reference instanceof PyOperatorReference) {
+                String className = type.getName();
+                if (classType.isDefinition()) {
+                  final PyClassLikeType metaClassType = classType.getMetaClassType(myTypeEvalContext, true);
+                  if (metaClassType != null) {
+                    className = metaClassType.getName();
                   }
-                  description = PyBundle.message("INSP.unresolved.operator.ref",
-                                                 className, refName,
-                                                 ((PyOperatorReference)reference).getReadableOperatorName());
                 }
-                else {
-                  final List<String> slots = classType.getPyClass().getOwnSlots();
-
-                  if (slots != null && slots.contains(refName)) {
-                    return;
-                  }
-
-                  description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
-                }
-                markedQualified = true;
+                description = PyBundle.message("INSP.unresolved.operator.ref",
+                                               className, refName,
+                                               ((PyOperatorReference)reference).getReadableOperatorName());
               }
               else {
-                description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
-                markedQualified = true;
+                final List<String> slots = classType.getPyClass().getOwnSlots();
+
+                if (slots != null && slots.contains(refName)) {
+                  return;
+                }
+
+                description = PyBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
               }
+              markedQualified = true;
+            }
+            else {
+              description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
+              markedQualified = true;
             }
           }
         }
@@ -655,6 +656,30 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
 
       registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
+
+    @Nullable
+    private static PyExpression getReferenceQualifier(@NotNull PsiReference reference) {
+      final PsiElement element = reference.getElement();
+
+      if (element instanceof PyQualifiedExpression) {
+        final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
+        if (qualifier != null) {
+          return qualifier;
+        }
+      }
+
+      if (reference instanceof PyFromImportNameReference) {
+        final PyFromImportStatement statement = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
+        if (statement != null) {
+          final PyReferenceExpression source = statement.getImportSource();
+          if (source != null) {
+            return source;
+          }
+        }
+      }
+
+      return null;
     }
 
     private static void addInstallPackageAction(List<LocalQuickFix> actions, String packageName, Module module, Sdk sdk) {
@@ -807,6 +832,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (type instanceof PyUnionType) {
         return ContainerUtil.exists(((PyUnionType)type).getMembers(), member -> ignoreUnresolvedMemberForType(member, reference, name));
+      }
+      if (type instanceof PyModuleType) {
+        final PyFile module = ((PyModuleType)type).getModule();
+        if (module.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON37)) {
+          return PyTypeChecker.definesGetAttr(module, myTypeEvalContext);
+        }
       }
       for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
         if (extension.ignoreUnresolvedMember(type, name, myTypeEvalContext)) {

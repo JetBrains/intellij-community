@@ -46,7 +46,8 @@ public class LaterInvocator {
     @NotNull private final Condition<?> expired;
     @Nullable private final ActionCallback callback;
 
-    RunnableInfo(@Debugger.Capture @NotNull Runnable runnable,
+    @Debugger.Capture
+    RunnableInfo(@NotNull Runnable runnable,
                  @NotNull ModalityState modalityState,
                  @NotNull Condition<?> expired,
                  @Nullable ActionCallback callback) {
@@ -428,7 +429,7 @@ public class LaterInvocator {
 
       if (lastInfo != null) {
         try {
-          doRun(lastInfo.runnable);
+          doRun(lastInfo);
           lastInfo.markDone();
         }
         catch (ProcessCanceledException ignored) { }
@@ -443,8 +444,8 @@ public class LaterInvocator {
     }
 
     // Extracted to have a capture point
-    private static void doRun(@Debugger.Insert Runnable runnable) {
-      runnable.run();
+    private static void doRun(@Debugger.Insert RunnableInfo info) {
+      info.runnable.run();
     }
 
     @Override

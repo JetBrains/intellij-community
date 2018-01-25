@@ -99,7 +99,7 @@ class ApplyPatchChange {
     TextDiffType type = getDiffType();
     boolean resolved = isRangeApplied();
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, false, resolved, false, false));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, false, resolved, false, false, false));
   }
 
   private void createStatusHighlighter() {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
 import sun.misc.JavaLangAccess;
@@ -42,8 +40,7 @@ public class CaptureStorage {
       if (DEBUG) {
         System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
       }
-      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-      CapturedStack stack = createCapturedStack(exception, currentStacks.isEmpty() ? null : currentStacks.getLast());
+      CapturedStack stack = createCapturedStack(exception, CURRENT_STACKS.get().peekLast());
       WeakKey keyRef = new WeakKey(key);
       synchronized (HISTORY) {
         CapturedStack old = STORAGE.put(keyRef, stack);
@@ -73,7 +70,7 @@ public class CaptureStorage {
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       if (stack != null) {
         Throwable exception = new Throwable();
-        currentStacks.add(new InsertMatch(stack, getStackTraceDepth(exception)));
+        currentStacks.add(new InsertMatch(stack, exception));
         if (DEBUG) {
           System.out.println("insert " + getCallerDescriptor(exception) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
         }
@@ -165,7 +162,7 @@ public class CaptureStorage {
       }
       else {
         List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
-        int insertPos = stackTrace.length - myInsertMatch.myDepth + 2;
+        int insertPos = stackTrace.length - myInsertMatch.getDepth() + 2;
         ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>(insertPos + insertStack.size() + 1);
         res.addAll(Arrays.asList(stackTrace).subList(1, insertPos));
         res.add(null);
@@ -177,13 +174,22 @@ public class CaptureStorage {
 
   private static class InsertMatch {
     private final CapturedStack myStack;
-    private final int myDepth;
+    private final Throwable myException;
 
-    static final InsertMatch EMPTY = new InsertMatch(null, 0);
+    static final InsertMatch EMPTY = new InsertMatch(null, null) {
+      @Override
+      int getDepth() {
+        return 0;
+      }
+    };
 
-    private InsertMatch(CapturedStack stack, int depth) {
+    private InsertMatch(CapturedStack stack, Throwable exception) {
       myStack = stack;
-      myDepth = depth;
+      myException = exception;
+    }
+
+    int getDepth() {
+      return getStackTraceDepth(myException);
     }
   }
 

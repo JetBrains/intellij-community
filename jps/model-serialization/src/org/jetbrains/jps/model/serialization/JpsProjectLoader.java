@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -123,14 +121,25 @@ public class JpsProjectLoader extends JpsLoaderBase {
   protected <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     Path externalConfigDir = resolveExternalProjectConfig("project");
     Element data = super.loadComponentData(serializer, configFile);
-    if (externalConfigDir != null && serializer.getComponentName().equals("CompilerConfiguration")) {
-      Element externalData = JDomSerializationUtil.findComponent(loadRootElement(externalConfigDir.resolve(configFile.getFileName())), "External" + serializer.getComponentName());
-      if (data == null) {
-        return externalData;
+    String componentName = serializer.getComponentName();
+    if (externalConfigDir == null || !(componentName.equals("CompilerConfiguration"))) {
+      return data;
+    }
+
+    String prefixedComponentName = "External" + componentName;
+    Element externalData = null;
+    for (Element child : (JDOMUtil.getChildren(loadRootElement(externalConfigDir.resolve(configFile.getFileName()))))) {
+      // be ready to handle both original name and prefixed
+      if (child.getName().equals(prefixedComponentName) || child.getName().equals(componentName)) {
+        externalData = child;
+        break;
       }
-      else if (externalData != null) {
-        return JDOMUtil.deepMerge(data, externalData);
-      }
+    }
+    if (data == null) {
+      return externalData;
+    }
+    else if (externalData != null) {
+      return JDOMUtil.deepMerge(data, externalData);
     }
     return data;
   }
@@ -200,6 +209,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Runnable artifactsTimingLog = TimingLog.startActivity("loading artifacts");
     for (Path artifactFile : listXmlFiles(dir.resolve("artifacts"))) {
       loadArtifacts(loadRootElement(artifactFile));
+    }
+    if (externalConfigDir != null) {
+      loadArtifacts(loadRootElement(externalConfigDir.resolve("artifacts.xml")));
     }
     artifactsTimingLog.run();
 

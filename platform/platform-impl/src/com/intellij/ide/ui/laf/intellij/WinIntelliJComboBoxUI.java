@@ -213,6 +213,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
       @Override
       public void paint(Graphics g) {
+        if (!UIUtil.isUnderWin10LookAndFeel()) return; // Paint events may still arrive after UI switch until entire UI is updated.
+
         Graphics2D g2 = (Graphics2D)g.create();
         try {
           Rectangle outerRect = new Rectangle(getSize());
@@ -250,11 +252,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           }
 
           Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
-          if (icon != null) {
-            int x = JBUI.scale(5);
-            int y = (getHeight() - icon.getIconHeight()) / 2;
-            icon.paintIcon(this, g2, x, y);
-          }
+          int x = JBUI.scale(5);
+          int y = (getHeight() - icon.getIconHeight()) / 2;
+          icon.paintIcon(this, g2, x, y);
         } finally {
           g2.dispose();
         }

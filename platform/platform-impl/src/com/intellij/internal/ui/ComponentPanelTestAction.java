@@ -8,9 +8,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.ComponentPanel;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
@@ -25,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
@@ -41,7 +44,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   private static class ComponentPanelTest extends DialogWrapper {
     private final Project myProject;
     private final Alarm myAlarm = new Alarm(getDisposable());
-    private ProgressTimerRequest timerRequest;
+    private ProgressTimerRequest progressTimerRequest;
 
     private ComponentPanelTest(Project project) {
       super(project);
@@ -68,12 +71,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       tabs.addListener(new TabsListener.Adapter(){
         @Override
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-          if (timerRequest != null && timerRequest.canPlay()) {
-            if (newSelection == progressTab) {
-              myAlarm.addRequest(timerRequest, 200, ModalityState.any());
-            } else {
-              myAlarm.cancelRequest(timerRequest);
-            }
+          if (newSelection == progressTab) {
+            myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
+          } else {
+            myAlarm.cancelRequest(progressTimerRequest);
           }
         }
       });
@@ -86,17 +87,28 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       panel.setBorder(JBUI.Borders.emptyTop(5));
 
-      JTextField text = new JTextField();
-      Dimension d = text.getPreferredSize();
-      text.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
+      JTextField text1 = new JTextField();
+      Dimension d = text1.getPreferredSize();
+      text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
 
-      panel.add(UI.PanelFactory.panel(text).
+      panel.add(UI.PanelFactory.panel(text1).
         withLabel("&Textfield:").
         withComment("Textfield description").
         moveCommentRight().createPanel());
 
-      panel.add(UI.PanelFactory.panel(new JTextField()).
+      JTextField text2 = new JTextField();
+      panel.add(UI.PanelFactory.panel(text2).
         withLabel("&Path:").createPanel());
+
+      ComponentPanel cp = ComponentPanel.getComponentPanel(text2);
+      text1.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          if (cp != null) {
+            cp.setCommentText(text1.getText());
+          }
+        }
+      });
 
       panel.add(UI.PanelFactory.panel(new JCheckBox("This is a checkbox 1")).
         withComment("My long long long long long long long long long long comment").
@@ -207,21 +219,23 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       }
 
       @Override public void run() {
-        int v = myProgressBar.getValue() + 1;
-        if (v > myProgressBar.getMaximum()) {
-          v = myProgressBar.getMinimum();
-        }
-        myProgressBar.setValue(v);
+        if (canPlay()) {
+          int v = myProgressBar.getValue() + 1;
+          if (v > myProgressBar.getMaximum()) {
+            v = myProgressBar.getMinimum();
+          }
+          myProgressBar.setValue(v);
 
-        ProgressPanel progressPanel = ProgressPanel.forComponent(myProgressBar);
-        if (progressPanel != null) {
-          progressPanel.setCommentText(Integer.toString(v));
+          ProgressPanel progressPanel = ProgressPanel.getProgressPanel(myProgressBar);
+          if (progressPanel != null) {
+            progressPanel.setCommentText(Integer.toString(v));
+          }
+          myAlarm.addRequest(this, 200, ModalityState.any());
         }
-        myAlarm.addRequest(this, 200, ModalityState.any());
       }
 
       private boolean canPlay() {
-        ProgressPanel progressPanel = ProgressPanel.forComponent(myProgressBar);
+        ProgressPanel progressPanel = ProgressPanel.getProgressPanel(myProgressBar);
         return progressPanel != null && progressPanel.getState() == ProgressPanel.State.PLAYING;
       }
     }
@@ -233,11 +247,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JProgressBar pb1 = new JProgressBar(0, 100);
       JProgressBar pb2 = new JProgressBar(0, 100);
 
-      timerRequest = new ProgressTimerRequest(pb1);
+      progressTimerRequest = new ProgressTimerRequest(pb1);
 
-      myAlarm.addRequest(timerRequest, 200, ModalityState.any());
+      myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
 
-      ProgressPanel progressPanel = ProgressPanel.forComponent(pb1);
+      ProgressPanel progressPanel = ProgressPanel.getProgressPanel(pb1);
       if (progressPanel != null) {
         progressPanel.setCommentText(Integer.toString(0));
       }
@@ -245,7 +259,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.add(UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(pb1).
           withLabel("Label 1.1").
-          withCancel(()-> myAlarm.cancelRequest(timerRequest)).
+          withCancel(()-> myAlarm.cancelRequest(progressTimerRequest)).
           andCancelText("Stop")).
         add(UI.PanelFactory.panel(pb2).
           withLabel("Label 1.2").
@@ -254,8 +268,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         expandVertically().
         createPanel());
 
-      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb1)).setCommentText("Long long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb2)).setCommentText("Short text");
+      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb1)).setCommentText("Long long long long long long long text");
+      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb2)).setCommentText("Short text");
 
       JProgressBar pb3 = new JProgressBar(0, 100);
       JProgressBar pb4 = new JProgressBar(0, 100);
@@ -271,8 +285,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         expandVertically().
         createPanel());
 
-      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb3)).setCommentText("Long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb4)).setCommentText("Short text");
+      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb3)).setCommentText("Long long long long long long text");
+      ObjectUtils.assertNotNull(ProgressPanel.getProgressPanel(pb4)).setCommentText("Short text");
 
       panel.add(UI.PanelFactory.grid().
         add(UI.PanelFactory.panel(new JProgressBar(0, 100)).

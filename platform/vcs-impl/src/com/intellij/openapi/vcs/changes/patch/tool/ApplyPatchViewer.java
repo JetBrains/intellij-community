@@ -741,10 +741,9 @@ class ApplyPatchViewer implements DataProvider, Disposable {
         LineRange patchRange = change.getPatchRange();
         assert resultRange != null;
 
-        Color color = change.getDiffType().getColor(myPatchEditor);
-
         // do not abort - ranges are ordered in patch order, but they can be not ordered in terms of resultRange
-        handler.process(resultRange.start, resultRange.end, patchRange.start, patchRange.end, color, change.isResolved());
+        handler.processResolvable(resultRange.start, resultRange.end, patchRange.start, patchRange.end,
+                                  myPatchEditor, change.getDiffType(), change.isResolved());
       }
     }
   }

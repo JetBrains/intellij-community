@@ -919,9 +919,16 @@ public class AbstractPopup implements JBPopup {
 
     final Window window = getContentWindow(myContent);
 
+    window.setFocusableWindowState(myRequestFocus);
+    window.setFocusable(myRequestFocus);
+    // temporary w/a (will be brought back in jdk)
+    if (SystemInfo.isJetBrainsJvm) {
+      window.setType(Window.Type.POPUP);
+    }
+    // Swing popup default always on top state is set in true
+    window.setAlwaysOnTop(false);
+
     if (myFocusable) {
-      window.setFocusableWindowState(true);
-      window.setFocusable(true);
       window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
@@ -954,9 +961,7 @@ public class AbstractPopup implements JBPopup {
       });
     }
 
-    if (!myRequestFocus) {
-      window.setAutoRequestFocus(false);
-    }
+    window.setAutoRequestFocus(myRequestFocus);
 
     myPopup.show();
 
@@ -1003,7 +1008,9 @@ public class AbstractPopup implements JBPopup {
         _requestFocus();
       }
 
-      window.setAutoRequestFocus(true);
+
+      window.setAutoRequestFocus(myRequestFocus);
+
       SwingUtilities.invokeLater(afterShow);
       delayKeyEventsUntilFocusSettlesDown();
     } else {

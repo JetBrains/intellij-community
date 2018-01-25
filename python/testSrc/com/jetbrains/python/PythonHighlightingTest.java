@@ -276,6 +276,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
+  // PY-28017
+  public void testAsyncModuleBuiltinMethods() {
+    doTest(LanguageLevel.PYTHON37, true, false);
+  }
+
+  // PY-28017
+  public void testModuleBuiltinMethods() {
+    doTest(LanguageLevel.PYTHON37, false, true);
+  }
+
   public void testImplicitOctLongInteger() {
     doTest(LanguageLevel.PYTHON35, true, false);
   }

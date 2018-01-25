@@ -64,3 +64,14 @@ class D1:
     b: int
 
 D1(<arg7>)
+
+
+@dataclasses.dataclass
+class E1:
+    a: int = dataclasses.field()
+    b: int = dataclasses.field(init=True)
+    c: int = dataclasses.field(init=False)
+    d: int = dataclasses.field(default=1)
+    e: int = dataclasses.field(default_factory=int)
+
+E1(<arg8>)

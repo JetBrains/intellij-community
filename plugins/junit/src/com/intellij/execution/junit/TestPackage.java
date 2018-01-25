@@ -29,6 +29,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -37,6 +38,7 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -84,14 +86,10 @@ public class TestPackage extends TestObject {
             if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
               String packageName = getPackageName(data);
               PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
-              PsiClass[] classes = aPackage == null
-                                   ? PsiClass.EMPTY_ARRAY
-                                   : ReadAction.compute(() ->
-                                                          aPackage.getClasses(GlobalSearchScope.projectScope(myProject)
-                                                                                               .intersectWith(classFilter.getScope())));
-              Arrays.stream(classes)
-                    .filter(aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)))
-                    .forEach(myClasses::add);
+              if (aPackage != null) {
+                collectClassesRecursively(aPackage, GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope()),
+                                          aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)));
+              }
             }
             else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
               String packageName = getPackageName(data);
@@ -111,6 +109,24 @@ public class TestPackage extends TestObject {
           catch (CantRunException ignored) {}
           finally {
             instance.setAlternativeResolveEnabled(false);
+          }
+        }
+      }
+
+      private void collectClassesRecursively(PsiPackage aPackage,
+                                             GlobalSearchScope scope,
+                                             Condition<PsiClass> acceptAsTest) {
+        PsiPackage[] psiPackages = ReadAction.compute(() -> aPackage.getSubPackages(scope));
+        for (PsiPackage psiPackage : psiPackages) {
+          collectClassesRecursively(psiPackage, scope, acceptAsTest);
+        }
+        PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
+        for (PsiClass aClass : psiClasses) {
+          if (Registry.is("junit4.accept.inner.classes", true)) {
+            myClasses.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).filter(acceptAsTest).toList()));
+          }
+          else if (acceptAsTest.value(aClass)) {
+            myClasses.add(aClass);  
           }
         }
       }

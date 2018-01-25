@@ -498,8 +498,12 @@ class SearchForUsagesRunnable implements Runnable {
       }
     }
 
+    UsageViewImpl usageView = myUsageViewRef.get();
+    if (usageView != null) {
+      usageView.waitForUpdateRequestsCompletion();
+    }
     if (myListener != null) {
-      myListener.findingUsagesFinished(myUsageViewRef.get());
+      myListener.findingUsagesFinished(usageView);
     }
   }
 

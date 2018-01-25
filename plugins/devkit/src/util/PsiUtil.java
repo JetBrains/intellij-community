@@ -165,7 +165,7 @@ public class PsiUtil {
         continue;
       }
       if (dir.findChild("idea.iml") != null || dir.findChild("community-main.iml") != null
-          || dir.findChild("intellij.ideaCommunity.main.iml") != null || dir.findChild("intellij.ideaUltimate.main.iml") != null) {
+          || dir.findChild("intellij.idea.community.main.iml") != null || dir.findChild("intellij.idea.ultimate.main.iml") != null) {
         return true;
       }
     }
