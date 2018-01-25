@@ -59,10 +59,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -908,5 +905,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
     }
     return baseDir;
+  }
+
+  @NotNull
+  protected static VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
+    File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
+    FileUtil.ensureExists(moduleDir);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
   }
 }

@@ -88,6 +88,7 @@ import java.util.function.Function;
 import java.util.jar.JarFile;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author yole
@@ -237,7 +238,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    Assert.assertEquals(expected, treeStringPresentation);
+    assertEquals(expected, treeStringPresentation);
   }
 
   public static void expand(JTree tree, int... rows) {
@@ -499,7 +500,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
-    Assert.assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
+    assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
   }
 
   @NotNull
@@ -591,7 +592,7 @@ public class PlatformTestUtil {
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
     if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
     if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
   }
 
   @NotNull
@@ -862,7 +863,7 @@ public class PlatformTestUtil {
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    Assert.assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
+    assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -889,7 +890,7 @@ public class PlatformTestUtil {
       }
     }
 
-    Assert.assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
+    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
   }
 
   private static String sortAndJoin(List<String> strings) {
@@ -967,7 +968,7 @@ public class PlatformTestUtil {
   @Deprecated
   public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
+      assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -1061,7 +1062,7 @@ public class PlatformTestUtil {
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
-      Assert.assertEquals(output.getStdout(), 0, output.getExitCode());
+      assertEquals(output.getStdout(), 0, output.getExitCode());
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e);
@@ -1166,8 +1167,8 @@ public class PlatformTestUtil {
         int result12 = comparator.compare(value1, value2);
         int result21 = comparator.compare(value2, value1);
         if (equality.equals(value1, value2)) {
-          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
-          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
         }
         else {
           if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
