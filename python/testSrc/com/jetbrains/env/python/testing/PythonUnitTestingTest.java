@@ -16,6 +16,7 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.sm.ServiceMessageBuilder;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
@@ -64,7 +65,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
     new ConfigurationTarget("", PyRunTargetVariant.PATH).checkValid();
   }
 
-  @Test(expected = RuntimeConfigurationWarning.class)
+  @Test(expected = RuntimeConfigurationError.class)
   public void testPythonValidation() {
     new ConfigurationTarget("c:/bad/", PyRunTargetVariant.PYTHON).checkValid();
   }
