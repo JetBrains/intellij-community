@@ -96,12 +96,13 @@ public class IconsLoadTime extends DumbAwareAction {
     List<Integer> stats = getStats(type);
     if (stats == null || stats.isEmpty()) return null;
 
-    int size = stats.size();
-    int sum = stats.stream().mapToInt(Integer::intValue).sum();
-    int average = sum / size;
-    int median = (size % 2 == 0) ? stats.get(size / 2 - 1) + stats.get(size / 2) : stats.get(size / 2);
-
-    return new StatData(type, measureStartupLoad, sum, average, median, size);
+    synchronized (stats) {
+      int size = stats.size();
+      int sum = stats.stream().mapToInt(Integer::intValue).sum();
+      int average = sum / size;
+      int median = (size % 2 == 0) ? stats.get(size / 2 - 1) + stats.get(size / 2) : stats.get(size / 2);
+      return new StatData(type, measureStartupLoad, sum, average, median, size);
+    }
   }
 
   private static Image measure(LoadFunction func, Type type) throws IOException {
@@ -112,8 +113,12 @@ public class IconsLoadTime extends DumbAwareAction {
     Image img = func.load(null, null);
 
     if (measure) {
-      stats.add((int)(System.nanoTime() - t));
-      if (stats.size() == FIXED_SCOPE) log(false, type);
+      int size;
+      synchronized (stats) {
+        stats.add((int)(System.nanoTime() - t));
+        size = stats.size();
+      }
+      if (size == FIXED_SCOPE) log(false, type);
     }
     return img;
   }
