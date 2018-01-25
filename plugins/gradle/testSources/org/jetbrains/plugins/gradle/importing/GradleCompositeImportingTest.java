@@ -140,7 +140,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
 
   @Test
-  @TargetVersions("3.3+")
+  @TargetVersions("4.0+")
   public void testCompositeBuildWithGradleProjectDuplicates() throws Exception {
     createSettingsFile("rootProject.name = 'app'\n" +
                        "include 'runtime'\n" +
