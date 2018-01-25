@@ -37,7 +37,13 @@ target("default": "Run UI tests") {
     "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
     "-XX:+UseCodeCacheFlushing",
     "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin,${home}/../../bazel-genfiles/tools/adt/idea/android-uitests/aswb",
-    "-Denable.nav.editor=true"
+    "-Denable.nav.editor=true",
+    "-javaagent:${home}/plugins/coverage/lib/jacocoagent.jar="
+    + "destfile=${home}/../../out/uicoverage/jacoco.exec"
+    + ",classdumpdir=${home}/../../out/uicoverage/classes"
+    + ",inclnolocationclasses=true"
+    + ",includes=org.jetbrains.android.*:com.android.tools.idea.*:com.android.tools.ndk.*:com.google.gct.*"
+    + ",excludes=*Test:*Test\$*:*TestCase:*TestCase\$*:*\$\$EnhancerBy*:org.jetbrains.android.maven.*:org.jetbrains.android.compiler.*",
   ]
 
   TestingTasks.create(context, options).runTests(jvmArgs, "android-uitests", null)
