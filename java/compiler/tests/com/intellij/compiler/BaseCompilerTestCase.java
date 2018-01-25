@@ -310,8 +310,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected Module doCreateRealModule(String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
-    final VirtualFile baseDir = myProject.getBaseDir();
-    Assert.assertNotNull(baseDir);
+    final VirtualFile baseDir = getProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     PlatformTestCase.myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {

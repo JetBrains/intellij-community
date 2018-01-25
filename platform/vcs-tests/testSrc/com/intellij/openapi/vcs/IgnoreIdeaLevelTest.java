@@ -85,11 +85,14 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myVcsManager.unregisterVcs(myVcs);
+    try {
+      myVcsManager.unregisterVcs(myVcs);
 
-    UsefulTestCase.clearDeclaredFields(this, IgnoreIdeaLevelTest.class);
-
-    super.tearDown();
+      UsefulTestCase.clearDeclaredFields(this, IgnoreIdeaLevelTest.class);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   // translates ignored path as if it was entered into a dialog

@@ -30,6 +30,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.PathUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,8 +141,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     }.execute().getResultObject();
     PlatformTestUtil.saveProject(getProject());
 
-    VirtualFile fileUnderNonProjectModuleDir 
-      = createFileExternally(new File(moduleWithoutContentRoot.getModuleFile().getParent().getPath()));
+    VirtualFile fileUnderNonProjectModuleDir = createFileExternally(new File(PathUtil.getParentPath(moduleWithoutContentRoot.getModuleFilePath())));
     
     assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
 
