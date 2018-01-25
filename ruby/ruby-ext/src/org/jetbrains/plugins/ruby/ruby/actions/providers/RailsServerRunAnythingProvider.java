@@ -35,7 +35,7 @@ public class RailsServerRunAnythingProvider extends RubyRunAnythingProviderBase<
     List<String> serverOptions = ContainerUtil.newArrayList();
 
     State state = SERVER;
-    for (String argument : StringUtil.split(getArguments(commandLine), " ")) {
+    for (String argument : getArguments(commandLine)) {
       if (!StringUtil.startsWith(argument, "-")) {
         switch (state) {
           case SERVER:
@@ -64,7 +64,7 @@ public class RailsServerRunAnythingProvider extends RubyRunAnythingProviderBase<
       else if (argument.equals(PARAM_SERVER_ENVIRONMENT) || argument.equals("--environment")) {
         state = ENV;
       }
-      else if (argument.startsWith("-") && argument.length() > 1 || argument.startsWith("--") && argument.length() > 2) {
+      else if (argument.startsWith("-") && argument.length() > 1) {
         serverOptions.add(argument);
       }
     }

@@ -29,14 +29,14 @@ public class CapistranoRunAnythingProvider extends RubyRunAnythingProviderBase<C
                            @NotNull String commandLine) {
     List<String> options = ContainerUtil.newArrayList();
     boolean isStage = true;
-    for (String argument : StringUtil.split(getArguments(commandLine), " ")) {
+    for (String argument : getArguments(commandLine)) {
       if (isStage) {
         configuration.setStage(argument);
         isStage = false;
         continue;
       }
 
-      if (argument.startsWith("-") && argument.length() > 1 || argument.startsWith("--") && argument.length() > 2) {
+      if (argument.startsWith("-") && argument.length() > 1) {
         options.add(argument);
         continue;
       }

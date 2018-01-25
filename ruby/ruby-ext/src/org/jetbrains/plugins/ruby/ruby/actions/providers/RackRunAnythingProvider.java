@@ -28,7 +28,7 @@ public class RackRunAnythingProvider extends RubyRunAnythingProviderBase<RackRun
   @Override
   void extendConfiguration(@NotNull RackRunConfiguration configuration, @NotNull VirtualFile baseDirectory, @NotNull String commandLine) {
     State state = CONFIG;
-    for (String argument : StringUtil.split(getArguments(commandLine), " ")) {
+    for (String argument : getArguments(commandLine)) {
       if (!StringUtil.startsWith(argument, "-")) {
         switch (state) {
           case SERVER:

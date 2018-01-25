@@ -25,10 +25,6 @@ public class IrbRunAnythingProvider extends RubyRunAnythingProviderBase<IrbRunCo
   void extendConfiguration(@NotNull IrbRunConfiguration configuration,
                            @NotNull VirtualFile baseDirectory,
                            @NotNull String commandLine) {
-    String arguments = getArguments(commandLine);
-    if (arguments != null) {
-      String path = baseDirectory.getPath() + VFS_SEPARATOR_CHAR + arguments;
-      configuration.setScriptPath(path);
-    }
+    //hasn't implemented yet
   }
 }

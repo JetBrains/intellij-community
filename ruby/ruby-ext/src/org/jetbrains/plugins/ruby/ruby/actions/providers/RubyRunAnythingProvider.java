@@ -31,13 +31,13 @@ public class RubyRunAnythingProvider extends RubyRunAnythingProviderBase<RubyRun
     List<String> scriptArguments = ContainerUtil.newArrayList();
 
     boolean isProgramParameters = false;
-    for (String argument : StringUtil.split(getArguments(commandLine), " ")) {
+    for (String argument : getArguments(commandLine)) {
       if (isProgramParameters) {
         scriptArguments.add(argument);
         continue;
       }
 
-      if (argument.startsWith("-") && argument.length() > 1 || argument.startsWith("--") && argument.length() > 2) {
+      if (argument.startsWith("-") && argument.length() > 1) {
         rubyOptions.add(argument);
         continue;
       }

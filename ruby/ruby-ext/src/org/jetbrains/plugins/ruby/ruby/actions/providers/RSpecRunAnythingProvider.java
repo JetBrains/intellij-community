@@ -32,11 +32,11 @@ public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecR
                            @NotNull String commandLine) {
 
     List<String> options = ContainerUtil.newArrayList();
-    for (String argument : StringUtil.split(getArguments(commandLine), " ")) {
+    for (String argument : getArguments(commandLine)) {
       if (RSPEC_EXAMPLE_NAME_KEY.equals(argument)) {
         configuration.setExampleNameFilter(argument);
       }
-      else if (argument.startsWith("-") && argument.length() > 1 || argument.startsWith("--") && argument.length() > 2) {
+      else if (argument.startsWith("-") && argument.length() > 1) {
         options.add(argument);
         continue;
       }
