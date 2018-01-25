@@ -110,13 +110,9 @@ public final class CompletionServiceImpl extends CompletionService {
     @Nullable
     private final CompletionResultSetImpl myOriginal;
 
-
-    public CompletionResultSetImpl(final Consumer<CompletionResult> consumer, final int lengthOfTextBeforePosition,
-                                   final PrefixMatcher prefixMatcher,
-                                   CompletionContributor contributor,
-                                   CompletionParameters parameters,
-                                   @NotNull CompletionSorterImpl sorter,
-                                   @Nullable CompletionResultSetImpl original) {
+    CompletionResultSetImpl(Consumer<CompletionResult> consumer, int lengthOfTextBeforePosition, PrefixMatcher prefixMatcher,
+                            CompletionContributor contributor, CompletionParameters parameters,
+                            @NotNull CompletionSorterImpl sorter, @Nullable CompletionResultSetImpl original) {
       super(prefixMatcher, consumer, contributor);
       myLengthOfTextBeforePosition = lengthOfTextBeforePosition;
       myParameters = parameters;
@@ -126,7 +122,7 @@ public final class CompletionServiceImpl extends CompletionService {
 
     @Override
     public void addAllElements(@NotNull Iterable<? extends LookupElement> elements) {
-      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements));
+      CompletionThreadingBase.withBatchUpdate(() -> super.addAllElements(elements), myParameters.getProcess());
     }
 
     @Override
@@ -191,17 +187,17 @@ public final class CompletionServiceImpl extends CompletionService {
 
     @Override
     public void restartCompletionOnPrefixChange(ElementPattern<String> prefixCondition) {
-      final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
-      if (indicator != null) {
-        indicator.addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
+      CompletionProcess process = myParameters.getProcess();
+      if (process instanceof CompletionProgressIndicator) {
+        ((CompletionProgressIndicator)process).addWatchedPrefix(myLengthOfTextBeforePosition - getPrefixMatcher().getPrefix().length(), prefixCondition);
       }
     }
 
     @Override
     public void restartCompletionWhenNothingMatches() {
-      final CompletionProgressIndicator indicator = getCompletionService().getCurrentCompletion();
-      if (indicator != null) {
-        indicator.getLookup().setStartCompletionWhenNothingMatches(true);
+      CompletionProcess process = myParameters.getProcess();
+      if (process instanceof CompletionProgressIndicator) {
+        ((CompletionProgressIndicator)process).getLookup().setStartCompletionWhenNothingMatches(true);
       }
     }
   }

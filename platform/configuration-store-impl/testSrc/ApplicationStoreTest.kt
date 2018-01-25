@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -78,7 +77,7 @@ internal class ApplicationStoreTest {
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
-    componentStore.save(SmartList())
+    saveStore()
 
     assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
@@ -222,7 +221,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `don't save if only format is changed`() {
-    val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
+    val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
     val file = writeConfig("a.xml", oldContent)
     val oldModificationTime = file.lastModified()
     testAppConfig.refreshVfs()
@@ -240,7 +239,10 @@ internal class ApplicationStoreTest {
     component.options.foo = "1"
     saveStore()
 
-    assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
+    assertThat(file).hasContent("""
+    <application>
+      <component name="A" foo="1" bar="2" />
+    </application>""")
   }
 
   @Test
@@ -378,7 +380,7 @@ internal class ApplicationStoreTest {
     @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
 
-    val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
+    val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
     val file = writeConfig("b.xml", oldContent)
     testAppConfig.refreshVfs()
 
@@ -386,9 +388,31 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.options).isEqualTo(TestState("old"))
 
+    try {
+      setRoamableComponentSaveThreshold(-100)
+      saveStore()
+    }
+    finally {
+      restoreDefaultNotRoamableComponentSaveThreshold()
+    }
+
+    assertThat(file).hasContent("""
+    <application>
+      <component name="A" foo="old" />
+    </application>""")
+  }
+
+  @Test fun `other xml file as not-roamable without explicit roaming`() {
+    @State(name = "A", storages = arrayOf(Storage(value = "other.xml")))
+    class AOther : A()
+
+    val component = AOther()
+    componentStore.initComponent(component, false)
+    component.options.foo = "old"
+
     saveStore()
 
-    assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"old\" />\n</application>")
+    assertThat(testAppConfig.resolve("other.xml")).doesNotExist()
   }
 
   private fun saveStore() {
@@ -403,7 +427,7 @@ internal class ApplicationStoreTest {
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
+      getMap(roamingType).put(fileSpec, String(content, 0, size, Charsets.UTF_8))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -15,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -354,7 +353,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   private static void highlightHints(@NotNull Editor editor, @Nullable PsiExpressionList expressionList, int currentHintIndex,
                                      @NotNull UserDataHolder context) {
-    if (editor.isDisposed()) return;
+    if (editor.isDisposed() || editor instanceof EditorWindow) return;
     ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
     Inlay currentHint = null;
     List<Inlay> highlightedHints = null;
@@ -438,11 +437,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void dispose(@NotNull DeleteParameterInfoContext context) {
-    resetHints(context.getCustomContext());
-    PsiElement parameterOwner = context.getParameterOwner();
     Editor editor = context.getEditor();
-    if (!editor.isDisposed() && parameterOwner != null && parameterOwner.isValid()) {
-      ParameterHintsPass.syncUpdate(parameterOwner.getParent(), editor);
+    if (!(editor instanceof EditorWindow)) {
+      resetHints(context.getCustomContext());
+      PsiElement parameterOwner = context.getParameterOwner();
+      if (!editor.isDisposed() && parameterOwner != null && parameterOwner.isValid()) {
+        ParameterHintsPass.syncUpdate(parameterOwner.getParent(), editor);
+      }
     }
   }
 

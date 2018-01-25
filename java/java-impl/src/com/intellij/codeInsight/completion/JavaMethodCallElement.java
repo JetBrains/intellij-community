@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -16,6 +16,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
@@ -299,6 +300,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     Editor editor = context.getEditor();
+    if (editor instanceof EditorWindow) return;
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     int braceOffset = offset - 1;

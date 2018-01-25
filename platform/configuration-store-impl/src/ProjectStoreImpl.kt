@@ -199,11 +199,13 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
       }
       else {
         result!!.sortWith(deprecatedComparator)
-        StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
-          LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation) }
-        }?.let {
-          // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-          return it
+        if (isDirectoryBased) {
+          StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
+            LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation) }
+          }?.let {
+              // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
+              return it
+            }
         }
 
         // if we create project from default, component state written not to own storage file, but to project file,

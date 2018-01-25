@@ -26,7 +26,7 @@ interface IComponentStore {
 
   class SaveCancelledException : RuntimeException()
 
-  fun save(readonlyFiles: MutableList<SaveSessionAndFile>)
+  fun save(readonlyFiles: MutableList<SaveSessionAndFile>, isForce: Boolean = false)
 
   @TestOnly
   fun saveApplicationComponent(component: PersistentStateComponent<*>)

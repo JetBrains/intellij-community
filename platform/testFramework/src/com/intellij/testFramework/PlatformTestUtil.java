@@ -605,8 +605,12 @@ public class PlatformTestUtil {
   }
 
   public static void saveProject(@NotNull Project project) {
+    saveProject(project, false);
+  }
+
+  public static void saveProject(@NotNull Project project, boolean isForce) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.save(ServiceKt.getStateStore(project), project);
+    StoreUtil.save(ServiceKt.getStateStore(project), project, isForce);
   }
 
   public static class TestInfo {

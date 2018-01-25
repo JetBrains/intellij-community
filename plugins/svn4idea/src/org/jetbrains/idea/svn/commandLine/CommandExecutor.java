@@ -137,7 +137,7 @@ public class CommandExecutor {
         startHandlingStreams();
       }
       catch (ExecutionException e) {
-        // TODO: currently startFailed() is not used for some real logic in svn4idea plugin
+        // TODO: currently startFailed() is not used for some real logic in intellij.vcs.svn plugin
         listeners().startFailed(e);
         throw new SvnBindException(e);
       }

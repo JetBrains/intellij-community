@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.types;
 
@@ -20,7 +20,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
@@ -94,11 +93,6 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     final PsiElement as = findNotNullChildByType(GroovyTokenTypes.kAS);
     final int offset = as.getStartOffsetInParent();
     return new TextRange(offset, offset + 2);
-  }
-
-  @Override
-  public PsiElement resolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false)).getElement();
   }
 
   @NotNull

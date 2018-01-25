@@ -230,4 +230,17 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
   }
+
+  @Override
+  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
+    if (file != null) {
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
+      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (cachedDocument != null && cachedDocument != document) {
+        throw new IllegalStateException("Can't replace existing document");
+      }
+      
+      FileDocumentManagerImpl.registerDocument(document, vFile);
+    }
+  }
 }

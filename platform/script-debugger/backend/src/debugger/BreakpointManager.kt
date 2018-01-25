@@ -80,6 +80,10 @@ interface BreakpointManager {
    */
   fun enableBreakpoints(enabled: Boolean): Promise<*>
 
+  fun setBreakOnFirstStatement()
+
+  fun isBreakOnFirstStatement(context: SuspendContext<*>): Boolean
+
   interface SetBreakpointResult
   data class BreakpointExist(val existingBreakpoint: Breakpoint) : SetBreakpointResult
   data class BreakpointCreated(val breakpoint: Breakpoint, val isResolved: Promise<out Breakpoint>) : SetBreakpointResult

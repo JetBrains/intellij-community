@@ -21,6 +21,9 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -112,13 +115,13 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
       @NotNull
       @Override
-      public UsageGroupingRule[] getActiveRules(Project project) {
+      public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
         return rules;
       }
 
       @NotNull
       @Override
-      public AnAction[] createGroupingActions(UsageView view) {
+      public AnAction[] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
       }
     };
@@ -129,6 +132,13 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       for (Usage usage : usages) {
         usageView.appendUsage(usage);
       }
+      UIUtil.dispatchAllInvocationEvents();
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), "waiting", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          usageView.waitForUpdateRequestsCompletion();
+        }
+      });
       UIUtil.dispatchAllInvocationEvents();
 
       return usageView.getRoot();

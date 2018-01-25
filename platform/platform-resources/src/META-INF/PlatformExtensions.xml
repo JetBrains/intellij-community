@@ -385,6 +385,9 @@
     <statistics.usagesCollector implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.ProductivityUsageCollector"/>
+
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>

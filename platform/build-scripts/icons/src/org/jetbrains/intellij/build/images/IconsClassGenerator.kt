@@ -36,7 +36,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     val packageName: String
     val className: String
     val outFile: File
-    if ("icons" == module.name) {
+    if ("intellij.platform.icons" == module.name) {
       customLoad = false
       packageName = "com.intellij.icons"
       className = "AllIcons"

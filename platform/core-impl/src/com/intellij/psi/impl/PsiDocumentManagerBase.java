@@ -55,7 +55,6 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, ProjectComponent {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiDocumentManagerImpl");
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
-  private final Key<PsiFile> HARD_REF_TO_PSI = Key.create("HARD_REF_TO_PSI"); // has to be different for each project to avoid mixups
   private static final Key<List<Runnable>> ACTION_AFTER_COMMIT = Key.create("ACTION_AFTER_COMMIT");
 
   protected final Project myProject;
@@ -100,11 +99,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       return null;
     }
 
-    final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if (userData != null) {
-      return ensureValidFile(userData, "From hard ref");
-    }
-
     PsiFile psiFile = getCachedPsiFile(document);
     if (psiFile != null) {
       return ensureValidFile(psiFile, "Cached PSI");
@@ -131,18 +125,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   // todo remove when Database Navigator plugin doesn't need that anymore
   // todo to be removed in idea 17
   public static void cachePsi(@NotNull Document document, @Nullable PsiFile file) {
-    LOG.warn("Unsupported method");
+    LOG.warn("Unsupported method", new Throwable());
   }
 
   public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
-    document.putUserData(HARD_REF_TO_PSI, file);
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public PsiFile getCachedPsiFile(@NotNull Document document) {
-    final PsiFile userData = document.getUserData(HARD_REF_TO_PSI);
-    if (userData != null) return userData;
-
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return getCachedPsiFile(virtualFile);
@@ -182,7 +173,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
     Document document = getCachedDocument(file);
     if (document != null) {
-      if (!file.getViewProvider().isPhysical() && document.getUserData(HARD_REF_TO_PSI) == null) {
+      if (!file.getViewProvider().isPhysical()) {
         PsiUtilCore.ensureValid(file);
         associatePsi(document, file);
       }
@@ -374,8 +365,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
     }
     catch (Throwable e) {
-      LOG.error(e);
-      forceReload(virtualFile, viewProvider);
+      try {
+        forceReload(virtualFile, viewProvider);
+      }
+      finally {
+        LOG.error(e);
+      }
     }
     finally {
       if (success.get()) {

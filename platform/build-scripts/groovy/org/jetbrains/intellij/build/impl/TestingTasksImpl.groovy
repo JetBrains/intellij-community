@@ -54,11 +54,11 @@ class TestingTasksImpl extends TestingTasks {
       JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
     }
     if (runConfigurations != null) {
-      compilationTasks.compileModules(["tests_bootstrap"], ["platform-build-scripts"] + runConfigurations.collect { it.moduleName })
+      compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
       compilationTasks.buildProjectArtifacts(runConfigurations.collectMany {it.requiredArtifacts})
     }
     else if (options.mainModule != null) {
-      compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule, "platform-build-scripts"])
+      compilationTasks.compileModules(["intellij.tools.testsBootstrap"], [options.mainModule, "intellij.platform.buildScripts"])
     }
     else {
       compilationTasks.compileAllModulesAndTests()
@@ -168,7 +168,7 @@ class TestingTasksImpl extends TestingTasks {
   private void runTestsProcess(String mainModule, String testGroups, String testPatterns,
                                List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
-    List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
+    List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
@@ -178,7 +178,7 @@ class TestingTasksImpl extends TestingTasks {
     List<String> jvmArgs = [
       "-ea",
       "-server",
-      "-Xbootclasspath/a:${context.getModuleOutputPath(context.findRequiredModule("boot"))}".toString(),
+      "-Xbootclasspath/a:${context.getModuleOutputPath(context.findRequiredModule("intellij.platform.boot"))}".toString(),
       "-XX:+HeapDumpOnOutOfMemoryError",
       "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
       "-XX:ReservedCodeCacheSize=300m",
@@ -320,7 +320,7 @@ class TestingTasksImpl extends TestingTasks {
       }
       if (!underTeamCity) {
         classpath {
-          pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("platform-build-scripts")))
+          pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("intellij.platform.buildScripts")))
         }
         formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
       }

@@ -59,8 +59,7 @@ private class ExportSettingsAction : AnAction(), DumbAware {
 
     val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
                                                 IdeBundle.message("title.select.components.to.export"),
-                                                IdeBundle.message(
-                                                                                    "prompt.please.check.all.components.to.export"))
+                                                IdeBundle.message("prompt.please.check.all.components.to.export"))
     if (!dialog.showAndGet()) {
       return
     }

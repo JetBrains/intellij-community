@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fest-swing/1.4.4/fest-swing-1.4.4.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/fest-swing/1.4.4/fest-swing-1.4.4-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

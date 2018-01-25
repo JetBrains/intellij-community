@@ -57,7 +57,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       Pair<String, Integer> address = getAttachAddress(processInfo);
       assert address != null;
 
-      // TODO: first need to remove circular dependency with execution-impl
+      // TODO: first need to remove circular dependency with intellij.java.execution.impl
       //RunnerAndConfigurationSettings runSettings = RunManager.getInstance(project)
       //  .createRunConfiguration(StringUtil.notNullize(address.first) + ":" + address.second,
       //                          RemoteConfigurationType.getInstance().getFactory());
