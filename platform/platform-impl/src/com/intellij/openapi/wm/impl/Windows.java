@@ -135,7 +135,9 @@ public class Windows {
               if (Arrays.stream(findShortcuts("EditorEscape"))
                 .anyMatch(shortcut -> shortcut.equals(new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)event), null))))
               {
-                deactivationShortcutHandler.accept(id);
+                if(isInActiveToolWindow(event.getSource())) {
+                  deactivationShortcutHandler.accept(id);
+                }
               }
             }
           }
