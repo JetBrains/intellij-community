@@ -38,7 +38,7 @@ class TestingOptions {
 
   /**
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
-   * {@link #testGroups} and {@link #testPatterns} will be ignored.
+   * {@link #testGroups}, {@link #testPatterns} and {@link #mainModule} will be ignored.
    */
   String testConfigurations = System.getProperty("intellij.build.test.configurations")
 
