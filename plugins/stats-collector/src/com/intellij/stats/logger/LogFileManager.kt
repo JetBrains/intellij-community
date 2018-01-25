@@ -16,36 +16,42 @@
 
 package com.intellij.stats.logger
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.storage.FilePathProvider
 import java.io.File
 
 class LogFileManager(private val filePathProvider: FilePathProvider) {
     private companion object {
-        val MAX_SIZE_BYTE = 250 * 1024
+        const val MAX_SIZE_BYTE = 250 * 1024
     }
 
-    private val storage = LineStorage()
+    private var storage = LineStorage()
 
+    @Synchronized
     fun println(message: String) {
         if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
             saveDataChunk(storage)
-            storage.clear()
+            storage = LineStorage()
         }
         storage.appendLine(message)
     }
 
+    @Synchronized
     fun dispose() {
         if (storage.size > 0) {
             saveDataChunk(storage)
         }
-        storage.clear()
+
+        storage = LineStorage()
     }
 
     private fun saveDataChunk(storage: LineStorage) {
-        val dir = filePathProvider.getStatsDataDirectory()
-        val tmp = File(dir, "tmp_data")
-        storage.dump(tmp)
-        tmp.renameTo(filePathProvider.getUniqueFile())
+        ApplicationManager.getApplication().executeOnPooledThread {
+            val dir = filePathProvider.getStatsDataDirectory()
+            val tmp = File(dir, "tmp_data")
+            storage.dump(tmp)
+            tmp.renameTo(filePathProvider.getUniqueFile())
+        }
     }
 
 }

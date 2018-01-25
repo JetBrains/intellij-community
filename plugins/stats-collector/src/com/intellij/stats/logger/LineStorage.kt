@@ -31,11 +31,6 @@ class LineStorage {
 
     fun sizeWithNewLine(newLine: String): Int = size + newLine.length + System.lineSeparator().length
 
-    fun clear() {
-        size = 0
-        lines.clear()
-    }
-
     fun dump(dest: File) {
         dest.writer().use { out ->
             lines.forEach { out.appendln(it) }
