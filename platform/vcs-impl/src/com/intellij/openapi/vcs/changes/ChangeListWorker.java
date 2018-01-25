@@ -552,6 +552,8 @@ public class ChangeListWorker {
 
   public void applyChangesFromUpdate(@NotNull ChangeListWorker updatedWorker,
                                      @NotNull PlusMinusModify<BaseRevision> deltaListener) {
+    HashMap<Change, ListData> oldChangeMappings = new HashMap<>(myChangeMappings);
+
     boolean somethingChanged = notifyPathsChanged(myIdx, updatedWorker.myIdx, deltaListener);
 
     myIdx.copyFrom(updatedWorker.myIdx);
@@ -563,7 +565,27 @@ public class ChangeListWorker {
       PartialChangeTracker tracker = getChangeTrackerFor(change);
       if (tracker == null) {
         ListData oldList = updatedWorker.myChangeMappings.get(change);
-        ListData newList = notNullList(listMapping.get(oldList));
+
+        ListData newList = null;
+        if (oldList == null) {
+          if (updatedWorker.myPartialChangeTrackers.isEmpty()) {
+            LOG.error("Change mapping not found");
+          }
+        }
+        else {
+          newList = listMapping.get(oldList);
+
+          if (newList == null) {
+            LOG.error("List mapping not found");
+          }
+        }
+
+        if (newList == null) {
+          ListData oldMappedList = oldChangeMappings.get(change);
+          if (oldMappedList != null) newList = getDataById(oldMappedList.id);
+        }
+        if (newList == null) newList = myDefault;
+
         myChangeMappings.put(change, newList);
       }
     }
