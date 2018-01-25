@@ -812,6 +812,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static int findContentStart(String text) {
     int index = StringUtil.indexOfIgnoreCase(text, "<body>", 0);
     if (index >= 0) return index + 6;
+    index = StringUtil.indexOfIgnoreCase(text, "</head>", 0);
+    if (index >= 0) return index + 7;
     index = StringUtil.indexOfIgnoreCase(text, "</style>", 0);
     if (index >= 0) return index + 8;
     index = StringUtil.indexOfIgnoreCase(text, "<html>", 0);
