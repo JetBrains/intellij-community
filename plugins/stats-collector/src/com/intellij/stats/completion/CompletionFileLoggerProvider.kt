@@ -16,7 +16,9 @@
 package com.intellij.stats.completion
 
 import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.stats.logger.EventLoggerWithValidation
 import com.intellij.stats.logger.LogFileManager
+import com.intellij.stats.logger.ServerSessionValidator
 import com.intellij.stats.storage.FilePathProvider
 import java.util.*
 
@@ -34,7 +36,7 @@ class CompletionFileLoggerProvider(
   override fun newCompletionLogger(): CompletionLogger {
     val installationUID = installationIdProvider.installationId()
     val completionUID = UUID.randomUUID().toString()
-    val eventLogger = CompletionEventFileLogger(logFileManager)
+    val eventLogger = EventLoggerWithValidation(CompletionEventFileLogger(logFileManager), ServerSessionValidator())
     return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), eventLogger)
   }
 }
