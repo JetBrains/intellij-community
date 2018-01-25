@@ -895,7 +895,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  protected VirtualFile getBaseDir() {
+  protected VirtualFile getProjectBaseDir() {
     VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir == null) {
       String basePath = myProject.getBasePath();

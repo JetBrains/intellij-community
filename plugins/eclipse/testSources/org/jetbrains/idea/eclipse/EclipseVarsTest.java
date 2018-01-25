@@ -27,7 +27,7 @@ public abstract class EclipseVarsTest extends IdeaTestCase {
     final String tempPath = getProject().getBasePath();
     final File tempDir = new File(tempPath);
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
-    copyDirContentsTo(vTestRoot, getBaseDir());
+    copyDirContentsTo(vTestRoot, getProjectBaseDir());
 
     final VirtualFile virtualTestDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(tempDir.getAbsolutePath(), virtualTestDir);

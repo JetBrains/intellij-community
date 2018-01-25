@@ -56,11 +56,11 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
   }
 
   protected VirtualFile createFile(final String path, final String text) {
-    return VfsTestUtil.createFile(getBaseDir(), path, text);
+    return VfsTestUtil.createFile(getProjectBaseDir(), path, text);
   }
 
   protected VirtualFile createDir(final String path) {
-    return VfsTestUtil.createDir(getBaseDir(), path);
+    return VfsTestUtil.createDir(getProjectBaseDir(), path);
   }
 
   protected static VirtualFile getJDomJar() {

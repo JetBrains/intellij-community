@@ -139,7 +139,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile createFile(@NotNull String path, final String text) {
-    return VfsTestUtil.createFile(getBaseDir(), path, text);
+    return VfsTestUtil.createFile(getProjectBaseDir(), path, text);
   }
 
   protected CompilationLog make(final Artifact... artifacts) {
