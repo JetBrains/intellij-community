@@ -212,7 +212,7 @@ public abstract class PyEnvTestCase {
   }
 
   protected final void checkStaging() {
-    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+    if (!SETTINGS.isUnderTeamCity()) {
       return; // Its ok to run staging tests locally
     }
     Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",

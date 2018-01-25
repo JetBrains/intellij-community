@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env
 
+import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
 import java.io.File
 
@@ -19,6 +20,10 @@ internal data class PyEnvTestSettings(
                                                      ?.map { File(it) }
                                                      ?.toList()
                                                    ?: emptyList(),
+
+
+  @get:JvmName("isUnderTeamCity")
+  val underTeamCity: Boolean = IS_UNDER_TEAMCITY,
 
   /**
    * Paths to all existing python SDKs
