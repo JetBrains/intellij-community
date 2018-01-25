@@ -42,7 +42,9 @@ public class RubyRunAnythingProvider extends RubyRunAnythingProviderBase<RubyRun
         continue;
       }
 
-      configuration.setScriptPath(new File(baseDirectory.getPath(), argument).getAbsolutePath());
+      VirtualFile file = baseDirectory.findChild(argument);
+      configuration.setScriptPath(file != null ? file.getCanonicalPath() : "");
+
       isProgramParameters = true;
     }
 

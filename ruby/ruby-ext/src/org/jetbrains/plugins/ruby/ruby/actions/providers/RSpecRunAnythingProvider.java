@@ -48,7 +48,8 @@ public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecR
         continue;
       }
 
-      configuration.setTestScriptPath(new File(baseDirectory.getPath(), argument).getAbsolutePath());
+      VirtualFile file = baseDirectory.findChild(argument);
+      configuration.setTestScriptPath(file != null ? file.getCanonicalPath() : "");
     }
 
     appendParameters(parameter -> configuration.setRunnerOptions(parameter), () -> configuration.getRunnerOptions(), options);
