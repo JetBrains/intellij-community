@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions.providers;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,9 +31,17 @@ public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecR
                            @NotNull String commandLine) {
 
     List<String> options = ContainerUtil.newArrayList();
+    boolean isExampleFilter = false;
     for (String argument : getArguments(commandLine)) {
-      if (RSPEC_EXAMPLE_NAME_KEY.equals(argument)) {
+      if (isExampleFilter) {
         configuration.setExampleNameFilter(argument);
+        isExampleFilter = false;
+        continue;
+      }
+
+      if (RSPEC_EXAMPLE_NAME_KEY.equals(argument)) {
+        isExampleFilter = true;
+        continue;
       }
       else if (argument.startsWith("-") && argument.length() > 1) {
         options.add(argument);
