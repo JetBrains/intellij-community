@@ -22,6 +22,8 @@ plugins {
  * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
  * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
  *
+ * ``PyEnvTestSettings`` class uses these vars also.
+ *
  */
 
 envs {
