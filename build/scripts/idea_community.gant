@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.IdeaCommunityBuilder
 import org.jetbrains.jps.idea.IdeaProjectLoader
@@ -21,6 +22,10 @@ String home = IdeaProjectLoader.guessHome(this)
 
 target(compile: "Compile project") {
   new IdeaCommunityBuilder(home).compileModules()
+}
+
+target('updater-full': 'Build updater-full.jar which includes IDE updater with its dependencies') {
+  new IdeaCommunityBuilder(home).buildFullUpdater()
 }
 
 target('default': 'The default target') {

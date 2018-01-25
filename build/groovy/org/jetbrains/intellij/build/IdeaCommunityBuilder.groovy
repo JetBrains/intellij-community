@@ -32,6 +32,12 @@ class IdeaCommunityBuilder {
     BuildTasks.create(buildContext).compileProjectAndTests(["intellij.platform.jps.build"])
   }
 
+  void buildFullUpdater() {
+    def tasks = BuildTasks.create(buildContext)
+    tasks.compileModules(["updater"])
+    tasks.buildFullUpdaterJar()
+  }
+
   void buildIntelliJCore() {
     def builder = new IntelliJCoreArtifactsBuilder(buildContext)
     builder.compileModules()
