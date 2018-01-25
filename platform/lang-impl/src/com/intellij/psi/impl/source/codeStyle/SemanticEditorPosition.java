@@ -90,6 +90,10 @@ public class SemanticEditorPosition {
     }
     return false;
   }
+
+  public boolean isAtMultiline(SyntaxElement... elements) {
+    return isAtAnyOf(elements) && CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
+  }
   
   public void moveBefore() {
     if (!myIterator.atEnd()) {
