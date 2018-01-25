@@ -1,3 +1,5 @@
+import org.jetbrains.jps.idea.IdeaProjectLoader
+
 /*
  * Copyright 2000-2018 JetBrains s.r.o.
  *
@@ -14,7 +16,7 @@
  * limitations under the License.
  */
 
-includeTargets << new File("$home/build/scripts/tests_in_community.gant")
+includeTargets << new File("${IdeaProjectLoader.guessHome(this)}/build/scripts/tests_in_community.gant")
 includeTool << gant.tools.Execute
 
 /**
