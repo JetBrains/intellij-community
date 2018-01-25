@@ -54,8 +54,8 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
     return canRunCommand("rvm");
   }
 
-  private static boolean canRunCommand(String rbenv) {
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine(rbenv);
+  private static boolean canRunCommand(@NotNull String command) {
+    GeneralCommandLine generalCommandLine = new GeneralCommandLine(command);
     generalCommandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
     try {
       generalCommandLine.createProcess();
