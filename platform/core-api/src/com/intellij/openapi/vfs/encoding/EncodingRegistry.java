@@ -43,7 +43,6 @@ public abstract class EncodingRegistry {
     return EncodingManager.getInstance();
   }
 
-
   public static <E extends Throwable> VirtualFile doActionAndRestoreEncoding(@NotNull VirtualFile fileBefore,
                                                                              @NotNull ThrowableComputable<VirtualFile, E> action) throws E {
     EncodingRegistry registry = getInstance();
