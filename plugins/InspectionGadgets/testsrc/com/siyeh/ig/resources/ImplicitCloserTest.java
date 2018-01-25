@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiVariable;

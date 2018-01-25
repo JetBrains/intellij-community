@@ -16,6 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -165,7 +166,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (!isNotSafelyClosedResource(expression)) {
+      if (isSafelyClosedResource(expression)) {
         return;
       }
       registerNewExpressionError(expression, expression.getType(), Boolean.FALSE);
@@ -174,7 +175,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || !isNotSafelyClosedResource(expression)) {
+      if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || isSafelyClosedResource(expression)) {
         return;
       }
       registerMethodCallError(expression, expression.getType(), Boolean.TRUE);
@@ -198,16 +199,16 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       registerError(expression, type, Boolean.FALSE);
     }
 
-    private boolean isNotSafelyClosedResource(PsiExpression expression) {
+    private boolean isSafelyClosedResource(PsiExpression expression) {
       if (!isResourceCreation(expression)) {
-        return false;
+        return true;
       }
-      if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return false;
+      if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return true;
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      if(variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return false;
-      if (variable == null) return true;
+      if(variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
+      if (variable == null) return false;
       return StreamEx.of(Extensions.getExtensions(ImplicitResourceCloser.EP_NAME))
-              .noneMatch(closer -> closer.isSafelyClosed(variable));
+              .anyMatch(closer -> closer.isSafelyClosed(variable));
     }
   }
 }
