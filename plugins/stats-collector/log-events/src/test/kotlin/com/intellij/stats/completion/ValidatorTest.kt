@@ -25,7 +25,6 @@ import org.junit.Test
 import java.io.File
 
 class ValidatorTest {
-
     lateinit var validator: InputSessionValidator
     val sessionStatuses = hashMapOf<String, Boolean>()
 
@@ -54,35 +53,34 @@ class ValidatorTest {
     fun testValidData() {
         val file = file("data/valid_data.txt")
         validator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isTrue()
+        assertThat(sessionStatuses["fb16691974d3"]).isTrue()
     }
 
     @Test
     fun testDataWithAbsentFieldInvalid() {
         val file = file("data/absent_field.txt")
         validator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isFalse()
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
 
     @Test
     fun testInvalidWithoutBacket() {
         val file = file("data/no_bucket.txt")
         validator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isNull()
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
 
     @Test
     fun testInvalidWithoutVersion() {
         val file = file("data/no_version.txt")
         validator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isNull()
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
 
     @Test
     fun testDataWithExtraFieldInvalid() {
         val file = file("data/extra_field.txt")
         validator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isFalse()
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
-
 }

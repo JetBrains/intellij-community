@@ -45,7 +45,6 @@ class RealDataValidation {
         separator = InputSessionValidator(result)
     }
 
-
     @Test
     fun testRealData() {
         val file = file("real_data")
@@ -59,10 +58,9 @@ class RealDataValidation {
 
         val validSessions = sessionStatuses.count { it.value }
 
-        assert(validSessions == 20)
-        assert(invalidSessions == 2)
+        assert(validSessions == 23)
+        assert(invalidSessions == 4)
     }
-
 
     private fun file(path: String): File {
         return File(javaClass.classLoader.getResource(path).file)
