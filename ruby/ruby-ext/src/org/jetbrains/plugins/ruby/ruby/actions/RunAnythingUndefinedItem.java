@@ -79,7 +79,7 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
       }
     }
 
-    List<String> args = ParametersListUtil.parse(command);
+    List<String> args = ParametersListUtil.parse(command, false, true);
     String exePath = ContainerUtil.getFirstItem(args);
     List<String> parameters = ContainerUtil.newArrayList(args);
     parameters.remove(0);
