@@ -143,6 +143,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
+  @Override
   public void onCancel() {
     onTaskFinished(true);
   }

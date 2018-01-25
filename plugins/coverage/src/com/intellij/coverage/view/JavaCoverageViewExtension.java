@@ -17,10 +17,8 @@ package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -49,7 +47,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return getNotCoveredMessage(coverageInformationString) + " in package \'" + node.toString() + "\'";
+    return getNotCoveredMessage(coverageInformationString) + " in package \'" + node + "\'";
   }
 
   private static String showSubCoverageNotification() {
@@ -92,7 +90,8 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
     if (columnIndex == 1) {
       return myAnnotator.getClassCoveredPercentage(info);
-    } else if (columnIndex == 2){
+    }
+    if (columnIndex == 2){
       return myAnnotator.getMethodCoveredPercentage(info);
     }
 
@@ -155,7 +154,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public List<AbstractTreeNode> createTopLevelNodes() {
-    final List<AbstractTreeNode> topLevelNodes = new ArrayList<>();
     final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<>();
     final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
     for (CoverageSuite suite : mySuitesBundle.getSuites()) {
@@ -175,6 +173,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
     packages.removeAll(packs);
 
+    final List<AbstractTreeNode> topLevelNodes = new ArrayList<>();
     for (PsiPackage aPackage : packages) {
       final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
       if (aPackage.getClasses(searchScope).length != 0) {
@@ -265,14 +264,10 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
     }
   }
-
+       
   @Nullable
   private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
-    return myAnnotator.getClassCoverageInfo(ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-      public String compute() {
-        return aClass.isValid() ? aClass.getQualifiedName() : null;
-      }
-    }));
+    return myAnnotator.getClassCoverageInfo(ReadAction.compute(() -> aClass.isValid() ? aClass.getQualifiedName() : null));
   }
 
   @Override
