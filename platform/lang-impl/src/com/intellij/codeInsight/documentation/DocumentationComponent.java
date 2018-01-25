@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.util.PropertiesComponent;
@@ -471,7 +472,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
-    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UIManager.getColor("link.foreground")) + "; text-decoration: none;}");
+    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
     editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 5px 7px; }");
@@ -485,6 +486,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule("td { margin: 2px 0 3.5px 0; padding: 0 0 0 0; }");
     editorKit.getStyleSheet().addRule(".section { color: #909090; padding-right: 4px}");
+  }
+
+  private static Color getLinkColor() {
+    Color color = UIManager.getColor("link.foreground");
+    return color != null ? color : IdeTooltipManager.getInstance().getLinkForeground(false);
   }
 
   @Override
