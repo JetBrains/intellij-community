@@ -17,6 +17,7 @@ package org.intellij.images.fileTypes;
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -36,7 +37,7 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
 
   @Override
   public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
-    final String[] result = new String[] {null};
+    final Ref<String> result = Ref.create();
 
     if (element instanceof PsiFileSystemItem && !((PsiFileSystemItem)element).isDirectory()) {
       final VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
@@ -57,8 +58,8 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
               path = "/" + path;
             }
             final String url = new URI("file", null, path, null).toString();
-            result[0] = String.format("<html><body><img src=\"%s\" width=\"%s\" height=\"%s\"><p>%sx%s, %sbpp</p><body></html>", url, imageWidth,
-                                 imageHeight, value.width, value.height, value.bpp);
+            result.set(String.format("<img src=\"%s\" width=\"%s\" height=\"%s\"><p>%sx%s, %sbpp</p>", url, imageWidth,
+                                 imageHeight, value.width, value.height, value.bpp));
           }
           catch (URISyntaxException ignored) {
             // nothing
@@ -68,6 +69,6 @@ public class ImageDocumentationProvider extends AbstractDocumentationProvider {
       }
     }
 
-    return result[0];
+    return result.get();
   }
 }
