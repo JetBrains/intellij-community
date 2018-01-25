@@ -154,8 +154,8 @@ public abstract class FindUsagesHandler {
     return Collections.singleton(element.getText());
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isSearchForTextOccurrencesAvailable(@NotNull PsiElement psiElement, boolean isSingleFile) {
+    //noinspection deprecation
     return isSearchForTextOccurencesAvailable(psiElement, isSingleFile);
   }
 
