@@ -174,27 +174,10 @@ public class CommitPanel extends JBPanel {
       myPresentation = presentation;
     }
 
-    private void customizeLinksStyle() {
-      Document document = getDocument();
-      if (document instanceof HTMLDocument) {
-        StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
-        String linkColor = "#" + ColorUtil.toHex(JBColor.link());
-        styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
-      }
-    }
-
     @NotNull
     @Override
     protected String getBody() {
       return myPresentation == null ? "" : myPresentation.getText();
-    }
-
-    public void update() {
-      setBody(getBody());
-
-      customizeLinksStyle();
-      revalidate();
-      repaint();
     }
 
     @Override

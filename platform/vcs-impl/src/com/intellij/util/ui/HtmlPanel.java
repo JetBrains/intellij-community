@@ -18,6 +18,8 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,6 +28,8 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Position;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -86,7 +90,17 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
 
   public void update() {
     setBody(getBody());
+    customizeLinksStyle();
     revalidate();
     repaint();
+  }
+
+  private void customizeLinksStyle() {
+    Document document = getDocument();
+    if (document instanceof HTMLDocument) {
+      StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
+      String linkColor = "#" + ColorUtil.toHex(JBColor.link());
+      styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
+    }
   }
 }
