@@ -1011,7 +1011,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
         if (indicator == null) indicator = new EmptyProgressIndicator();
         DiffLog log = BlockSupportImpl.makeFullParse(file, node, text, indicator, text).getFirst();
-        DocumentCommitThread.doActualPsiChange(file, log);
+        log.doActualPsiChange(file);
         file.getViewProvider().contentsSynchronized();
       });
     }

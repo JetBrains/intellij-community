@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.psi;
+package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -18,8 +18,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DocumentCommitThread;
-import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;

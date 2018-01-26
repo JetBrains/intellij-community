@@ -56,7 +56,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.util.*;
@@ -204,10 +204,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (myProject != null) {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
       CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
-      InjectedLanguageManagerImpl.pushInjectors(getProject());
+      InjectedLanguageManagerImpl.pushInjectors(myProject);
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
     }
 
-    DocumentCommitThread.getInstance().clearQueue();
     UIUtil.dispatchAllInvocationEvents();
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
   }
