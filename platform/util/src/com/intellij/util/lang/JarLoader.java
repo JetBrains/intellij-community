@@ -46,7 +46,7 @@ class JarLoader extends Loader {
   private final String myFilePath;
   private final ClassPath myConfiguration;
   private SoftReference<JarMemoryLoader> myMemoryLoader;
-  private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myCanLockJar==true
+  private volatile SoftReference<ZipFile> myZipFileSoftReference; // Used only when myConfiguration.myCanLockJars==true
   private final Map<Resource.Attribute, String> myAttributes;
   private volatile SoftReference<Attributes> myCachedManifestAttributes;
 
@@ -245,7 +245,7 @@ class JarLoader extends Loader {
   }
 
   private void releaseZipFile(ZipFile zipFile) throws IOException {
-    // Closing of zip file when myCanLockJar=true happens in ZipFile.finalize
+    // Closing of zip file when myConfiguration.myCanLockJars=true happens in ZipFile.finalize
     if (!myConfiguration.myCanLockJars) {
       zipFile.close();
     }
