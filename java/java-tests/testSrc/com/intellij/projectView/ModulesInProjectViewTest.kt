@@ -45,6 +45,9 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           |  unloaded-inner
           |   subdir
           |   y.txt
+          | loaded-inner.iml
+          | loaded.iml
+          | test unloaded modules.iml
           | unloaded
           |  loaded-inner
           |   subdir
@@ -78,8 +81,11 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           |  unloaded
           |   subdir
           |   y.txt
+          | foo.bar.unloaded.iml
+          | test unloaded module with qualified name.iml
           | unloaded2
           |  subdir
+          | unloaded2.iml
           |
           """.trimMargin()
     assertStructureEqual(expected)
@@ -97,8 +103,10 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     PsiTestUtil.addContentRoot(createModule("foo.bar.module"), root.findChild("module"))
     assertStructureEqual("""
           |Project
+          | foo.bar.module.iml
           | module
           |  subdir
+          | test do not show parent groups for single module.iml
           |
           """.trimMargin())
   }
@@ -113,8 +121,11 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
     myStructure.isFlattenModules = true
     assertStructureEqual("""
           |Project
+          | foo.bar.module1.iml
+          | foo.bar.module2.iml
           | module1
           | module2
+          | test flatten modules option.iml
           |
           """.trimMargin())
   }
@@ -131,6 +142,9 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           | Group: xxx
           |  foo
           |  foo.bar
+          | test do not show groups duplicating module names.iml
+          | xxx.foo.bar.iml
+          | xxx.foo.iml
           |
           """.trimMargin())
   }
@@ -155,6 +169,9 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           |  Group: baz
           |   module2
           |    subdir
+          | foo.bar.module1.iml
+          | foo.baz.module2.iml
+          | test modules with common parent group.iml
           |
           """.trimMargin())
   }
