@@ -370,23 +370,29 @@ public abstract class TreeTraversal {
   private abstract static class DfsIt<T, H extends P<T, H>> extends TracingIt<T> {
 
     H last;
+    H cur;
 
     protected DfsIt(Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
     }
 
+    @Override
+    protected void currentChanged() {
+      cur = last;
+    }
+
     @Nullable
     public T parent() {
-      if (last == null) throw new NoSuchElementException();
+      if (cur == null) throw new NoSuchElementException();
 
-      H p = last.parent;
+      H p = cur.parent;
       return p == null ? null : p.node == null ? null : _transform(p.node);
     }
 
     @NotNull
     public JBIterable<T> backtrace() {
-      if (last == null) throw new NoSuchElementException();
-      return _transform(JBIterable.generate(last, P.<T>toPrev()).filterMap(P.<T>toNode()));
+      if (cur == null) throw new NoSuchElementException();
+      return _transform(JBIterable.generate(cur, P.<T>toPrev()).filterMap(P.<T>toNode()));
     }
   }
 
@@ -427,13 +433,13 @@ public abstract class TreeTraversal {
     @Nullable
     @Override
     public T parent() {
-      return last == null || last.node == null ? null : _transform(last.node);
+      return cur == null || cur.node == null ? null : _transform(cur.node);
     }
 
     @NotNull
     @Override
     public JBIterable<T> backtrace() {
-      return last == null ? JBIterable.of(current()) : JBIterable.of(current()).append(super.backtrace());
+      return cur == null ? JBIterable.of(current()) : JBIterable.of(current()).append(super.backtrace());
     }
 
     @Override
@@ -571,10 +577,16 @@ public abstract class TreeTraversal {
     final ArrayDeque<T> queue = new ArrayDeque<T>();
     final Map<T, T> paths = ContainerUtil.newTroveMap(ContainerUtil.<T>identityStrategy());
     P1<T> top;
+    P1<T> cur;
 
     TracingBfsIt(@NotNull Iterable<? extends T> roots, Function<T, ? extends Iterable<? extends T>> tree) {
       super(tree);
       JBIterable.from(roots).addAllTo(queue);
+    }
+
+    @Override
+    protected void currentChanged() {
+      cur = top;
     }
 
     @Override
@@ -594,15 +606,15 @@ public abstract class TreeTraversal {
 
     @Override
     public T parent() {
-      if (top == null) throw new NoSuchElementException();
-      return _transform(paths.get(top.node));
+      if (cur == null) throw new NoSuchElementException();
+      return _transform(paths.get(cur.node));
     }
 
     @NotNull
     @Override
     public JBIterable<T> backtrace() {
-      if (top == null) throw new NoSuchElementException();
-      return _transform(JBIterable.generate(top.node, Functions.fromMap(paths)));
+      if (cur == null) throw new NoSuchElementException();
+      return _transform(JBIterable.generate(cur.node, Functions.fromMap(paths)));
     }
   }
 
@@ -731,7 +743,7 @@ public abstract class TreeTraversal {
 
     P1<T> remove() {
       P1<T> p = parent;
-      parent = null;
+      //parent = null;
       return p;
     }
 
