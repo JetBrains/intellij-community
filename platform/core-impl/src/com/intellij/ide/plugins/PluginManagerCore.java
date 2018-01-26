@@ -786,7 +786,10 @@ public class PluginManagerCore {
         if (optionalDescriptor == null) {
           optionalDescriptor = loadDescriptor(file, optPathName, context);
         }
-        if (optionalDescriptor == null && directory) {
+        if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
+          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream 
+          // and here code supports the same behavior. 
+          // Note that this code is meant for IDE development / testing purposes  
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optPathName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource, optPathName);
@@ -797,6 +800,10 @@ public class PluginManagerCore {
     }
 
     return descriptor;
+  }
+
+  private static boolean resolveDescriptorsInResources() {  
+    return System.getProperty("resolve.descriptors.in.resources") != null;
   }
 
   /*
