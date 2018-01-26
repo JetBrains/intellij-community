@@ -1,13 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.memory.component;
+package com.intellij.xdebugger.memory.component;
 
-import com.intellij.debugger.memory.event.InstancesTrackerListener;
-import com.intellij.debugger.memory.tracking.TrackingType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.xdebugger.memory.event.InstancesTrackerListener;
+import com.intellij.xdebugger.memory.tracking.TrackingType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

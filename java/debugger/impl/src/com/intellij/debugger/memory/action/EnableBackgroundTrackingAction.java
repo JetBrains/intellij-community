@@ -18,8 +18,9 @@ package com.intellij.debugger.memory.action;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.debugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
 
+// Java
 public class EnableBackgroundTrackingAction extends ToggleAction {
 
   @Override

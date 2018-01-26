@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+// Java
 public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   @Override
   public void update(AnActionEvent e) {

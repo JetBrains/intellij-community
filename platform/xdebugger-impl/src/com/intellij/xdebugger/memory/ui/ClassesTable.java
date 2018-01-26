@@ -1,17 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.debugger.memory.ui;
+package com.intellij.xdebugger.memory.ui;
 
-import com.intellij.debugger.memory.component.InstancesTracker;
-import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
-import com.intellij.debugger.memory.tracking.TrackingType;
-import com.intellij.debugger.memory.utils.AbstractTableColumnDescriptor;
-import com.intellij.debugger.memory.utils.AbstractTableModelWithColumns;
-import com.intellij.debugger.memory.utils.InstancesProvider;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -23,8 +20,9 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
+import com.intellij.xdebugger.memory.tracking.TrackingType;
+import com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor;
+import com.intellij.xdebugger.memory.utils.AbstractTableModelWithColumns;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +41,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
-  public static final DataKey<ReferenceType> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
-  public static final DataKey<InstancesProvider> NEW_INSTANCES_PROVIDER_KEY =
-    DataKey.create("ClassesTable.NewInstances");
+  public static final DataKey<TypeInfo> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
     DataKey.create("ClassesTable.ReferenceCountProvider");
 
@@ -59,9 +55,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private static final UnknownDiffValue UNKNOWN_VALUE = new UnknownDiffValue();
 
   private final DiffViewTableModel myModel = new DiffViewTableModel();
-  private final Map<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
+  private final Map<TypeInfo, DiffValue> myCounts = new ConcurrentHashMap<>();
   private final InstancesTracker myInstancesTracker;
-  private final ClassesFilteredView myParent;
+  private final ClassesFilteredViewBase myParent;
   private final ReferenceCountProvider myCountProvider;
 
   private boolean myOnlyWithDiff;
@@ -70,11 +66,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private MinusculeMatcher myMatcher = NameUtil.buildMatcher("*").build();
   private String myFilteringPattern = "";
 
-  private volatile List<ReferenceType> myItems = Collections.unmodifiableList(new ArrayList<>());
+  private volatile List<TypeInfo> myItems = Collections.unmodifiableList(new ArrayList<>());
   private boolean myIsShowCounts = true;
   private MouseListener myMouseListener = null;
 
-  public ClassesTable(@NotNull InstancesTracker tracker, @NotNull ClassesFilteredView parent, boolean onlyWithDiff,
+  @SuppressWarnings("WeakerAccess")
+  public ClassesTable(@NotNull Project project, @NotNull ClassesFilteredViewBase parent, boolean onlyWithDiff,
                       boolean onlyWithInstances,
                       boolean onlyTracked) {
     setModel(myModel);
@@ -82,7 +79,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myOnlyWithDiff = onlyWithDiff;
     myOnlyWithInstances = onlyWithInstances;
     myOnlyTracked = onlyTracked;
-    myInstancesTracker = tracker;
+    myInstancesTracker = InstancesTracker.getInstance(project);
     myParent = parent;
 
     final TableColumnModel columnModel = getColumnModel();
@@ -100,7 +97,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setShowGrid(false);
     setIntercellSpacing(new JBDimension(0, 0));
 
-    setDefaultRenderer(ReferenceType.class, new MyClassColumnRenderer());
+    setDefaultRenderer(TypeInfo.class, new MyClassColumnRenderer());
     setDefaultRenderer(Long.class, new MyCountColumnRenderer());
     setDefaultRenderer(DiffValue.class, new MyDiffColumnRenderer());
 
@@ -109,7 +106,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       @Override
       public boolean include(Entry<? extends DiffViewTableModel, ? extends Integer> entry) {
         int ix = entry.getIdentifier();
-        ReferenceType ref = myItems.get(ix);
+        TypeInfo ref = myItems.get(ix);
         DiffValue diff = myCounts.getOrDefault(ref, UNKNOWN_VALUE);
 
         boolean isFilteringOptionsRefused = myOnlyWithDiff && diff.diff() == 0
@@ -130,18 +127,18 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
     myCountProvider = new ReferenceCountProvider() {
       @Override
-      public int getTotalCount(@NotNull ReferenceType ref) {
+      public int getTotalCount(@NotNull TypeInfo ref) {
         return (int)myCounts.get(ref).myCurrentCount;
       }
 
       @Override
-      public int getDiffCount(@NotNull ReferenceType ref) {
+      public int getDiffCount(@NotNull TypeInfo ref) {
         return (int)myCounts.get(ref).diff();
       }
 
       @Override
-      public int getNewInstancesCount(@NotNull ReferenceType ref) {
-        TrackerForNewInstances strategy = myParent.getStrategy(ref);
+      public int getNewInstancesCount(@NotNull TypeInfo ref) {
+        TrackerForNewInstancesBase strategy = myParent.getStrategy(ref);
         return strategy == null || !strategy.isReady() ? -1 : strategy.getCount();
       }
     };
@@ -149,15 +146,15 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   public interface ReferenceCountProvider {
 
-    int getTotalCount(@NotNull ReferenceType ref);
+    int getTotalCount(@NotNull TypeInfo ref);
 
-    int getDiffCount(@NotNull ReferenceType ref);
+    int getDiffCount(@NotNull TypeInfo ref);
 
-    int getNewInstancesCount(@NotNull ReferenceType ref);
+    int getNewInstancesCount(@NotNull TypeInfo ref);
   }
 
   @Nullable
-  ReferenceType getSelectedClass() {
+  public TypeInfo getSelectedClass() {
     int selectedRow = getSelectedRow();
     if (selectedRow != -1) {
       int ix = convertRowIndexToModel(selectedRow);
@@ -168,18 +165,14 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   @Nullable
-  ReferenceType getClassByName(@NotNull String name) {
-    for (ReferenceType ref : myItems) {
+  public TypeInfo getClassByName(@NotNull String name) {
+    for (TypeInfo ref : myItems) {
       if (name.equals(ref.name())) {
         return ref;
       }
     }
 
     return null;
-  }
-
-  boolean isInClickableMode() {
-    return myMouseListener != null;
   }
 
   void makeClickable(@NotNull String text, @NotNull Runnable onClick) {
@@ -222,7 +215,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  void setBusy(boolean value) {
+  public boolean isInClickableMode() {
+    return myMouseListener != null;
+  }
+
+  public void setBusy(boolean value) {
     setPaintBusy(value);
   }
 
@@ -258,14 +255,16 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  public void updateClassesOnly(@NotNull List<ReferenceType> classes) {
+  @SuppressWarnings("WeakerAccess")
+  public void updateClassesOnly(@NotNull List<TypeInfo> classes) {
     myIsShowCounts = false;
-    final LinkedHashMap<ReferenceType, Long> class2Count = new LinkedHashMap<>();
+    final LinkedHashMap<TypeInfo, Long> class2Count = new LinkedHashMap<>();
     classes.forEach(x -> class2Count.put(x, 0L));
     updateCountsInternal(class2Count);
   }
 
-  public void updateContent(@NotNull Map<ReferenceType, Long> class2Count) {
+  @SuppressWarnings("WeakerAccess")
+  public void updateContent(@NotNull Map<TypeInfo, Long> class2Count) {
     myIsShowCounts = true;
     updateCountsInternal(class2Count);
   }
@@ -281,17 +280,17 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myModel.show();
   }
 
-  private void updateCountsInternal(@NotNull Map<ReferenceType, Long> class2Count) {
+  private void updateCountsInternal(@NotNull Map<TypeInfo, Long> class2Count) {
     releaseMouseListener();
     getEmptyText().setText(DEFAULT_EMPTY_TEXT);
 
-    final ReferenceType selectedClass = myModel.getSelectedClassBeforeHide();
+    final TypeInfo selectedClass = myModel.getSelectedClassBeforeHide();
     int newSelectedIndex = -1;
     final boolean isInitialized = !myItems.isEmpty();
     myItems = Collections.unmodifiableList(new ArrayList<>(class2Count.keySet()));
 
     int i = 0;
-    for (final ReferenceType ref : class2Count.keySet()) {
+    for (final TypeInfo ref : class2Count.keySet()) {
       if (ref.equals(selectedClass)) {
         newSelectedIndex = i;
       }
@@ -321,22 +320,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     if (SELECTED_CLASS_KEY.is(dataId)) {
       return getSelectedClass();
     }
-    if (NEW_INSTANCES_PROVIDER_KEY.is(dataId)) {
-      ReferenceType selectedClass = getSelectedClass();
-      if (selectedClass != null) {
-        TrackerForNewInstances strategy = myParent.getStrategy(selectedClass);
-        if (strategy != null && strategy.isReady()) {
-          List<ObjectReference> newInstances = strategy.getNewInstances();
-          return (InstancesProvider)limit -> newInstances;
-        }
-      }
-    }
 
     if (REF_COUNT_PROVIDER_KEY.is(dataId)) {
       return myCountProvider;
     }
 
-    return null;
+    return myParent.getData(dataId);
   }
 
   public void clean(@NotNull String emptyText) {
@@ -356,7 +345,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Nullable
   private TrackingType getTrackingType(int row) {
-    ReferenceType ref = (ReferenceType)getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
+    TypeInfo ref = (TypeInfo)getValueAt(row, convertColumnIndexToView(DiffViewTableModel.CLASSNAME_COLUMN_INDEX));
     return myInstancesTracker.getTrackingType(ref.name());
   }
 
@@ -364,18 +353,18 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myModel.fireTableDataChanged();
   }
 
-  class DiffViewTableModel extends AbstractTableModelWithColumns {
-    final static int CLASSNAME_COLUMN_INDEX = 0;
+  public class DiffViewTableModel extends AbstractTableModelWithColumns {
+    public final static int CLASSNAME_COLUMN_INDEX = 0;
     final static int COUNT_COLUMN_INDEX = 1;
-    final static int DIFF_COLUMN_INDEX = 2;
+    public final static int DIFF_COLUMN_INDEX = 2;
 
     // Workaround: save selection after content of classes table has been hided
-    private ReferenceType mySelectedClassWhenHidden = null;
+    private TypeInfo mySelectedClassWhenHidden = null;
     private boolean myIsWithContent = false;
 
     DiffViewTableModel() {
       super(new AbstractTableColumnDescriptor[]{
-        new AbstractTableColumnDescriptor("Class", ReferenceType.class) {
+        new AbstractTableColumnDescriptor("Class", TypeInfo.class) {
           @Override
           public Object getValue(int ix) {
             return myItems.get(ix);
@@ -396,7 +385,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       });
     }
 
-    ReferenceType getSelectedClassBeforeHide() {
+    TypeInfo getSelectedClassBeforeHide() {
       return mySelectedClassWhenHidden;
     }
 
@@ -506,7 +495,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     @Override
     protected void addText(@NotNull Object value, boolean isSelected,
                            int row) {
-      String presentation = ((ReferenceType)value).name();
+      String presentation = ((TypeInfo)value).name();
       append(" ");
       if (isSelected) {
         FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
@@ -554,7 +543,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         setTransparentIconBackground(true);
       }
 
-      ReferenceType ref = myItems.get(convertRowIndexToModel(row));
+      TypeInfo ref = myItems.get(convertRowIndexToModel(row));
 
       long diff = myCountProvider.getDiffCount(ref);
       String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
