@@ -54,7 +54,7 @@ public class VcsCommitInfoBalloon {
     myEditorPane.setBackground(HintUtil.getInformationColor());
     myEditorPane.setFont(VcsHistoryUtil.getCommitDetailsFont());
     myEditorPane.setBorder(HintUtil.createHintBorder());
-    Border margin = JBUI.Borders.empty(3, 3, 3, 3);
+    Border margin = JBUI.Borders.empty(3);
     myEditorPane.setBorder(new CompoundBorder(myEditorPane.getBorder(), margin));
     myEditorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
