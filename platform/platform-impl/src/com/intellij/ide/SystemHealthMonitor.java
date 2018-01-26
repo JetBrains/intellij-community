@@ -13,11 +13,13 @@ import com.intellij.notification.impl.NotificationFullContent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
@@ -33,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -56,11 +57,13 @@ public class SystemHealthMonitor implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    checkRuntime();
-    checkReservedCodeCacheSize();
-    checkIBus();
-    checkSignalBlocking();
-    startDiskSpaceMonitoring();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      checkRuntime();
+      checkReservedCodeCacheSize();
+      checkIBus();
+      checkSignalBlocking();
+      startDiskSpaceMonitoring();
+    });
   }
 
   private void checkRuntime() {
@@ -127,8 +130,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           if (m.find() && StringUtil.compareVersionNumbers(m.group(1), "1.5.11") < 0) {
             String fix = System.getenv("IBUS_ENABLE_SYNC_MODE");
             if (fix == null || fix.isEmpty() || fix.equals("0") || fix.equalsIgnoreCase("false")) {
-              showNotification("ibus.blocking.warn.message", new BrowseNotificationAction(IdeBundle.message("ibus.blocking.details.action"),
-                                                                                          IdeBundle.message("ibus.blocking.details.url")));
+              showNotification("ibus.blocking.warn.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-78860"));
             }
           }
         }
@@ -144,8 +146,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
         if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
           long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
           if (handler == LibC.SIG_IGN) {
-            showNotification("ide.sigint.ignored.message", new BrowseNotificationAction(IdeBundle.message("ide.sigint.ignored.action"),
-                                                                                        IdeBundle.message("ide.sigint.ignored.url")));
+            showNotification("ide.sigint.ignored.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-157989"));
           }
         }
       }
@@ -162,40 +163,30 @@ public class SystemHealthMonitor implements ApplicationComponent {
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
-    String message = IdeBundle.message(key, params);
-
-    Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    Notification notification = new MyNotification(IdeBundle.message(key, params));
+    if (action != null) {
+      notification.addAction(action);
+    }
+    notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
       @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        app.invokeLater(() -> {
-          Notification notification = new MyNotification(message);
-          if (action != null) {
-            notification.addAction(action);
-          }
-          notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
-            @Override
-            public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-              notification.expire();
-              myProperties.setValue("ignore." + key, "true");
-            }
-          });
-          notification.setImportant(true);
-          Notifications.Bus.notify(notification);
-        });
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        myProperties.setValue("ignore." + key, "true");
       }
     });
+    notification.setImportant(true);
+
+    ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(notification));
   }
 
   private static final class MyNotification extends Notification implements NotificationFullContent {
     public MyNotification(@NotNull String content) {
-      super(GROUP.getDisplayId(), "", content, NotificationType.WARNING, new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-          BrowserUtil.browse(e.getDescription());
-        }
-      });
+      super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
     }
+  }
+
+  private static NotificationAction detailsAction(String url) {
+    return new BrowseNotificationAction(IdeBundle.message("sys.health.details"), url);
   }
 
   private static void startDiskSpaceMonitoring() {
