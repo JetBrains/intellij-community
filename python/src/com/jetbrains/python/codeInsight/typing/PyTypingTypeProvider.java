@@ -1263,6 +1263,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return false;
   }
 
+  public static boolean isProtocol(@NotNull PyClassLikeType classLikeType, @NotNull TypeEvalContext context) {
+    return ContainerUtil.exists(classLikeType.getSuperClassTypes(context),
+                                superClass -> superClass != null && PROTOCOL.equals(superClass.getClassQName()));
+  }
+
   @NotNull
   private static String getOpenMode(@NotNull PyFunction function, @NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final Map<PyExpression, PyCallableParameter> arguments =

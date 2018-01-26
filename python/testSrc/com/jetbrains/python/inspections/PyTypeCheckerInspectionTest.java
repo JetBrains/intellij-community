@@ -470,4 +470,44 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testModuleWithGetAttr() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
+
+  // PY-26628
+  public void testAgainstTypingProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolWithImplementedMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolWithImplementedVariable() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstMergedTypingProtocols() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstGenericTypingProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstRecursiveTypingProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolWrongTypes() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testTypingProtocolAgainstProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
 }
