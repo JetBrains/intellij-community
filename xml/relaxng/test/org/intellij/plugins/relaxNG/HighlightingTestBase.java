@@ -121,7 +121,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     ExternalResourceManagerEx resourceManager = ExternalResourceManagerEx.getInstanceEx();
     String url = "urn:test:undefined";
     ApplicationManager.getApplication().runWriteAction(() -> resourceManager.addIgnoredResource(url));
-    Disposer.register(getTestRootDisposable(), () -> resourceManager.removeIgnoredResource(url));
+    Disposer.register(getTestRootDisposable(), () -> ApplicationManager.getApplication().runWriteAction(() -> resourceManager.removeIgnoredResource(url)));
   }
 
   @Override
