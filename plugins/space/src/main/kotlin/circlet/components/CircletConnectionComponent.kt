@@ -32,7 +32,7 @@ class CircletConnectionComponent(private val project: Project) :
 
     val loginModel = LoginModel(
         IdeaPersistence, endpoint, ApiScheme(emptyArray()) /*TODO*/, EmptyLoggedStateWatcher,
-        { authCheckFailedNotification() }, NotificationSettingKind.Ide
+        { authCheckFailedNotification() }, NotificationKind.Ide
     ) {
         // TODO: NOTIFY
     }
