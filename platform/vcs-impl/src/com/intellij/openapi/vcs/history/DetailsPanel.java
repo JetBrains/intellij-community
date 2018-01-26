@@ -66,7 +66,6 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
     mySelection = selection;
     update();
-    setCaretPosition(0);
   }
 
   @NotNull

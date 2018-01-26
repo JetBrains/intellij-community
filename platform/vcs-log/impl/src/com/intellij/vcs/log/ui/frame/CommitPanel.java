@@ -153,9 +153,6 @@ public class CommitPanel extends JBPanel {
     @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
     DataPanel() {
-      DefaultCaret caret = (DefaultCaret)getCaret();
-      caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-
       setBorder(JBUI.Borders.empty(0, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
     }
 
@@ -191,9 +188,6 @@ public class CommitPanel extends JBPanel {
     private boolean myExpanded = false;
 
     BranchesPanel() {
-      DefaultCaret caret = (DefaultCaret)getCaret();
-      caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-
       setBorder(JBUI.Borders.empty(REFERENCES_BORDER, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
     }
 

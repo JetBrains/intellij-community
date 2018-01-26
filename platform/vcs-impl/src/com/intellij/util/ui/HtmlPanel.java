@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.Document;
 import javax.swing.text.Position;
 import javax.swing.text.html.HTMLDocument;
@@ -40,6 +41,9 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     setOpaque(false);
     putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     addHyperlinkListener(this);
+
+    DefaultCaret caret = (DefaultCaret)getCaret();
+    caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
   }
 
   @Override
