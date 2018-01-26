@@ -14,6 +14,7 @@ import org.apache.log4j.PatternLayout
 import org.apache.log4j.RollingFileAppender
 import java.io.File
 import java.io.IOException
+import java.nio.file.Paths
 import java.util.*
 
 object FeatureUsageEventLogger {
@@ -76,8 +77,8 @@ object FeatureUsageEventLogger {
   }
 
   private fun createLogger(): Logger? {
-    val logPath = PathManager.getLogPath()
-    val file = File(logPath + "/feature-usage.log")
+    val path = Paths.get(PathManager.getSystemPath()).resolve("event-log").resolve("feature-usage.log")
+    val file = File(path.toUri())
 
     val logger = Logger.getLogger("feature-usage-event-logger")
     logger.level = Level.INFO
