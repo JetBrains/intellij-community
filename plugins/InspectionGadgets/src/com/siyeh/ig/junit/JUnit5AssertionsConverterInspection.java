@@ -120,7 +120,7 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
 
     private boolean absentInJUnit5(PsiMethod psiMethod, String methodName) {
       if ("fail".equals(methodName)) {
-        return psiMethod.getParameterList().getParametersCount() == 0;
+        return psiMethod.getParameterList().isEmpty();
       }
       if ("assertNotEquals".equals(methodName)) {
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();

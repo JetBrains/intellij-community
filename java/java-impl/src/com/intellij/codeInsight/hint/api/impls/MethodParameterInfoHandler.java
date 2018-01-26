@@ -145,7 +145,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
           if (currentMethodReference == null || originalMethodName.equals(currentMethodReference.getReferenceName())) {
 
-            int currentNumberOfParameters = expressionList.getExpressions().length;
+            int currentNumberOfParameters = expressionList.getExpressionCount();
             PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
             Document document = psiDocumentManager.getCachedDocument(context.getFile());
             if (parent instanceof PsiCallExpression && JavaMethodCallElement.isCompletionMode((PsiCall)parent)) {
@@ -187,7 +187,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           for (PsiElement element : owner.getChildren()) {
             if (element instanceof PsiErrorElement) return false;
           }
-          if (owner instanceof PsiExpressionList && ((PsiExpressionList)owner).getExpressions().length == 0) {
+          if (owner instanceof PsiExpressionList && ((PsiExpressionList)owner).isEmpty()) {
             PsiElement parent = owner.getParent();
             if (parent instanceof PsiCall) {
               PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
@@ -226,7 +226,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiElement e = ((CandidateInfo)c).getElement();
       if (!(e instanceof PsiMethod)) return false;
       PsiMethod m = (PsiMethod)e;
-      return m.getParameterList().getParametersCount() == 0 && m.getName().equals(methodName);
+      return m.getParameterList().isEmpty() && m.getName().equals(methodName);
     }) != null;
   }
 
@@ -358,7 +358,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     Inlay currentHint = null;
     List<Inlay> highlightedHints = null;
     if (expressionList != null && expressionList.isValid()) {
-      int expressionCount = expressionList.getExpressions().length;
+      int expressionCount = expressionList.getExpressionCount();
       if (currentHintIndex == 0 || currentHintIndex > 0 && currentHintIndex < expressionCount) {
         highlightedHints = new ArrayList<>(expressionCount);
         ParameterHintsPass.syncUpdate(expressionList.getParent(), editor);

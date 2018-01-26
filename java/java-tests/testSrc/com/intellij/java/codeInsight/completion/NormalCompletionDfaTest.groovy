@@ -54,6 +54,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testGenericTypeDfa() { doTest() }
   void testNoUnnecessaryCastDfa() { doTest() }
   void testNoUnnecessaryCastRawDfa() { doTest() }
+  void testNoUnnecessaryCastDeepHierarchy() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
   void testComplexInstanceOfDfa() {
     configureByTestName()

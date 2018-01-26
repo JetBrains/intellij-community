@@ -290,7 +290,7 @@ public class ProjectBytecodeAnalysis {
 
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
-    int arity = owner.getParameterList().getParameters().length;
+    int arity = owner.getParameterList().getParametersCount();
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
     EKey failureKey = key.withDirection(Throw);

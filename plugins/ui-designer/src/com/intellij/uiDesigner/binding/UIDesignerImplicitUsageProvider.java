@@ -32,7 +32,7 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
       PsiMethod method = (PsiMethod) element;
       if ((AsmCodeGenerator.CREATE_COMPONENTS_METHOD_NAME.equals(method.getName()) ||
            AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
-           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().getParametersCount() == 0) {
+           AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName())) && method.getParameterList().isEmpty()) {
         return true;
       }
     }

@@ -157,7 +157,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       myExceptionVar = exceptionVar;
       myMethods = StreamEx.of("getMessage", "getLocalizedMessage", "getCause")
         .flatArray(name -> exceptionClass.findMethodsByName(name, true))
-        .filter(m -> m.getParameterList().getParametersCount() == 0)
+        .filter(m -> m.getParameterList().isEmpty())
         .toList();
     }
 

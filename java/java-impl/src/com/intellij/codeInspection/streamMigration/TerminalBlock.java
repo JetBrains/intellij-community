@@ -332,8 +332,7 @@ class TerminalBlock {
     PsiNewExpression initializer = tryCast(var.getInitializer(), PsiNewExpression.class);
     if (initializer == null) return null;
     PsiExpressionList argumentList = initializer.getArgumentList();
-    if (argumentList == null ||
-        argumentList.getExpressions().length != 0 ||
+    if (argumentList == null || !argumentList.isEmpty() ||
         ControlFlowUtils.getInitializerUsageStatus(var, getStreamSourceStatement()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       return null;
     }

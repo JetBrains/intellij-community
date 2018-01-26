@@ -57,7 +57,7 @@ public class ApproximateResolver {
 
     Set<PsiClass> qualifierType = getPossibleTypes(qualifier, maxDepth - 1);
     String refName = ref.getReferenceName();
-    int argCount = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions().length;
+    int argCount = ((PsiMethodCallExpression)expression).getArgumentList().getExpressionCount();
     List<PsiMethod> methods = refName == null || qualifierType == null ? null : getPossibleMethods(qualifierType, refName, argCount);
     return methods == null ? null : getDefiniteSymbolTypes(methods);
   }

@@ -53,7 +53,7 @@ class EditBookmarkDescriptionAction extends DumbAwareAction {
       return;
     }
     Bookmark bookmark = BookmarksAction.getSelectedBookmarks(myList).get(0);
-   // myPopup.setUiVisible(false);
+    myPopup.setUiVisible(false);
 
     BookmarkManager.getInstance(myProject).editDescription(bookmark, myList);
 

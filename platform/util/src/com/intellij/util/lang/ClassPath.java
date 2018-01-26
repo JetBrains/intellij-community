@@ -20,12 +20,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -47,13 +49,14 @@ public class ClassPath {
   private final Map<URL, Loader> myLoadersMap = new HashMap<URL, Loader>();
   private final ClasspathCache myCache = new ClasspathCache();
 
-  private final boolean myCanLockJars;
+  final boolean myCanLockJars; // true implies that the .jar file will not be modified in the lifetime of the JarLoader
   private final boolean myCanUseCache;
   private final boolean myAcceptUnescapedUrls;
-  private final boolean myPreloadJarContents;
-  private final boolean myCanHavePersistentIndex;
+  final boolean myPreloadJarContents;
+  final boolean myCanHavePersistentIndex;
   @Nullable private final CachePoolImpl myCachePool;
   @Nullable private final UrlClassLoader.CachingCondition myCachingCondition;
+  final boolean myLogErrorOnMissingJar;
 
   public ClassPath(List<URL> urls,
                    boolean canLockJars,
@@ -62,7 +65,8 @@ public class ClassPath {
                    boolean preloadJarContents,
                    boolean canHavePersistentIndex,
                    @Nullable CachePoolImpl cachePool,
-                   @Nullable UrlClassLoader.CachingCondition cachingCondition) {
+                   @Nullable UrlClassLoader.CachingCondition cachingCondition,
+                   boolean logErrorOnMissingJar) {
     myCanLockJars = canLockJars;
     myCanUseCache = canUseCache;
     myAcceptUnescapedUrls = acceptUnescapedUrls;
@@ -70,6 +74,7 @@ public class ClassPath {
     myCachePool = cachePool;
     myCachingCondition = cachingCondition;
     myCanHavePersistentIndex = canHavePersistentIndex;
+    myLogErrorOnMissingJar = logErrorOnMissingJar;
     push(urls);
   }
 
@@ -196,10 +201,10 @@ public class ClassPath {
 
   private Loader createLoader(URL url, int index, File file, boolean processRecursively) throws IOException {
     if (file.isDirectory()) {
-      return new FileLoader(url, index, myCanHavePersistentIndex);
+      return new FileLoader(url, index, this);
     }
     if (file.isFile()) {
-      Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents, this);
+      Loader loader = new JarLoader(url, index, this);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath((JarLoader)loader);
         if (referencedJars != null) {

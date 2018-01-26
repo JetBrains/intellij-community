@@ -4,6 +4,7 @@
     <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.intellij.codeInspection.naming.NamingConvention"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.method" interface="com.intellij.codeInspection.naming.NamingConvention"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.field" interface="com.intellij.codeInspection.naming.NamingConvention"/>
+    <extensionPoint qualifiedName="com.intellij.implicit.resource.closer" interface="com.intellij.codeInspection.resources.ImplicitResourceCloser"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 

@@ -79,11 +79,6 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
               && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
             shouldCloseAllPopup = true;
           }
-          else if (focused instanceof Dialog && ((Dialog)focused).isModal()) {
-            // close all popups except one that is opening a modal dialog
-            closeAllPopups(true, focused.getOwner());
-            return false;
-          }
         }
 
         if (shouldCloseAllPopup) {

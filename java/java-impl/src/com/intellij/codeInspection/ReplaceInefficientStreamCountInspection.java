@@ -110,7 +110,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)function;
       if (!STREAM_METHOD.equals(methodRef.getReferenceName())) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
-      if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
+      if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().isEmpty()) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(containingClass.getQualifiedName())) {
           return true;

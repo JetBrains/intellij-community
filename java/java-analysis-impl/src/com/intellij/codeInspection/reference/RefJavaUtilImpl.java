@@ -265,7 +265,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       }
 
       PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList.getExpressions().length > 0) {
+      if (!argumentList.isEmpty()) {
         refMethod.updateParameterValues(argumentList.getExpressions());
       }
 

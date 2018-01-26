@@ -248,7 +248,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
-    if (method.getParameterList().getParametersCount() == 0 ||
+    if (method.getParameterList().isEmpty() ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
         !ParameterInfoController.areParameterTemplatesEnabledOnCompletion()) {
       return false;
@@ -258,7 +258,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     context.commitDocument();
     PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCall.class, false);
     PsiExpressionList argList = call == null ? null : call.getArgumentList();
-    if (argList == null || argList.getExpressions().length > 0) {
+    if (argList == null || !argList.isEmpty()) {
       return false;
     }
 

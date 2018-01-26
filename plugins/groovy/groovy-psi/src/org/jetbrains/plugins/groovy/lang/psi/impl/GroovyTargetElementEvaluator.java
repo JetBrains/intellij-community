@@ -61,7 +61,7 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
           argumentList != null &&
           PsiImplUtil.hasNamedArguments(argumentList) &&
           !PsiImplUtil.hasExpressionArguments(argumentList)) {
-        if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
+        if (constructor.getParameterList().isEmpty()) return constructor.getContainingClass();
       }
 
       return constructor;

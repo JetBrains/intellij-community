@@ -88,7 +88,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
         }
         if (runnableExpr instanceof PsiLambdaExpression) {
           PsiLambdaExpression lambda = (PsiLambdaExpression)runnableExpr;
-          if (lambda.getParameterList().getParametersCount() != 0) return null;
+          if (!lambda.getParameterList().isEmpty()) return null;
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody == null) return null;
           return getLambdaElementCapturingThis(lambdaBody, trackedClass).orElse(null);

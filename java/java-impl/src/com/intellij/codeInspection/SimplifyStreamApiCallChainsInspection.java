@@ -753,7 +753,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       PsiMethodReferenceExpression methodRef = tryCast(call.getArgumentList().getExpressions()[0], PsiMethodReferenceExpression.class);
       if (methodRef == null || !methodRef.isConstructor()) return null;
       PsiMethod ctor = tryCast(methodRef.resolve(), PsiMethod.class);
-      if (ctor == null || ctor.getParameterList().getParametersCount() != 0) return null;
+      if (ctor == null || !ctor.getParameterList().isEmpty()) return null;
       PsiClass aClass = ctor.getContainingClass();
       if (aClass == null) return null;
       String name = aClass.getQualifiedName();

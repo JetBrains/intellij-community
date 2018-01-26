@@ -108,7 +108,7 @@ class DistributionJARsBuilder {
       withModule("intellij.platform.bootstrap")
       withModule("intellij.java.guiForms.rt")
       withModule("intellij.platform.icons")
-      withModule("intellij.platform.boot")
+      withModule("intellij.platform.boot", "bootstrap.jar")
       withModule("intellij.platform.resources", "resources.jar")
       withModule("intellij.platform.colorSchemes", "resources.jar")
       withModule("intellij.platform.resources.en", productLayout.mainJarName)

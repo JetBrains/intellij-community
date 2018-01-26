@@ -155,7 +155,7 @@ class LanguageResolvingUtil {
 
     PsiMethod defaultConstructor = null;
     for (PsiMethod constructor : languagePsiClass.getConstructors()) {
-      if (constructor.getParameterList().getParametersCount() == 0) {
+      if (constructor.getParameterList().isEmpty()) {
         defaultConstructor = constructor;
         break;
       }

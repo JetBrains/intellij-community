@@ -675,7 +675,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public static String getMethodPresentation(PsiMethod method) {
-      if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
         return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {

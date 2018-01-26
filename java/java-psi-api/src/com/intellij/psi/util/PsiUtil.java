@@ -28,7 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
-import java.util.HashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
@@ -1029,7 +1028,7 @@ public final class PsiUtil extends PsiUtilCore {
       for (PsiMethod cls: constructors) {
         if ((!checkModifiers || cls.hasModifierProperty(PsiModifier.PUBLIC) ||
              allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
-            cls.getParameterList().getParametersCount() == 0) {
+            cls.getParameterList().isEmpty()) {
           return true;
         }
       }

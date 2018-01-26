@@ -448,7 +448,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private int getActualParametersLength() {
     if (myActualParameterTypes == null) {
       LOG.assertTrue(myArgumentsList instanceof PsiExpressionList, myArgumentsList);
-      return ((PsiExpressionList)myArgumentsList).getExpressions().length;
+      return ((PsiExpressionList)myArgumentsList).getExpressionCount();
     }
     return myActualParameterTypes.length;
   }

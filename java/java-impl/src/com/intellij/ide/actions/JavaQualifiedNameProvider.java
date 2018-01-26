@@ -270,7 +270,7 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
 
     int caretOffset = rangeMarker.getEndOffset();
-    if (element instanceof PsiMethod && ((PsiMethod)element).getParameterList().getParametersCount() != 0 && StringUtil.endsWithChar(suffix,')')) {
+    if (element instanceof PsiMethod && !((PsiMethod)element).getParameterList().isEmpty() && StringUtil.endsWithChar(suffix,')')) {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);

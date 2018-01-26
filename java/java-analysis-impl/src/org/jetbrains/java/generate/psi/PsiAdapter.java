@@ -464,7 +464,7 @@ public class PsiAdapter {
             return false;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() != 0) {
+        if (!parameterList.isEmpty()) {
             return false;
         }
         return true;
@@ -598,7 +598,7 @@ public class PsiAdapter {
 
             // must not have a parameter
             PsiParameterList parameters = method.getParameterList();
-            if (parameters.getParametersCount() != 0) {
+            if (!parameters.isEmpty()) {
                 continue;
             }
 

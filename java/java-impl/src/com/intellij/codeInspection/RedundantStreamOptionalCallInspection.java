@@ -112,7 +112,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall =
                 findSubsequentCall(call, Predicate.isEqual("distinct"), CALLS_KEEPING_ELEMENTS_DISTINCT::contains);
-              if (furtherCall != null && furtherCall.getArgumentList().getExpressions().length == 0) {
+              if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(furtherCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.distinct"));
               }
             }
@@ -121,7 +121,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall =
                 findSubsequentCall(call, Predicate.isEqual("unordered"), n -> !n.equals("sorted"));
-              if (furtherCall != null && furtherCall.getArgumentList().getExpressions().length == 0) {
+              if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(furtherCall, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.unordered"));
               }
             }
@@ -130,7 +130,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
           case "parallel":
             if (args.length == 0) {
               PsiMethodCallExpression furtherCall = findSubsequentCall(call, CALLS_AFFECTING_PARALLELIZATION::contains, n -> true);
-              if (furtherCall != null && furtherCall.getArgumentList().getExpressions().length == 0) {
+              if (furtherCall != null && furtherCall.getArgumentList().isEmpty()) {
                 register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.parallel",
                                                          furtherCall.getMethodExpression().getReferenceName()));
               }
@@ -198,7 +198,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     if (aClass == null) return false;
     PsiType primitiveCandidate = null;
     PsiParameterList list = method.getParameterList();
-    if (list.getParametersCount() == 0) {
+    if (list.isEmpty()) {
       primitiveCandidate = method.getReturnType();
     }
     else if (list.getParametersCount() == 1) {

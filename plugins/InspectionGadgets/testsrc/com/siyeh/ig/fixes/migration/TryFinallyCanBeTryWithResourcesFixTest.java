@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.fixes.migration;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.migration.TryFinallyCanBeTryWithResourcesInspection;
@@ -25,6 +27,14 @@ public class TryFinallyCanBeTryWithResourcesFixTest extends IGQuickFixesTestCase
   public void testMultiple() { doTest(); }
   public void testDependents() { doTest(); }
   public void testKeepResourceCallInBlock() { doTest(); }
+  public void testTryInCatchBlock() { doTest(); }
+  public void testJava9() { doTest(); }
+  public void testJava9WithParameter() { doTest(); }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    builder.setLanguageLevel(LanguageLevel.JDK_1_9);
+  }
 
   @Override
   public void setUp() throws Exception {

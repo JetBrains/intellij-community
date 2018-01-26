@@ -1198,7 +1198,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private static boolean isAcceptableContextForMathOperation(PsiExpression expression) {
-    PsiType type = expression.getType();
     PsiElement parent = expression.getParent();
     while (parent != null && !(parent instanceof PsiAssignmentExpression) && !(parent instanceof PsiStatement) && !(parent instanceof PsiLambdaExpression)) {
       if (parent instanceof PsiExpressionList) return true;

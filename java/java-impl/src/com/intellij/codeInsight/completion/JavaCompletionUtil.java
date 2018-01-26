@@ -366,7 +366,7 @@ public class JavaCompletionUtil {
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
           PsiClass plainClass = plainResult.getElement();
           HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-          if (plainClass != null && StreamEx.of(signature.getSuperSignatures()).prepend(signature)
+          if (plainClass != null && StreamEx.ofTree(signature, s -> StreamEx.of(s.getSuperSignatures()))
             .anyMatch(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true) != null)) {
             PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
 

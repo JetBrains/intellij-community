@@ -922,9 +922,12 @@ public class AbstractPopup implements JBPopup {
     window.setFocusableWindowState(myRequestFocus);
     window.setFocusable(myRequestFocus);
     // temporary w/a (will be brought back in jdk)
-    if (SystemInfo.isJetBrainsJvm) {
+    if ("TRUE".equals(getContent().getClientProperty("BookmarkPopup"))) {
+      window.setType(Window.Type.NORMAL);
+    } else if (SystemInfo.isJetBrainsJvm) {
       window.setType(Window.Type.POPUP);
     }
+
     // Swing popup default always on top state is set in true
     window.setAlwaysOnTop(false);
 

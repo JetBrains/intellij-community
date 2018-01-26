@@ -176,7 +176,7 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
       final PsiMethod[] methods = aClass.findMethodsByName("isEmpty", true);
       for (PsiMethod method : methods) {
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return qualifierExpression.getText() + ".isEmpty()";
         }
       }

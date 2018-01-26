@@ -38,6 +38,7 @@ import java.awt.event.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.beans.PropertyChangeListener;
 
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
@@ -52,13 +53,42 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return new DarculaComboBoxUI();
   }
 
-  protected KeyListener   editorKeyListener;
-  protected FocusListener editorFocusListener;
+  private KeyListener            editorKeyListener;
+  private FocusListener          editorFocusListener;
+  private PropertyChangeListener propertyListener;
 
   @Override
   protected void installDefaults() {
     super.installDefaults();
     comboBox.setBorder(this);
+  }
+
+  @Override protected void installListeners() {
+    super.installListeners();
+
+    propertyListener = createPropertyListener();
+    comboBox.addPropertyChangeListener(propertyListener);
+  }
+
+  @Override public void uninstallListeners() {
+    super.uninstallListeners();
+
+    if (propertyListener != null) {
+      comboBox.removePropertyChangeListener(propertyListener);
+      propertyListener = null;
+    }
+  }
+
+  protected PropertyChangeListener createPropertyListener() {
+    return e -> {
+      if ("enabled".equals(e.getPropertyName())) {
+        EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
+        if (etf != null) {
+          Color color = e.getNewValue() == Boolean.FALSE ? UIManager.getColor("ComboBox.disabledBackground") : null;
+          etf.setBackground(color);
+        }
+      }
+    };
   }
 
   protected JButton createArrowButton() {

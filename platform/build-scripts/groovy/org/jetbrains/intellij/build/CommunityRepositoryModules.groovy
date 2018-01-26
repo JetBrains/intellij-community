@@ -250,7 +250,7 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.sdklib", "sdklib.jar")
       withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
-      withModule("android.sdktools.layoutlib", "layoutlib-loader.jar")
+      withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
       withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
