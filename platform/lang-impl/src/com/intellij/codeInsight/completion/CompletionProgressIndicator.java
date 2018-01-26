@@ -94,6 +94,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
   private final CompletionLookupArranger myArranger;
+  private final CompletionType myCompletionType;
+  private final int myInvocationCount;
   private OffsetsInFile myHostOffsets;
   private final LookupImpl myLookup;
   private final Alarm mySuppressTimeoutAlarm = new Alarm(this);
@@ -138,11 +140,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
+    myCompletionType = handler.completionType;
+    myInvocationCount = invocationCount;
     myOffsetMap = offsetMap;
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myParameters = createCompletionParameters(invocationCount, offsets, editor);
+    myParameters = createCompletionParameters(offsets);
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
@@ -169,13 +173,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private CompletionParameters createCompletionParameters(int invocationCount, OffsetsInFile offsets, Editor editor) {
+  private CompletionParameters createCompletionParameters(OffsetsInFile offsets) {
     int offset = offsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
     PsiFile fileCopy = offsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
     PsiElement insertedElement = findCompletionPositionLeaf(offsets, offset, originalFile);
     insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, new CompletionContext(fileCopy, offsets.getOffsets()));
-    return new CompletionParameters(insertedElement, originalFile, myHandler.completionType, offset, invocationCount, editor, this);
+    return new CompletionParameters(insertedElement, originalFile, myCompletionType, offset, myInvocationCount, myEditor, this);
   }
 
   @NotNull
@@ -185,7 +189,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return insertedElement;
   }
 
-  public void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
+  void itemSelected(@Nullable LookupElement lookupItem, char completionChar) {
     boolean dispose = lookupItem == null;
     finishCompletionProcess(dispose);
     if (dispose) return;
@@ -195,7 +199,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHandler.lookupItemSelected(this, lookupItem, completionChar, myLookup.getItems());
   }
 
-  public OffsetMap getOffsetMap() {
+  OffsetMap getOffsetMap() {
     return myOffsetMap;
   }
 
@@ -203,13 +207,13 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myHostOffsets;
   }
 
-  void duringCompletion(CompletionInitializationContext initContext) {
-    if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(myParameters)) {
+  void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
+    if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
       myLookup.setFocusDegree(CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
                               ? LookupImpl.FocusDegree.FOCUSED
                               : LookupImpl.FocusDegree.SEMI_FOCUSED);
     }
-    addDefaultAdvertisements();
+    addDefaultAdvertisements(parameters);
 
     ProgressManager.checkCanceled();
 
@@ -244,23 +248,23 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
   
 
-  private void addDefaultAdvertisements() {
+  private void addDefaultAdvertisements(CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
       addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
       return;
     }
     
-    advertiseTabReplacement();
+    advertiseTabReplacement(parameters);
     if (isAutopopupCompletion()) {
-      if (shouldPreselectFirstSuggestion(myParameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
+      if (shouldPreselectFirstSuggestion(parameters) && !CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
         advertiseCtrlDot();
       }
       advertiseCtrlArrows();
     }
   }
 
-  private void advertiseTabReplacement() {
-    if (CompletionUtil.shouldShowFeature(myParameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE) &&
+  private void advertiseTabReplacement(CompletionParameters parameters) {
+    if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_REPLACE) &&
       myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET) != myOffsetMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET)) {
       String shortcut = CompletionContributor.getActionShortcut(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
       if (StringUtil.isNotEmpty(shortcut)) {
@@ -307,14 +311,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
 
-  void scheduleAdvertising() {
+  void scheduleAdvertising(CompletionParameters parameters) {
     if (myLookup.isAvailableToUser()) {
       return;
     }
-    for (final CompletionContributor contributor : CompletionContributor.forParameters(myParameters)) {
+    for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
       if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
 
-      @SuppressWarnings("deprecation") String s = contributor.advertise(myParameters);
+      @SuppressWarnings("deprecation") String s = contributor.advertise(parameters);
       if (s != null) {
         addAdvertisement(s, null);
       }
@@ -332,7 +336,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     contentComponent.addKeyListener(new ModifierTracker(contentComponent));
   }
 
-  public void setMergeCommand() {
+  void setMergeCommand() {
     CommandProcessor.getInstance().setCurrentCommandGroupId(getCompletionCommandName());
   }
 
@@ -340,23 +344,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return "Completion" + hashCode();
   }
 
-  public boolean showLookup() {
-    return updateLookup(myIsUpdateSuppressed);
+  void showLookup() {
+    updateLookup(myIsUpdateSuppressed);
   }
 
   public CompletionParameters getParameters() {
     return myParameters;
   }
 
-  public CodeCompletionHandlerBase getHandler() {
-    return myHandler;
-  }
-
   public LookupImpl getLookup() {
     return myLookup;
   }
 
-  public void withSingleUpdate(Runnable action) {
+  void withSingleUpdate(Runnable action) {
     try {
       myIsUpdateSuppressed = true;
       action.run();
@@ -366,9 +366,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private boolean updateLookup(boolean isUpdateSuppressed) {
+  private void updateLookup(boolean isUpdateSuppressed) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated() || !shouldShowLookup() || isUpdateSuppressed) return false;
+    if (isOutdated() || !shouldShowLookup() || isUpdateSuppressed) return;
 
     while (true) {
       Runnable action = myAdvertiserChanges.poll();
@@ -386,7 +386,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     boolean justShown = false;
     if (!myLookup.isShown()) {
       if (hideAutopopupIfMeaningless()) {
-        return false;
+        return;
       }
 
       if (Registry.is("dump.threads.on.empty.lookup") && myLookup.isCalculating() && myLookup.getItems().isEmpty()) {
@@ -394,7 +394,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
 
       if (!myLookup.showLookup()) {
-        return false;
+        return;
       }
       justShown = true;
     }
@@ -404,7 +404,6 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (justShown) {
       myLookup.ensureSelectionVisible(true);
     }
-    return true;
   }
 
   private boolean shouldShowLookup() {
@@ -456,7 +455,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (!myLookup.addItem(item.getLookupElement(), item.getPrefixMatcher())) {
       return;
     }
-    myCount++;
+    //noinspection NonAtomicOperationOnVolatileField
+    myCount++; // invoked from a single thread
 
     if (myCount == 1) {
       JobScheduler.getScheduler().schedule(myFreezeSemaphore::up, ourInsertSingleItemTimeSpan, TimeUnit.MILLISECONDS);
@@ -621,8 +621,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
   }
 
-  public int nextInvocationCount(int invocation, boolean reused) {
-    return reused ? Math.max(getParameters().getInvocationCount() + 1, 2) : invocation;
+  int nextInvocationCount(int invocation, boolean reused) {
+    return reused ? Math.max(myInvocationCount + 1, 2) : invocation;
   }
 
   public Editor getEditor() {
@@ -630,12 +630,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   @NotNull
-  public Caret getCaret() {
+  Caret getCaret() {
     return myCaret;
   }
 
-  public boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
-    if (completionType != myParameters.getCompletionType() || editor != myEditor) {
+  boolean isRepeatedInvocation(CompletionType completionType, Editor editor) {
+    if (completionType != myCompletionType || editor != myEditor) {
       return false;
     }
 
@@ -648,7 +648,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Override
   public boolean isAutopopupCompletion() {
-    return myParameters.getInvocationCount() == 0;
+    return myInvocationCount == 0;
   }
 
   @NotNull
@@ -689,7 +689,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       closeAndFinish(false);
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      new CodeCompletionHandlerBase(myParameters.getCompletionType(), false, false, true).invokeCompletion(getProject(), myEditor, myParameters.getInvocationCount());
+      new CodeCompletionHandlerBase(myCompletionType, false, false, true).invokeCompletion(getProject(), myEditor, myInvocationCount);
       return;
     }
 
@@ -715,8 +715,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
       if (phase.checkExpired()) return;
 
-      CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
-                                                  isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(),
+      CompletionAutoPopupHandler.invokeCompletion(myCompletionType,
+                                                  isAutopopupCompletion(), project, myEditor, myInvocationCount,
                                                   true);
     });
   }
@@ -731,7 +731,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
            System.identityHashCode(this);
   }
 
-  protected void handleEmptyLookup(final boolean awaitSecondInvocation) {
+  void handleEmptyLookup(boolean awaitSecondInvocation) {
     if (isAutopopupCompletion() && ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -779,17 +779,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
 
-  void startCompletion(final CompletionInitializationContext initContext) {
+  void startCompletion(CompletionInitializationContext initContext) {
+    CompletionParameters parameters = myParameters;
+    
     boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
     myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
-    myStrategy.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, this::scheduleAdvertising));
+    myStrategy.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));
     final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
 
     class CalculateItems implements Runnable {
       @Override
       public void run() {
         try {
-          calculateItems(initContext, weigher);
+          calculateItems(initContext, weigher, parameters);
         }
         catch (ProcessCanceledException ignore) {
           cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
@@ -803,11 +805,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myStrategy.startThread(this, ()->AsyncCompletion.tryReadOrCancel(this, new CalculateItems()));
   }
 
-  private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher) {
-    duringCompletion(initContext);
+  private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher, CompletionParameters parameters) {
+    duringCompletion(initContext, parameters);
     ProgressManager.checkCanceled();
 
-    CompletionService.getCompletionService().performCompletion(myParameters, weigher);
+    CompletionService.getCompletionService().performCompletion(parameters, weigher);
     ProgressManager.checkCanceled();
 
     weigher.waitFor();
@@ -825,6 +827,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myQueue.queue(myUpdate);
   }
 
+  @SuppressWarnings("unused") // for Rider
   @TestOnly
   public static void setGroupingTimeSpan(int timeSpan) {
     ourInsertSingleItemTimeSpan = timeSpan;
@@ -836,7 +839,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ourShowPopupAfterFirstItemGroupingTime = timeSpan;
   }
 
-  public void makeSureLookupIsShown(int timeout) {
+  void makeSureLookupIsShown(int timeout) {
     mySuppressTimeoutAlarm.addRequest(this::showIfSuppressed, timeout);
   }
 
