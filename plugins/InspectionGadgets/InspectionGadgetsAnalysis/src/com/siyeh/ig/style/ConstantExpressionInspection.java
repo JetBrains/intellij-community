@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 50;
+  private static final int MAX_EXPRESSION_LENGTH = 200;
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -35,9 +38,9 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
       }
 
       void handle(PsiExpression expression) {
-        // intention disabled for long expressions because of performance issues on
+        // inspection disabled for long expressions because of performance issues on
         // relatively common large string expressions.
-        if (expression.getTextLength() > 200) return;
+        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return;
         if (expression.getType() == null) return;
         if (!PsiUtil.isConstantExpression(expression)) return;
         final PsiElement parent = expression.getParent();
@@ -47,7 +50,10 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
           if (value != null) {
             String valueText = getValueText(value);
             if (!expression.textMatches(valueText)) {
-              holder.registerProblem(expression, InspectionGadgetsBundle.message("inspection.constant.expression.display.name"),
+              String message = valueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY ?
+                               InspectionGadgetsBundle.message("inspection.constant.expression.display.name") :
+                               InspectionGadgetsBundle.message("inspection.constant.expression.message", valueText);
+              holder.registerProblem(expression, message,
                                      new ComputeConstantValueFix(expression, valueText));
             }
           }
@@ -71,7 +77,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      if (myValueText.length() > 50) {
+      if (myValueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY) {
         return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name", myText);
       }
       return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.with.value", myText, myValueText);
