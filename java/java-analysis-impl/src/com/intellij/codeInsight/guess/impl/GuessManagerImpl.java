@@ -174,13 +174,16 @@ public class GuessManagerImpl extends GuessManager {
       }
     }
     if (place == null) return false;
+    PsiType type = place.getType();
+    if (type == null) return false;
     final int start = place.getTextRange().getStartOffset();
     class Visitor extends JavaRecursiveElementWalkingVisitor {
       public boolean hasInteresting;
 
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), place)) {
+        if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), place) &&
+            expression.getRExpression() != null && !type.equals(expression.getRExpression().getType())) {
           hasInteresting = true;
           stopWalking();
         }
@@ -189,7 +192,8 @@ public class GuessManagerImpl extends GuessManager {
 
       @Override
       public void visitLocalVariable(PsiLocalVariable variable) {
-        if (variable.getInitializer() != null && ExpressionUtils.isReferenceTo(place, variable)) {
+        if (variable.getInitializer() != null && ExpressionUtils.isReferenceTo(place, variable) &&
+          !type.equals(variable.getInitializer().getType())) {
           hasInteresting = true;
           stopWalking();
         }
