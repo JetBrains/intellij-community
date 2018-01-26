@@ -193,7 +193,7 @@
     <module old-name="lang-impl" new-name="intellij.platform.lang.impl" />
     <module old-name="lang-tests" new-name="intellij.platform.lang.tests" />
     <module old-name="layoutinspector" new-name="intellij.android.layoutInspector" />
-    <module old-name="layoutlib" new-name="android.sdktools.layoutlib" />
+    <module old-name="layoutlib" new-name="intellij.android.layoutlib" />
     <module old-name="layoutlib-api" new-name="android.sdktools.layoutlib-api" />
     <module old-name="layoutlib-resources" new-name="android.sdktools.layoutlib-resources" />
     <module old-name="lint-api" new-name="android.sdktools.lint-api" />
