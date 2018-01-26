@@ -1,4 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 package com.intellij.history.integration.patches;
 
 import com.intellij.history.core.revisions.Difference;
@@ -7,15 +8,13 @@ import com.intellij.history.integration.PatchingTestCase;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.VfsTestUtil;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 public class PatchCreatorTest extends PatchingTestCase {
+
   @Bombed(user = "Nadya Zabrodina", year = 2018, month = Calendar.DECEMBER, day = 1,
     description = "Now we are not able to apply empty file creation patch; git special tag needed or smth like that")
   public void testCreationEmptyPatch() throws Exception {
@@ -37,11 +36,9 @@ public class PatchCreatorTest extends PatchingTestCase {
     clearRoot();
     applyPatch();
     myRoot.refresh(false, true);
-    VirtualFile dir = myRoot.findChild("idea_test_idea_test_integration");
-    assertThat(dir).isNotNull();
-    assertThat(dir.findChild("f1.txt")).isNotNull();
-    assertThat(dir.findChild("f2.txt")).isNotNull();
-    assertThat(dir.findChild("f3.txt")).isNull();
+    assertNotNull(myRoot.findChild("f1.txt"));
+    assertNotNull(myRoot.findChild("f2.txt"));
+    assertNull(myRoot.findChild("f3.txt"));
   }
 
   public void testRename() throws Exception {
@@ -54,9 +51,8 @@ public class PatchCreatorTest extends PatchingTestCase {
     rename(f, "f.txt");
     applyPatch();
 
-    VirtualFile dir = myRoot.findChild("idea_test_idea_test_integration");
-    VirtualFile patched = dir.findChild("ff.txt");
-    assertNull(dir.findChild("f.txt"));
+    VirtualFile patched = myRoot.findChild("ff.txt");
+    assertNull(myRoot.findChild("f.txt"));
     assertNotNull(patched);
     assertEquals('x', patched.contentsToByteArray()[0]);
   }
@@ -66,7 +62,7 @@ public class PatchCreatorTest extends PatchingTestCase {
     createPatchBetweenRevisions(2, 0, true);
     applyPatch();
 
-    assertNull(myRoot.findFileByRelativePath("idea_test_idea_test_integration/f.txt"));
+    assertNull(myRoot.findChild("f.txt"));
   }
 
   public void testDirectoryCreationWithFiles() throws Exception {
@@ -78,7 +74,8 @@ public class PatchCreatorTest extends PatchingTestCase {
 
     applyPatch();
 
-    assertThat(myRoot.findFileByRelativePath("idea_test_idea_test_integration/dir/f.txt")).isNotNull();
+    assertNotNull(myRoot.findChild("dir"));
+    assertNotNull(myRoot.findChild("dir").findChild("f.txt"));
   }
 
   public void testDirectoryDeletionWithFiles() throws Exception {
@@ -86,7 +83,7 @@ public class PatchCreatorTest extends PatchingTestCase {
     createChildDataWithContent(dir, "f1.txt");
     createChildDataWithContent(dir, "f2.txt");
 
-    VfsTestUtil.deleteFile(dir);
+    delete(dir);
     createPatchBetweenRevisions(1, 0, false);
 
     dir = createChildDirectory(myRoot, "dir");

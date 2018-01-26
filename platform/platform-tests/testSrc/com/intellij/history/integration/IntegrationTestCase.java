@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 public abstract class IntegrationTestCase extends PlatformTestCase {
@@ -61,8 +62,21 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
     });
   }
 
+  @NotNull
+  @Override
+  protected Path getProjectDirOrFile() {
+    try {
+      return createTempDirectory().toPath().resolve("test.ipr");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   protected void setUpInWriteAction() throws Exception {
-    myRoot = ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDir("idea_test_integration")));
+    VirtualFile tmpTestDir =
+      ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(FileUtil.getTempDirectory())));
+    myRoot = tmpTestDir.createChildDirectory(null, "idea_test_integration");
     PsiTestUtil.addContentRoot(myModule, myRoot);
   }
 
