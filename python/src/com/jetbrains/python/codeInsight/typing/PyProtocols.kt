@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.typing
 import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.psi.AccessDirection
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
@@ -15,6 +16,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 
 fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean {
   return classLikeType.getSuperClassTypes(context).any { type -> PROTOCOL == type?.classQName }
+}
+
+fun isProtocol(cls: PyClass, context: TypeEvalContext): Boolean {
+  return cls.getSuperClassTypes(context).any { type -> PROTOCOL == type?.classQName }
 }
 
 fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: TypeEvalContext) = expected is PyClassLikeType &&
