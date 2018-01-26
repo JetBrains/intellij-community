@@ -191,7 +191,6 @@
 
     <compiler.updateResourcesBuildContributor
         implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
-    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.settings.GradleSettingsImporter"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
