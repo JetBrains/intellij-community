@@ -22,7 +22,6 @@ import java.io.IOException;
  * @author Dmitry Avdeev
  */
 public class EclipseImportWizardTest extends ProjectWizardTestCase {
-
   public void testImportProject() throws Exception {
     Module module = doTest(".project");
     assertEquals("root", module.getName());
@@ -55,8 +54,8 @@ public class EclipseImportWizardTest extends ProjectWizardTestCase {
     final File currentTestRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "import");
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
     assertNotNull(vTestRoot);
-    VirtualFile subdir = StringUtil.isEmpty(subdirName) ? getProject().getBaseDir() :
-                         WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(getProject().getBaseDir(), subdirName));
+    VirtualFile subdir = StringUtil.isEmpty(subdirName) ? getOrCreateProjectBaseDir() :
+                         WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(getOrCreateProjectBaseDir(), subdirName));
     copyDirContentsTo(vTestRoot, subdir);
   }
 

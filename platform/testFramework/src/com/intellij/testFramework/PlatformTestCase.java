@@ -329,8 +329,23 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return getProjectDirOrFile(false);
   }
 
+  protected boolean isCreateProjectFileExplicitly() {
+    return true;
+  }
+
   @NotNull
   protected final Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
+    if (isCreateProjectFileExplicitly()) {
+      try {
+        File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+        myFilesToDelete.add(tempFile);
+        return tempFile.toPath();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     Path tempFile = generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
     myFilesToDelete.add(tempFile.toFile());
     return tempFile;
@@ -361,12 +376,28 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  protected static Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, final ModuleType moduleType) {
+  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, final ModuleType moduleType) {
     return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
   }
 
   @NotNull
-  protected static Module createModuleAt(@NotNull String moduleName, @NotNull Project project, ModuleType moduleType, @NotNull String path) {
+  protected Module createModuleAt(@NotNull String moduleName, @NotNull Project project, ModuleType moduleType, @NotNull String path) {
+    if (isCreateProjectFileExplicitly()) {
+      File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      FileUtil.createIfDoesntExist(moduleFile);
+      myFilesToDelete.add(moduleFile);
+      return new WriteAction<Module>() {
+        @Override
+        protected void run(@NotNull Result<Module> result) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+          assertNotNull(virtualFile);
+          Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
+          module.getModuleFile();
+          result.setResult(module);
+        }
+      }.execute().getResultObject();
+    }
+
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     return new WriteAction<Module>() {
       @Override
@@ -892,7 +923,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  protected VirtualFile getProjectBaseDir() {
+  protected VirtualFile getOrCreateProjectBaseDir() {
     VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir == null) {
       String basePath = myProject.getBasePath();

@@ -27,7 +27,7 @@ public abstract class EclipseVarsTest extends IdeaTestCase {
     final String tempPath = getProject().getBasePath();
     final File tempDir = new File(tempPath);
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
-    copyDirContentsTo(vTestRoot, getProjectBaseDir());
+    copyDirContentsTo(vTestRoot, getOrCreateProjectBaseDir());
 
     final VirtualFile virtualTestDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
     assertNotNull(tempDir.getAbsolutePath(), virtualTestDir);
@@ -41,8 +41,12 @@ public abstract class EclipseVarsTest extends IdeaTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    PathMacros.getInstance().removeMacro(VARIABLE);
-    PathMacros.getInstance().removeMacro(SRCVARIABLE);
-    super.tearDown();
+    try {
+      PathMacros.getInstance().removeMacro(VARIABLE);
+      PathMacros.getInstance().removeMacro(SRCVARIABLE);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

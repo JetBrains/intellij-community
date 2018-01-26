@@ -38,7 +38,7 @@ public class RootsChangedTest extends ModuleTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    getProjectBaseDir();
+    getOrCreateProjectBaseDir();
     MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
     myModuleRootListener = new MyModuleRootListener();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);

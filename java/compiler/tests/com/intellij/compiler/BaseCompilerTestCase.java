@@ -49,6 +49,11 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   @Override
+  protected boolean isCreateProjectFileExplicitly() {
+    return false;
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
     myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -139,7 +144,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected VirtualFile createFile(@NotNull String path, final String text) {
-    return VfsTestUtil.createFile(getProjectBaseDir(), path, text);
+    return VfsTestUtil.createFile(getOrCreateProjectBaseDir(), path, text);
   }
 
   protected CompilationLog make(final Artifact... artifacts) {
@@ -310,7 +315,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected Module doCreateRealModule(String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
-    final VirtualFile baseDir = getProjectBaseDir();
+    final VirtualFile baseDir = getOrCreateProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     PlatformTestCase.myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {

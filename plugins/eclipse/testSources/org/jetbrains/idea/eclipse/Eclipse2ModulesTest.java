@@ -30,7 +30,7 @@ public abstract class Eclipse2ModulesTest extends IdeaTestCase {
     File currentTestRoot = new File(testRoot, getTestName(true));
     assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    getProjectBaseDir();
+    getOrCreateProjectBaseDir();
     VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
     copyDirContentsTo(vTestRoot, getProject().getBaseDir());
   }
