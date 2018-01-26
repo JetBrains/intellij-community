@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -336,5 +337,11 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
   public void setFileToImport(String path) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     getParameters().myImportRoot = file == null || file.isDirectory() ? file : file.getParent();
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 }
