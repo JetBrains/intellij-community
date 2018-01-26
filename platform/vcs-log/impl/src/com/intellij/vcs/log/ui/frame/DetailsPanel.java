@@ -31,7 +31,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
@@ -172,7 +172,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
-      label.setFont(VcsHistoryUtil.getCommitDetailsFont());
+      label.setFont(FontUtil.getCommitDetailsFont());
       label.setBorder(CommitPanel.getDetailsBorder());
       myMainContentPanel.add(label);
     }

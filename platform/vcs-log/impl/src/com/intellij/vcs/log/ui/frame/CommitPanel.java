@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.openapi.vcs.ui.FontUtil.getCommitDetailsFont;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;

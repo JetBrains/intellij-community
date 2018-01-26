@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,5 +60,10 @@ public class FontUtil {
     }
 
     return result.toString();
+  }
+
+  @NotNull
+  public static Font getCommitDetailsFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 }

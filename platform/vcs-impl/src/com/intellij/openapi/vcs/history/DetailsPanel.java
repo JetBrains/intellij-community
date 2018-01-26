@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.HtmlPanel;
 import com.intellij.util.ui.JBDimension;
@@ -89,7 +90,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     }
     else {
       setText("<html><head>" +
-              UIUtil.getCssFontDeclaration(VcsHistoryUtil.getCommitDetailsFont()) +
+              UIUtil.getCssFontDeclaration(FontUtil.getCommitDetailsFont()) +
               "</head><body>" +
               myText +
               "</body></html>");

@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.openapi.vcs.ui.FontUtil.getCommitDetailsFont;
 import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
 
 public class ReferencesPanel extends JPanel {

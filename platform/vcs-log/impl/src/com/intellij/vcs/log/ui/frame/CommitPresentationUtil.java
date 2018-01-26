@@ -28,7 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
-import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.openapi.vcs.ui.FontUtil.getCommitDetailsFont;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class CommitPresentationUtil {
