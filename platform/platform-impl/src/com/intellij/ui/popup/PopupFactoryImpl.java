@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -69,14 +55,19 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.actionSystem.Presentation.*;
+import static com.intellij.openapi.actionSystem.Presentation.PROP_TEXT;
+import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -674,10 +665,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
-    Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
+    final int lineHeight = editor.getLineHeight();
+    Point p = editor.visualPositionToXY(visualPosition);
+    p.y += lineHeight;
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - editor.getLineHeight())
+    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - lineHeight)
            ? null : p;
   }
 
