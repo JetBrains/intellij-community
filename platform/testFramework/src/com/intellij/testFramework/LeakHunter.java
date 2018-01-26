@@ -57,7 +57,7 @@ public class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  public static <T> void checkLeak(@NotNull Collection<Object> roots,
+  public static <T> void checkLeak(@NotNull Map<Object, String> roots,
                                    @NotNull Class<T> suspectClass,
                                    @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
     processLeaks(roots, suspectClass, isReallyLeak, (leaked, backLink)->{
@@ -77,7 +77,7 @@ public class LeakHunter {
    * Checks if there is a memory leak if an object of type {@code suspectClass} is strongly accessible via references from the {@code root} object.
    */
   @TestOnly
-  static <T> void processLeaks(@NotNull Collection<Object> roots,
+  static <T> void processLeaks(@NotNull Map<Object, String> roots,
                                @NotNull Class<T> suspectClass,
                                @Nullable final Condition<? super T> isReallyLeak,
                                @NotNull final PairProcessor<? super T, Object> processor) throws AssertionError {
@@ -108,20 +108,22 @@ public class LeakHunter {
    */
   @TestOnly
   public static <T> void checkLeak(@NotNull Object root, @NotNull Class<T> suspectClass, @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
-    checkLeak(Collections.singletonList(root), suspectClass, isReallyLeak);
+    checkLeak(Collections.singletonMap(root, "Root object"), suspectClass, isReallyLeak);
   }
 
   @NotNull
-  public static List<Object> allRoots() {
+  public static Map<Object, String> allRoots() {
     ClassLoader classLoader = LeakHunter.class.getClassLoader();
     // inspect static fields of all loaded classes
-    Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
+    Vector allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
 
-    return Arrays.asList(ApplicationManager.getApplication(),
-                         Disposer.getTree(),
-                         IdeEventQueue.getInstance(),
-                         LaterInvocator.getLaterInvocatorQueue(),
-                         ThreadTracker.getThreads(),
-                         allLoadedClasses);
+    Map<Object, String> result = new IdentityHashMap<>();
+    result.put(ApplicationManager.getApplication(), "ApplicationManager.getApplication()");
+    result.put(Disposer.getTree(), "Disposer.getTree()");
+    result.put(IdeEventQueue.getInstance(), "IdeEventQueue.getInstance()");
+    result.put(LaterInvocator.getLaterInvocatorQueue(), "LaterInvocator.getLaterInvocatorQueue()");
+    result.put(ThreadTracker.getThreads(), "all live threads");
+    result.put(allLoadedClasses, "all loaded classes statics");
+    return result;
   }
 }
