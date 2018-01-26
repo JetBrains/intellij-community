@@ -410,6 +410,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
            : Collections.emptyList();
   }
 
+  @Deprecated
   @NotNull
   public GitExecutableValidator getExecutableValidator() {
     return myExecutableValidator;
