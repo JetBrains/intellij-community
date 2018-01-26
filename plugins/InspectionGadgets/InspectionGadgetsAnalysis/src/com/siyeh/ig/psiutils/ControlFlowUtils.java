@@ -42,7 +42,7 @@ public class ControlFlowUtils {
   public static boolean isElseIf(PsiIfStatement ifStatement) {
     PsiElement parent = ifStatement.getParent();
     if (parent instanceof PsiCodeBlock &&
-        ((PsiCodeBlock)parent).getStatements().length == 1 &&
+        ((PsiCodeBlock)parent).getStatementCount() == 1 &&
         parent.getParent() instanceof PsiBlockStatement) {
       parent = parent.getParent().getParent();
     }

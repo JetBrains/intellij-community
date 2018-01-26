@@ -446,7 +446,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
   private static boolean isMeaningful(@NotNull PsiStatement statement) {
     if (statement instanceof PsiEmptyStatement) return false;
     if (statement instanceof PsiBlockStatement) {
-      return ((PsiBlockStatement)statement).getCodeBlock().getStatements().length != 0;
+      return !((PsiBlockStatement)statement).getCodeBlock().isEmpty();
     }
     return true;
   }

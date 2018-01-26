@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
@@ -41,6 +42,32 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   @NotNull
   public PsiStatement[] getStatements() {
     return PsiImplUtil.getChildStatements(this);
+  }
+
+  @Override
+  public int getStatementCount() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
