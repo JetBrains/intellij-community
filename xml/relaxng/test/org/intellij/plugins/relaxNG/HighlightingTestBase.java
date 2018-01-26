@@ -28,6 +28,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -117,7 +118,10 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
   public abstract String getTestDataPath();
 
   protected void init() {
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("urn:test:undefined"));
+    ExternalResourceManagerEx resourceManager = ExternalResourceManagerEx.getInstanceEx();
+    String url = "urn:test:undefined";
+    ApplicationManager.getApplication().runWriteAction(() -> resourceManager.addIgnoredResource(url));
+    Disposer.register(getTestRootDisposable(), () -> resourceManager.removeIgnoredResource(url));
   }
 
   @Override
