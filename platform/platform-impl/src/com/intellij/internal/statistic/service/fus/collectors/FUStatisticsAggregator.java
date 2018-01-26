@@ -3,9 +3,9 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.CollectUsagesException;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
-import com.intellij.internal.statistic.service.fus.beans.gson.FSContent;
-import com.intellij.internal.statistic.service.fus.beans.gson.FSGroup;
-import com.intellij.internal.statistic.service.fus.beans.gson.FSSession;
+import com.intellij.internal.statistic.service.fus.beans.FSContent;
+import com.intellij.internal.statistic.service.fus.beans.FSGroup;
+import com.intellij.internal.statistic.service.fus.beans.FSSession;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -20,7 +20,7 @@ import java.util.Set;
 import static com.intellij.internal.statistic.utils.StatisticsUploadAssistant.LOCK;
 
 public class FUStatisticsAggregator implements UsagesCollectorConsumer {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.whiteList.collectors.FUStatisticsAggregator.");
+  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUStatisticsAggregator.");
 
   public FUStatisticsAggregator() {
   }
@@ -37,7 +37,7 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
 
     collectApplicationUsages(content, approvedGroups);
     collectOpenProjectUsages(content, approvedGroups);
-    collectPersistedProjectUsages(content, approvedGroups);
+    collectPersistedProjectUsages(content);
 
     return content;
   }
@@ -46,7 +46,7 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     writeContent(content, FUSession.APPLICATION_SESSION, getApplicationUsages(approvedGroups));
   }
 
-  public void collectOpenProjectUsages(@NotNull FSContent content, @NotNull Set<String> approvedGroups) {
+  private void collectOpenProjectUsages(@NotNull FSContent content, @NotNull Set<String> approvedGroups) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (project.isDisposed()) continue;
       Map<String, Set<UsageDescriptor>> usages = getProjectUsages(project, approvedGroups);
@@ -56,13 +56,14 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     }
   }
 
-  private void collectPersistedProjectUsages(@NotNull FSContent content,
-                                             @NotNull Set<String> approvedGroups) {
-    // todo: implement persistence component
+  private static void collectPersistedProjectUsages(@NotNull FSContent content) {
+    for (FSSession session : FUStatisticsPersistence.getPersistedSessions()) {
+      content.addSession(session);
+    }
   }
 
   @NotNull
-  public Map<String, Set<UsageDescriptor>> getApplicationUsages(@NotNull Set<String> approvedGroups) {
+  private Map<String, Set<UsageDescriptor>> getApplicationUsages(@NotNull Set<String> approvedGroups) {
     synchronized (LOCK) {
       Map<String, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
       for (ApplicationUsagesCollector usagesCollector : ApplicationUsagesCollector.getExtensions(this)) {
@@ -83,7 +84,7 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
   }
 
   @NotNull
-  public Map<String, Set<UsageDescriptor>> getProjectUsages(@NotNull Project project, @NotNull Set<String> approvedGroups) {
+  Map<String, Set<UsageDescriptor>> getProjectUsages(@NotNull Project project, @NotNull Set<String> approvedGroups) {
     synchronized (LOCK) {
       Map<String, Set<UsageDescriptor>> usageDescriptors = new LinkedHashMap<>();
       for (ProjectUsagesCollector usagesCollector : ProjectUsagesCollector.getExtensions(this)) {
@@ -92,9 +93,11 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
         if (!approvedGroups.contains(groupDescriptor)) continue;
 
         try {
-          usageDescriptors.merge(groupDescriptor, usagesCollector.getUsages(project), ContainerUtil::union);
-        }
-        catch (CollectUsagesException e) {
+          Set<UsageDescriptor> usages = usagesCollector.getUsages(project);
+          if (!usages.isEmpty()) {
+            usageDescriptors.merge(groupDescriptor, usages, ContainerUtil::union);
+          }
+        } catch (CollectUsagesException e) {
           LOG.info(e);
         }
       }
@@ -103,10 +106,9 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     }
   }
 
-
-  public void writeContent(FSContent content,
+  static void writeContent(@NotNull FSContent content,
                            @NotNull FUSession fuSession,
-                           Map<String, Set<UsageDescriptor>> usages) {
+                           @NotNull Map<String, Set<UsageDescriptor>> usages) {
     FSSession session = FSSession.create(Integer.toString(fuSession.getId()), fuSession.getBuildId());
     if (content.getSessions() !=null && content.getSessions().contains(session)) return;
 

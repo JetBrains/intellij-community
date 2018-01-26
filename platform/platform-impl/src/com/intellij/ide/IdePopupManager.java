@@ -61,15 +61,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
         }
 
-        if (focused == null) {
-          shouldCloseAllPopup = true;
-        }
-
         Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
         Window sourceWindow = ((WindowEvent)e).getWindow();
         Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
-        if (!shouldCloseAllPopup && ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+        if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
           shouldCloseAllPopup = true;
         }
 

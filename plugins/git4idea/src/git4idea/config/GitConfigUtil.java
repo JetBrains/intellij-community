@@ -92,10 +92,9 @@ public class GitConfigUtil {
   public static String getValue(Project project, VirtualFile root, @NonNls String key) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
-    h.ignoreErrorCode(1);
     h.addParameters("--null", "--get", key);
     GitCommandResult result = Git.getInstance().runCommand(h);
-    String output = result.getOutputOrThrow();
+    String output = result.getOutputOrThrow(1);
     int pos = output.indexOf('\u0000');
     if (result.getExitCode() != 0 || pos == -1) {
       return null;
@@ -179,9 +178,8 @@ public class GitConfigUtil {
   public static void setValue(Project project, VirtualFile root, String key, String value, String... additionalParameters) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
-    h.ignoreErrorCode(1);
     h.addParameters(additionalParameters);
     h.addParameters(key, value);
-    Git.getInstance().runCommand(h).getOutputOrThrow();
+    Git.getInstance().runCommand(h).getOutputOrThrow(1);
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -37,6 +38,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -51,7 +53,6 @@ import java.util.List;
 public abstract class BaseConfigurationTestCase extends IdeaTestCase {
   protected TempFiles myTempFiles;
   private final List<Module> myModulesToDispose = new ArrayList<>();
-  protected static final String MOCK_JUNIT = "mock JUnit";
 
   @Override
   protected void setUp() throws Exception {
@@ -83,13 +84,11 @@ public abstract class BaseConfigurationTestCase extends IdeaTestCase {
       PsiTestUtil.addContentRoot(module, module1Content);
     }
 
-    VirtualFile mockJUnit = findFile(MOCK_JUNIT);
-    ModuleRootModificationUtil.addModuleLibrary(module, mockJUnit.getUrl());
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
     ModuleRootModificationUtil.setModuleSdk(module, ModuleRootManager.getInstance(myModule).getSdk());
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
-    VirtualFile testCase = mockJUnit.findFileByRelativePath("junit/framework/TestCase.java");
-    assertNotNull(testCase);
-    assertTrue(scope.contains(testCase));
+    assertNotNull(JavaPsiFacade.getInstance(getProject()).findClass(JUnitUtil.TEST_CASE_CLASS, scope));
     Module missingModule = createTempModule();
     addDependency(module, missingModule);
     ModuleManager.getInstance(myProject).disposeModule(missingModule);

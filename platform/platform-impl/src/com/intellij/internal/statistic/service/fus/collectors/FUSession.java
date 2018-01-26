@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -18,7 +19,7 @@ public class FUSession {
   }
 
   public static FUSession create(@NotNull Project project) {
-    return new FUSession(project.getName());
+    return new FUSession(ProjectUtil.getProjectCacheFileName(project, false, "." ));
   }
 
   public FUSession(@NotNull String id) {

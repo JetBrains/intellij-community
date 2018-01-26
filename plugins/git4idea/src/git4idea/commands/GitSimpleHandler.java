@@ -26,6 +26,7 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.HashSet;
 
 /**
  * Simple Git handler that accumulates stdout and stderr and has nothing on stdin.
@@ -57,6 +58,10 @@ public class GitSimpleHandler extends GitTextHandler {
    * Reminder of the last stdout line
    */
   private final StringBuilder myStdoutLine = new StringBuilder();
+  /**
+   * Error codes that are ignored for the handler
+   */
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>();
 
   /**
    * A constructor
@@ -230,5 +235,24 @@ public class GitSimpleHandler extends GitTextHandler {
       throw new VcsException("The git command returned null: " + printableCommandLine());
     }
     return resultRef.get();
+  }
+
+  /**
+   * Add error code to ignored list
+   *
+   * @param code the code to ignore
+   */
+  public void ignoreErrorCode(int code) {
+    myIgnoredErrorCodes.add(code);
+  }
+
+  /**
+   * Check if error code should be ignored
+   *
+   * @param code a code to check
+   * @return true if error code is ignorable
+   */
+  public boolean isIgnoredErrorCode(int code) {
+    return myIgnoredErrorCodes.contains(code);
   }
 }

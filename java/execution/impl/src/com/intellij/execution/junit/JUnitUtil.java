@@ -166,14 +166,8 @@ public class JUnitUtil {
     final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(psiClass, PsiClass.class);
     if (topLevelClass != null) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(topLevelClass, Collections.singleton(RUN_WITH));
-      if (annotation != null) {
-        final PsiAnnotationMemberValue attributeValue = annotation.findAttributeValue("value");
-        if (attributeValue instanceof PsiClassObjectAccessExpression) {
-          final String runnerName = ((PsiClassObjectAccessExpression)attributeValue).getOperand().getType().getCanonicalText();
-          if (!(PARAMETERIZED_CLASS_NAME.equals(runnerName) || SUITE_CLASS_NAME.equals(runnerName))) {
-            return true;
-          }
-        }
+      if (annotation != null && !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD)) {
+        return true;
       }
     }
 
