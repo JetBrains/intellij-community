@@ -74,10 +74,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -91,7 +89,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Editor myEditor;
   @NotNull
   private final Caret myCaret;
-  private final CompletionParameters myParameters;
+  @Nullable private CompletionParameters myParameters;
   private final CodeCompletionHandlerBase myHandler;
   private final CompletionLookupArranger myArranger;
   private final CompletionType myCompletionType;
@@ -134,7 +132,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final int myStartCaret;
   private CompletionThreadingBase myStrategy;
 
-  CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount, OffsetsInFile offsets,
+  CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
                               boolean hasModifiers, LookupImpl lookup) {
     myEditor = editor;
@@ -146,11 +144,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myParameters = createCompletionParameters(offsets);
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
-    myArranger = new CompletionLookupArranger(myParameters, this);
+    myArranger = new CompletionLookupArranger(this);
     myLookup.setArranger(myArranger);
 
     myLookup.addLookupListener(myLookupListener);
@@ -348,6 +345,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     updateLookup(myIsUpdateSuppressed);
   }
 
+  // non-null when running generators and adding elements to lookup
+  @Nullable
   public CompletionParameters getParameters() {
     return myParameters;
   }
@@ -422,7 +421,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return myOffsetMap.getOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET);
   }
 
-  void addItem(final CompletionResult item) {
+  void addItem(CompletionResult item) {
     if (!isRunning()) return;
     ProgressManager.checkCanceled();
 
@@ -743,16 +742,24 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       return;
     }
 
-    for (final CompletionContributor contributor : CompletionContributor.forParameters(getParameters())) {
-      final String text = contributor.handleEmptyLookup(getParameters(), getEditor());
+    CompletionParameters parameters = getParameters();
+    if (parameters != null && runContributorsOnEmptyLookup(awaitSecondInvocation, parameters)) {
+      return;
+    }
+    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+  }
+
+  private boolean runContributorsOnEmptyLookup(boolean awaitSecondInvocation, CompletionParameters parameters) {
+    for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
+      final String text = contributor.handleEmptyLookup(parameters, getEditor());
       if (StringUtil.isNotEmpty(text)) {
         LightweightHint hint = showErrorHint(getProject(), getEditor(), text);
         CompletionServiceImpl.setCompletionPhase(
           awaitSecondInvocation ? new CompletionPhase.NoSuggestionsHint(hint, this) : CompletionPhase.NoCompletion);
-        return;
+        return true;
       }
     }
-    CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+    return false;
   }
 
   private static LightweightHint showErrorHint(Project project, Editor editor, String text) {
@@ -779,9 +786,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
 
-  void startCompletion(CompletionInitializationContext initContext) {
-    CompletionParameters parameters = myParameters;
-    
+  void startCompletion(CompletionInitializationContext initContext, OffsetsInFile offsets) {
+    CompletionParameters parameters = createCompletionParameters(offsets);
+    myParameters = parameters;
+
     boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
     myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
     myStrategy.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));
