@@ -69,6 +69,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
+import java.util.Objects;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -152,11 +153,6 @@ public class CodeCompletionHandlerBase {
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
-    /*
-    if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase.fillInCommonPrefix()) {
-      return;
-    }
-    */
 
     final int newTime = phase.newCompletionStarted(time, repeated);
     if (invokedExplicitly) {
@@ -302,7 +298,7 @@ public class CodeCompletionHandlerBase {
     }
 
     CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                            invocationCount, finalOffsets, this,
+                                                                            invocationCount, this,
                                                                             initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
     Disposer.register(indicator, finalOffsets.getOffsets());
@@ -310,7 +306,7 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
-    indicator.startCompletion(initContext);
+    indicator.startCompletion(initContext, finalOffsets);
 
     if (!synchronous) {
       return;
@@ -342,11 +338,12 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private AutoCompletionDecision shouldAutoComplete(final CompletionProgressIndicator indicator, List<LookupElement> items) {
+  private AutoCompletionDecision shouldAutoComplete(CompletionProgressIndicator indicator,
+                                                    List<LookupElement> items, 
+                                                    CompletionParameters parameters) {
     if (!invokedExplicitly) {
       return AutoCompletionDecision.SHOW_LOOKUP;
     }
-    final CompletionParameters parameters = indicator.getParameters();
     final LookupElement item = items.get(0);
     if (items.size() == 1) {
       final AutoCompletionPolicy policy = getAutocompletionPolicy(item);
@@ -386,12 +383,13 @@ public class CodeCompletionHandlerBase {
 
   protected void completionFinished(final CompletionProgressIndicator indicator, boolean hasModifiers) {
     final List<LookupElement> items = indicator.getLookup().getItems();
+    CompletionParameters parameters = Objects.requireNonNull(indicator.getParameters());
     if (items.isEmpty()) {
       LookupManager.getInstance(indicator.getProject()).hideActiveLookup();
 
       Caret nextCaret = getNextCaretToProcess(indicator.getEditor());
       if (nextCaret != null) {
-        invokeCompletion(indicator.getProject(), indicator.getEditor(), indicator.getParameters().getInvocationCount(), hasModifiers, false, nextCaret);
+        invokeCompletion(indicator.getProject(), indicator.getEditor(), parameters.getInvocationCount(), hasModifiers, false, nextCaret);
       }
       else {
         indicator.handleEmptyLookup(true);
@@ -404,7 +402,7 @@ public class CodeCompletionHandlerBase {
     LOG.assertTrue(!indicator.isCanceled(), "canceled");
 
     try {
-      final AutoCompletionDecision decision = shouldAutoComplete(indicator, items);
+      AutoCompletionDecision decision = shouldAutoComplete(indicator, items, parameters);
       if (decision == AutoCompletionDecision.SHOW_LOOKUP) {
         CompletionServiceImpl.setCompletionPhase(new CompletionPhase.ItemsCalculated(indicator));
         indicator.getLookup().setCalculating(false);
@@ -582,7 +580,7 @@ public class CodeCompletionHandlerBase {
       });
       context = lastContext.get();
     } else {
-      context = insertItem(indicator, item, completionChar, items, update, editor, indicator.getParameters().getOriginalFile(), caretOffset,
+      context = insertItem(indicator, item, completionChar, items, update, editor, PsiUtilBase.getPsiFileInEditor(editor, indicator.getProject()), caretOffset,
                            idEndOffset, indicator.getOffsetMap());
     }
     if (context.shouldAddCompletionChar()) {
@@ -671,7 +669,7 @@ public class CodeCompletionHandlerBase {
       Language language = PsiUtilBase.getLanguageInEditor(editor, indicator.getProject());
       if (language != null) {
         for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.allForLanguage(language)) {
-          if (processor.processAfterCompletion(editor, indicator.getParameters().getOriginalFile())) break;
+          if (processor.processAfterCompletion(editor, context.getFile())) break;
         }
       }
     }
@@ -786,6 +784,7 @@ public class CodeCompletionHandlerBase {
     return null;
   }
 
+  @SuppressWarnings("unused") // for Rider
   @TestOnly
   public static void setAutoInsertTimeout(int timeout) {
     ourAutoInsertItemTimeout = timeout;
