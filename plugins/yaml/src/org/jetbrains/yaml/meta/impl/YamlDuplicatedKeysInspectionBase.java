@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLBundle;
@@ -18,6 +19,7 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 import java.util.Collection;
 import java.util.Map;
 
+@ApiStatus.Experimental
 public abstract class YamlDuplicatedKeysInspectionBase extends LocalInspectionTool {
 
   @NotNull
