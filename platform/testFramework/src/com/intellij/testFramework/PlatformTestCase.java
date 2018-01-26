@@ -335,7 +335,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   protected final Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
-    if (isCreateProjectFileExplicitly()) {
+    if (!isDirectoryBasedProject && isCreateProjectFileExplicitly()) {
       try {
         File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
         myFilesToDelete.add(tempFile);
