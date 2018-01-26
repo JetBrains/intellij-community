@@ -178,7 +178,6 @@ class TestingTasksImpl extends TestingTasks {
     List<String> jvmArgs = [
       "-ea",
       "-server",
-      "-Xbootclasspath/a:${context.getModuleOutputPath(context.findRequiredModule("intellij.platform.boot"))}".toString(),
       "-XX:+HeapDumpOnOutOfMemoryError",
       "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
       "-XX:ReservedCodeCacheSize=300m",
