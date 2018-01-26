@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.stats.logger.LineStorage
 import com.intellij.stats.logger.LogFileManager
 import com.intellij.stats.storage.UniqueFilesProvider
+import com.intellij.testFramework.PlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Before
@@ -27,7 +28,6 @@ import java.io.File
 
 
 class FilesProviderTest {
-    
     private lateinit var provider: UniqueFilesProvider
 
     @Before
@@ -53,9 +53,7 @@ class FilesProviderTest {
     }
 }
 
-
 class AsciiMessageStorageTest {
-    
     private lateinit var storage: LineStorage
     private lateinit var tmpFile: File
 
@@ -92,33 +90,28 @@ class AsciiMessageStorageTest {
     }
 }
 
-
-
-class FileLoggerTest {
-    
+class FileLoggerTest : PlatformTestCase() {
     private lateinit var fileLogger: LogFileManager
     private lateinit var filesProvider: UniqueFilesProvider
+    private lateinit var tempDirectory: File
 
-    @Before
-    fun setUp() {
-        filesProvider = UniqueFilesProvider("chunk", ".", "logs-data")
-        val dir = filesProvider.getStatsDataDirectory()
-        dir.deleteRecursively()
+    override fun setUp() {
+        super.setUp()
+        tempDirectory = createTempDirectory()
+        filesProvider = UniqueFilesProvider("chunk", tempDirectory.absolutePath, "logs-data")
         fileLogger = LogFileManager(filesProvider)
     }
 
-    @After
-    fun tearDown() {
-        val dir = filesProvider.getStatsDataDirectory()
-        dir.deleteRecursively()
+    override fun tearDown() {
+        tempDirectory.deleteRecursively()
+        super.tearDown()
     }
 
-    @Test
     fun `test chunk is around 256Kb`() {
         val bytesToWrite = 1024 * 200
         val text = StringUtil.repeat("c", bytesToWrite)
         fileLogger.println(text)
-        fileLogger.dispose()
+        fileLogger.flush()
 
         val chunks = filesProvider.getDataFiles()
         assertThat(chunks).hasSize(1)
@@ -128,7 +121,6 @@ class FileLoggerTest {
         assertThat(fileLength).isGreaterThan(200 * 1024)
     }
     
-    @Test
     fun `test multiple chunks`() {
         writeKb(1024)
 
@@ -138,8 +130,6 @@ class FileLoggerTest {
         assertThat(fileIndexes).isEqualTo((0 until files.size).toList())
     }
 
-
-    @Test
     fun `test delete old stuff`() {
         writeKb(4096)
 
@@ -174,6 +164,7 @@ class FileLoggerTest {
         (0..kb * 1024 / lineLength).forEach {
             fileLogger.println("")
         }
-        fileLogger.dispose()
+
+        fileLogger.flush()
     }
 }

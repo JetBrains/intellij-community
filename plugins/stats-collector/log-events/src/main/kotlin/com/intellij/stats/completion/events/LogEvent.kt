@@ -19,6 +19,7 @@ package com.intellij.stats.completion.events
 import com.intellij.stats.completion.Action
 import com.intellij.stats.completion.LogEventVisitor
 import com.intellij.stats.completion.LookupEntryInfo
+import com.intellij.stats.completion.ValidationStatus
 
 
 abstract class LogEvent(
@@ -31,6 +32,7 @@ abstract class LogEvent(
     @Transient var recorderVersion = "3"
     @Transient var timestamp = System.currentTimeMillis()
     @Transient var bucket = "-1"
+    var validationStatus = ValidationStatus.UNKNOWN
 
     abstract fun accept(visitor: LogEventVisitor)
 }

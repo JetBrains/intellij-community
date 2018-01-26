@@ -25,8 +25,7 @@ import org.junit.Test
 import java.io.File
 
 class ValidatorTest {
-
-    lateinit var separator: InputSessionValidator
+    lateinit var validator: InputSessionValidator
     val sessionStatuses = hashMapOf<String, Boolean>()
 
     @Before
@@ -43,7 +42,7 @@ class ValidatorTest {
                 sessionStatuses[sessionUid] = true
             }
         }
-        separator = InputSessionValidator(result)
+        validator = InputSessionValidator(result)
     }
 
     private fun file(path: String): File {
@@ -53,36 +52,35 @@ class ValidatorTest {
     @Test
     fun testValidData() {
         val file = file("data/valid_data.txt")
-        separator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isTrue()
+        validator.validate(file.readLines())
+        assertThat(sessionStatuses["fb16691974d3"]).isTrue()
     }
 
     @Test
     fun testDataWithAbsentFieldInvalid() {
         val file = file("data/absent_field.txt")
-        separator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isFalse()
+        validator.validate(file.readLines())
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
 
     @Test
     fun testInvalidWithoutBacket() {
         val file = file("data/no_bucket.txt")
-        separator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isNull()
+        validator.validate(file.readLines())
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
 
     @Test
     fun testInvalidWithoutVersion() {
         val file = file("data/no_version.txt")
-        separator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isNull()
+        validator.validate(file.readLines())
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
 
     @Test
     fun testDataWithExtraFieldInvalid() {
         val file = file("data/extra_field.txt")
-        separator.validate(file.readLines())
-        assertThat(sessionStatuses["30fa222f0419"]).isFalse()
+        validator.validate(file.readLines())
+        assertThat(sessionStatuses["fb16691974d3"]).isFalse()
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,27 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.logger
+package com.intellij.stats.completion
 
-import java.io.File
-
-class LineStorage {
-
-    private val lines = mutableListOf<String>()
-    var size: Int = 0
-        private set
-
-    fun appendLine(line: String) {
-        size += line.length + System.lineSeparator().length
-        lines.add(line)
-    }
-
-    fun sizeWithNewLine(newLine: String): Int = size + newLine.length + System.lineSeparator().length
-
-    fun dump(dest: File) {
-        dest.writer().use { out ->
-            lines.forEach { out.appendln(it) }
-        }
-    }
-
+/**
+ * @author Vitaliy.Bibaev
+ */
+enum class ValidationStatus {
+    VALID, UNKNOWN, INVALID
 }
