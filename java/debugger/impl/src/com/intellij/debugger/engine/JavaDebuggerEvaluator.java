@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.EditorTextProvider;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -92,9 +93,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
   }
 
   @Override
-  public void evaluate(@NotNull PsiElement element,
-                       @NotNull XEvaluationCallback callback,
-                       @Nullable XSourcePosition expressionPosition) {
+  public void evaluate(@NotNull PsiElement element, @NotNull XEvaluationCallback callback) {
     myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext(),
                                                                               myStackFrame.getStackFrameProxy().threadProxy()) {
       @Override
@@ -114,21 +113,21 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
           return;
         }
 
-        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext()).createEvaluationContext();
+        DebuggerContextImpl debuggerContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext());
+        EvaluationContextImpl evalContext = debuggerContext.createEvaluationContext();
         if (evalContext == null) {
           callback.errorOccurred("Context is not available");
           return;
         }
 
         try {
-          Project project = element.getProject();
           ExpressionEvaluator evaluator = ReadAction.compute(() -> {
             CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
-            return factory.getEvaluatorBuilder().build(element, DebuggerUtilsEx.toSourcePosition(expressionPosition, project));
+            return factory.getEvaluatorBuilder().build(element, debuggerContext.getSourcePosition());
           });
           Value value = evaluator.evaluate(evalContext);
           TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
-          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text, value, evalContext);
+          WatchItemDescriptor descriptor = new WatchItemDescriptor(element.getProject(), text, value, evalContext);
           callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }
         catch (EvaluateException e) {

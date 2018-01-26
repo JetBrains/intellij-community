@@ -11,7 +11,5 @@ import org.jetbrains.annotations.Nullable;
  * @author egor
  */
 public interface XDebuggerPsiEvaluator {
-  void evaluate(@NotNull PsiElement element,
-                @NotNull XDebuggerEvaluator.XEvaluationCallback callback,
-                @Nullable XSourcePosition expressionPosition);
+  void evaluate(@NotNull PsiElement element, @NotNull XDebuggerEvaluator.XEvaluationCallback callback);
 }
