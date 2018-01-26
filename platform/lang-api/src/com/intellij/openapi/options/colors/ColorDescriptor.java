@@ -55,6 +55,7 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
     return myKind;
   }
 
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @NotNull
   @Override
   public ColorKey getKey() {
