@@ -18,6 +18,7 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 
@@ -25,8 +26,6 @@ import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -76,13 +75,8 @@ public class ContentComboLabel extends BaseLabel {
   }
 
   void update() {
-    if (isToDrawCombo()) {
-      setBorder(new EmptyBorder(0, 8, 0, 8));
-    } else {
-      setBorder(null);
-    }
-
-    updateTextAndIcon(myUi.myManager.getSelectedContent(), true);
+    setBorder(isToDrawCombo() ? JBUI.Borders.empty(0, 8) : JBUI.Borders.empty());
+    updateTextAndIcon(getContent(), true);
   }
 
   @Override
@@ -92,31 +86,25 @@ public class ContentComboLabel extends BaseLabel {
 
   @Override
   public Dimension getPreferredSize() {
-    if (!isToDrawCombo()) {
-      return super.getPreferredSize();
+    Dimension size = super.getPreferredSize();
+    if (!isPreferredSizeSet() && isToDrawCombo()) {
+      int gap = getIconTextGap();
+      Content content = getContent();
+      if (content != null) {
+        Font font = getFont();
+        String text = content.getDisplayName();
+        size.width = font == null || text == null || text.isEmpty() ? 0 : getFontMetrics(font).stringWidth(text);
+        if (Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON))) {
+          Icon icon = content.getIcon();
+          if (icon != null) size.width += gap + icon.getIconWidth();
+        }
+      }
+      if (size.width > 0) size.width += gap;
+      size.width += myComboIcon.getIconWidth();
+      Insets insets = getInsets();
+      if (insets != null) size.width += insets.left + insets.right;
     }
-
-    int width = 0;
-    for (int i = 0; i < myUi.myManager.getContentCount(); i++) {
-      final Content content = myUi.myManager.getContent(i);
-      assert content != null;
-      String text = content.getDisplayName();
-      final Icon icon = content.getUserData(ToolWindow.SHOW_CONTENT_ICON) == Boolean.TRUE ? content.getIcon() : null;
-      FontMetrics metrics = getFontMetrics(getFont());
-      int eachTextWidth = metrics.stringWidth(text != null ? text : "");
-      int iconWidth = icon != null ? icon.getIconWidth() : 0;
-      width = Math.max(eachTextWidth + iconWidth, width);
-    }
-
-    Border border = getBorder();
-    if (border != null) {
-      Insets insets = border.getBorderInsets(this);
-      width += (insets.left + insets.right);
-    }
-
-    width += myComboIcon.getIconWidth();
-
-    return new Dimension(width, super.getPreferredSize().height);
+    return size;
   }
 
   private boolean isToDrawCombo() {
