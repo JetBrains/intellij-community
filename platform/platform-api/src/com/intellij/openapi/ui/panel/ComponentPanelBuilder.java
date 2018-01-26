@@ -157,7 +157,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
     else if (myComponent instanceof JButton) {
       top = isWin10 ? 2 : 4;
-      left = isWin10 ? 2 : isMacDefault ? 5 : 6;
+      left = isWin10 ? 2 : isMacDefault ? 5 : 4;
       bottom = 0;
     }
 
