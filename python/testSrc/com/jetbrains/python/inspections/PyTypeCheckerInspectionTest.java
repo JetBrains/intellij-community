@@ -510,4 +510,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTypingProtocolAgainstProtocol() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
+
+  // PY-26628
+  public void testAgainstTypingProtocolDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
 }

@@ -198,7 +198,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
         final PyType actual = myTypeEvalContext.getType(argument);
-        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
       final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
@@ -220,7 +220,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(arguments.stream().map(e -> myTypeEvalContext.getType(e)).collect(Collectors.toList()));
-        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         return arguments.stream()
           .map(argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched))
           .collect(Collectors.toList());
@@ -229,11 +229,18 @@ public class PyTypeCheckerInspection extends PyInspection {
         return arguments.stream()
           .map(argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           })
           .collect(Collectors.toList());
       }
+    }
+
+    private boolean matchParameterAndArgument(@Nullable PyType parameterType,
+                                              @Nullable PyType argumentType,
+                                              @NotNull Map<PyGenericType, PyType> substitutions) {
+      return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
+             !PyTypingTypeProvider.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }
 
     @Nullable

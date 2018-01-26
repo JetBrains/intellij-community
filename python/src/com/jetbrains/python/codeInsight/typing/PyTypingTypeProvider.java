@@ -1268,6 +1268,22 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
                                 superClass -> superClass != null && PROTOCOL.equals(superClass.getClassQName()));
   }
 
+  public static boolean matchingProtocolDefinitions(@Nullable PyType expected, @Nullable PyType actual, @NotNull TypeEvalContext context) {
+    if (expected instanceof PyClassLikeType && actual instanceof PyClassLikeType) {
+      final PyClassLikeType expectedClassLikeType = (PyClassLikeType)expected;
+      final PyClassLikeType actualClassLikeType = (PyClassLikeType)actual;
+
+      if (expectedClassLikeType.isDefinition() &&
+          actualClassLikeType.isDefinition() &&
+          isProtocol(expectedClassLikeType, context) &&
+          isProtocol(actualClassLikeType, context)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   @NotNull
   private static String getOpenMode(@NotNull PyFunction function, @NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
     final Map<PyExpression, PyCallableParameter> arguments =
