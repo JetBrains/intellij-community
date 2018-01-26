@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
@@ -240,7 +241,7 @@ public class PyTypeCheckerInspection extends PyInspection {
                                               @Nullable PyType argumentType,
                                               @NotNull Map<PyGenericType, PyType> substitutions) {
       return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
-             !PyTypingTypeProvider.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
+             !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }
 
     @Nullable

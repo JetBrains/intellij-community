@@ -11,7 +11,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.codeInsight.typing.InspectingProtocolSubclassCallback;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -200,46 +201,41 @@ public class PyTypeChecker {
           return match(superTupleType.getIteratedItemType(), subTupleType.getIteratedItemType(), context, substitutions, recursive, matching);
         }
       }
-      else if (PyTypingTypeProvider.isProtocol(expectedClassType, context) && !matchClasses(superClass, subClass, context)) {
+      else if (PyProtocolsKt.isProtocol(expectedClassType, context) && !matchClasses(superClass, subClass, context)) {
         if (expected instanceof PyCollectionType &&
             !matchGenerics((PyCollectionType)expected, actual, context, substitutions, recursive, matching)) {
           return false;
         }
 
         final boolean[] result = new boolean[]{true};
-        final PyClassLikeType actualAsInstance = actualClassType.toInstance();
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
 
-        expectedClassType.toInstance().visitMembers(
-          e -> {
-            if (result[0]) {
-              final PyTypedElement element = as(e, PyTypedElement.class);
-              final String name = element == null ? null : element.getName();
-
-              if (element != null && name != null) {
-                final List<? extends RatedResolveResult> resolveResults =
-                  actualAsInstance.resolveMember(name, null, AccessDirection.READ, resolveContext);
-
-                if (ContainerUtil.isEmpty(resolveResults)) {
-                  result[0] = false;
-                }
-                else {
-                  final PyType expectedMemberType = context.getType(element);
-
-                  result[0] = StreamEx
-                    .of(resolveResults)
-                    .map(ResolveResult::getElement)
-                    .select(PyTypedElement.class)
-                    .map(context::getType)
-                    .anyMatch(actualMemberType -> match(expectedMemberType, actualMemberType, context, substitutions, recursive, matching));
-                }
-              }
+        PyProtocolsKt.inspectProtocolSubclass(
+          expectedClassType,
+          actualClassType,
+          context,
+          new InspectingProtocolSubclassCallback() {
+            @Override
+            public boolean onUnresolved(@NotNull PyTypedElement protocolElement) {
+              result[0] = false;
+              return false;
             }
 
-            return result[0];
-          },
-          true,
-          context
+            @Override
+            public boolean onResolved(@NotNull PyTypedElement protocolElement, @NotNull List<? extends RatedResolveResult> subclassElements) {
+              final PyType protocolElementType = context.getType(protocolElement);
+
+              result[0] = StreamEx
+                .of(subclassElements)
+                .map(ResolveResult::getElement)
+                .select(PyTypedElement.class)
+                .map(context::getType)
+                .anyMatch(
+                  subclassElementType -> match(protocolElementType, subclassElementType, context, substitutions, recursive, matching)
+                );
+
+              return result[0];
+            }
+          }
         );
 
         return result[0];
