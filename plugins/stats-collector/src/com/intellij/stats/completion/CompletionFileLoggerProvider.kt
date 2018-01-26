@@ -31,7 +31,7 @@ class CompletionFileLoggerProvider(
   private val eventLogger = EventLoggerWithValidation(CompletionEventFileLogger(logFileManager), ServerSessionValidator())
 
   override fun disposeComponent() {
-    logFileManager.dispose()
+    logFileManager.flush()
   }
 
   override fun newCompletionLogger(): CompletionLogger {

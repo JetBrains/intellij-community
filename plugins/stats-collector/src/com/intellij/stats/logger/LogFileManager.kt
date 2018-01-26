@@ -37,7 +37,7 @@ class LogFileManager(private val filePathProvider: FilePathProvider) {
     }
 
     @Synchronized
-    fun dispose() {
+    fun flush() {
         if (storage.size > 0) {
             saveDataChunk(storage)
         }
@@ -46,12 +46,18 @@ class LogFileManager(private val filePathProvider: FilePathProvider) {
     }
 
     private fun saveDataChunk(storage: LineStorage) {
-        ApplicationManager.getApplication().executeOnPooledThread {
-            val dir = filePathProvider.getStatsDataDirectory()
-            val tmp = File(dir, "tmp_data")
-            storage.dump(tmp)
-            tmp.renameTo(filePathProvider.getUniqueFile())
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+            save(storage)
+        } else {
+            ApplicationManager.getApplication().executeOnPooledThread({ save(storage) })
         }
     }
 
+    @Synchronized
+    private fun save(storage: LineStorage) {
+        val dir = filePathProvider.getStatsDataDirectory()
+        val tmp = File(dir, "tmp_data")
+        storage.dump(tmp)
+        tmp.renameTo(filePathProvider.getUniqueFile())
+    }
 }
