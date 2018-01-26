@@ -87,7 +87,7 @@ object FeatureUsageEventLogger {
     val pattern = PatternLayout("%m\n")
     try {
       val fileAppender = RollingFileAppender(pattern, file.absolutePath)
-      fileAppender.setMaxFileSize("1MB")
+      fileAppender.setMaxFileSize("200KB")
       fileAppender.maxBackupIndex = 10
       logger.addAppender(fileAppender)
     }
