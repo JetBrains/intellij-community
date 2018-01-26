@@ -288,7 +288,7 @@ public class CodeCompletionHandlerBase {
     final Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
-    CompletionContext context = createCompletionContext(initContext.getFile(), hostCopyOffsets);
+    OffsetsInFile finalOffsets = toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
     LookupImpl lookup = obtainLookup(editor, initContext.getProject());
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -302,10 +302,10 @@ public class CodeCompletionHandlerBase {
     }
 
     CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                            invocationCount, context, this,
+                                                                            invocationCount, finalOffsets, this,
                                                                             initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
-    Disposer.register(indicator, context.getOffsetMap());
+    Disposer.register(indicator, finalOffsets.getOffsets());
     Disposer.register(indicator, translator);
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
@@ -497,11 +497,10 @@ public class CodeCompletionHandlerBase {
            !CompletionAssertions.isEditorValid(initContext.getEditor());
   }
 
-  private static CompletionContext createCompletionContext(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
+  private static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
     CompletionAssertions.assertHostInfo(hostCopyOffsets.getFile(), hostCopyOffsets.getOffsets());
 
     int hostStartOffset = hostCopyOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
-    OffsetsInFile result = hostCopyOffsets;
     OffsetsInFile translatedOffsets = hostCopyOffsets.toInjectedIfAny(hostStartOffset);
     if (translatedOffsets != hostCopyOffsets) {
       PsiFile injected = translatedOffsets.getFile();
@@ -512,11 +511,11 @@ public class CodeCompletionHandlerBase {
       CompletionAssertions.assertInjectedOffsets(hostStartOffset, injected, documentWindow);
 
       if (injected.getTextRange().contains(translatedOffsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET))) {
-        result = translatedOffsets;
+        return translatedOffsets;
       }
     }
 
-    return new CompletionContext(result.getFile(), result.getOffsets());
+    return hostCopyOffsets;
   }
 
   protected void lookupItemSelected(final CompletionProgressIndicator indicator, @NotNull final LookupElement item, final char completionChar,

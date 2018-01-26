@@ -133,7 +133,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final int myStartCaret;
   private CompletionThreadingBase myStrategy;
 
-  CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount, CompletionContext context,
+  CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount, OffsetsInFile offsets,
                               CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
                               boolean hasModifiers, LookupImpl lookup) {
     myEditor = editor;
@@ -143,7 +143,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myParameters = createCompletionParameters(invocationCount, context, editor);
+    myParameters = createCompletionParameters(invocationCount, offsets, editor);
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
@@ -170,19 +170,19 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     }
   }
 
-  private CompletionParameters createCompletionParameters(int invocationCount, CompletionContext context, Editor editor) {
-    int offset = context.getStartOffset();
-    PsiFile fileCopy = context.file;
+  private CompletionParameters createCompletionParameters(int invocationCount, OffsetsInFile offsets, Editor editor) {
+    int offset = offsets.getOffsets().getOffset(CompletionInitializationContext.START_OFFSET);
+    PsiFile fileCopy = offsets.getFile();
     PsiFile originalFile = fileCopy.getOriginalFile();
-    PsiElement insertedElement = findCompletionPositionLeaf(context, offset, fileCopy, originalFile);
-    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, context);
+    PsiElement insertedElement = findCompletionPositionLeaf(offsets, offset, originalFile);
+    insertedElement.putUserData(CompletionContext.COMPLETION_CONTEXT_KEY, new CompletionContext(fileCopy, offsets.getOffsets()));
     return new CompletionParameters(insertedElement, originalFile, myHandler.completionType, offset, invocationCount, editor, this);
   }
 
   @NotNull
-  private static PsiElement findCompletionPositionLeaf(CompletionContext context, int offset, PsiFile fileCopy, PsiFile originalFile) {
-    PsiElement insertedElement = context.file.findElementAt(offset);
-    CompletionAssertions.assertCompletionPositionPsiConsistent(context, offset, fileCopy, originalFile, insertedElement);
+  private static PsiElement findCompletionPositionLeaf(OffsetsInFile offsets, int offset, PsiFile originalFile) {
+    PsiElement insertedElement = offsets.getFile().findElementAt(offset);
+    CompletionAssertions.assertCompletionPositionPsiConsistent(offsets, offset, originalFile, insertedElement);
     return insertedElement;
   }
 
