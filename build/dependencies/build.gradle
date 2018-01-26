@@ -37,7 +37,7 @@ allprojects {
 apply plugin: "de.undercouch.download"
 apply plugin: 'base'
 
-group 'com.intellij.build'
+group 'intellij.tools'
 version '1.0'
 
 try {
