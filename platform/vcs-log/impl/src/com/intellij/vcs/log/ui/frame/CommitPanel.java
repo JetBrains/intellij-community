@@ -238,12 +238,7 @@ public class CommitPanel extends JBPanel {
     }
 
     void setBranches(@Nullable List<String> branches) {
-      if (branches == null) {
-        myBranches = null;
-      }
-      else {
-        myBranches = branches;
-      }
+      myBranches = branches;
       myExpanded = false;
     }
 
