@@ -38,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.rt.ant.execution.SegmentedOutputStream;
@@ -158,7 +159,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     PsiClass psiClass = findTestA(module1);
     PsiClass psiClass2 = findTestA(getModule2());
     PsiClass derivedTest = findClass(module1, "test1.DerivedTest");
-    PsiClass baseTestCase = findClass("junit.framework.ThirdPartyClass", module1AndLibraries);
+    PsiClass baseTestCase = findClass("test1.ThirdPartyTest", module1AndLibraries);
     PsiClass testB = findClass(getModule3(), "test1.TestB");
     assertNotNull(testCase);
     assertNotNull(derivedTest);
@@ -177,6 +178,8 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
         psiClass2.getQualifiedName(),
         derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
         "test1.nested.TestA",
+        "test1.nested.TestWithJunit4",
+        "test1.ThirdPartyTest",
         testB.getQualifiedName()},
       lines);
   }
@@ -259,7 +262,10 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     CHECK.singleOccurence(classPath, getOutput(module2, true));
     CHECK.singleOccurence(classPath, getOutput(module3, false));
     CHECK.singleOccurence(classPath, getOutput(module3, true));
-    CHECK.singleOccurence(classPath, getFSPath(findFile(MOCK_JUNIT)));
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    for (File file : junit4Library.getClasses()) {
+      CHECK.singleOccurence(classPath, file.getPath());
+    }
   }
 
   public void testExternalizeJUnitConfiguration() {
@@ -489,7 +495,10 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
         CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
         try {
           List<CompilerMessage> messages = tester.make();
-          assertFalse(messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+          assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
+                              .map(message -> message.getMessage())
+                              .findFirst().orElse("Compiles fine"),
+                      messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
           task.startSearch();
         }
         finally {
