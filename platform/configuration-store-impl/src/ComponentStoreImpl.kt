@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.StateStorageManager.ExternalizationSession
@@ -373,7 +359,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        val stateGetter = createStateGetter(isUseLoadedStateAsExisting(storage), storage, component, name, stateClass,
+        val stateGetter = createStateGetter(isUseLoadedStateAsExistingForComponent(storage, name), storage, component, name, stateClass,
                                             reloadData = reloadData)
         var state = stateGetter.getState(defaultState)
         if (state == null) {
@@ -407,13 +393,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
-  // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
   // todo fix FacetManager
   // use.loaded.state.as.existing used in upsource
-  private fun isUseLoadedStateAsExisting(storage: StateStorage, name: String): Boolean {
+  private fun isUseLoadedStateAsExistingForComponent(storage: StateStorage, name: String): Boolean {
     return isUseLoadedStateAsExisting(storage) &&
            name != "AntConfiguration" &&
-           name != "ProjectModuleManager" &&
+           name != "ProjectModuleManager" /* why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest */ &&
            name != "FacetManager" &&
            name != "ProjectRunConfigurationManager" && /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */
            name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
