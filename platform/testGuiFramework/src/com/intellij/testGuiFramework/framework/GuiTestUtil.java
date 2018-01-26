@@ -647,7 +647,7 @@ public final class GuiTestUtil {
     }
   }
 
-  public static String getBundledJdLocation() {
+  public static String getBundledJdkLocation() {
     JdkBundle jdkBundle = JdkBundle.createBundled();
     if (jdkBundle == null) jdkBundle = JdkBundle.createBoot();
     String homeSubPath = SystemInfo.isMac ? "/Contents/Home" : "";
