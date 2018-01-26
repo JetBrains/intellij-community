@@ -78,10 +78,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         final PsiElement parent = aClass.getParent();
-        final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
-        if (lambdaContext != null &&
-            (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) &&
-            canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
+        if (canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
@@ -199,6 +196,9 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                boolean acceptParameterizedFunctionTypes,
                                                boolean reportNotAnnotatedInterfaces,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
+    PsiElement parent = aClass.getParent();
+    final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
+    if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;
     if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
@@ -293,7 +293,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     ReplaceWithLambdaFix
       .giveUniqueNames(project, elementFactory, lambdaExpression,
-                       usedLocalNames, variables.toArray(new PsiVariable[variables.size()]));
+                       usedLocalNames, variables.toArray(new PsiVariable[0]));
 
     final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression.getBody());
     if (singleExpr != null) {
@@ -506,7 +506,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
           psiMethod != null &&
           !methodCallExpression.getMethodExpression().isQualified() &&
           "getClass".equals(psiMethod.getName()) &&
-          psiMethod.getParameterList().getParametersCount() == 0) {
+          psiMethod.getParameterList().isEmpty()) {
         myBodyContainsForbiddenRefs = true;
       }
     }

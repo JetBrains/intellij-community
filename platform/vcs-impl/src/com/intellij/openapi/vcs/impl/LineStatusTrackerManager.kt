@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.HashMap
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
@@ -300,8 +299,8 @@ class LineStatusTrackerManager(
 
     val change = ChangeListManager.getInstance(project).getChange(virtualFile)
     return change != null && change.javaClass == Change::class.java &&
-           change.type == Change.Type.MODIFICATION && change.afterRevision is CurrentContentRevision
-
+           (change.type == Change.Type.MODIFICATION || change.type == Change.Type.MOVED) &&
+           change.afterRevision is CurrentContentRevision
   }
 
   override fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {

@@ -350,7 +350,7 @@ public class MethodSignatureUtil {
   public static PsiSubstitutor combineSubstitutors(@NotNull PsiSubstitutor substitutor1, @NotNull PsiSubstitutor substitutor2) {
     if (substitutor1 == PsiSubstitutor.EMPTY) return substitutor2;
     Set<PsiTypeParameter> parameters1 = substitutor1.getSubstitutionMap().keySet();
-    final PsiTypeParameter[] typeParameters = parameters1.toArray(new PsiTypeParameter[parameters1.size()]);
+    final PsiTypeParameter[] typeParameters = parameters1.toArray(PsiTypeParameter.EMPTY_ARRAY);
     for (PsiTypeParameter typeParameter : typeParameters) {
       final PsiType type = substitutor1.substitute(typeParameter);
       PsiType otherSubstituted;

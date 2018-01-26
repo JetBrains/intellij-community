@@ -151,7 +151,7 @@ abstract class Symbol {
     void setSupers(Set<ClassSymbol> supers) {
       mySuperClasses = supers.isEmpty() ? null :
                        supers.size() == 1 ? supers.iterator().next() :
-                       supers.toArray(new ClassSymbol[supers.size()]);
+                       supers.toArray(new ClassSymbol[0]);
       myUnitInfo = null;
     }
 
@@ -199,7 +199,7 @@ abstract class Symbol {
     }
 
     private static ClassSymbol[] toSortedArray(List<ClassSymbol> members) {
-      ClassSymbol[] array = members.toArray(new ClassSymbol[members.size()]);
+      ClassSymbol[] array = members.toArray(ClassSymbol.EMPTY_ARRAY);
       Arrays.sort(array, CLASS_SYMBOL_BY_NAME_COMPARATOR);
       return array;
     }

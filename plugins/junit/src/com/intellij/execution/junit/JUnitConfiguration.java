@@ -50,6 +50,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
   @NonNls public static final String TEST_UNIQUE_ID = "uniqueId";
+  @NonNls public static final String TEST_TAGS = "tags";
   @NonNls public static final String BY_SOURCE_POSITION = "source location";
   @NonNls public static final String BY_SOURCE_CHANGES = "changes";
 
@@ -410,6 +411,13 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       idsElement.getChildren("uniqueId").forEach(uniqueIdElement -> ids.add(uniqueIdElement.getAttributeValue("value")));
       getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
     }
+
+    Element tagsElement = element.getChild("tags");
+    if (tagsElement != null) {
+      List<String> tags = new ArrayList<>();
+      tagsElement.getChildren("tag").forEach(tagElement -> tags.add(tagElement.getAttributeValue("value")));
+      getPersistentData().setTags(ArrayUtil.toStringArray(tags));
+    }
   }
 
   @Override
@@ -459,10 +467,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.setAttribute("repeat_mode", repeatMode);
     }
     String[] ids = persistentData.getUniqueIds();
-    if (ids != null) {
+    if (ids != null && ids.length > 0) {
       Element uniqueIds = new Element("uniqueIds");
       Arrays.stream(ids).forEach(id -> uniqueIds.addContent(new Element("uniqueId").setAttribute("value", id)));
       element.addContent(uniqueIds);
+    }
+
+    String[] tags = persistentData.getTags();
+    if (tags != null && tags.length > 0) {
+      Element tagsElement = new Element("tags");
+      Arrays.stream(tags).forEach(id -> tagsElement.addContent(new Element("tag").setAttribute("value", id)));
+      element.addContent(tagsElement);
     }
   }
 
@@ -535,7 +550,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
-    private String[] UNIQUE_ID;
+    private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] TAGS = ArrayUtil.EMPTY_STRING_ARRAY;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
@@ -566,6 +582,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
              Comparing.equal(DIR_NAME, second.DIR_NAME) &&
              Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
              Comparing.equal(UNIQUE_ID, second.UNIQUE_ID) &&
+             Comparing.equal(TAGS, second.TAGS) &&
              Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
              REPEAT_COUNT == second.REPEAT_COUNT;
     }
@@ -583,6 +600,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
              Comparing.hashcode(DIR_NAME) ^
              Comparing.hashcode(CATEGORY_NAME) ^
              Comparing.hashcode(UNIQUE_ID) ^
+             Comparing.hashcode(TAGS) ^
              Comparing.hashcode(REPEAT_MODE) ^
              Comparing.hashcode(REPEAT_COUNT);
     }
@@ -648,8 +666,16 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
+    public String[] getTags() {
+      return TAGS;
+    }
+
+    public void setTags(String[] tags) {
+      TAGS = tags;
+    }
+
     public static String getMethodPresentation(PsiMethod method) {
-      if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
         return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
@@ -688,7 +714,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
       }
       if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
-        return UNIQUE_ID != null ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+        return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+      }
+      if (TEST_TAGS.equals(TEST_OBJECT)) {
+        return TAGS != null && TAGS.length > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {

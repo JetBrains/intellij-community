@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An immutable collection of facts which are known for some value. Each fact is identified by {@link DfaFactType} and fact value.
@@ -89,24 +90,6 @@ public final class DfaFactMap {
       if(!type.isSuper(thisValue, other)) return false;
     }
     return true;
-  }
-
-  /**
-   * Checks whether the passed fact map is always distinct from this map (i.e. any exact value
-   * which conforms the passed fact map does not conform this fact map).
-   *
-   * @param otherMap a fact map to check
-   * @return true if this fact map is always distinct from other map.
-   */
-  public boolean isDistinct(DfaFactMap otherMap) {
-    for (DfaFactType<?> key : DfaFactType.getTypes()) {
-      @SuppressWarnings("unchecked")
-      DfaFactType<Object> type = (DfaFactType<Object>)key;
-      Object thisValue = myMap.get(type);
-      Object other = otherMap.get(type);
-      if(thisValue != null && other != null && type.isDistinct(thisValue, other)) return true;
-    }
-    return false;
   }
 
   /**
@@ -186,7 +169,9 @@ public final class DfaFactMap {
   @SuppressWarnings("unchecked")
   @Override
   public String toString() {
-    return StreamEx.of(myMap.getKeys()).map(key -> ((DfaFactType<Object>)key).toString(myMap.get(key))).joining(", ");
+    return StreamEx.of(myMap.getKeys())
+      .map(key -> ((DfaFactType<Object>)key).toString(Objects.requireNonNull(myMap.get(key))))
+      .joining(", ");
   }
 
   /**

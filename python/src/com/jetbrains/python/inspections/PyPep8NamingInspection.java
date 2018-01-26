@@ -184,7 +184,7 @@ public class PyPep8NamingInspection extends PyInspection {
           if (!ignoredErrors.contains(errorCode)) {
             quickFixes.add(new IgnoreErrorFix(errorCode));
             registerProblem(nameNode.getPsi(), ERROR_CODES_DESCRIPTION.get(errorCode),
-                            quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+                            quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }

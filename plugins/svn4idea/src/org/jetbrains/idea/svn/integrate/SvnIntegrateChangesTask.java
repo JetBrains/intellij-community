@@ -143,6 +143,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
   }
 
+  @Override
   public void onCancel() {
     onTaskFinished(true);
   }
@@ -253,6 +254,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     // for changes to be detected, we need switch to background change list manager update thread and back to dispatch thread
     // so callback is used; ok to be called after VCS update markup closed: no remote operations
+    VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(files, null);
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     changeListManager.invokeAfterUpdate(
       () -> {
@@ -263,8 +265,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
         CommitChangeListDialog.commitChanges(myProject, changes, null, null, myMerger.getComment());
         prepareAndShowResults();
-      }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle, vcsDirtyScopeManager -> vcsDirtyScopeManager.filePathsDirty(files, null),
-      null);
+      }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, myTitle, null);
   }
 
   @NotNull

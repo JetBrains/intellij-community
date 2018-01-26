@@ -37,6 +37,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
@@ -64,10 +65,6 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
   }
 
-  public static boolean isHelpButton(JComponent button) {
-    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
-  }
-
   /**
    * Paints additional buttons decorations
    * @param g Graphics
@@ -78,13 +75,15 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
     int w = c.getWidth();
     int h = c.getHeight();
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
-      int off = JBUI.scale(22);
-      int x = (w - off) / 2;
-      int y = (h - off) / 2;
-      g.fillOval(x, y, off, off);
+      int diam = JBUI.scale(22);
+      int x = (w - diam) / 2;
+      int y = (h - diam) / 2;
+
+      g.fill(new Ellipse2D.Float(x, y, diam, diam));
       AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
+
       return false;
     } else {
       Graphics2D g2 = (Graphics2D)g.create();
@@ -93,16 +92,15 @@ public class DarculaButtonUI extends BasicButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
+        float arc = isSquare(c) ? JBUI.scale(2.0f) : DarculaUIUtil.arc();
+        float bw = DarculaUIUtil.bw();
         if (c.isEnabled()) {
           if (isSquare(c)) {
 
             Rectangle r = new Rectangle(w, h);
-            //JBInsets.removeFrom(r, JBUI.insets(1));
             g2.translate(r.x, r.y);
             g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColor1(), r.x + r.width,
                                                 r.y + r.height, getButtonColor2()));
-            float arc = JBUI.scale(2.0f);
-            float bw = DarculaUIUtil.bw();
             g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
           else {
@@ -110,10 +108,7 @@ public class DarculaButtonUI extends BasicButtonUI {
                         UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()) :
                         UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
 
-            Insets ins = c.getInsets();
-            int yOff = (ins.top + ins.bottom) / 4;
-            int rad = JBUI.scale(5);
-            g2.fillRoundRect(JBUI.scale(4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
+            g2.fill(new RoundRectangle2D.Float(bw, bw, w - bw * 2, h - bw * 2, arc, arc));
           }
         }
       } finally {
@@ -131,7 +126,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       return;
     }
     

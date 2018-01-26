@@ -85,7 +85,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     for (final CompileScope compileScope : myScopes) {
       ContainerUtil.addAll(modules, compileScope.getAffectedModules());
     }
-    return modules.toArray(new Module[modules.size()]);
+    return modules.toArray(Module.EMPTY_ARRAY);
   }
 
   @NotNull

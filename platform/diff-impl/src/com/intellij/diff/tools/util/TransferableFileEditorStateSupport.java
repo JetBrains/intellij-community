@@ -53,6 +53,7 @@ public class TransferableFileEditorStateSupport {
   @NotNull private final DiffSettings mySettings;
   @NotNull private final List<BinaryEditorHolder> myHolders;
   private final boolean mySupported;
+  private final MySynchronizer mySynchronizer;
 
   public TransferableFileEditorStateSupport(@NotNull DiffSettings settings,
                                             @NotNull List<BinaryEditorHolder> holders,
@@ -60,7 +61,8 @@ public class TransferableFileEditorStateSupport {
     mySettings = settings;
     myHolders = holders;
     mySupported = ContainerUtil.or(myHolders, IS_SUPPORTED);
-    new MySynchronizer(ContainerUtil.filter(myHolders, IS_SUPPORTED)).install(disposable);
+    mySynchronizer = new MySynchronizer(ContainerUtil.filter(myHolders, IS_SUPPORTED));
+    mySynchronizer.install(disposable);
   }
 
   public boolean isSupported() {
@@ -73,6 +75,10 @@ public class TransferableFileEditorStateSupport {
 
   public void setEnabled(boolean enabled) {
     mySettings.setSyncBinaryEditorSettings(enabled);
+  }
+
+  public void syncStatesNow() {
+    mySynchronizer.syncStatesNow();
   }
 
   public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
@@ -142,6 +148,20 @@ public class TransferableFileEditorStateSupport {
       myEditors = ContainerUtil.map(editors, holder -> holder.getEditor());
     }
 
+    public void syncStatesNow() {
+      if (myEditors.size() < 2) return;
+
+      TransferableFileEditorState sourceState = getEditorState(myEditors.get(0));
+      if (sourceState == null) return;
+
+      Map<String, String> options = sourceState.getTransferableOptions();
+      String id = sourceState.getEditorId();
+
+      for (int i = 1; i < myEditors.size(); i++) {
+        updateEditor(myEditors.get(i), id, options);
+      }
+    }
+
     public void install(@NotNull Disposable disposable) {
       if (myEditors.size() < 2) return;
 
@@ -192,7 +212,7 @@ public class TransferableFileEditorStateSupport {
     }
   }
 
-  private class ToggleSynchronousEditorStatesAction extends ToggleActionButton implements DumbAware {
+  private static class ToggleSynchronousEditorStatesAction extends ToggleActionButton implements DumbAware {
     @NotNull private final TransferableFileEditorStateSupport mySupport;
 
     public ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
@@ -213,6 +233,9 @@ public class TransferableFileEditorStateSupport {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySupport.setEnabled(state);
+      if (state) {
+        mySupport.syncStatesNow();
+      }
     }
   }
 }

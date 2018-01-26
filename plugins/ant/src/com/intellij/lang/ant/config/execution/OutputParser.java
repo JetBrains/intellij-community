@@ -236,7 +236,6 @@ public class OutputParser{
                           final int columnNum) {
         StringTokenizer tokenizer = new StringTokenizer(message, "\n", false);
         final String[] strings = new String[tokenizer.countTokens()];
-        //noinspection ForLoopThatDoesntUseLoopVariable
         for (int idx = 0; tokenizer.hasMoreTokens(); idx++) {
           strings[idx] = tokenizer.nextToken();
         }

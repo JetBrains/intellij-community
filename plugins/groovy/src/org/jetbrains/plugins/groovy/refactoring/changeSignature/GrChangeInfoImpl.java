@@ -208,7 +208,7 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
   @Override
   @NotNull
   public JavaParameterInfo[] getNewParameters() {
-    return parameters.toArray(new GrParameterInfo[parameters.size()]);
+    return parameters.toArray(new GrParameterInfo[0]);
   }
 
   @Override

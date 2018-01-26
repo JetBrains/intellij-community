@@ -37,23 +37,25 @@ import java.util.zip.ZipOutputStream;
 /**
  * Used in TestAll to collect data in command line
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public class InternalTestDiscoveryListener implements TestListener, Closeable {
   private final String myModuleName;
   private final String myTracesDirectory;
   private final List<String> myCompletedMethodNames = new ArrayList<>();
+  private final boolean myCompactResults;
   private Object myDiscoveryIndex;
   private Class<?> myDiscoveryIndexClass;
 
   public InternalTestDiscoveryListener() {
     myTracesDirectory = System.getProperty("org.jetbrains.instrumentation.trace.dir");
     myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
+    myCompactResults = Boolean.parseBoolean(System.getProperty("org.jetbrains.instrumentation.compact.traces", "true"));
     System.out.println(getClass().getSimpleName() + " instantiated with module='" + myModuleName + "' , directory='" + myTracesDirectory + "'");
   }
 
   private Object getIndex() {
     if (myDiscoveryIndex == null) {
-      final Project project = ProjectManager.getInstance().getDefaultProject();
+      Project project = ProjectManager.getInstance().getDefaultProject();
       try {
         myDiscoveryIndexClass = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryIndex");
         myDiscoveryIndex = myDiscoveryIndexClass
@@ -79,10 +81,11 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     final String methodName = getMethodName(test);
 
     try {
-      final Object data = getData();
-      Method testEnded = data.getClass().getMethod("testDiscoveryEnded", new Class[] {String.class});
-      testEnded.invoke(data, new Object[] {"j" + className + "-" + methodName});
-    } catch (Throwable t) {
+      Object data = getData();
+      Method testEnded = data.getClass().getMethod("testDiscoveryEnded", String.class);
+      testEnded.invoke(data, "j" + className + "-" + methodName);
+    }
+    catch (Throwable t) {
       t.printStackTrace();
     }
 
@@ -91,20 +94,19 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     if (myCompletedMethodNames.size() > 50) {
       final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
       myCompletedMethodNames.clear();
-      AppExecutorUtil.getAppExecutorService().execute(
-      () -> {
-        flushCurrentTraces(fullTestNames);
-      });
+      AppExecutorUtil.getAppExecutorService().execute(() -> flushCurrentTraces(fullTestNames));
     }
   }
 
   protected void flushCurrentTraces(final String[] fullTestNames) {
+    if (!myCompactResults) return;
     System.out.println("Start compacting to index");
     try {
-      final Object index = getIndex();
-      final Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
-        .getMethod("processAvailableTraces", fullTestNames.getClass(), myTracesDirectory.getClass(), String.class, String.class,
-                   myDiscoveryIndexClass);
+      Object index = getIndex();
+      Method method = Class.forName("com.intellij.execution.testDiscovery.TestDiscoveryExtension")
+                           .getMethod("processAvailableTraces", fullTestNames.getClass(), myTracesDirectory.getClass(), String.class,
+                                      String.class,
+                                      myDiscoveryIndexClass);
       method.invoke(null, fullTestNames, myTracesDirectory, myModuleName, "j", index);
       System.out.println("Compacting done.");
     }
@@ -128,18 +130,19 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   @Override
   public void startTest(Test test) {
     try {
-      final Object data = getData();
-      Method testStarted = data.getClass().getMethod("testDiscoveryStarted", new Class[] {String.class});
-      testStarted.invoke(data, new Object[] {getClassName(test) + "-" + getMethodName(test)});
-    } catch (Throwable t) {
+      Object data = getData();
+      Method testStarted = data.getClass().getMethod("testDiscoveryStarted", String.class);
+      testStarted.invoke(data, getClassName(test) + "-" + getMethodName(test));
+    }
+    catch (Throwable t) {
       t.printStackTrace();
     }
   }
 
   protected Object getData() throws Exception {
     return Class.forName("com.intellij.rt.coverage.data.ProjectData")
-      .getMethod("getProjectData", new Class[0])
-      .invoke(null, new Object[0]);
+                .getMethod("getProjectData", ArrayUtil.EMPTY_CLASS_ARRAY)
+                .invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
   }
 
   @Override
@@ -151,13 +154,14 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   }
 
   private static void zipOutput(String tracesDirectory) {
-    final File[] files = new File(tracesDirectory).listFiles();
+    final String zipName = "out.zip";
+    final File[] files = new File(tracesDirectory).listFiles((dir, name) -> name != null && !name.equalsIgnoreCase(zipName));
     if (files == null) {
       System.out.println("No traces found.");
       return;
     }
     System.out.println("Preparing zip.");
-    try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tracesDirectory + File.separator + "out.zip"))) {
+    try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(new File(tracesDirectory, zipName)))) {
       for (File file : files) {
         ZipUtil.addFileToZip(zipOutputStream, file, "/" + file.getName(), null, null);
       }

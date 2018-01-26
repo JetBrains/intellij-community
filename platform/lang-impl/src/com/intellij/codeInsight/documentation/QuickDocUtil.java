@@ -88,9 +88,9 @@ public class QuickDocUtil {
    * @param progressIndicator optional progress indicator, which can be used to cancel the action externally
    * @return {@code true} if the action succeeded to run without interruptions, {@code false} otherwise
    */
-  static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
-                                                                   long timeout, long pauseBetweenRetries,
-                                                                   @Nullable ProgressIndicator progressIndicator) {
+  public static boolean runInReadActionWithWriteActionPriorityWithRetries(@NotNull final Runnable action,
+                                                                          long timeout, long pauseBetweenRetries,
+                                                                          @Nullable ProgressIndicator progressIndicator) {
     boolean result;
     long deadline = System.currentTimeMillis() + timeout;
     while (!(result = runInReadActionWithWriteActionPriority(action, progressIndicator == null ? null : 

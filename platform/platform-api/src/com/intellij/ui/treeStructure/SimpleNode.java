@@ -250,7 +250,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    */
   public final ColoredFragment[] getColoredText() {
     final List<ColoredFragment> list = getTemplatePresentation().getColoredText();
-    return list.toArray(new ColoredFragment[list.size()]);
+    return list.toArray(new ColoredFragment[0]);
   }
 
   @NotNull

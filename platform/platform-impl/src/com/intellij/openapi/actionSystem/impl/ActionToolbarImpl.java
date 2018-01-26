@@ -1276,10 +1276,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
 
     protected abstract void onOtherActionPerformed();
-
-    @Override
-    public void beforeEditorTyping(final char c, final DataContext dataContext) {
-    }
   }
 
 

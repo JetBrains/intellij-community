@@ -599,7 +599,7 @@ public class CharsetToolkit {
   @NotNull
   public static Charset[] getAvailableCharsets() {
     Collection<Charset> collection = Charset.availableCharsets().values();
-    return collection.toArray(new Charset[collection.size()]);
+    return collection.toArray(new Charset[0]);
   }
 
   @NotNull

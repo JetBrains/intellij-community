@@ -38,29 +38,25 @@ class WinExeInstallerBuilder {
   }
 
   private void generateInstallationConfigFileForSilentMode() {
-    if (customizer.silentInstallationConfig == null) {
-      buildContext.messages.warning("Silent config file for Windows installer won't be generated because it is not defined.")
-      return
-    }
-    if (! new File(customizer.silentInstallationConfig).exists()) {
+    String silentConfigTemplate = (customizer.silentInstallationConfig == null ?
+                          "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config" :
+                          customizer.silentInstallationConfig)
+    if (! new File(silentConfigTemplate).exists()) {
       buildContext.messages.error(
-        "Silent config file for Windows installer won't be generated. The template doesn't exist: '${customizer.silentInstallationConfig}'")
+        "Silent config file for Windows installer won't be generated. The template doesn't exist: $silentConfigTemplate")
     }
     else {
+      buildContext.ant.copy(file: "$silentConfigTemplate", todir: "${buildContext.paths.artifacts}")
+      File silentConfigFile = new File ("${buildContext.paths.artifacts}/silent.config")
       def extensionsList = customizer.fileAssociations
-      String associations = "; List of associations. To create an association change value to 1.\n"
+      String associations = "\n\n; List of associations. To create an association change value to 1.\n"
       if (! extensionsList.isEmpty()) {
         associations += extensionsList.collect { "$it=0\n" }.join("")
       }
       else {
-        associations = "; There are no associations for the product.\n"
+        associations = "\n\n; There are no associations for the product.\n"
       }
-      buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
-        fileset(file: customizer.silentInstallationConfig)
-        filterset(begintoken: "@@", endtoken: "@@") {
-          filter(token: "List of associations", value: associations)
-        }
-      }
+      silentConfigFile.append(associations)
     }
   }
 

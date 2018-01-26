@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -26,14 +27,17 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Alexey.Ivanov
@@ -112,7 +116,7 @@ public class PyOverrideImplementUtil {
     }
 
     final MemberChooser<PyMethodMember> chooser =
-      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[elements.size()]), false, true, project) {
+      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[0]), false, true, project) {
         @Override
         protected SpeedSearchComparator getSpeedSearchComparator() {
           return new SpeedSearchComparator(false) {
@@ -164,6 +168,8 @@ public class PyOverrideImplementUtil {
       final PyFunction baseFunction = (PyFunction)newMember.getPsiElement();
       final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction, implement);
       final PyFunction function = builder.addFunctionAfter(statementList, anchor, languageLevel);
+
+      addImports(baseFunction, function);
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
     }
 
@@ -357,5 +363,103 @@ public class PyOverrideImplementUtil {
       }
     }
     return Lists.newArrayList(functions.values());
+  }
+
+  /**
+   * Adds imports for type hints in overridden function (PY-18553).
+   *
+   * @param baseFunction base function used to resolve types
+   * @param function overridden function
+   */
+  private static void addImports(@NotNull PyFunction baseFunction, @NotNull PyFunction function) {
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
+
+    final UnresolvedExpressionVisitor unresolvedExpressionVisitor = new UnresolvedExpressionVisitor();
+    final List<PyAnnotation> annotations = getAnnotations(function, typeEvalContext);
+    annotations.forEach(annotation -> unresolvedExpressionVisitor.visitPyElement(annotation));
+    final List<PyReferenceExpression> unresolved = unresolvedExpressionVisitor.getUnresolved();
+
+    final ResolveExpressionVisitor resolveExpressionVisitor = new ResolveExpressionVisitor(unresolved);
+    final List<PyAnnotation> baseAnnotations = getAnnotations(baseFunction, typeEvalContext);
+    baseAnnotations.forEach(annotation -> resolveExpressionVisitor.visitPyElement(annotation));
+  }
+
+  /**
+   * Collect annotations from function parameters and return.
+   *
+   * @param function
+   * @param typeEvalContext
+   * @return
+   */
+  private static List<PyAnnotation> getAnnotations(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
+    return Streams.concat(
+      function.getParameters(typeEvalContext).stream()
+        .map(PyCallableParameter::getParameter)
+        .filter(PyNamedParameter.class::isInstance)
+        .map(PyNamedParameter.class::cast)
+        .filter(parameter -> !parameter.isSelf())
+        .map(pyNamedParameter -> pyNamedParameter.getAnnotation()),
+      Stream.of(function.getAnnotation())
+    )
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
+  /**
+   * Collects unresolved {@link PyReferenceExpression} objects.
+   */
+  private static class UnresolvedExpressionVisitor extends PyRecursiveElementVisitor {
+
+    private final List<PyReferenceExpression> myUnresolved = new ArrayList<>();
+
+    @Override
+    public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
+      super.visitPyReferenceExpression(referenceExpression);
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits();
+      if (referenceExpression.getReference(resolveContext).multiResolve(false).length == 0) {
+        myUnresolved.add(referenceExpression);
+      }
+    }
+
+    /**
+     * Get list of {@link PyReferenceExpression} that left myUnresolved after function override.
+     *
+     * @return list of {@link PyReferenceExpression} elements.
+     */
+    @NotNull
+    List<PyReferenceExpression> getUnresolved() {
+      return Collections.unmodifiableList(myUnresolved);
+    }
+  }
+
+  /**
+   * Resolves reference expressions by name and adds imports for them using references being visited.
+   */
+  private static class ResolveExpressionVisitor extends PyRecursiveElementVisitor {
+
+    private final Map<String, PyReferenceExpression> myExpressionsToResolve;
+
+    /**
+     * {@link PyReferenceExpression} objects to resolve.
+     *
+     * @param toResolve collection of references to resolve.
+     */
+    ResolveExpressionVisitor(@NotNull Collection<PyReferenceExpression> toResolve) {
+      myExpressionsToResolve = StreamEx.of(toResolve)
+              .toMap(PyReferenceExpression::getName, Function.identity(),
+                     (expression1, expression2) -> expression2);
+    }
+
+    @Override
+    public void visitPyReferenceExpression(final PyReferenceExpression referenceExpression) {
+      super.visitPyReferenceExpression(referenceExpression);
+
+      if (myExpressionsToResolve.containsKey(referenceExpression.getName())) {
+        PyClassRefactoringUtil.rememberNamedReferences(referenceExpression);
+        PyClassRefactoringUtil.restoreReference(referenceExpression,
+                                                myExpressionsToResolve.get(referenceExpression.getName()),
+                                                PsiElement.EMPTY_ARRAY);
+      }
+    }
   }
 }

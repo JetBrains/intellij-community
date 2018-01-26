@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.notification.NotificationType
@@ -30,7 +28,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-val NOTIFICATION_GROUP_ID = "Load Error"
+const val NOTIFICATION_GROUP_ID = "Load Error"
 
 @TestOnly
 var DEBUG_LOG: String? = null
@@ -107,7 +105,7 @@ private fun collect(componentManager: ComponentManager,
                     unknownMacros: MutableSet<String>,
                     substitutorToStore: MutableMap<TrackingPathMacroSubstitutor, IComponentStore>) {
   val store = componentManager.stateStore
-  val substitutor = store.stateStorageManager.macroSubstitutor ?: return
+  val substitutor = store.storageManager.macroSubstitutor ?: return
 
   val macros = substitutor.getUnknownMacros(null)
   if (macros.isEmpty()) {

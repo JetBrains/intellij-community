@@ -37,6 +37,6 @@ public class PythonModuleConfigurationEditorProvider implements ModuleConfigurat
     final List<ModuleConfigurationEditor> editors = new ArrayList<>();
     editors.add(new PyContentEntriesEditor(module, state, false, JavaSourceRootType.SOURCE));
     editors.add(editorFactory.createClasspathEditor(state));
-    return editors.toArray(new ModuleConfigurationEditor[editors.size()]);
+    return editors.toArray(ModuleConfigurationEditor.EMPTY);
   }
 }

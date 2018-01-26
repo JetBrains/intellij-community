@@ -59,7 +59,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           final PsiMethod[] constructors = containingClass.getConstructors();
           boolean defaultConstructor = constructors.length == 0;
           for (PsiMethod constructor : constructors) {
-            if (constructor.getParameterList().getParametersCount() == 0) {
+            if (constructor.getParameterList().isEmpty()) {
               defaultConstructor = true;
               break;
             }
@@ -115,7 +115,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
         return;
       }
       final JBPopup popup = NavigationUtil
-        .getPsiElementPopup(relatedItems.toArray(new PsiElement[relatedItems.size()]), "<html>Choose component with fx:id <b>" + fieldName.getText() + "<b></html>");
+        .getPsiElementPopup(relatedItems.toArray(PsiElement.EMPTY_ARRAY), "<html>Choose component with fx:id <b>" + fieldName.getText() + "<b></html>");
       popup.show(new RelativePoint(e));
     }
   }

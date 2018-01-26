@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -78,8 +77,7 @@ public class ListIndexOfReplaceableByContainsInspection
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression expression =
         (PsiBinaryExpression)descriptor.getPsiElement();
       final PsiExpression lhs = expression.getLOperand();
@@ -119,12 +117,11 @@ public class ListIndexOfReplaceableByContainsInspection
       qualifierText = "";
     }
     else {
-      qualifierText = tracker.markUnchanged(qualifierExpression).getText();
+      qualifierText = tracker.text(qualifierExpression);
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression expression = argumentList.getExpressions()[0];
-    @NonNls final String newExpressionText =
-      qualifierText + ".contains(" + tracker.markUnchanged(expression).getText() + ')';
+    @NonNls final String newExpressionText = qualifierText + ".contains(" + tracker.text(expression) + ')';
     if (tokenType.equals(JavaTokenType.EQEQ)) {
       return '!' + newExpressionText;
     }

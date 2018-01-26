@@ -258,7 +258,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       catch (SvnBindException ignored) {
       }
     }
-    getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new Url[svnURLs.size()]), myShowFiles);
+    getRepositoryBrowser().setRepositoryURLs(svnURLs.toArray(new Url[0]), myShowFiles);
     getRepositoryBrowser().getRepositoryTree().addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {

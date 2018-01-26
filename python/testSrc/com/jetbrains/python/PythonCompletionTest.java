@@ -1199,6 +1199,18 @@ public class PythonCompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-28017
+  public void testModuleGetAttrAndDir() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final List<String> suggested = doTestByText("def __<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, "__getattr__(name)", "__dir__()");
+      }
+    );
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

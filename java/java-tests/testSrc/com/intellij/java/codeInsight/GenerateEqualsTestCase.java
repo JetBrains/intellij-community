@@ -91,6 +91,6 @@ public abstract class GenerateEqualsTestCase extends LightCodeInsightTestCase {
     for (int indice : indices) {
       result.add(fields[indice]);
     }
-    return result.toArray(new PsiField[result.size()]);
+    return result.toArray(PsiField.EMPTY_ARRAY);
   }
 }

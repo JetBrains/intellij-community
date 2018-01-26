@@ -54,21 +54,49 @@ public class ImageLoader implements Serializable {
   public static final int CACHED_IMAGE_MAX_SIZE = (int)Math.round(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
-  private static class ImageDesc {
+  @SuppressWarnings({"UnusedDeclaration"}) // set from com.intellij.internal.IconsLoadTime
+  private static LoadFunction measureLoad;
+
+  /**
+   * For internal usage.
+   */
+  public interface LoadFunction {
+    Image load(@Nullable LoadFunction delegate, @Nullable ImageDesc.Type type) throws IOException;
+  }
+
+  public static class ImageDesc {
     public enum Type {
       PNG,
 
       SVG {
         @Override
-        public Image load(URL url, InputStream is, double scale) throws IOException {
-          return SVGLoader.load(url, is, scale);
+        public Image load(final URL url, final InputStream is, final double scale) throws IOException {
+          LoadFunction f = new LoadFunction() {
+            @Override
+            public Image load(LoadFunction delegate, Type type) throws IOException {
+              return SVGLoader.load(url, is, scale);
+            }
+          };
+          if (measureLoad != null) {
+            return measureLoad.load(f, SVG);
+          }
+          return f.load(null, null);
         }
       },
 
       UNDEFINED;
 
-      public Image load(URL url, InputStream stream, double scale) throws IOException {
-        return ImageLoader.load(stream, scale);
+      public Image load(final URL url, final InputStream is, final double scale) throws IOException {
+        LoadFunction f = new LoadFunction() {
+          @Override
+          public Image load(LoadFunction delegate, Type type) {
+            return ImageLoader.load(is, scale);
+          }
+        };
+        if (measureLoad != null) {
+          return measureLoad.load(f, PNG);
+        }
+        return f.load(null, null);
       }
     }
 

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.FrameStateManager;
@@ -14,20 +12,19 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -45,7 +42,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -64,14 +60,12 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
 
 @State(
   name = "ToolWindowManager",
@@ -91,11 +85,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Map<String, StripeButton> myId2StripeButton = new HashMap<>();
   private final Map<String, FocusWatcher> myId2FocusWatcher = new HashMap<>();
 
-  private final EditorComponentFocusWatcher myEditorComponentFocusWatcher = new EditorComponentFocusWatcher();
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
   private final InternalDecoratorListener myInternalDecoratorListener = new MyInternalDecoratorListener();
-
-  private boolean myEditorWasActive;
 
   private final ActiveStack myActiveStack = new ActiveStack();
   private final SideStack mySideStack = new SideStack();
@@ -192,6 +183,41 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     };
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(focusListener);
     Disposer.register(this, () -> KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(focusListener));
+
+    Predicate<AWTEvent> predicate = event ->
+      event.getID() == FocusEvent.FOCUS_LOST
+      || event.getID() == FocusEvent.FOCUS_GAINED
+      || event.getID() == MouseEvent.MOUSE_PRESSED
+      || event.getID() == KeyEvent.KEY_PRESSED;
+
+    Windows.toolWindows()
+      .filterBySignal(new Windows.Signal(predicate))
+      .withEscAction(actionManager)
+      .handleDocked(toolWindowId -> {})
+      .handleFloating(toolWindowId -> {})
+      .handleFocusLostOnPinned(toolWindowId -> {
+        ArrayList<FinalizableCommand> commands = new ArrayList<>();
+        deactivateToolWindowImpl(toolWindowId, true, commands);
+        myCommandProcessor.execute(commands, myProject.getDisposed());
+      })
+      .handleWindowed(toolWindowId -> {})
+      .handleDeactivatingShortcut(toolWindowId -> {
+        JComponent defaultFocusedComponentInEditor = null;
+        EditorsSplitters splittersToFocus = getSplittersToFocus();
+        if (splittersToFocus != null) {
+        final EditorWindow window = splittersToFocus.getCurrentWindow();
+          if (window != null) {
+            final EditorWithProviderComposite editor = window.getSelectedEditor();
+            if (editor != null) {
+              defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+              if (defaultFocusedComponentInEditor != null) {
+                defaultFocusedComponentInEditor.requestFocus();
+              }
+            }
+          }
+        }
+      })
+      .bind(myProject);
   }
 
   private void updateToolWindowHeaders() {
@@ -423,12 +449,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     JComponent editorComponent = createEditorComponent(myProject);
-    myEditorComponentFocusWatcher.install(editorComponent);
+    editorComponent.setFocusable(false);
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
-    if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
-      activateEditorComponentImpl(commandsList, true);
-    }
   }
 
   private static JComponent createEditorComponent(@NotNull Project project) {
@@ -438,20 +461,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (ToolWindowEP bean : beans) {
-      Condition<Project> condition = bean.getCondition();
-      if (condition == null || condition.value(myProject)) {
-        list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
-          @Override
-          public void run() {
-            initToolWindow(bean);
-          }
-        });
-      }
+      list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
+        @Override
+        public void run() {
+          initToolWindow(bean);
+        }
+      });
     }
   }
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
+    Condition<Project> condition = bean.getCondition();
+    if (condition != null && !condition.value(myProject)) return;
+
     WindowInfoImpl before = myLayout.getInfo(bean.id, false);
     boolean visible = before != null && before.isVisible();
     JLabel label = createInitializingLabel();
@@ -522,10 +545,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       deactivateToolWindowImpl(id, true, commandsList);
     }
 
-    // Remove editor component
-
-    final JComponent editorComponent = FileEditorManagerEx.getInstanceEx(myProject).getComponent();
-    myEditorComponentFocusWatcher.deinstall(editorComponent);
     appendSetEditorComponentCmd(null, commandsList);
     execute(commandsList);
     myFrame = null;
@@ -569,95 +588,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void activateEditorComponent() {
-    activateEditorComponent(true);
-  }
-
-  private void activateEditorComponent(boolean forced) {
-    //TODO: runnable in activateEditorComponent(boolean, boolean) never runs
-    activateEditorComponent(forced, false);
-  }
-
-  private void activateEditorComponent(final boolean forced, boolean now) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("enter: activateEditorComponent()");
-    }
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
-    final ExpirableRunnable runnable = new ExpirableRunnable.ForProject(myProject) {
-      @Override
-      public void run() {
-        List<FinalizableCommand> commandList = new ArrayList<>();
-        activateEditorComponentImpl(commandList, forced);
-        execute(commandList);
-      }
-    };
-    if (now) {
-      if (!runnable.isExpired()) {
-        runnable.run();
-      }
-    }
-    else {
-      final FocusRequestor requestor = getFocusManager().getFurtherRequestor();
-      getFocusManager().doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
-        @Override
-        public void run() {
-          requestor.requestFocus(new FocusCommand() {
-            @NotNull
-            @Override
-            public ActionCallback run() {
-              runnable.run();
-              return ActionCallback.DONE;
-            }
-          }.setExpirable(runnable), forced);
-        }
-      });
-    }
-  }
-
-  private void activateEditorComponentImpl(@NotNull List<FinalizableCommand> commandList, final boolean forced) {
-    final String active = getActiveToolWindowId();
-    // Now we have to request focus into most recent focused editor
-    appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(() -> {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("editor activated");
-      }
-      List<FinalizableCommand> commandList12 = new ArrayList<>();
-      deactivateWindows(null, commandList12);
-      myActiveStack.clear();
-
-      execute(commandList12);
-    }).doWhenRejected(() -> {
-      if (forced) {
-        getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
-          @NotNull
-          @Override
-          public ActionCallback run() {
-            List<FinalizableCommand> commandList1 = new ArrayList<>();
-
-            final WindowInfoImpl toReactivate = active == null ? null : getInfo(active);
-            final boolean reactivateLastActive = toReactivate != null && !isToHideOnDeactivation(toReactivate);
-            deactivateWindows(reactivateLastActive ? active : null, commandList1);
-            execute(commandList1);
-
-            if (reactivateLastActive) {
-              activateToolWindow(active, false, true);
-            }
-            else {
-              if (active != null) {
-                myActiveStack.remove(active, false);
-              }
-
-              if (!myActiveStack.isEmpty()) {
-                activateToolWindow(myActiveStack.peek(), false, true);
-              }
-            }
-            return ActionCallback.DONE;
-          }
-        }, false);
-      }
-    });
-  }
+  public void activateEditorComponent() {}
 
   private void deactivateWindows(@Nullable String idToIgnore, @NotNull List<FinalizableCommand> commandList) {
     final WindowInfoImpl[] infos = myLayout.getInfos();
@@ -728,7 +659,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                       @NotNull List<FinalizableCommand> commandList,
                                       boolean forced,
                                       boolean autoFocusContents) {
-    autoFocusContents &= forced || FocusManagerImpl.getInstance().isUnforcedRequestAllowed();
+    autoFocusContents &= forced;
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: activateToolWindowImpl(" + id + ")");
@@ -916,8 +847,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
           deactivateToolWindowImpl(eachId, true, commandList);
         }
       }
-
-      activateEditorComponentImpl(commandList, true);
     }
     else if (isStackEnabled()) {
 
@@ -953,23 +882,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
 
-      if (wasActive && moveFocus) {
-        if (myActiveStack.isEmpty()) {
-          if (hasOpenEditorFiles()) {
-            activateEditorComponentImpl(commandList, false);
-          }
-          else {
-            focusToolWindowByDefault(id);
-          }
+      if (wasActive && moveFocus && !myActiveStack.isEmpty()) {
+        final String toBeActivatedId = myActiveStack.pop();
+        if (getInfo(toBeActivatedId).isVisible() || isStackEnabled()) {
+          activateToolWindowImpl(toBeActivatedId, commandList, false, true);
         }
         else {
-          final String toBeActivatedId = myActiveStack.pop();
-          if (getInfo(toBeActivatedId).isVisible() || isStackEnabled()) {
-            activateToolWindowImpl(toBeActivatedId, commandList, false, true);
-          }
-          else {
-            focusToolWindowByDefault(id);
-          }
+          focusToolWindowByDefault(id);
         }
       }
     }
@@ -1182,9 +1101,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         showToolWindowImpl(info.getId(), false, commandsList);
       }
     }
-    else if (wasActive) { // tool window was active but it cannot be activate again
-      activateEditorComponentImpl(commandsList, true);
-    }
 
     execute(commandsList);
     fireToolWindowRegistered(id);
@@ -1323,11 +1239,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         showToolWindowImpl(currentInfo.getId(), false, commandList);
       }
     }
-    // if there is no any active tool window and editor is also inactive
-    // then activate editor
-    if (!myEditorWasActive && getActiveToolWindowId() == null) {
-      activateEditorComponentImpl(commandList, true);
-    }
+
     execute(commandList);
   }
 
@@ -1767,14 +1679,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     commandsList.add(myToolWindowsPane.createRemoveButtonCmd(id, myCommandProcessor));
   }
 
-  private ActionCallback appendRequestFocusInEditorComponentCmd(List<FinalizableCommand> commandList, boolean forced) {
-    if (myProject.isDisposed()) return ActionCallback.DONE;
-    EditorsSplitters splitters = getSplittersToFocus();
-    RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), myCommandProcessor, forced);
-    commandList.add(command);
-    return command.getDoneCallback();
-  }
-
   private void appendRequestFocusInToolWindowCmd(final String id, List<FinalizableCommand> commandList, boolean forced) {
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
@@ -1807,9 +1711,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
     }
 
-    FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(myProject);
-    EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
-    return splitters != null ? splitters : fem.getSplitters();
+    final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
+
+    if (frame != null && frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isActive()) {
+      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(frame.getProject());
+      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+      return splitters != null ? splitters : fem.getSplitters();
+    }
+
+    return null;
   }
 
   @Override
@@ -1869,12 +1779,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     for (Element e : state.getChildren()) {
-      if (EDITOR_ELEMENT.equals(e.getName())) {
-        myEditorWasActive = Boolean.valueOf(e.getAttributeValue(ACTIVE_ATTR_VALUE)).booleanValue();
-      }
-      else if (DesktopLayout.TAG.equals(e.getName())) {
+      if (DesktopLayout.TAG.equals(e.getName())) {
         myLayout.readExternal(e);
       }
       else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
@@ -2139,35 +2046,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return bounds;
   }
 
-  private final class EditorComponentFocusWatcher extends FocusWatcher {
-    @Override
-    protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (myCommandProcessor.getCommandCount() > 0 || component == null) {
-        return;
-      }
-      final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-      final Component owner = mgr.getFocusOwner();
-
-      if (owner instanceof EditorComponentImpl && cause instanceof FocusEvent) {
-        JFrame frame = WindowManager.getInstance().getFrame(myProject);
-        Component oppositeComponent = ((FocusEvent)cause).getOppositeComponent();
-        if (oppositeComponent != null && UIUtil.getWindow(oppositeComponent) != frame) {
-          return;
-        }
-      }
-
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
-        @Override
-        public void run() {
-          if (mgr.getFocusOwner() == owner) {
-            activateEditorComponent(false);
-          }
-        }
-      });
-    }
-  }
-
-
   /**
    * Notifies window manager about focus traversal in tool window
    */
@@ -2340,13 +2218,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @NotNull
   public ActionCallback requestDefaultFocus(final boolean forced) {
-    return getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
-      @NotNull
-      @Override
-      public ActionCallback run() {
-        return processDefaultFocusRequest(forced);
-      }
-    }, forced);
+    //todo need to implement
+    return ActionCallback.DONE;
   }
 
   private void focusToolWindowByDefault(@Nullable String idToIgnore) {
@@ -2377,42 +2250,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
   }
 
-  private ActionCallback processDefaultFocusRequest(boolean forced) {
-    if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
-      final String activeId = getActiveToolWindowId();
-      if (isEditorComponentActive() || activeId == null || getToolWindow(activeId) == null) {
-        activateEditorComponent(forced, true);
-      }
-      else {
-        activateToolWindow(activeId, forced, true);
-      }
-
-      return ActionCallback.DONE;
-    }
-    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-    if (activeWindow != null) {
-      JRootPane root = null;
-      if (activeWindow instanceof JDialog) {
-        root = ((JDialog)activeWindow).getRootPane();
-      }
-      else if (activeWindow instanceof JFrame) {
-        root = ((JFrame)activeWindow).getRootPane();
-      }
-
-      if (root != null) {
-        JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(root);
-        if (toFocus != null) {
-          if (DialogWrapper.findInstance(toFocus) != null) {
-            return ActionCallback.DONE; //IDEA-80929
-          }
-          return IdeFocusManager.findInstanceByComponent(toFocus).requestFocus(toFocus, forced);
-        }
-      }
-    }
-    return ActionCallback.REJECTED;
-  }
-
-
   /**
    * Delegate method for compatibility with older versions of IDEA
    */
@@ -2421,22 +2258,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return IdeFocusManager.getInstance(myProject).requestFocus(c, forced);
   }
 
-  @NotNull
-  public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
-    return IdeFocusManager.getInstance(myProject).requestFocus(command, forced);
-  }
-
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable) {
     IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(runnable);
-  }
-
-  public boolean dispatch(@NotNull KeyEvent e) {
-    return IdeFocusManager.getInstance(myProject).dispatch(e);
-  }
-
-  @NotNull
-  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return IdeFocusManager.getInstance(myProject).getTimestamp(trackOnlyForcedCommands);
   }
 
   void setShowStripeButton(@NotNull String id, boolean visibleOnPanel) {

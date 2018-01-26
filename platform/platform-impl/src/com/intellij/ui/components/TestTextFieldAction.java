@@ -116,11 +116,6 @@ public class TestTextFieldAction extends DumbAwareAction {
             public boolean isIconBeforeText() {
               return true;
             }
-
-            @Override
-            public Runnable getActionOnClick() {
-              return null;
-            }
           },
           new Extension() {
             private final Icon icon = new AnimatedIcon.Grey();

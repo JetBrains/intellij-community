@@ -101,10 +101,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
   }
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-  }
-
   public boolean dispatch(@NotNull final AWTEvent e) {
     JRootPane eventRootPane = myRootPane;
 
@@ -578,11 +574,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
 
   protected void paintComponent(final Graphics g) {
     getPainters().paint(g);
-  }
-
-  @Override
-  protected void paintChildren(Graphics g) {
-    super.paintChildren(g);
   }
 
   public Component getTargetComponentFor(MouseEvent e) {

@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.util.Collections;
 
 /**
  * @author peter
@@ -82,10 +83,10 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiMethod method = getTargetMethod(editor, file);
     assert method != null;
-    Contract existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Contract.class);
-    String oldContract = existingAnno == null ? null : existingAnno.value();
-    boolean oldPure = existingAnno != null && existingAnno.pure();
-    String oldMutates = existingAnno == null ? null : existingAnno.mutates();
+    PsiAnnotation existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Collections.singleton(Contract.class.getName()));
+    String oldContract = existingAnno == null ? null : AnnotationUtil.getStringAttributeValue(existingAnno, "value");
+    boolean oldPure = existingAnno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(existingAnno, "pure"));
+    String oldMutates = existingAnno == null ? null : AnnotationUtil.getStringAttributeValue(existingAnno, "mutates");
 
     JBTextField contractText = new JBTextField(oldContract);
     JBTextField mutatesText = new JBTextField(oldMutates);

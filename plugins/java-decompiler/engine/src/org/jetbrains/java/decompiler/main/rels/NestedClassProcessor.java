@@ -910,7 +910,7 @@ public class NestedClassProcessor {
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
-      if (o == null || !(o instanceof VarFieldPair)) return false;
+      if (!(o instanceof VarFieldPair)) return false;
 
       VarFieldPair pair = (VarFieldPair)o;
       return fieldKey.equals(pair.fieldKey) && varPair.equals(pair.varPair);

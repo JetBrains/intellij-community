@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> implements Processor<T> {
+
   public enum SearchMode {
     MAX_2_MEMBERS(2),
     MAX_100_MEMBERS(100);
@@ -48,15 +49,17 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
 
   @NotNull private final PsiElement myPlace;
   @NotNull private final SearchMode mySearchMode;
-  private final boolean myShowMembersFromDefaultPackage;
+  private final boolean myInDefaultPackage;
+  private final boolean myAddStaticImport;
   private ExpectedTypeInfo[] myExpectedTypes;
 
   protected StaticMembersProcessor(@NotNull PsiElement place,
-                                   boolean showMembersFromDefaultPackage,
+                                   boolean addStaticImport,
                                    @NotNull SearchMode searchMode) {
     myPlace = place;
     mySearchMode = searchMode;
-    myShowMembersFromDefaultPackage = showMembersFromDefaultPackage && PsiUtil.isFromDefaultPackage(place);
+    myInDefaultPackage = PsiUtil.isFromDefaultPackage(place);
+    myAddStaticImport = addStaticImport;
   }
 
   protected abstract boolean isApplicable(T member, PsiElement place);
@@ -117,7 +120,12 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
     }
 
-    if (myShowMembersFromDefaultPackage || !PsiUtil.isFromDefaultPackage(member)) {
+    if (myAddStaticImport) {
+      if (!PsiUtil.isFromDefaultPackage(member)) {
+        mySuggestions.putValue(containingClass, member);
+      }
+    }
+    else if (myInDefaultPackage || !PsiUtil.isFromDefaultPackage(member)) {
       mySuggestions.putValue(containingClass, member);
     }
     return processCondition();
@@ -154,6 +162,11 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       if (!PsiUtil.isAccessible(myPlace.getProject(), member, myPlace, containingClass)) {
         continue;
       }
+
+      if (myAddStaticImport && !PsiUtil.isAccessible(myPlace.getProject(), member, myPlace.getContainingFile(), containingClass)) {
+        continue;
+      }
+
       if (isApplicable(member, myPlace)) {
         applicableList.add(member);
         myPossibleClasses.put(qualifiedName, true);

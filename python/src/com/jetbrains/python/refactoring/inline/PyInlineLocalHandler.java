@@ -42,7 +42,6 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
-import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -169,7 +168,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
       for (Instruction i : latestDefs) {
         elems.add(i.getElement());
       }
-      final PsiElement[] defs = elems.toArray(new PsiElement[elems.size()]);
+      final PsiElement[] defs = elems.toArray(PsiElement.EMPTY_ARRAY);
       boolean isSameDefinition = true;
       for (PsiElement otherDef : defs) {
         isSameDefinition &= isSameDefinition(def, otherDef);

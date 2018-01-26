@@ -28,10 +28,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
@@ -90,18 +87,48 @@ public class BlockSupportImpl extends BlockSupport {
     final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
     return reparseableRoots != null
            ? mergeTrees(fileImpl, reparseableRoots.first, reparseableRoots.second, indicator, lastCommittedText)
-           : makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText);
+           : makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText).getFirst();
   }
 
+  // return diff log, old node to replace, new node (in dummy file)
+  @NotNull
+  public static Trinity<DiffLog, ASTNode, ASTNode> reparse(@NotNull final PsiFile file,
+                                                           @NotNull FileASTNode oldFileNode,
+                                                           @NotNull TextRange changedPsiRange,
+                                                           @NotNull final CharSequence newFileText,
+                                                           @NotNull final ProgressIndicator indicator,
+                                                           @NotNull CharSequence lastCommittedText) {
+    PsiFileImpl fileImpl = (PsiFileImpl)file;
+
+    final Couple<ASTNode> reparseableRoots = findReparseableRoots(fileImpl, oldFileNode, changedPsiRange, newFileText);
+    DiffLog diffLog;
+    ASTNode oldRoot;
+    ASTNode newRoot;
+    if (reparseableRoots == null) {
+      Pair.NonNull<DiffLog, FileElement> pair = makeFullParse(fileImpl, oldFileNode, newFileText, indicator, lastCommittedText);
+      oldRoot = oldFileNode;
+      newRoot = pair.getSecond();
+      diffLog = pair.getFirst();
+    }
+    else {
+      oldRoot = reparseableRoots.first;
+      newRoot = reparseableRoots.second;
+      diffLog = mergeTrees(fileImpl, oldRoot, newRoot, indicator, lastCommittedText);
+    }
+    return Trinity.create(diffLog, oldRoot, newRoot);
+  }
+
+
   /**
-   * This method searches ast node that could be reparsed incrementally and returns pair of target reparseable node and new replacement node.
-   * Returns null if there is no any chance to make incremental parsing.
+   * Find ast node that could be reparsed incrementally
+   * @return Pair (target reparseable node, new replacement node)
+   *         or {@code null} if can't parse incrementally.
    */
   @Nullable
-  public Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
-                                              @NotNull FileASTNode oldFileNode,
-                                              @NotNull TextRange changedPsiRange,
-                                              @NotNull CharSequence newFileText) {
+  public static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+                                                     @NotNull FileASTNode oldFileNode,
+                                                     @NotNull TextRange changedPsiRange,
+                                                     @NotNull CharSequence newFileText) {
     Project project = file.getProject();
     final FileElement fileElement = (FileElement)oldFileNode;
     final CharTable charTable = fileElement.getCharTable();
@@ -175,12 +202,13 @@ public class BlockSupportImpl extends BlockSupport {
     );
   }
 
+  // returns diff log, new file element
   @NotNull
-  public static DiffLog makeFullParse(@NotNull PsiFileImpl fileImpl,
-                                       @NotNull FileASTNode oldFileNode,
-                                       @NotNull CharSequence newFileText,
-                                       @NotNull ProgressIndicator indicator,
-                                       @NotNull CharSequence lastCommittedText) {
+  public static Pair.NonNull<DiffLog, FileElement> makeFullParse(@NotNull PsiFileImpl fileImpl,
+                                                             @NotNull FileASTNode oldFileNode,
+                                                             @NotNull CharSequence newFileText,
+                                                             @NotNull ProgressIndicator indicator,
+                                                             @NotNull CharSequence lastCommittedText) {
     if (fileImpl instanceof PsiCodeFragment) {
       FileElement parent = fileImpl.getTreeElement();
       final FileElement holderElement = new DummyHolder(fileImpl.getManager(), fileImpl.getContext()).getTreeElement();
@@ -188,7 +216,7 @@ public class BlockSupportImpl extends BlockSupport {
       DiffLog diffLog = new DiffLog();
       diffLog.appendReplaceFileElement(parent, (FileElement)holderElement.getFirstChildNode());
 
-      return diffLog;
+      return Pair.createNonNull(diffLog, holderElement);
     }
     FileViewProvider viewProvider = fileImpl.getViewProvider();
     viewProvider.getLanguages();
@@ -217,7 +245,7 @@ public class BlockSupportImpl extends BlockSupport {
     DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
 
     ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
-    return diffLog;
+    return Pair.createNonNull(diffLog, newFileElement);
   }
 
   @NotNull
@@ -227,7 +255,7 @@ public class BlockSupportImpl extends BlockSupport {
 
     PsiFile file = providerCopy.getPsi(language);
     if (file != null && !(file instanceof PsiFileImpl)) {
-      throw new RuntimeException("View provider " + viewProvider + " refused to provide PsiFileImpl for " + language + details(providerCopy, viewProvider));
+      throw new RuntimeException("View provider " + viewProvider + " refused to provide PsiFileImpl for " + language + details(providerCopy, viewProvider) +" and returned this strange thing instead of PsiFileImpl: "+file +" ("+file.getClass()+")");
     }
 
     PsiFileImpl newFile = (PsiFileImpl)file;

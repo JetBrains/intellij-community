@@ -16,8 +16,8 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -68,6 +68,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
   private static final String CALLABLE = "typing.Callable";
+  private static final String LIST = "typing.List";
+  private static final String DICT = "typing.Dict";
+  private static final String DEFAULT_DICT = "typing.DefaultDict";
+  private static final String SET = "typing.Set";
+  private static final String FROZEN_SET = "typing.FrozenSet";
+  private static final String COUNTER = "typing.Counter";
+  private static final String DEQUE = "typing.Deque";
+  private static final String TUPLE = "typing.Tuple";
+  private static final String CLASSVAR = "typing.ClassVar";
 
   public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
   public static final String SUPPORTS_INT_SIMPLE = "SupportsInt";
@@ -83,12 +92,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   public static final Pattern TYPE_COMMENT_PATTERN = Pattern.compile("# *type: *(.*)");
 
-  private static final ImmutableMap<String, String> COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
-    .put("typing.List", "list")
-    .put("typing.Dict", "dict")
-    .put("typing.Set", PyNames.SET)
-    .put("typing.FrozenSet", "frozenset")
-    .put("typing.Tuple", PyNames.TUPLE)
+  public static final ImmutableMap<String, String> BUILTIN_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
+    .put(LIST, "list")
+    .put(DICT, "dict")
+    .put(SET, PyNames.SET)
+    .put(FROZEN_SET, "frozenset")
+    .put(TUPLE, PyNames.TUPLE)
+    .build();
+
+  private static final ImmutableMap<String, String> COLLECTIONS_CLASSES = ImmutableMap.<String, String>builder()
+    .put(DEFAULT_DICT, "collections.DefaultDict")
+    .put(COUNTER, "collections.Counter")
+    .put(DEQUE, "collections.Deque")
     .build();
 
   public static final ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
@@ -114,16 +129,21 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.Any")
     .add("typing.TypeVar")
     .add(GENERIC)
-    .add("typing.Tuple")
+    .add(TUPLE)
     .add(CALLABLE)
     .add("typing.Type")
     .add("typing.no_type_check")
     .add("typing.Union")
     .add("typing.Optional")
-    .add("typing.List")
-    .add("typing.Dict")
-    .add("typing.DefaultDict")
-    .add("typing.Set")
+    .add(LIST)
+    .add(DICT)
+    .add(DEFAULT_DICT)
+    .add(SET)
+    .add(FROZEN_SET)
+    .add(PROTOCOL)
+    .add(CLASSVAR)
+    .add(COUNTER)
+    .add(DEQUE)
     .build();
 
   @Nullable
@@ -139,6 +159,12 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if ("Protocol".equals(referenceExpression.getName())) {
       if (resolveToQualifiedNames(referenceExpression, context).contains(PROTOCOL)) {
         return createTypingProtocolType();
+      }
+    }
+    // Check for the exact name in advance for performance reasons
+    if ("Callable".equals(referenceExpression.getName())) {
+      if (resolveToQualifiedNames(referenceExpression, context).contains(CALLABLE)) {
+        return createTypingCallableType();
       }
     }
     return null;
@@ -325,6 +351,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return new PyCustomType(PROTOCOL, null, false);
   }
 
+  @NotNull
+  private static PyType createTypingCallableType() {
+    return new PyCallableTypeImpl(null, null);
+  }
+
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
     return func.getContainingClass() != null && func.getModifier() != PyFunction.Modifier.STATICMETHOD &&
            annotation.getParameterTypeList().getParameterTypes().size() < func.getParameterList().getParameters().length;
@@ -438,6 +469,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (PROTOCOL.equals(target.getQualifiedName())) {
         return createTypingProtocolType();
       }
+      // Depends on typing.Callable defined as a target expression
+      if (CALLABLE.equals(target.getQualifiedName())) {
+        return createTypingCallableType();
+      }
+
+      final PyType collection = getCollection(target, context);
+      if (collection instanceof PyInstantiableType) {
+        return ((PyInstantiableType)collection).toClass();
+      }
+
       final Ref<PyType> annotatedType = getTypeFromTargetExpressionAnnotation(target, context);
       if (annotatedType != null) {
         return annotatedType.get();
@@ -560,8 +601,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @NotNull
   @Override
   public Map<PyType, PyType> getGenericSubstitutions(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final Context ctx = new Context(context);
-    if (!isGeneric(cls, ctx)) {
+    if (!isGeneric(cls, context)) {
       return Collections.emptyMap();
     }
     final Map<PyType, PyType> results = new HashMap<>();
@@ -574,6 +614,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         results.putAll(superSubstitutions);
       }
       if (superClass != null) {
+        final Context ctx = new Context(context);
         final List<PyType> superGenerics = collectGenericTypes(superClass, ctx);
         final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
         for (int i = 0; i < superGenerics.size(); i++) {
@@ -646,7 +687,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static List<PyType> collectGenericTypes(@NotNull PyClass cls, @NotNull Context context) {
-    if (!isGeneric(cls, context)) {
+    if (!isGeneric(cls, context.getTypeContext())) {
       return Collections.emptyList();
     }
     final TypeEvalContext typeEvalContext = context.getTypeContext();
@@ -664,8 +705,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       .toList();
   }
 
-  private static boolean isGeneric(@NotNull PyClass cls, @NotNull Context context) {
-    for (PyClassLikeType ancestor : cls.getAncestorTypes(context.getTypeContext())) {
+  public static boolean isGeneric(@NotNull PyWithAncestors descendant, @NotNull TypeEvalContext context) {
+    for (PyClassLikeType ancestor : descendant.getAncestorTypes(context)) {
       if (ancestor != null && GENERIC_CLASSES.contains(ancestor.getClassQName())) {
         return true;
       }
@@ -720,9 +761,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (parameterizedType != null) {
         return Ref.create(parameterizedType);
       }
-      final PyType builtinCollection = getBuiltinCollection(resolved, context.getTypeContext());
-      if (builtinCollection != null) {
-        return Ref.create(builtinCollection);
+      final PyType collection = getCollection(resolved, context.getTypeContext());
+      if (collection != null) {
+        return Ref.create(collection);
       }
       final PyType genericType = getGenericTypeFromTypeVar(resolved, context);
       if (genericType != null) {
@@ -1016,10 +1057,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getBuiltinCollection(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    final String collectionName = getQualifiedName(element);
-    final String builtinName = COLLECTION_CLASSES.get(collectionName);
-    return builtinName != null ? PyTypeParser.getTypeByName(element, builtinName, context) : null;
+  private static PyType getCollection(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    final String typingName = getQualifiedName(element);
+
+    final String builtinName = BUILTIN_COLLECTION_CLASSES.get(typingName);
+    if (builtinName != null) return PyTypeParser.getTypeByName(element, builtinName, context);
+
+    final String collectionName = COLLECTIONS_CLASSES.get(typingName);
+    if (collectionName != null) return PyTypeParser.getTypeByName(element, collectionName, context);
+
+    return null;
   }
 
   @NotNull
@@ -1195,6 +1242,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         : PY3_TEXT_FILE_TYPE;
 
     return Ref.create(PyTypeParser.getTypeByName(call, type, context));
+  }
+
+  public static boolean isClassVar(@NotNull PyAnnotationOwner annotationOwner, @NotNull TypeEvalContext context) {
+    final PyExpression annotationValue = getAnnotationValue(annotationOwner, context);
+
+    if (annotationValue instanceof PySubscriptionExpression) {
+      final PyExpression operand = ((PySubscriptionExpression)annotationValue).getOperand();
+      return operand instanceof PyReferenceExpression && resolveToQualifiedNames(operand, context).contains(CLASSVAR);
+    }
+    else if (annotationValue instanceof PyReferenceExpression) {
+      return resolveToQualifiedNames(annotationValue, context).contains(CLASSVAR);
+    }
+
+    return false;
   }
 
   @NotNull

@@ -74,7 +74,7 @@ public class PluginBuildUtil {
           result.add(projectModule);
         }
       }
-      return result.toArray(new Module[result.size()]);
+      return result.toArray(Module.EMPTY_ARRAY);
     });
   }
 

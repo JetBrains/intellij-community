@@ -77,10 +77,14 @@ public abstract class CompletionService {
 
     for (int i = contributors.indexOf(from) + 1; i < contributors.size(); i++) {
       ProgressManager.checkCanceled();
-      final CompletionContributor contributor = contributors.get(i);
+      CompletionContributor contributor = contributors.get(i);
 
-      final CompletionResultSet result = createResultSet(parameters, consumer, contributor);
-      contributor.fillCompletionVariants(parameters, result);
+      CompletionResultSet result = createResultSet(parameters, consumer, contributor);
+      try {
+        contributor.fillCompletionVariants(parameters, result);
+      }
+      catch (CompletionWithoutEditorException ignore) {
+      }
       if (result.isStopped()) {
         return;
       }

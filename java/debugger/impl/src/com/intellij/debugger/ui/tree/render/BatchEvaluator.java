@@ -15,7 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 
@@ -170,7 +170,7 @@ public class BatchEvaluator {
         ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep((ArrayReference)value); // to avoid ObjectCollectedException for both the array and its elements
         final ArrayReference strings = (ArrayReference)value;
         final List<Value> allValuesArray = strings.getValues();
-        final Value[] allValues = allValuesArray.toArray(new Value[allValuesArray.size()]);
+        final Value[] allValues = allValuesArray.toArray(new Value[0]);
         int idx = 0;
         for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext(); idx++) {
           ToStringCommand request = iterator.next();

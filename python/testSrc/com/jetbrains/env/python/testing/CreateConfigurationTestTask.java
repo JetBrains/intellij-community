@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.RunManager;
@@ -25,9 +11,11 @@ import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -38,6 +26,7 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 
 /**
@@ -136,7 +125,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     Assert.assertThat("Bad configuration type in " + elementToRightClickOn, configuration,
                       Matchers.is(Matchers.instanceOf(expectedConfigurationType)));
 
-    RunManager.getInstance(elementToRightClickOn.getProject()).addConfiguration(runnerAndConfigurationSettings, false);
+    RunManager.getInstance(elementToRightClickOn.getProject()).addConfiguration(runnerAndConfigurationSettings);
 
     @SuppressWarnings("unchecked") // Checked one line above
     final T typedConfiguration = (T)configuration;
@@ -181,12 +170,42 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
       assert configuration != null : "No config created. Run runTestOn()";
       return configuration;
     }
+  }
 
-    void checkEmptyTarget() {
-      myConfiguration.getTarget().setTargetType(TestTargetType.PATH);
-      myConfiguration.getTarget().setTarget("");
+  /**
+   * Validates configuration.
+   * Implement logic in {@link #validateConfiguration}
+   * and call {@link #fetchException(Consumer)} to fetch exception thrown from {@link #validateConfiguration}
+   */
+  abstract static class PyConfigurationValidationTask<T extends PyAbstractTestConfiguration> extends PyConfigurationCreationTask<T> {
+    @Override
+    public void runTestOn(final String sdkHome) {
+      super.runTestOn(sdkHome);
+      validateConfiguration();
+    }
 
-      myConfiguration.checkConfiguration();
+
+    protected void validateConfiguration() {
+      getConfiguration().getTarget().setTargetVariant(PyRunTargetVariant.PATH);
+      getConfiguration().getTarget().setTarget("");
+
+      getConfiguration().checkConfiguration();
+    }
+
+    final void fetchException(@NotNull final Consumer<PyConfigurationValidationTask<T>> testRunFunction) throws Throwable {
+      //noinspection ErrorNotRethrown
+      try {
+        testRunFunction.accept(this);
+      }
+      catch (final AssertionError ex) {
+        final Exception cause = ObjectUtils.tryCast(ex.getCause(), Exception.class);
+        if (cause != null) {
+          throw cause;
+        }
+        else {
+          throw ex;
+        }
+      }
     }
   }
 }

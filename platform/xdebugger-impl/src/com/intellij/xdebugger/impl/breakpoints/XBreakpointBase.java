@@ -5,7 +5,6 @@ package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -546,12 +545,6 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @Override
     public Alignment getAlignment() {
       return Alignment.RIGHT;
-    }
-
-    @Override
-    @Nullable
-    public ActionGroup getPopupMenuActions() {
-      return null;
     }
 
     @Override

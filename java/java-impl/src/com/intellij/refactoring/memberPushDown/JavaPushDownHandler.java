@@ -125,7 +125,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
         }
       }
     }
-    PushDownDialog dialog = new PushDownDialog(project, members.toArray(new MemberInfo[members.size()]), aClass);
+    PushDownDialog dialog = new PushDownDialog(project, members.toArray(new MemberInfo[0]), aClass);
     dialog.show();
   }
 

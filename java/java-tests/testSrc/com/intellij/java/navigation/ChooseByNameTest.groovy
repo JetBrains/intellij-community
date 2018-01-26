@@ -432,6 +432,18 @@ class Intf {
     assert gotoClass('SomeClass') == [camel, upper]
     assert gotoFile('SomeClass.java') == [camel.containingFile, upper.containingFile]
   }
+  
+  void "test prefer closer path match"() {
+    def index = addEmptyFile("content/objc/features/index.html")
+    def i18n = addEmptyFile("content/objc/features/screenshots/i18n.html")
+    assert gotoFile('objc/features/i') == [index, i18n]
+  }
+
+  void "test matching file in a matching directory"() {
+    def file = addEmptyFile("foo/index/index")
+    assert gotoFile('in') == [file, file.parent]
+    assert gotoFile('foin') == [file, file.parent]
+  }
 
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoClassModel2(project), text, checkboxState)

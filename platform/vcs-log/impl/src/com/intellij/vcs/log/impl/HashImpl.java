@@ -31,6 +31,7 @@ public class HashImpl implements Hash {
 
   private static final int BASE = 16;
   private static final int SHORT_HASH_LENGTH = 7;
+  public static final int FULL_HASH_LENGTH = 40;
 
   @NotNull
   private final byte[] myData;

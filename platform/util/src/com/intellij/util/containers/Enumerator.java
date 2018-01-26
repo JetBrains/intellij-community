@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntIterator;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dyoma
@@ -72,6 +73,10 @@ public class Enumerator<T> {
       return -number;
     }
     return number;
+  }
+
+  public boolean contains(@NotNull T object) {
+    return myNumbers.get(object) != 0;
   }
 
   public int get(T object) {

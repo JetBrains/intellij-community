@@ -142,7 +142,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     }
 
     final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, editor.getCaretModel().getOffset());
-    return expressions.toArray(new PsiElement[expressions.size()]);
+    return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
@@ -156,12 +156,23 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, processor.getTargetClass().getContainingFile())) return false;
+
+    processor.setPreviewSupported(true);
     if (processor.showDialog(directTypes)) {
+      if (processor.isPreviewDuplicates()) {
+        return previewExtractMethod(processor);
+      }
       extractMethod(project, processor);
       DuplicatesImpl.processDuplicates(processor, project, editor);
       return true;
     }
     return false;
+  }
+
+  private static boolean previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
+    processor.previewRefactoring();
+    new ExtractDuplicatesProcessor(processor).run();
+    return true;
   }
 
   public static void extractMethod(@NotNull final Project project, final ExtractMethodProcessor processor) {

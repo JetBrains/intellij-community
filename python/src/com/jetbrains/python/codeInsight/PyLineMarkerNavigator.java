@@ -58,7 +58,7 @@ abstract class PyLineMarkerNavigator<T extends PsiElement> implements GutterIcon
      * {@link PsiElementListNavigator} simply opens then (hence it is swing-based) and can't be used in tests.
      * So, in unit tests we save data in element and data could be obtained with {@link #getNavigationTargets(UserDataHolder)}
      */
-    final NavigatablePsiElement[] methods = navElements.toArray(new NavigatablePsiElement[navElements.size()]);
+    final NavigatablePsiElement[] methods = navElements.toArray(new NavigatablePsiElement[0]);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       elt.putUserData(MARKERS, methods);
     }

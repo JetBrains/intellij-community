@@ -63,7 +63,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   public void appendCoverageArgument(RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
     try {
-      if (runner != null && runner instanceof JavaCoverageRunner) {
+      if (runner instanceof JavaCoverageRunner) {
         final String path = getCoverageFilePath();
         assert path != null; // cannot be null here if runner != null
 

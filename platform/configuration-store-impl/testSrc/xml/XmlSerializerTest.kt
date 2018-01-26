@@ -36,6 +36,7 @@ import java.util.*
 @Suite.SuiteClasses(
   XmlSerializerTest::class,
   XmlSerializerMapTest::class,
+  XmlSerializerOldMapAnnotationTest::class,
   XmlSerializerCollectionTest::class,
   StoredPropertyStateTest::class,
   KotlinXmlSerializerTest::class,
@@ -583,7 +584,7 @@ internal class XmlSerializerTest {
 
   @Test fun cdataAfterNewLine() {
     @Tag("bean")
-    data class Bean(@Tag var description: String? = null)
+    data class Bean(@Tag val description: String? = null)
 
     var bean = loadElement("""<bean>
   <description>
@@ -594,9 +595,32 @@ internal class XmlSerializerTest {
 </bean>""").deserialize<Bean>()
     assertThat(bean.description).isEqualToIgnoringWhitespace("<h4>Node.js integration</h4>")
 
-    bean = loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""").deserialize<Bean>()
+    bean = loadElement("""<bean><description><![CDATA[<h4>Node.js integration</h4>]]></description></bean>""").deserialize()
     assertThat(bean.description).isEqualTo("<h4>Node.js integration</h4>")
   }
+
+//  @Test
+//  fun dataClass() {
+//    data class ConnectionKey(val server: String, val client: String, val user: String) {
+//      override fun toString() = "$server, $user@$client"
+//    }
+//
+//    @Tag("bean")
+//    class ConfigBean {
+//      @JvmField
+//      var listMappings: MutableMap<ConnectionKey, String> = THashMap()
+//    }
+//
+//    val bean = ConfigBean()
+//    bean.listMappings.put(ConnectionKey("localhost", "bad", "ivan"), "bar")
+//    testSerializer("""
+//    <bean>
+//      <option name="listMappings">
+//        <map />
+//      </option>
+//    </bean>
+//      """, bean)
+//  }
 }
 
 internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
@@ -635,8 +659,7 @@ internal class BeanWithTextAnnotation {
 internal class BeanWithProperty {
   var name: String = "James"
 
-  constructor() {
-  }
+  constructor()
 
   constructor(name: String) {
     this.name = name

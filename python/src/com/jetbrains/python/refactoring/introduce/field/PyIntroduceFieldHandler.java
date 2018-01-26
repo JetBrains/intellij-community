@@ -173,7 +173,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     final ScopeOwner current = ScopeUtil.getScopeOwner(expression);
-    if (clazz != null && current != null && current instanceof PyFunction) {
+    if (clazz != null && current instanceof PyFunction) {
       PyFunction init = clazz.findMethodByName(PyNames.INIT, false, null);
       if (current == init) {
         return true;
@@ -335,7 +335,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
-            occurrences.toArray(new PsiElement[occurrences.size()]), null);
+            occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myOperation = operation;
       if (operation.getAvailableInitPlaces().size() > 1) {

@@ -420,10 +420,6 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     updateOverride();
   }
 
-  public void disposeUIResources() {
-
-  }
-
   public void addOptionChangeListener(TemplateOptionsPanelListener listener) {
     listeners.add(TemplateOptionsPanelListener.class, listener);
   }

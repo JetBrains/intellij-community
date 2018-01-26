@@ -60,10 +60,6 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
   }
 
   @Override
-  public void buildStarted(UUID sessionId) {
-  }
-
-  @Override
   protected void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event) {
     if (myProject.isDisposed()) {
       return;

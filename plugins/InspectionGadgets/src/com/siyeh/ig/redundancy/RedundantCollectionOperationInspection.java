@@ -37,8 +37,12 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "containsAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
   private static final CallMatcher CONTAINS =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "contains").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
-  private static final CallMatcher REMOVE =
+  private static final CallMatcher CONTAINS_KEY =
+    instanceCall(CommonClassNames.JAVA_UTIL_MAP, "containsKey").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final CallMatcher COLLECTION_REMOVE =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "remove").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+  private static final CallMatcher MAP_REMOVE =
+    instanceCall(CommonClassNames.JAVA_UTIL_MAP, "remove").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
   private static final CallMatcher SET_ADD =
     instanceCall(CommonClassNames.JAVA_UTIL_SET, "add").parameterTypes("E");
   private static final CallMatcher REMOVE_BY_INDEX =
@@ -51,8 +55,9 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(TO_ARRAY, AsListToArrayHandler::handler)
       .register(CONTAINS_ALL, ContainsAllSingletonHandler::handler)
       .register(CONTAINS, SingletonContainsHandler::handler)
-      .register(CONTAINS, ContainsBeforeAddRemoveHandler::handler)
-      .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler);
+      .register(anyOf(CONTAINS, CONTAINS_KEY), ContainsBeforeAddRemoveHandler::handler)
+      .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
+      .register(AS_LIST, RedundantAsListForIterationHandler::handler);
 
   @NotNull
   @Override
@@ -140,15 +145,21 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static class ContainsBeforeAddRemoveHandler implements RedundantCollectionOperationHandler {
+    private final String myName;
+
+    public ContainsBeforeAddRemoveHandler(String name) {
+      myName = name;
+    }
+
     @Override
     public String getProblemName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.collection.unnecessary.contains.problem");
+      return InspectionGadgetsBundle.message("inspection.redundant.collection.unnecessary.contains.problem", myName);
     }
 
     @NotNull
     @Override
     public String getFixName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.collection.unnecessary.contains.fix");
+      return InspectionGadgetsBundle.message("inspection.redundant.collection.unnecessary.contains.fix", myName);
     }
 
     @Override
@@ -181,7 +192,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     public static RedundantCollectionOperationHandler handler(PsiMethodCallExpression call) {
       PsiExpression qualifier1 = call.getMethodExpression().getQualifierExpression();
       if (qualifier1 == null) return null;
-      CallMatcher wantedMethod = REMOVE;
+      CallMatcher wantedMethod = anyOf(COLLECTION_REMOVE, MAP_REMOVE);
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
       if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
         wantedMethod = SET_ADD;
@@ -201,7 +212,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiExpression qualifier2 = thenCall.getMethodExpression().getQualifierExpression();
       if (qualifier2 == null || !PsiEquivalenceUtil.areElementsEquivalent(qualifier1, qualifier2)) return null;
       if (!PsiEquivalenceUtil.areElementsEquivalent(call.getArgumentList(), thenCall.getArgumentList())) return null;
-      return new ContainsBeforeAddRemoveHandler();
+      return new ContainsBeforeAddRemoveHandler(call.getMethodExpression().getReferenceName());
     }
   }
 
@@ -374,6 +385,75 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       if (!SINGLETON.test(qualifierCall)) return null;
       return new SingletonContainsHandler();
+    }
+  }
+
+  private static class RedundantAsListForIterationHandler implements RedundantCollectionOperationHandler {
+    @Override
+    public String getProblemName() {
+      return "Unnecessary 'Arrays.asList' call";
+    }
+
+    @NotNull
+    @Override
+    public String getFixName() {
+      return "Unwrap";
+    }
+
+    @Override
+    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length != 1) return;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      CommentTracker ct = new CommentTracker();
+      if (parent instanceof PsiLocalVariable) {
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (!typeElement.isInferredType()) {
+          PsiType type = args[0].getType();
+          if (type == null) return;
+          if(type instanceof PsiEllipsisType) {
+            type = ((PsiEllipsisType)type).toArrayType();
+          }
+          if (!typeElement.isInferredType()) {
+            typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(type));
+          }
+        }
+      }
+      ct.replaceAndRestoreComments(call, ct.markUnchanged(args[0]));
+    }
+
+    static RedundantAsListForIterationHandler handler(PsiMethodCallExpression call) {
+      if (MethodCallUtils.isVarArgCall(call)) return null;
+      PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      if (!(arg.getType() instanceof PsiArrayType)) return null;
+      if (isAllowedContext(call)) {
+        return new RedundantAsListForIterationHandler();
+      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      if (parent instanceof PsiLocalVariable) {
+        PsiLocalVariable localVariable = (PsiLocalVariable)parent;
+        if (!(localVariable.getParent() instanceof PsiDeclarationStatement) ||
+            ((PsiDeclarationStatement)localVariable.getParent()).getDeclaredElements().length != 1) {
+          return null;
+        }
+        PsiCodeBlock block = PsiTreeUtil.getParentOfType(localVariable, PsiCodeBlock.class);
+        if (block != null && VariableAccessUtils.variableIsUsed(localVariable, block) &&
+            PsiTreeUtil.processElements(block, element -> {
+          if (!(element instanceof PsiReferenceExpression)) return true;
+          PsiReferenceExpression ref = (PsiReferenceExpression)element;
+          if (!(ref.isReferenceTo(localVariable))) return true;
+          return isAllowedContext(ref);
+        })) {
+          return new RedundantAsListForIterationHandler();
+        }
+      }
+      return null;
+    }
+
+    private static boolean isAllowedContext(PsiExpression expression) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      return parent instanceof PsiForeachStatement &&
+             PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), expression, false);
     }
   }
 

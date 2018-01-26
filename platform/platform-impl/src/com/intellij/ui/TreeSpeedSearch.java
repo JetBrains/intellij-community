@@ -108,7 +108,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     List<TreePath> result = paths
       .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode))
       .toList();
-    return result.toArray(new TreePath[result.size()]);
+    return result.toArray(new TreePath[0]);
   }
 
   @Override

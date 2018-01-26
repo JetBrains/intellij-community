@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.lang.properties.create;
 
@@ -116,7 +116,7 @@ public class CreateResourceBundleDialogComponent {
         Messages.showErrorDialog(getContentPanel(), errorString);
       } else {
         final List<PsiFile> createFiles = myComponent.createPropertiesFiles();
-        myCreatedFiles = createFiles.toArray(new PsiElement[createFiles.size()]);
+        myCreatedFiles = createFiles.toArray(PsiElement.EMPTY_ARRAY);
         super.doOKAction();
       }
     }
@@ -423,16 +423,14 @@ public class CreateResourceBundleDialogComponent {
     private MyExistLocalesListModel() {
       myLocales = new ArrayList<>();
       myLocales.add(PropertiesUtil.DEFAULT_LOCALE);
-      PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject), new PropertiesFileProcessor() {
-        @Override
-        public boolean process(String baseName, PropertiesFile propertiesFile) {
-          final Locale locale = propertiesFile.getLocale();
-          if (locale != PropertiesUtil.DEFAULT_LOCALE && !myLocales.contains(locale)) {
-            myLocales.add(locale);
-          }
-          return true;
-        }
-      }, BundleNameEvaluator.DEFAULT);
+      PropertiesReferenceManager.getInstance(myProject).processPropertiesFiles(GlobalSearchScope.projectScope(myProject),
+                                                                               (baseName, propertiesFile) -> {
+                                                                                 final Locale locale = propertiesFile.getLocale();
+                                                                                 if (locale != PropertiesUtil.DEFAULT_LOCALE && !myLocales.contains(locale)) {
+                                                                                   myLocales.add(locale);
+                                                                                 }
+                                                                                 return true;
+                                                                               }, BundleNameEvaluator.DEFAULT);
       Collections.sort(myLocales, LOCALE_COMPARATOR);
     }
 

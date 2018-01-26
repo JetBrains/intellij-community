@@ -28,15 +28,13 @@ import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
-import com.siyeh.ig.psiutils.CountingLoop;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -221,20 +219,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     addInstruction(new AssignInstruction(rExpr, myFactory.createValue(lExpr)));
 
-    flushArrayElementsOnUnknownIndexAssignment(lExpr);
-
     finishElement(expression);
-  }
-
-  private void flushArrayElementsOnUnknownIndexAssignment(PsiExpression lExpr) {
-    if (lExpr instanceof PsiArrayAccessExpression &&
-        !(myFactory.createValue(lExpr) instanceof DfaVariableValue) // check for unknown index, otherwise AssignInstruction will flush only that element
-      ) {
-      DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
-      if (arrayVar instanceof DfaVariableValue) {
-        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar, true));
-      }
-    }
   }
 
   private void generateDefaultAssignmentBinOp(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
@@ -555,8 +540,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       });
     }
 
-    addCountingLoopBound(statement);
-
     PsiExpression condition = statement.getCondition();
     if (condition != null) {
       condition.accept(this);
@@ -577,6 +560,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       update.accept(this);
     }
 
+    addCountingLoopBound(statement);
+
     ControlFlow.ControlFlowOffset offset = initialization != null
                  ? getEndOffset(initialization)
                  : getStartOffset(statement);
@@ -592,7 +577,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   /**
    * Add known-to-be-true condition inside counting loop, effectively converting
-   * {@code for(int i=origin; i<bound; i++)} to {@code for(int i=origin; i>=origin && i<bound; i++)}.
+   * {@code for(int i=origin; i<bound; i++)} to
+   * {@code int i = origin; while(i < bound) {... i++; if(i <= origin) break;}}.
    * This adds a range knowledge to data flow analysis.
    * <p>
    * Does nothing if the statement is not a counting loop.
@@ -626,7 +612,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (origin == null || VariableAccessUtils.variableIsAssigned(counter, statement.getBody())) return;
     addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(counter, false), null));
     addInstruction(new PushInstruction(origin, null));
-    addInstruction(new BinopInstruction(JavaTokenType.LT, null, myProject));
+    addInstruction(new BinopInstruction(JavaTokenType.LE, null, myProject));
     addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
   }
 
@@ -1183,7 +1169,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateOther(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
-    op = substituteBinaryOperation(op, type);
+    op = substituteBinaryOperation(expression, op);
 
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
@@ -1202,11 +1188,25 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable
-  private static IElementType substituteBinaryOperation(IElementType op, PsiType type) {
-    if (JavaTokenType.PLUS == op && (type == null || !type.equalsToText(JAVA_LANG_STRING))) {
+  private static IElementType substituteBinaryOperation(PsiPolyadicExpression expression, IElementType op) {
+    if (JavaTokenType.PLUS == op) {
+      if (TypeUtils.isJavaLangString(expression.getType()) || isAcceptableContextForMathOperation(expression)) return op;
       return null;
     }
+    if (JavaTokenType.MINUS == op && !isAcceptableContextForMathOperation(expression)) return null;
     return op;
+  }
+
+  private static boolean isAcceptableContextForMathOperation(PsiExpression expression) {
+    PsiElement parent = expression.getParent();
+    while (parent != null && !(parent instanceof PsiAssignmentExpression) && !(parent instanceof PsiStatement) && !(parent instanceof PsiLambdaExpression)) {
+      if (parent instanceof PsiExpressionList) return true;
+      if (parent instanceof PsiBinaryExpression && DfaRelationValue.RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
   }
 
   private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
@@ -1716,6 +1716,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
         if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction());
+        }
+        else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
+          addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(type), type, null), null));
+          addInstruction(new SwapInstruction());
+          addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression, myProject));
         }
         else {
           addInstruction(new PopInstruction());

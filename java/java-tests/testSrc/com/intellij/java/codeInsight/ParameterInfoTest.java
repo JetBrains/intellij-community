@@ -339,4 +339,26 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals(itemsToShow[lineIndex], updateParameterInfo(handler, list, itemsToShow).getHighlightedParameter());
   }
 
+  public void testTypeInvalidationByCompletion() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    PsiExpressionList argList = handler.findElementForParameterInfo(context);
+    assertNotNull(argList);
+    Object[] items = context.getItemsToShow();
+    assertSize(2, items);
+    updateParameterInfo(handler, argList, items);
+    
+    myFixture.completeBasic();
+    myFixture.type('\n');
+
+    assertTrue(argList.isValid());
+    // items now contain references to invalid PSI
+    updateParameterInfo(handler, argList, items);
+    assertSize(2, context.getItemsToShow());
+    
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
 }

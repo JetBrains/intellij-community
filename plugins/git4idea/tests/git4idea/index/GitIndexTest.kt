@@ -31,8 +31,6 @@ class GitIndexTest : GitPlatformTest() {
 
   private lateinit var repository: GitRepository
 
-  override fun runInDispatchThread(): Boolean = true
-
   public override fun setUp() {
     super.setUp()
 

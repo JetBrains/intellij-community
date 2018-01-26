@@ -40,17 +40,19 @@ public abstract class SettingsConnectionService {
     return new String[]{SERVICE_URL_ATTR_NAME};
   }
 
+  @Nullable
   private final String mySettingsUrl;
   @Nullable
   private final String myDefaultServiceUrl;
 
-  protected SettingsConnectionService(@NotNull String settingsUrl, @Nullable String defaultServiceUrl) {
+  protected SettingsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
     mySettingsUrl = settingsUrl;
     myDefaultServiceUrl = defaultServiceUrl;
   }
 
   @SuppressWarnings("unused")
   @Deprecated
+  @Nullable
   public String getSettingsUrl() {
     return mySettingsUrl;
   }
@@ -62,6 +64,7 @@ public abstract class SettingsConnectionService {
 
   @Nullable
   private Map<String, String> readSettings(final String... attributes) {
+    if (mySettingsUrl == null) return Collections.emptyMap();
     return HttpRequests.request(mySettingsUrl)
       .productNameAsUserAgent()
       .connect(request -> {

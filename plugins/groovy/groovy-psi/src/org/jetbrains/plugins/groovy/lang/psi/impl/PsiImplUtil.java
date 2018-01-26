@@ -317,8 +317,7 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiElement realPrevious(PsiElement previousLeaf) {
-    while (previousLeaf != null &&
-        (previousLeaf instanceof PsiWhiteSpace ||
+    while ((previousLeaf instanceof PsiWhiteSpace ||
             previousLeaf instanceof PsiComment ||
             previousLeaf instanceof PsiErrorElement)) {
       previousLeaf = previousLeaf.getPrevSibling();
@@ -751,7 +750,7 @@ public class PsiImplUtil {
         result.add((GrStatement)cur);
       }
     }
-    return result.toArray(new GrStatement[result.size()]);
+    return result.toArray(GrStatement.EMPTY_ARRAY);
   }
 
   public static GrNamedArgument findNamedArgument(final GrNamedArgumentsOwner namedArgumentOwner,

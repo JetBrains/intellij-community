@@ -18,7 +18,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.util.SingletonSet;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Handle;
@@ -31,6 +30,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,11 +44,11 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 interface CombinedData {
 
   final class ParamKey {
-    final Method method;
+    final Member method;
     final int i;
     final boolean stable;
 
-    ParamKey(Method method, int i, boolean stable) {
+    ParamKey(Member method, int i, boolean stable) {
       this.method = method;
       this.i = i;
       this.stable = stable;
@@ -84,12 +84,12 @@ interface CombinedData {
 
   final class TrackableCallValue extends BasicValue implements Trackable {
     private final int originInsnIndex;
-    final Method method;
+    final Member method;
     final List<? extends BasicValue> args;
     final boolean stableCall;
     final boolean thisCall;
 
-    TrackableCallValue(int originInsnIndex, Type tp, Method method, List<? extends BasicValue> args, boolean stableCall, boolean thisCall) {
+    TrackableCallValue(int originInsnIndex, Type tp, Member method, List<? extends BasicValue> args, boolean stableCall, boolean thisCall) {
       super(tp);
       this.originInsnIndex = originInsnIndex;
       this.method = method;
@@ -154,13 +154,13 @@ interface CombinedData {
 final class CombinedAnalysis {
 
   private final ControlFlowGraph controlFlow;
-  private final Method method;
+  private final Member method;
   private final CombinedInterpreter interpreter;
   private BasicValue returnValue;
   private boolean exception;
   private final MethodNode methodNode;
 
-  CombinedAnalysis(Method method, ControlFlowGraph controlFlow) {
+  CombinedAnalysis(Member method, ControlFlowGraph controlFlow) {
     this.method = method;
     this.controlFlow = controlFlow;
     methodNode = controlFlow.methodNode;
@@ -537,8 +537,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3)
-    throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
       case IASTORE:
       case LASTORE:
@@ -581,7 +580,7 @@ final class CombinedInterpreter extends BasicInterpreter {
       case INVOKEVIRTUAL:
       case INVOKEINTERFACE: {
         MethodInsnNode mNode = (MethodInsnNode)insn;
-        Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+        Member method = new Member(mNode.owner, mNode.name, mNode.desc);
         TrackableCallValue value = methodCall(opCode, origin, method, values);
         calls.add(value);
         return value;
@@ -602,7 +601,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 
   @NotNull
-  private TrackableCallValue methodCall(int opCode, int origin, Method method, List<? extends BasicValue> values) {
+  private TrackableCallValue methodCall(int opCode, int origin, Member method, List<? extends BasicValue> values) {
     Type retType = Type.getReturnType(method.methodDesc);
     boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
     boolean thisCall = false;
@@ -637,14 +636,14 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 }
 
-class NegationAnalysisFailure extends Exception {
+class NegationAnalysisFailedException extends Exception {
 
 }
 
 final class NegationAnalysis {
 
   private final ControlFlowGraph controlFlow;
-  private final Method method;
+  private final Member method;
   private final NegationInterpreter interpreter;
   private final MethodNode methodNode;
 
@@ -652,20 +651,20 @@ final class NegationAnalysis {
   private BasicValue trueBranchValue;
   private BasicValue falseBranchValue;
 
-  NegationAnalysis(Method method, ControlFlowGraph controlFlow) {
+  NegationAnalysis(Member method, ControlFlowGraph controlFlow) {
     this.method = method;
     this.controlFlow = controlFlow;
     methodNode = controlFlow.methodNode;
     interpreter = new NegationInterpreter(methodNode.instructions);
   }
 
-  private static void checkAssertion(boolean assertion) throws NegationAnalysisFailure {
+  private static void checkAssertion(boolean assertion) throws NegationAnalysisFailedException {
     if (!assertion) {
-      throw new NegationAnalysisFailure();
+      throw new NegationAnalysisFailedException();
     }
   }
 
-  final void analyze() throws AnalyzerException, NegationAnalysisFailure {
+  final void analyze() throws AnalyzerException, NegationAnalysisFailedException {
     Frame<BasicValue> frame = createStartFrame();
     int insnIndex = 0;
 
@@ -701,7 +700,7 @@ final class NegationAnalysis {
   }
 
   private void proceedBranch(Frame<BasicValue> startFrame, int startIndex, boolean branchValue)
-    throws NegationAnalysisFailure, AnalyzerException {
+    throws NegationAnalysisFailedException, AnalyzerException {
 
     Frame<BasicValue> frame = new Frame<>(startFrame);
     int insnIndex = startIndex;
@@ -816,7 +815,7 @@ final class NegationInterpreter extends BasicInterpreter {
       case INVOKEINTERFACE:
         boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
         MethodInsnNode mNode = (MethodInsnNode)insn;
-        Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+        Member method = new Member(mNode.owner, mNode.name, mNode.desc);
         Type retType = Type.getReturnType(mNode.desc);
         BasicValue receiver = null;
         if (shift == 1) {

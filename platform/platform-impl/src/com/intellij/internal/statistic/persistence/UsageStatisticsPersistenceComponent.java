@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.internal.statistic.persistence;
 
@@ -21,10 +21,11 @@ import java.util.Set;
 
 @State(
   name = "UsagesStatistic",
-  storages = @Storage(value = "usage.statistics.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
 )
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements NamedComponent, PersistentStateComponent<Element> {
+  public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
   @NonNls private boolean isShowNotification = true;
   @NotNull private SendPeriod myPeriod = SendPeriod.DAILY;
@@ -50,7 +51,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     for (Element groupElement : element.getChildren(GROUP_TAG)) {
       String groupId = groupElement.getAttributeValue(GROUP_ID_ATTR);
       double groupPriority = getPriority(groupElement.getAttributeValue(GROUP_PRIORITY_ATTR));

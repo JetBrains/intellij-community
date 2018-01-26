@@ -44,7 +44,7 @@ public class JavaHighlightUtil {
     if (containingClass == null) return false;
     if (method.isConstructor()) {
       if (isSerializable(containingClass, "java.io.Externalizable") && 
-          method.getParameterList().getParametersCount() == 0 &&
+          method.getParameterList().isEmpty() &&
           method.hasModifierProperty(PsiModifier.PUBLIC)) {
         return true;
       }

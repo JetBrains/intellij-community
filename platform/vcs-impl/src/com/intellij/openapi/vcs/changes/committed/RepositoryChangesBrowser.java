@@ -84,7 +84,7 @@ public class RepositoryChangesBrowser extends ChangesBrowser implements DataProv
 
     else if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
-      return list.toArray(new Change[list.size()]);
+      return list.toArray(new Change[0]);
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       final Change highestSelection = myViewer.getHighestLeadSelection();

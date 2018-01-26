@@ -75,7 +75,7 @@ public class LightPsiClassBuilder extends LightPsiClassBase implements OriginInf
   @NotNull
   @Override
   public PsiMethod[] getMethods() {
-    return myMethods.toArray(new PsiMethod[myMethods.size()]);
+    return myMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull

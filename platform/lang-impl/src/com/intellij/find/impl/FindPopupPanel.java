@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
@@ -66,6 +67,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -137,7 +139,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private LoadingDecorator myLoadingDecorator;
   private int myLoadingHash;
   private JPanel myTitlePanel;
-  private String[] myMessageState = new String[2];
+  private String myUsagesCount;
+  private String myFilesCount;
   private UsageViewPresentation myUsageViewPresentation;
 
   FindPopupPanel(@NotNull FindUIHelper helper) {
@@ -239,17 +242,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     if (myIsPinned.get()) return false;
     if (!ApplicationManager.getApplication().isActive()) return false;
     if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
-    List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
+    List<JBPopup> popups = ContainerUtil.filter(JBPopupFactory.getInstance().getChildPopups(this), popup -> !popup.isDisposed());
     if (!popups.isEmpty()) {
       for (JBPopup popup : popups) {
         popup.cancel();
       }
       return false;
     }
-    if (myScopeUI.hideAllPopups()) {
-      return false;
-    }
-    return true;
+    return !myScopeUI.hideAllPopups();
   }
 
   protected void saveSettings() {
@@ -258,7 +258,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     FindSettings findSettings = FindSettings.getInstance();
     myScopeUI.applyTo(findSettings, mySelectedScope);
     myHelper.updateFindSettings();
-    applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
+    applyTo(FindManager.getInstance(myProject).getFindInProjectModel());
   }
 
   @NotNull
@@ -449,52 +449,43 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myReplaceSelectedButton = new JButton(FindBundle.message("find.popup.replace.selected.button", 0));
     myReplaceSelectedButton.setToolTipText("Replace " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)));
 
-    myOkActionListener = __ -> {
-      doOK(true);
-    };
-    myReplaceAllButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        if (myResultsPreviewTable.getRowCount() < 2 || ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
-          myMessageState[0],
-          getStringToFind(),
-          myMessageState[1],
-          getStringToReplace())) {
-          doOK(false);
-        }
+    myOkActionListener = __ -> doOK(true);
+    myReplaceAllButton.addActionListener(e -> {
+      if (myResultsPreviewTable.getRowCount() < 2 || ReplaceInProjectManager.getInstance(myProject).showReplaceAllConfirmDialog(
+        myUsagesCount,
+        getStringToFind(),
+        myFilesCount,
+        getStringToReplace())) {
+        doOK(false);
       }
     });
-    myReplaceSelectedButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        int rowToSelect = myResultsPreviewTable.getSelectionModel().getMinSelectionIndex();
-        Map<Integer, Usage> usages = getSelectedUsages();
-        if (usages == null) {
-          return;
-        }
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          for (Map.Entry<Integer, Usage> entry : usages.entrySet()) {
-            try {
-              ReplaceInProjectManager.getInstance(myProject).replaceUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet(), false);
-              ((DefaultTableModel)myResultsPreviewTable.getModel()).removeRow(entry.getKey());
-            }
-            catch (FindManager.MalformedReplacementStringException ex) {
-              if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                Messages.showErrorDialog(FindPopupPanel.this, ex.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
-              }
-              break;
-            }
-          }
-
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (myResultsPreviewTable.getRowCount() > rowToSelect) {
-              myResultsPreviewTable.getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
-            }
-            ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
-          });
-        }, FindBundle.message("find.replace.command"), null);
+    myReplaceSelectedButton.addActionListener(e -> {
+      int rowToSelect = myResultsPreviewTable.getSelectionModel().getMinSelectionIndex();
+      Map<Integer, Usage> usages = getSelectedUsages();
+      if (usages == null) {
+        return;
       }
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        for (Map.Entry<Integer, Usage> entry : usages.entrySet()) {
+          try {
+            ReplaceInProjectManager.getInstance(myProject).replaceUsage(entry.getValue(), myHelper.getModel(), Collections.emptySet(), false);
+            ((DefaultTableModel)myResultsPreviewTable.getModel()).removeRow(entry.getKey());
+          }
+          catch (FindManager.MalformedReplacementStringException ex) {
+            if (!ApplicationManager.getApplication().isUnitTestMode()) {
+              Messages.showErrorDialog(this, ex.getMessage(), FindBundle.message("find.replace.invalid.replacement.string.title"));
+            }
+            break;
+          }
+        }
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myResultsPreviewTable.getRowCount() > rowToSelect) {
+            myResultsPreviewTable.getSelectionModel().setSelectionInterval(rowToSelect, rowToSelect);
+          }
+          ScrollingUtil.ensureSelectionExists(myResultsPreviewTable);
+        });
+      }, FindBundle.message("find.replace.command"), null);
     });
     myOKButton.addActionListener(myOkActionListener);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
@@ -511,13 +502,13 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           myOkActionListener.actionPerformed(null);
         }
         else {
-          navigateToSelectedUsage();
+          navigateToSelectedUsage(null);
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
     DumbAwareAction.create(e -> {
       if (enterAsOK) {
-        navigateToSelectedUsage();
+        navigateToSelectedUsage(null);
       }
       else {
         myOkActionListener.actionPerformed(null);
@@ -537,7 +528,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          navigateToSelectedUsage();
+          navigateToSelectedUsage(e);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(navigationKeyStrokes.toArray(Shortcut.EMPTY_ARRAY)), this);
     }
@@ -584,7 +575,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
         if (event.getSource() != myResultsPreviewTable) return false;
-        navigateToSelectedUsage();
+        navigateToSelectedUsage(null);
         return true;
       }
     }.installOn(myResultsPreviewTable);
@@ -650,7 +641,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           scheduleResultsUpdate();
         }
         if (e.getDocument() == myReplaceComponent.getDocument()) {
-          applyTo(myHelper.getModel(), false);
+          applyTo(myHelper.getModel());
           ApplicationManager.getApplication().invokeLater(updatePreviewRunnable);
         }
       }
@@ -711,7 +702,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       twoButtons.add(myFilterContextButton);
       twoButtons.add(myPinButton);
       add(twoButtons, "wrap");
-    } else {
+    }
+    else {
       add(myFilterContextButton, "wrap");
     }
     add(mySearchTextArea, "pushx, growx, sx 10, gaptop 4, wrap");
@@ -748,7 +740,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
 
     FindModel validateModel = myHelper.getModel().clone();
-    applyTo(validateModel, false);
+    applyTo(validateModel);
 
     ValidationInfo validationInfo = getValidationInfo(validateModel);
 
@@ -930,7 +922,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     final ModalityState state = ModalityState.current();
     finishPreviousPreviewSearch();
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
-    applyTo(myHelper.getModel(), false);
+    applyTo(myHelper.getModel());
     FindModel findModel = new FindModel();
     findModel.copyFrom(myHelper.getModel());
 
@@ -1051,18 +1043,18 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             if (occurrences > 0) {
               stringBuilder.append(Math.min(ShowUsagesAction.getUsagesPageSize(), occurrences));
               boolean foundAllUsages = occurrences < ShowUsagesAction.getUsagesPageSize();
-              myMessageState[0] = String.valueOf(occurrences);
+              myUsagesCount = String.valueOf(occurrences);
               if (!foundAllUsages) {
                 stringBuilder.append("+");
-                myMessageState[0]  += "+";
+                myUsagesCount += "+";
               }
               stringBuilder.append(UIBundle.message("message.matches", occurrences));
               stringBuilder.append(" in ");
               stringBuilder.append(filesWithOccurrences);
-              myMessageState[1] = String.valueOf(filesWithOccurrences);
+              myFilesCount = String.valueOf(filesWithOccurrences);
               if (!foundAllUsages) {
                 stringBuilder.append("+");
-                myMessageState[1]  += "+";
+                myFilesCount += "+";
               }
               stringBuilder.append(UIBundle.message("message.files", filesWithOccurrences));
             }
@@ -1099,7 +1091,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
   }
 
-  protected void showEmptyText(@Nullable String message) {
+  private void showEmptyText(@Nullable String message) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
     emptyText.setText(message != null ? UIBundle.message("message.nothingToShow.with.problem", message)
@@ -1107,13 +1099,10 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     if (mySelectedScope == FindPopupScopeUIImpl.DIRECTORY && !myHelper.getModel().isWithSubdirectories()) {
       emptyText.appendSecondaryText(FindBundle.message("find.recursively.hint"),
                                                                SimpleTextAttributes.LINK_ATTRIBUTES,
-                                                               new ActionListener() {
-                                                                 @Override
-                                                                 public void actionPerformed(ActionEvent e) {
-                                                                   myHelper.getModel().setWithSubdirectories(true);
-                                                                   scheduleResultsUpdate();
-                                                                 }
-                                                               });
+                                    e -> {
+                                      myHelper.getModel().setWithSubdirectories(true);
+                                      scheduleResultsUpdate();
+                                    });
     }
   }
 
@@ -1185,7 +1174,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       if (mask.contains(";")) {
         return new ValidationInfo("File masks should be comma-separated", myFileMaskField);
       }
-
       else {
         try {
           FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
@@ -1209,7 +1197,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     return myReplaceComponent.getText();
   }
 
-  private void applyTo(@NotNull FindModel model, boolean findAll) {
+  private void applyTo(@NotNull FindModel model) {
     model.setCaseSensitive(myCbCaseSensitive.isSelected());
 
     if (model.isReplaceState()) {
@@ -1239,13 +1227,20 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     model.setCustomScope(false);
     myScopeUI.applyTo(model, mySelectedScope);
 
-    model.setFindAll(findAll);
+    model.setFindAll(false);
 
     String mask = getFileTypeMask();
     model.setFileFilter(mask);
   }
 
-  private void navigateToSelectedUsage() {
+  private void navigateToSelectedUsage(AnActionEvent e) {
+    Navigatable[] navigatables = e != null ? e.getData(CommonDataKeys.NAVIGATABLE_ARRAY) : null;
+    if (navigatables != null) {
+      myBalloon.cancel();
+      OpenSourceUtil.navigate(navigatables);
+      return;
+    }
+
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages != null) {
       myBalloon.cancel();
@@ -1375,7 +1370,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
   private static class MyLookupElement extends LookupElement {
     private final String myValue;
 
-    public MyLookupElement(String value) {
+    MyLookupElement(String value) {
       myValue = value;
     }
 

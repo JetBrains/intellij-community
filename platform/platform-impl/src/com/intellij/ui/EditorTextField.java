@@ -53,7 +53,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider,
+public class EditorTextField extends NonOpaquePanel implements DocumentListener, TextComponent, DataProvider, TextAccessor,
                                                        DocumentBasedComponent, FocusListener, MouseListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.EditorTextField");
   public static final Key<Boolean> SUPPLEMENTARY_KEY = Key.create("Supplementary");
@@ -234,6 +234,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
   }
 
+  @Override
   public void setText(@Nullable final String text) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
@@ -660,9 +661,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 
-      if (UIUtil.isUnderDefaultMacTheme()) {
-        size.height = Math.max(size.height, JBUI.scale(18));
-      } else if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         size.height = Math.max(size.height, JBUI.scale(16));
       }
 
@@ -709,11 +708,6 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
         IdeFocusManager.getGlobalInstance().requestFocus(myEditor.getContentComponent(), true);
       });
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
-    else {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        requestFocus();
-      });
     }
   }
 

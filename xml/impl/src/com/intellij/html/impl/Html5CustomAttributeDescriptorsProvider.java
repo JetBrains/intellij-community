@@ -73,7 +73,7 @@ public class Html5CustomAttributeDescriptorsProvider implements XmlAttributeDesc
       }
     }
 
-    return result.toArray(new XmlAttributeDescriptor[result.size()]);
+    return result.toArray(XmlAttributeDescriptor.EMPTY);
   }
 
   @Override

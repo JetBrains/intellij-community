@@ -198,7 +198,7 @@ public class ImportModuleAction extends AnAction {
       path = ProjectImportProvider.getDefaultPath(file);
     }
 
-    ProjectImportProvider[] availableProviders = available.toArray(new ProjectImportProvider[available.size()]);
+    ProjectImportProvider[] availableProviders = available.toArray(new ProjectImportProvider[0]);
 
     return dialogParent == null
            ? new AddModuleWizard(project, path, availableProviders)

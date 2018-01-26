@@ -62,6 +62,7 @@ import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -236,7 +237,7 @@ public abstract class DialogWrapper {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
             if (myErrorText != null && myErrorText.isVisible()) {
-              myActualSize.height -= myErrorText.myLabel.getHeight();
+              myActualSize.height -= myErrorText.getMinimumSize().height;
             }
           }
         }
@@ -2042,27 +2043,9 @@ public abstract class DialogWrapper {
   }
 
   private Component getFocusable(Component source) {
-    if (source == null) {
-      return null;
-    } else if (source instanceof JScrollPane) {
-      return ((JScrollPane)source).getViewport().getView();
-    } else if (source instanceof JComboBox && ((JComboBox)source).isEditable()) {
-      return ((JComboBox)source).getEditor().getEditorComponent();
-    } else if (source instanceof JSpinner) {
-      Container c = ((JSpinner)source).getEditor();
-      synchronized (c.getTreeLock()) {
-        return c.getComponent(0);
-      }
-    } else if (source instanceof Container) {
-      Container container = (Container)source;
-      List<Component> cl;
-      synchronized (container.getTreeLock()) {
-        cl = Arrays.asList(container.getComponents());
-      }
-      return cl.stream().filter(c -> c.isFocusable()).count() > 1 ? null : source;
-    } else {
-      return source;
-    }
+    return source instanceof JComboBox && !((JComboBox)source).isEditable() ?
+           source :
+           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst().orElse(null);
   }
 
   private void updateSize() {

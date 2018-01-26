@@ -45,13 +45,19 @@ class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiL
 
   private final PsiAnnotation myTarget;
   private final PsiLiteralExpression mySuppressedExpression;
+  @NotNull
   private final ProperTextRange myPriorityRange;
 
-  HighlightSuppressedWarningsHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiAnnotation target, @Nullable PsiLiteralExpression suppressedExpression) {
+
+  HighlightSuppressedWarningsHandler(@NotNull Editor editor,
+                                     @NotNull PsiFile file,
+                                     @NotNull PsiAnnotation target,
+                                     @Nullable PsiLiteralExpression suppressedExpression,
+                                     @NotNull ProperTextRange priorityRange) {
     super(editor, file);
     myTarget = target;
     mySuppressedExpression = suppressedExpression;
-    myPriorityRange = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
+    myPriorityRange = priorityRange;
   }
 
   @Override

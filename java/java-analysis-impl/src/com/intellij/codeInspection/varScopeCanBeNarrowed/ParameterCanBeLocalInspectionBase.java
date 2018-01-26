@@ -104,7 +104,7 @@ public class ParameterCanBeLocalInspectionBase extends AbstractBaseJavaLocalInsp
         result.add(createProblem(manager, identifier, isOnTheFly));
       }
     }
-    return result.toArray(new ProblemDescriptor[result.size()]);
+    return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull

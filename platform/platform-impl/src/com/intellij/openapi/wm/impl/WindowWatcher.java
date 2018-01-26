@@ -38,6 +38,7 @@ import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -55,8 +56,8 @@ public final class WindowWatcher implements PropertyChangeListener{
   /**
    * Contains last focused window for each project.
    */
-  private final HashSet myFocusedWindows = new HashSet();
-  @NonNls protected static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
+  private final Set myFocusedWindows = new HashSet();
+  @NonNls private static final String FOCUSED_WINDOW_PROPERTY = "focusedWindow";
 
   WindowWatcher() {}
 
@@ -202,7 +203,7 @@ public final class WindowWatcher implements PropertyChangeListener{
           return focusedComponent;
         }
         else{
-          return null;
+          return window == KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() ? window : null;
         }
       }else{
          // info isn't valid, i.e. window was garbage collected, so we need the remove invalid info

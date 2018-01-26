@@ -76,7 +76,7 @@ public class AutoPopupController implements Disposable {
 
 
   private final Project myProject;
-  private final Alarm myAlarm;
+  private final Alarm myAlarm = new Alarm(this);
 
   public static AutoPopupController getInstance(Project project){
     return ServiceManager.getService(project, AutoPopupController.class);
@@ -84,7 +84,6 @@ public class AutoPopupController implements Disposable {
 
   public AutoPopupController(Project project) {
     myProject = project;
-    myAlarm = new Alarm(this);
     setupListeners();
   }
 
@@ -92,21 +91,16 @@ public class AutoPopupController implements Disposable {
     ActionManagerEx.getInstanceEx().addAnActionListener(new AnActionListener() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        cancelAllRequest();
+        cancelAllRequests();
       }
 
       @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
-        cancelAllRequest();
-      }
-
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
+        cancelAllRequests();
       }
     }, this);
 
-    IdeEventQueue.getInstance().addActivityListener(() -> cancelAllRequest(), this);
+    IdeEventQueue.getInstance().addActivityListener(this::cancelAllRequests, this);
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
@@ -171,7 +165,7 @@ public class AutoPopupController implements Disposable {
     }
   }
 
-  private void cancelAllRequest() {
+  public void cancelAllRequests() {
     myAlarm.cancelAllRequests();
   }
 

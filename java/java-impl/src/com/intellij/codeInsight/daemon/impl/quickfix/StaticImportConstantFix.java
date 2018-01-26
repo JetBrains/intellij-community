@@ -63,7 +63,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
         element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
-    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element, showMembersFromDefaultPackage(), searchMode) {
+    final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element, toAddStaticImports(), searchMode) {
       @Override
       protected boolean isApplicable(PsiField field, PsiElement place) {
         PsiType fieldType = field.getType();
@@ -106,7 +106,7 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
   }
 
   @Override
-  protected boolean showMembersFromDefaultPackage() {
-    return false;
+  protected boolean toAddStaticImports() {
+    return true;
   }
 }

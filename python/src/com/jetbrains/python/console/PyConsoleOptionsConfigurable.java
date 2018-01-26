@@ -68,7 +68,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
       }
     }
 
-    return result.toArray(new Configurable[result.size()]);
+    return result.toArray(new Configurable[0]);
   }
 
   private static Configurable createConsoleChildConfigurable(final String name,

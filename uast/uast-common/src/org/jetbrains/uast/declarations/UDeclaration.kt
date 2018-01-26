@@ -32,7 +32,10 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   override fun getOriginalElement(): PsiElement? = psi.originalElement
 
   /**
-   * Returns the declaration name identifier, or null if the declaration is anonymous.
+   * Returns the declaration name identifier. If declaration is anonymous other implementation dependant psi element will be returned.
+   * The main rule that returned element is "anchor": it is a single token which represents this declaration.
+   *
+   * It is useful for putting gutters and inspection reports.
    */
   val uastAnchor: UElement?
 
@@ -58,3 +61,14 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
 }
 
 fun UElement.getContainingDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+
+/**
+ * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]
+ *
+ * Note: [UDeclaration] and [UAnnotation] will extend this interface after all implementations will do
+ */
+interface UAnchorOwner : UElement {
+
+  val uastAnchor: UIdentifier?
+
+}

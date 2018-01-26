@@ -100,7 +100,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           if (paths.isEmpty()) return;
           ApplicationManager.getApplication().invokeLater(
             () -> AutoSvnUpdater
-              .run(new AutoSvnUpdater(project, paths.toArray(new FilePath[paths.size()])), ActionInfo.UPDATE.getActionName()),
+              .run(new AutoSvnUpdater(project, paths.toArray(new FilePath[0])), ActionInfo.UPDATE.getActionName()),
             ModalityState.NON_MODAL);
         }
       }

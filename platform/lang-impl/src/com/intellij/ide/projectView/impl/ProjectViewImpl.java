@@ -707,7 +707,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (window != null) {
-      window.setTitleActions(titleActions.toArray(new AnAction[titleActions.size()]));
+      window.setTitleActions(titleActions.toArray(AnAction.EMPTY_ARRAY));
     }
   }
 
@@ -759,7 +759,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane != null && viewPane instanceof AbstractProjectViewPSIPane) {
+    if (viewPane instanceof AbstractProjectViewPSIPane) {
       return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
@@ -1144,15 +1144,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
       if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
         final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
       }
       if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
         final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
       }
       if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
         final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
-        return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
+        return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
       }
 
       if (PlatformDataKeys.SELECTED_ITEMS.is(dataId)) {
@@ -1252,7 +1252,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return null;
       }
       else {
-        return result.toArray(new Module[result.size()]);
+        return result.toArray(Module.EMPTY_ARRAY);
       }
     }
 
@@ -1325,6 +1325,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           FileEditor editor = EditorHelper.openInEditor(element, false);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            JComponent component = editor.getPreferredFocusedComponent();
+            if (component != null) {
+              component.requestFocus();
+            }
             requestFocus = false;
           }
         }
@@ -1795,7 +1799,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
       if (!paths.isEmpty()) {
-        tree.setSelectionPaths(paths.toArray(new TreePath[paths.size()]));
+        tree.setSelectionPaths(paths.toArray(new TreePath[0]));
       }
     }
 

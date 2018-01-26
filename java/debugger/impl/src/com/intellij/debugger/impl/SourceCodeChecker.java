@@ -71,10 +71,6 @@ public class SourceCodeChecker {
       return;
     }
     suspendContext.getDebugProcess().getManagerThread().schedule(new SuspendContextCommandImpl(suspendContext) {
-      @Override
-      public Priority getPriority() {
-        return Priority.LOW;
-      }
 
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {

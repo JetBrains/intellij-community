@@ -37,7 +37,7 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
 
   default boolean supportsOverloadSwitching() { return false; }
-  default void dispose() {}
+  default void dispose(@NotNull DeleteParameterInfoContext context) {}
 
   /** @deprecated not used */
   default @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }

@@ -77,7 +77,7 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
         result.add(window);
       }
     }
-    return result.toArray(new FoldRegion[result.size()]);
+    return result.toArray(FoldRegion.EMPTY_ARRAY);
   }
 
   @Override

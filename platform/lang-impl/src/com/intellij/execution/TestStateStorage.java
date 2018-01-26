@@ -35,8 +35,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -115,6 +114,17 @@ public class TestStateStorage implements Disposable {
     }, 4096, CURRENT_VERSION);
   }
 
+  @NotNull
+  public synchronized Collection<String> getKeys() {
+    try {
+      return myMap == null ? Collections.emptyList() : myMap.getAllKeysWithExistingMapping();
+    }
+    catch (IOException e) {
+      thingsWentWrongLetsReinitialize(e, "Can't get keys");
+      return Collections.emptyList();
+    }
+  }
+
   @Nullable
   public synchronized Record getState(String testUrl) {
     try {
@@ -156,7 +166,7 @@ public class TestStateStorage implements Disposable {
     catch (IOException e) {
       thingsWentWrongLetsReinitialize(e, "Can't get recent tests");
     }
-    
+
     return result;
   }
 
@@ -197,7 +207,7 @@ public class TestStateStorage implements Disposable {
         IOUtil.deleteAllFilesStartingWith(myFile);
       }
       myMap = initializeMap();
-      LOG.error(message, e);
+      LOG.warn(message, e);
     }
     catch (IOException e1) {
       LOG.error("Cannot repair", e1);

@@ -254,6 +254,21 @@ public class Py3CompletionTest extends PyTestCase {
     assertDoesntContain(suggested, "meta_method");
   }
 
+  // PY-27398
+  public void testDataclassPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-27398
+  public void testDataclassWithInitVarPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-27398
+  public void testDataclassPostInitNoInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

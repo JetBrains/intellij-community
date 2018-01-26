@@ -27,7 +27,11 @@ import java.nio.file.Files;
 /**
  * @author lambdamix
  */
+@SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
+  boolean plainFlag;
+  volatile boolean volatileFlag;
+
   static void f(@ExpectNotNull Object o1, @ExpectNotNull Object o2) {
     if (o1 == null) throw new NullPointerException();
     else s(o2, o2);
@@ -293,5 +297,12 @@ public class Test01 {
 
     }
     return false;
+  }
+
+  @ExpectContract(pure = true)
+  String[] replaceFirstWithNull(@ExpectNotNull String[] arr) {
+    String[] res = arr.clone();
+    res[0] = null;
+    return res;
   }
 }

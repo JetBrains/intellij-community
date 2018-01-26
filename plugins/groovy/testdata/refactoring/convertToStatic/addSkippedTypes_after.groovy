@@ -2,7 +2,7 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 class Foo {
-    private String field1 = ""
+    private String field1 = bar1()
 
     static String bar1() {
         ""

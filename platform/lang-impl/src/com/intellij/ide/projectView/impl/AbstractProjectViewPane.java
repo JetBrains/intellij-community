@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.projectView.impl;
@@ -13,6 +13,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
 import com.intellij.ide.projectView.impl.nodes.AbstractProjectNode;
 import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
@@ -43,7 +44,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jdom.Element;
@@ -276,13 +276,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (paths == null) return Collections.emptyList();
     final ArrayList<T> result = new ArrayList<>();
     for (TreePath path : paths) {
-      Object lastPathComponent = path.getLastPathComponent();
-      if (lastPathComponent instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-        Object userObject = node.getUserObject();
-        if (userObject != null && ReflectionUtil.isAssignable(nodeClass, userObject.getClass())) {
-          result.add((T)userObject);
-        }
+      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
+      if (userObject != null && ReflectionUtil.isAssignable(nodeClass, userObject.getClass())) {
+        result.add((T)userObject);
       }
     }
     return result;
@@ -295,23 +291,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       if (paths == null) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<>();
       for (TreePath path : paths) {
-        Object lastPathComponent = path.getLastPathComponent();
-        if (lastPathComponent instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)lastPathComponent;
-          Object userObject = node.getUserObject();
-          if (userObject instanceof Navigatable) {
-            navigatables.add((Navigatable)userObject);
-          }
-          else if (node instanceof Navigatable) {
-            navigatables.add((Navigatable)node);
-          }
+        Object node = path.getLastPathComponent();
+        Object userObject = TreeUtil.getUserObject(node);
+        if (userObject instanceof Navigatable) {
+          navigatables.add((Navigatable)userObject);
+        }
+        else if (node instanceof Navigatable) {
+          navigatables.add((Navigatable)node);
         }
       }
       if (navigatables.isEmpty()) {
         return null;
       }
       else {
-        return navigatables.toArray(new Navigatable[navigatables.size()]);
+        return navigatables.toArray(new Navigatable[0]);
       }
     }
     if (myTreeStructure instanceof AbstractTreeStructureBase) {
@@ -330,13 +323,9 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final NodeDescriptor getSelectedDescriptor() {
-    final DefaultMutableTreeNode node = getSelectedNode();
-    if (node == null) return null;
-    Object userObject = node.getUserObject();
-    if (userObject instanceof NodeDescriptor) {
-      return (NodeDescriptor)userObject;
-    }
-    return null;
+    TreePath path = getSelectedPath();
+    Object userObject = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
+    return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
   }
 
   public final DefaultMutableTreeNode getSelectedNode() {
@@ -423,7 +412,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         result.add ( (TreeNode) lastPathComponent);
       }
     }
-    return result.toArray(new TreeNode[result.size()]);
+    return result.toArray(new TreeNode[0]);
   }
 
 
@@ -453,6 +442,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public AbstractTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
+  }
+
+  public AbstractTreeStructure getTreeStructure() {
+    return myTreeStructure;
   }
 
   public void readExternal(@NotNull Element element)  {
@@ -542,7 +535,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     if (!directories.isEmpty()) {
-      return directories.toArray(new PsiDirectory[directories.size()]);
+      return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
 
     final PsiElement[] elements = getSelectedPSIElements();
@@ -598,7 +591,16 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
             dirs.add(directory);
           }
         }
-        return dirs.toArray(new PsiDirectory[dirs.size()]);
+        return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
+      }
+    }
+    else if (userObject instanceof ProjectViewNode) {
+      VirtualFile file = ((ProjectViewNode)userObject).getVirtualFile();
+      if (file != null && file.isValid() && file.isDirectory()) {
+        PsiDirectory directory = PsiManager.getInstance(myProject).findDirectory(file);
+        if (directory != null) {
+          return new PsiDirectory[]{directory};
+        }
       }
     }
     return PsiDirectory.EMPTY_ARRAY;

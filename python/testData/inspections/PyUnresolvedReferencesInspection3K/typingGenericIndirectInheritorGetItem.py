@@ -16,4 +16,6 @@ class Z(Y[T]):
     pass
 
 
-Z[int]
+a: Z[int]
+Alias = Z[int]
+Z[int]()

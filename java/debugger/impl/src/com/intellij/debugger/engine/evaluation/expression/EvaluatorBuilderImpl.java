@@ -107,7 +107,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult = null;
         }
 
-        myCurrentFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[evaluators.size()]));
+        myCurrentFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[0]));
         myResult = myCurrentFragmentEvaluator;
       }
       finally {
@@ -639,7 +639,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       if(!evaluators.isEmpty()) {
         CodeFragmentEvaluator codeFragmentEvaluator = new CodeFragmentEvaluator(myCurrentFragmentEvaluator);
-        codeFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[evaluators.size()]));
+        codeFragmentEvaluator.setStatements(evaluators.toArray(new Evaluator[0]));
         myResult = codeFragmentEvaluator;
       } else {
         myResult = null;

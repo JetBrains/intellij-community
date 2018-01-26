@@ -22,8 +22,8 @@ import java.io.File;
 public class SvnFormatSelector {
 
   @NotNull
-  public static WorkingCopyFormat findRootAndGetFormat(final File path) {
-    File root = SvnUtil.getWorkingCopyRootNew(path);
+  public static WorkingCopyFormat findRootAndGetFormat(@NotNull File path) {
+    File root = SvnUtil.getWorkingCopyRoot(path);
 
     return root != null ? SvnUtil.getFormat(root) : WorkingCopyFormat.UNKNOWN;
   }

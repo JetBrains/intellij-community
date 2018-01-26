@@ -201,7 +201,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
 
     final Object result = GroovyConstantExpressionEvaluator.evaluate(expression);
-    if (result == null || !(result instanceof String)) {
+    if (!(result instanceof String)) {
       registerError(
         elementToHighlight,
         ProblemHighlightType.WEAK_WARNING,
@@ -564,7 +564,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     registerError(
       toHighlight,
       message,
-      fixes.toArray(new LocalQuickFix[fixes.size()]),
+      fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
       result == ConversionResult.ERROR ? ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     );
   }

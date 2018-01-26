@@ -225,7 +225,7 @@ public class XsltReferenceProvider extends PsiReferenceProvider {
       }
       while (matcher.find());
 
-      return refs.toArray(new PsiReference[refs.size()]);
+      return refs.toArray(PsiReference.EMPTY_ARRAY);
     }
     return PsiReference.EMPTY_ARRAY;
   }

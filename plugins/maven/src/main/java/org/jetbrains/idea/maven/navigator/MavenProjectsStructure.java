@@ -386,7 +386,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (MavenSimpleNode each : children) {
         if (each.isVisible()) result.add(each);
       }
-      return result.toArray(new MavenSimpleNode[result.size()]);
+      return result.toArray(new MavenSimpleNode[0]);
     }
 
     protected List<? extends MavenSimpleNode> doGetChildren() {

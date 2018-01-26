@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -100,8 +99,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -114,7 +112,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       @NonNls final StringBuilder newExpression = new StringBuilder();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        newExpression.append(commentTracker.markUnchanged(qualifierExpression).getText());
+        newExpression.append(commentTracker.text(qualifierExpression));
         newExpression.append('.');
       }
       if (put) {
@@ -125,7 +123,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      newExpression.append(StringUtil.join(arguments, arg -> commentTracker.markUnchanged(arg).getText(), ","));
+      newExpression.append(StringUtil.join(arguments, arg -> commentTracker.text(arg), ","));
       newExpression.append(')');
 
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);

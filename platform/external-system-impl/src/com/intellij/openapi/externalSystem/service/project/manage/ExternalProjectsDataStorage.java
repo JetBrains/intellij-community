@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -31,8 +29,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -53,7 +53,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.*;
 public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
-  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".1";
+  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".2";
 
   @NotNull
   private final Project myProject;
@@ -74,11 +74,20 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
   }
 
+  @TestOnly
+  public ExternalProjectsDataStorage(@NotNull Project project, @NotNull Alarm alarm) {
+    myProject = project;
+    myAlarm = alarm;
+  }
+
   public synchronized void load() {
     myExternalRootProjects.clear();
+    long startTs = System.currentTimeMillis();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
-      if(projectInfos.isEmpty() && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
+      if (projectInfos.isEmpty() &&
+          myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
+          hasLinkedExternalProjects()) {
         markDirtyAllExternalProjects();
       }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
@@ -103,6 +112,13 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     }
 
     mergeLocalSettings();
+    long finishTs = System.currentTimeMillis();
+    LOG.info("Loaded external projects data in " + (finishTs - startTs) + " millis");
+  }
+
+  private boolean hasLinkedExternalProjects() {
+    return ExternalSystemApiUtil.getAllManagers().stream()
+      .anyMatch(manager -> !manager.getSettingsProvider().fun(myProject).getLinkedProjectsSettings().isEmpty());
   }
 
   private void markDirtyAllExternalProjects() {
@@ -411,7 +427,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   }
 
   @Override
-  public synchronized void loadState(State state) {
+  public synchronized void loadState(@NotNull State state) {
     myState = state == null ? new State() : state;
   }
 
@@ -449,8 +465,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   static class ProjectState {
     @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
-      keyAttributeName = "path", entryTagName = "dataType")
+    @XMap(keyAttributeName = "path", entryTagName = "dataType")
     public final Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
     public boolean isInclusion;
   }

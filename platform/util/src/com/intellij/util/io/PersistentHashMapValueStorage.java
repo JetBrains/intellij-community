@@ -47,6 +47,9 @@ public class PersistentHashMapValueStorage {
   private static final int CACHE_PROTECTED_QUEUE_SIZE = 10;
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
   private static final long MAX_RETAINED_LIMIT_WHEN_COMPACTING = 100 * 1024 * 1024;
+  
+  static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
+  static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
   public static class CreationTimeOptions {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
@@ -353,7 +356,7 @@ public class PersistentHashMapValueStorage {
     final int fileBufferLength = 256 * 1024;
     final int maxRecordHeader = 5 /* max length - variable int */ + 10 /* max long offset*/;
     final byte[] buffer = new byte[fileBufferLength + maxRecordHeader];
-    byte[] recordBuffer = {};
+    byte[] reusedAccumulatedChunksBuffer = {};
 
     long lastReadOffset = mySize;
     long lastConsumedOffset = lastReadOffset;
@@ -361,12 +364,10 @@ public class PersistentHashMapValueStorage {
     int fragments = 0;
     int newFragments = 0;
     int allRecordsLength = 0;
+    
     byte[] stuffFromPreviousRecord = null;
     int bytesRead = (int)(mySize - (mySize / fileBufferLength) * fileBufferLength);
     long retained = 0;
-    final long softMaxRetainedLimit = 10 * 1024* 1024;
-    final int blockSizeToWriteWhenSoftMaxRetainedLimitIsHit = 1024;
-    final long maxRetainedLimit = 100 * 1024* 1024;
 
     while(lastReadOffset != 0) {
       final long readStartOffset = lastReadOffset - bytesRead;
@@ -404,23 +405,23 @@ public class PersistentHashMapValueStorage {
           prevChunkAddress = readPrevChunkAddress(info.valueAddress);
           dataOffset = available - myBufferStreamWrapper.available();
 
-          byte[] b;
+          byte[] accumulatedChunksBuffer;
           if (info.value != null) {
             int defragmentedChunkSize = info.value.length + chunkSize;
             if (prevChunkAddress == 0) {
-              if (defragmentedChunkSize >= recordBuffer.length) recordBuffer = new byte[defragmentedChunkSize];
-              b = recordBuffer;
+              if (defragmentedChunkSize >= reusedAccumulatedChunksBuffer.length) reusedAccumulatedChunksBuffer = new byte[defragmentedChunkSize];
+              accumulatedChunksBuffer = reusedAccumulatedChunksBuffer;
             } else {
-              b = new byte[defragmentedChunkSize];
+              accumulatedChunksBuffer = new byte[defragmentedChunkSize];
               retained += defragmentedChunkSize;
             }
-            System.arraycopy(info.value, 0, b, chunkSize, info.value.length);
+            System.arraycopy(info.value, 0, accumulatedChunksBuffer, chunkSize, info.value.length);
           } else {
             if (prevChunkAddress == 0) {
-              if (chunkSize >= recordBuffer.length) recordBuffer = new byte[chunkSize];
-              b = recordBuffer;
+              if (chunkSize >= reusedAccumulatedChunksBuffer.length) reusedAccumulatedChunksBuffer = new byte[chunkSize];
+              accumulatedChunksBuffer = reusedAccumulatedChunksBuffer;
             } else {
-              b = new byte[chunkSize];
+              accumulatedChunksBuffer = new byte[chunkSize];
               retained += chunkSize;
             }
           }
@@ -429,11 +430,11 @@ public class PersistentHashMapValueStorage {
                                                     Math.max((int)(info.valueAddress + dataOffset + chunkSize - lastReadOffset), 0));
           if (chunkSizeOutOfBuffer > 0) {
             if (allRecordsStart != 0) {
-              myCompactionModeReader.get(allRecordsStart, b, chunkSize - chunkSizeOutOfBuffer, chunkSizeOutOfBuffer);
+              myCompactionModeReader.get(allRecordsStart, accumulatedChunksBuffer, chunkSize - chunkSizeOutOfBuffer, chunkSizeOutOfBuffer);
             } else {
               int offsetInStuffFromPreviousRecord = Math.max((int)(info.valueAddress + dataOffset - lastReadOffset), 0);
               // stuffFromPreviousRecord starts from lastReadOffset
-              System.arraycopy(stuffFromPreviousRecord, offsetInStuffFromPreviousRecord, b, chunkSize - chunkSizeOutOfBuffer, chunkSizeOutOfBuffer);
+              System.arraycopy(stuffFromPreviousRecord, offsetInStuffFromPreviousRecord, accumulatedChunksBuffer, chunkSize - chunkSizeOutOfBuffer, chunkSizeOutOfBuffer);
             }
           }
 
@@ -441,9 +442,9 @@ public class PersistentHashMapValueStorage {
           allRecordsStart = allRecordsLength = 0;
 
           lastConsumedOffset = info.valueAddress;
-          checkPreconditions(b, chunkSize, 0);
+          checkPreconditions(accumulatedChunksBuffer, chunkSize, 0);
 
-          System.arraycopy(buffer, recordStartInBuffer + dataOffset, b, 0, chunkSize - chunkSizeOutOfBuffer);
+          System.arraycopy(buffer, recordStartInBuffer + dataOffset, accumulatedChunksBuffer, 0, chunkSize - chunkSizeOutOfBuffer);
 
           ++fragments;
           records.remove(info);
@@ -454,17 +455,17 @@ public class PersistentHashMapValueStorage {
           }
 
           if (prevChunkAddress == 0) {
-            info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
+            info.newValueAddress = storage.appendBytes(accumulatedChunksBuffer, 0, chunkSize, info.newValueAddress);
             ++newFragments;
           } else {
-            if (retained > softMaxRetainedLimit && b.length > blockSizeToWriteWhenSoftMaxRetainedLimitIsHit ||
+            if (retained > SOFT_MAX_RETAINED_LIMIT && accumulatedChunksBuffer.length > BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT ||
                 retained > MAX_RETAINED_LIMIT_WHEN_COMPACTING) {
-              ++newFragments;
-              info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
-              info.value = null;
-              retained -= b.length;
+              // to avoid OOME we need to save bytes in accumulatedChunksBuffer 
+              newFragments += saveAccumulatedDataOnDiskPreservingWriteOrder(storage, info, prevChunkAddress, accumulatedChunksBuffer, chunkSize);
+              retained -= accumulatedChunksBuffer.length;
+              continue;
             } else {
-              info.value = b;
+              info.value = accumulatedChunksBuffer;
             }
             info.valueAddress = prevChunkAddress;
             records.add(info);
@@ -487,6 +488,22 @@ public class PersistentHashMapValueStorage {
     }
 
     return fragments | ((long)newFragments << 32);
+  }
+
+  private int saveAccumulatedDataOnDiskPreservingWriteOrder(PersistentHashMapValueStorage storage,
+                                                            PersistentHashMap.CompactionRecordInfo info,
+                                                            long prevChunkAddress,
+                                                            byte[] accumulatedChunksData, 
+                                                            int accumulatedChunkDataLength) throws IOException {
+    ReadResult result = readBytes(prevChunkAddress);
+    // to avoid possible OOME result.bytes and accumulatedChunksData are not combined in one chunk, instead they are 
+    // placed one after another, such near placement should be fine because of disk caching
+    info.newValueAddress = storage.appendBytes(result.buffer, 0, result.buffer.length, info.newValueAddress);
+    info.newValueAddress = storage.appendBytes(accumulatedChunksData, 0, accumulatedChunkDataLength, info.newValueAddress);
+    
+    info.value = null;
+    info.valueAddress = 0;
+    return 2; // number of chunks produced = number of appendBytes called
   }
 
   public static class ReadResult {

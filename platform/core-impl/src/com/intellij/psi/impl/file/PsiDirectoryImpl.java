@@ -147,7 +147,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         dirs.add(dir);
       }
     }
-    return dirs.toArray(new PsiDirectory[dirs.size()]);
+    return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override

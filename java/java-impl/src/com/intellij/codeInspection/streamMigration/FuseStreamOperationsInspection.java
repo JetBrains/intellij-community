@@ -65,7 +65,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
         PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)function).getBody());
         PsiNewExpression newExpression = tryCast(PsiUtil.skipParenthesizedExprDown(body), PsiNewExpression.class);
         if (newExpression != null && newExpression.getAnonymousClass() == null && newExpression.getQualifier() == null &&
-            newExpression.getArgumentList() != null && newExpression.getArgumentList().getExpressions().length == 0) {
+            newExpression.getArgumentList() != null && newExpression.getArgumentList().isEmpty()) {
           PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
           if (classReference != null) {
             return tryCast(classReference.resolve(), PsiClass.class);

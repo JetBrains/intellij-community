@@ -1,8 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -15,8 +18,14 @@ public class PyPIPackageCache extends PyAbstractPackageCache {
 
   @NotNull
   public static synchronized PyPIPackageCache getInstance() {
+    return getInstance(getDefaultCachePath(CACHE_FILE_NAME));
+  }
+
+  @VisibleForTesting
+  @NotNull
+  static synchronized PyPIPackageCache getInstance(@NotNull Path pathToCache) {
     if (ourInstance == null) {
-      ourInstance = PyAbstractPackageCache.load(PyPIPackageCache.class, new PyPIPackageCache(), CACHE_FILE_NAME);
+      ourInstance = PyAbstractPackageCache.load(PyPIPackageCache.class, new PyPIPackageCache(), pathToCache);
     }
     return ourInstance;
   }
@@ -26,6 +35,11 @@ public class PyPIPackageCache extends PyAbstractPackageCache {
     ourInstance = new PyPIPackageCache(packageNames);
     store(ourInstance, CACHE_FILE_NAME);
     return ourInstance;
+  }
+
+  @TestOnly
+  static synchronized void reset() {
+    ourInstance = null;
   }
 
   private PyPIPackageCache() {

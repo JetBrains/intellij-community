@@ -78,7 +78,7 @@ public class SPIFile extends PsiFileBase {
         }
       }
       refs.add(reference);
-      return refs.toArray(new PsiReference[refs.size()]);
+      return refs.toArray(PsiReference.EMPTY_ARRAY);
     });
   }
 

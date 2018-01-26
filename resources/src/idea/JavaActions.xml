@@ -31,10 +31,6 @@
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </group>
 
-    <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
-      <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
-    </action>
-
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
@@ -274,6 +270,11 @@
       <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
               id="MemoryView.EnableTrackingWithClosedWindow"
               text="Enable Tracking With Hidden Memory View"/>
+
+      <action class="com.intellij.debugger.memory.action.SwitchUpdateModeAction"
+              id="MemoryView.SwitchUpdateMode"
+              text="Update Loaded Classes On Debugger Stop"
+              description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
     </group>
 
     <group id="MemoryView.ClassesPopupActionGroup">

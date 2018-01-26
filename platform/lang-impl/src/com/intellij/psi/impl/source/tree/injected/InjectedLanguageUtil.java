@@ -20,6 +20,7 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostRegistrar;
@@ -30,11 +31,13 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
@@ -57,11 +60,10 @@ import java.util.List;
 @Deprecated
 public class InjectedLanguageUtil {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageUtil.class);
-  static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
-  // meaning: injected file text is probably incorrect
 
+  // meaning: injected file text is probably incorrect
   public static void forceInjectionOnElement(@NotNull PsiElement host) {
     enumerate(host, (injectedPsi, places) -> {
     });
@@ -86,8 +88,23 @@ public class InjectedLanguageUtil {
     return host;
   }
 
-  public static List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> getHighlightTokens(@NotNull PsiFile file) {
+  private static final Key<List<TokenInfo>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
+  public static List<TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
+  }
+  public static class TokenInfo {
+    @NotNull public final IElementType type;
+    @NotNull public final ProperTextRange rangeInsideInjectionHost;
+    public final int shredIndex;
+
+    public TokenInfo(@NotNull IElementType type, @NotNull ProperTextRange rangeInsideInjectionHost, int shredIndex) {
+      this.type = type;
+      this.rangeInsideInjectionHost = rangeInsideInjectionHost;
+      this.shredIndex = shredIndex;
+    }
+  }
+  static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
+    file.putUserData(HIGHLIGHT_TOKENS, tokens);
   }
 
   public static Place getShreds(@NotNull PsiFile injectedFile) {
@@ -171,7 +188,7 @@ public class InjectedLanguageUtil {
    * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
    * for uncommitted documents.
    */
-  public static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
+  static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
     PsiFile hostPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(hostDocument);
     if (hostPsiFile == null || !hostPsiFile.isValid()) return false;
     List<DocumentWindow> documents = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(hostPsiFile, TextRange.create(hostOffset, hostOffset));
@@ -722,5 +739,24 @@ public class InjectedLanguageUtil {
                                      @NotNull PsiLanguageInjectionHost host,
                                      @NotNull TextRange rangeInsideHost) {
     ((InjectionRegistrarImpl)registrar).injectReference(language, prefix, suffix, host, rangeInsideHost);
+  }
+
+  // null means failed to reparse
+  public static BooleanRunnable reparse(@NotNull PsiFile injectedPsiFile,
+                                        @NotNull DocumentWindow document,
+                                        @NotNull PsiFile hostPsiFile,
+                                        @NotNull FileViewProvider hostViewProvider,
+                                        @NotNull ProgressIndicator indicator, @NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
+    Language language = injectedPsiFile.getLanguage();
+    InjectedFileViewProvider provider = (InjectedFileViewProvider)injectedPsiFile.getViewProvider();
+    VirtualFile oldInjectedVFile = provider.getVirtualFile();
+    VirtualFile hostVirtualFile = hostViewProvider.getVirtualFile();
+    BooleanRunnable runnable = InjectionRegistrarImpl
+      .reparse(language, (DocumentWindowImpl)document, injectedPsiFile, (VirtualFileWindow)oldInjectedVFile, hostVirtualFile, hostPsiFile,
+               indicator, oldRoot, newRoot);
+    if (runnable == null) {
+      EditorWindowImpl.disposeEditorFor(document);
+    }
+    return runnable;
   }
 }

@@ -157,7 +157,7 @@ public abstract class PyElementGenerator {
    * @param qualifier     from where {@code name} will be imported (module name)
    * @param name          text of the reference in import element
    * @param alias         optional alias for {@code as alias} part
-   * @return created {@link com.jetbrains.python.psi.PyFromImportStatement}
+   * @return created {@link PyFromImportStatement}
    */
   @NotNull
   public abstract PyFromImportStatement createFromImportStatement(@NotNull LanguageLevel languageLevel,
@@ -171,10 +171,16 @@ public abstract class PyElementGenerator {
    * @param languageLevel language level for created element
    * @param name          text of the reference in import element (module name)
    * @param alias         optional alias for {@code as alias} part
-   * @return created {@link com.jetbrains.python.psi.PyImportStatement}
+   * @return created {@link PyImportStatement}
    */
   @NotNull
   public abstract PyImportStatement createImportStatement(@NotNull LanguageLevel languageLevel,
                                                           @NotNull String name,
                                                           @Nullable String alias);
+
+  @NotNull
+  public abstract PyNoneLiteralExpression createEllipsis();
+
+  @NotNull
+  public abstract PySingleStarParameter createSingleStarParameter();
 }

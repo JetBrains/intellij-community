@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +37,8 @@ class ChangeListManagerSerialization {
   @NonNls private static final String ATT_VALUE_TRUE = "true";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
+  @NonNls private static final String ATT_CHANGE_BEFORE_PATH_IS_DIR = "beforeDir";
+  @NonNls private static final String ATT_CHANGE_AFTER_PATH_IS_DIR = "afterDir";
   @NonNls private static final String ATT_PATH = "path";
   @NonNls private static final String ATT_MASK = "mask";
   @NonNls private static final String NODE_LIST = "list";
@@ -214,20 +218,61 @@ class ChangeListManagerSerialization {
   @NotNull
   private static Element writeChange(@NotNull Change change) {
     Element changeNode = new Element(NODE_CHANGE);
-
-    ContentRevision bRev = change.getBeforeRevision();
-    ContentRevision aRev = change.getAfterRevision();
-
-    changeNode.setAttribute(ATT_CHANGE_BEFORE_PATH, bRev != null ? bRev.getFile().getPath() : "");
-    changeNode.setAttribute(ATT_CHANGE_AFTER_PATH, aRev != null ? aRev.getFile().getPath() : "");
+    writeContentRevision(changeNode, change.getBeforeRevision(), RevisionSide.BEFORE);
+    writeContentRevision(changeNode, change.getAfterRevision(), RevisionSide.AFTER);
     return changeNode;
   }
 
   @NotNull
   private static Change readChange(@NotNull Element changeNode) {
-    String bRev = changeNode.getAttributeValue(ATT_CHANGE_BEFORE_PATH);
-    String aRev = changeNode.getAttributeValue(ATT_CHANGE_AFTER_PATH);
-    return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev),
-                      StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));
+    FakeRevision bRev = readContentRevision(changeNode, RevisionSide.BEFORE);
+    FakeRevision aRev = readContentRevision(changeNode, RevisionSide.AFTER);
+    return new Change(bRev, aRev);
+  }
+
+  private static void writeContentRevision(@NotNull Element changeNode, @Nullable ContentRevision rev, @NotNull RevisionSide side) {
+    if (rev == null) return;
+    FilePath filePath = rev.getFile();
+    changeNode.setAttribute(side.getPathKey(), filePath.getPath());
+    changeNode.setAttribute(side.getIsDirKey(), String.valueOf(filePath.isDirectory()));
+  }
+
+  @Nullable
+  private static FakeRevision readContentRevision(@NotNull Element changeNode, @NotNull RevisionSide side) {
+    String path = changeNode.getAttributeValue(side.getPathKey());
+    if (StringUtil.isEmpty(path)) return null;
+
+    String value = changeNode.getAttributeValue(side.getIsDirKey());
+    if (value != null) {
+      boolean isDirectory = Boolean.parseBoolean(value);
+      return new FakeRevision(VcsUtil.getFilePath(path, isDirectory));
+    }
+    else {
+      // old-style config. Will get "isDirectory" flag from VFS.
+      return new FakeRevision(VcsUtil.getFilePath(path));
+    }
+  }
+
+  private enum RevisionSide {
+    BEFORE(ATT_CHANGE_BEFORE_PATH, ATT_CHANGE_BEFORE_PATH_IS_DIR),
+    AFTER(ATT_CHANGE_AFTER_PATH, ATT_CHANGE_AFTER_PATH_IS_DIR);
+
+    @NotNull private final String myPathKey;
+    @NotNull private final String myIsDirKey;
+
+    RevisionSide(@NotNull String pathKey, @NotNull String isDirKey) {
+      myPathKey = pathKey;
+      myIsDirKey = isDirKey;
+    }
+
+    @NotNull
+    public String getPathKey() {
+      return myPathKey;
+    }
+
+    @NotNull
+    public String getIsDirKey() {
+      return myIsDirKey;
+    }
   }
 }

@@ -98,7 +98,7 @@ class HTMLTextPainter {
       }
     }
 
-    myMethodSeparators = methodSeparators.toArray(new LineMarkerInfo[methodSeparators.size()]);
+    myMethodSeparators = methodSeparators.toArray(new LineMarkerInfo[0]);
     myCurrentMethodSeparator = 0;
   }
 

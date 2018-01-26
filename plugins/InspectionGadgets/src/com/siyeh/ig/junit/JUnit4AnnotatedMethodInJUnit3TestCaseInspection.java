@@ -58,7 +58,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
     fixes.add(new ConvertToJUnit4Fix(className));
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(new InspectionGadgetsFix[0]);
   }
 
   private static void deleteAnnotation(ProblemDescriptor descriptor, final String qualifiedName) {
@@ -149,7 +149,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
       @NonNls final String name = method.getName();
       if (!method.hasModifierProperty(PsiModifier.STATIC) &&
           PsiType.VOID.equals(method.getReturnType()) &&
-          method.getParameterList().getParametersCount() == 0) {
+          method.getParameterList().isEmpty()) {
         final PsiModifierList modifierList = method.getModifierList();
         if (name.startsWith("test")) {
           addAnnotationIfNotPresent(modifierList, "org.junit.Test");

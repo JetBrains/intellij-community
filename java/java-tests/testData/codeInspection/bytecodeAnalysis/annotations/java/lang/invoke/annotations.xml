@@ -1710,6 +1710,11 @@
     <item name='java.lang.invoke.MethodType java.lang.Class&lt;?&gt;[] listToArray(java.util.List&lt;java.lang.Class&lt;?&gt;&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodType java.lang.Class&lt;?&gt;[] parameterArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodType java.lang.Class&lt;?&gt;[] ptypes()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1806,6 +1811,9 @@
         </annotation>
     </item>
     <item name='java.lang.invoke.MethodType java.util.List&lt;java.lang.Class&lt;?&gt;&gt; parameterList()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodType void MethodType_init(java.lang.Class&lt;?&gt;, java.lang.Class&lt;?&gt;[]) 0'>

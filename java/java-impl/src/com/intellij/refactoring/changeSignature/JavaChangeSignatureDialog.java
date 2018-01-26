@@ -137,7 +137,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                             getVisibility(),
                                             getMethodName(),
                                             getReturnType(),
-                                            parameters.toArray(new ParameterInfoImpl[parameters.size()]),
+                                            parameters.toArray(new ParameterInfoImpl[0]),
                                             getExceptions(),
                                             myMethodsToPropagateParameters,
                                             myMethodsToPropagateExceptions) {
@@ -413,7 +413,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
             if (myAnyVar != null) {
               focusable.add(myAnyVar);
             }
-            return focusable.toArray(new JComponent[focusable.size()]);
+            return focusable.toArray(new JComponent[0]);
           }
         };
       }
@@ -510,7 +510,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                                         getVisibility(),
                                         getMethodName(),
                                         getReturnType(),
-                                        parameters.toArray(new ParameterInfoImpl[parameters.size()]),
+                                        parameters.toArray(new ParameterInfoImpl[0]),
                                         getExceptions(),
                                         myMethodsToPropagateParameters,
                                         myMethodsToPropagateExceptions);

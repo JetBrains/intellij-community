@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       final PsiAssignmentExpression elseAssign = (PsiAssignmentExpression)strippedElseBranch.getExpression();
       CommentTracker commentTracker = new CommentTracker();
       final PsiExpression lhs = thenAssign.getLExpression();
-      final String lhsText = commentTracker.markUnchanged(lhs).getText();
+      final String lhsText = commentTracker.text(lhs);
       final PsiJavaToken sign = thenAssign.getOperationSign();
       final String operator = sign.getText();
       final PsiExpression thenRhs = thenAssign.getRExpression();
@@ -105,7 +105,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       final PsiExpressionStatement elseBranch = (PsiExpressionStatement)ControlFlowUtils.stripBraces(ifStatement.getElseBranch());
       final PsiMethodCallExpression thenMethodCallExpression = (PsiMethodCallExpression)thenBranch.getExpression();
       final PsiMethodCallExpression elseMethodCallExpression = (PsiMethodCallExpression)elseBranch.getExpression();
-      final StringBuilder replacementText = new StringBuilder(commentTracker.markUnchanged(thenMethodCallExpression.getMethodExpression()).getText());
+      final StringBuilder replacementText = new StringBuilder(commentTracker.text(thenMethodCallExpression.getMethodExpression()));
       replacementText.append('(');
       final PsiExpressionList thenArgumentList = thenMethodCallExpression.getArgumentList();
       final PsiExpression[] thenArguments = thenArgumentList.getExpressions();
@@ -118,7 +118,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
         final PsiExpression thenArgument = thenArguments[i];
         final PsiExpression elseArgument = elseArguments[i];
         if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenArgument, elseArgument)) {
-          replacementText.append(commentTracker.markUnchanged(thenArgument).getText());
+          replacementText.append(commentTracker.text(thenArgument));
         }
         else {
           final PsiMethod method = thenMethodCallExpression.resolveMethod();
@@ -202,7 +202,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)thenType;
       conditional.append(primitiveType.getBoxedTypeName());
-      conditional.append(".valueOf(").append(commentTracker.markUnchanged(thenValue).getText()).append("):");
+      conditional.append(".valueOf(").append(commentTracker.text(thenValue)).append("):");
       conditional.append(getExpressionText(commentTracker.markUnchanged(elseValue), false));
     }
     else if (elseType instanceof PsiPrimitiveType &&
@@ -214,7 +214,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       conditional.append(':');
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)elseType;
       conditional.append(primitiveType.getBoxedTypeName());
-      conditional.append(".valueOf(").append(commentTracker.markUnchanged(elseValue).getText()).append(')');
+      conditional.append(".valueOf(").append(commentTracker.text(elseValue)).append(')');
     }
     else {
       conditional.append(getExpressionText(commentTracker.markUnchanged(thenValue), false));

@@ -140,11 +140,4 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   public RefactoringActionHandler getPullUpHandler() {
     return new JavaPullUpHandler();
   }
-
-  @Nullable
-  @Override
-  public RefactoringActionHandler getExtractInterfaceHandler() {
-    //return new ExtractInterfaceHandler();
-    return null;
-  }
 }

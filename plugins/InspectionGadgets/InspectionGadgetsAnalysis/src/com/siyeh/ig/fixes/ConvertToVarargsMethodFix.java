@@ -60,7 +60,7 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
 
   private static void makeMethodVarargs(PsiMethod method) {
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() == 0) {
+    if (parameterList.isEmpty()) {
       return;
     }
     final PsiParameter[] parameters = parameterList.getParameters();

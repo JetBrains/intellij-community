@@ -301,4 +301,7 @@ public abstract class QuickFixFactory {
 
   @NotNull
   public abstract IntentionAction createWrapWithAdapterFix(@Nullable PsiType type, @NotNull PsiExpression expression);
+
+  @Nullable
+  public abstract IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName);
 }

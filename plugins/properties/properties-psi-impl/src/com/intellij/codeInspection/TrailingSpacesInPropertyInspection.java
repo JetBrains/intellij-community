@@ -94,7 +94,7 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
         }
       }
     }
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable

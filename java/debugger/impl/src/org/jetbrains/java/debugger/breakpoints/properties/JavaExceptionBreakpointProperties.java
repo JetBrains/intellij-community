@@ -1,12 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,7 +40,7 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
   }
 
   @Override
-  public void loadState(JavaExceptionBreakpointProperties state) {
+  public void loadState(@NotNull JavaExceptionBreakpointProperties state) {
     super.loadState(state);
 
     NOTIFY_CAUGHT = state.NOTIFY_CAUGHT;

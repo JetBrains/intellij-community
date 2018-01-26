@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.ui.IdeBorderFactory;
@@ -60,7 +59,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.psi.codeStyle.CodeStyleSettings.*;
+import static com.intellij.psi.codeStyle.CodeStyleSettings.MAX_RIGHT_MARGIN;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
@@ -151,11 +150,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
     myMarkersPanel.setBorder(JBUI.Borders.emptyLeft(30));
-  }
-
-  @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
   }
 
 
@@ -343,10 +337,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
     //noinspection NullableProblems
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
-  }
-
-  @Override
-  protected void prepareForReformat(final PsiFile psiFile) {
   }
 
 

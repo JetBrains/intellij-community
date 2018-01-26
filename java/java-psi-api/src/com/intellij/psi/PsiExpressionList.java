@@ -32,4 +32,20 @@ public interface PsiExpressionList extends PsiElement {
   @NotNull PsiExpression[] getExpressions();
 
   @NotNull PsiType[] getExpressionTypes();
+
+  /**
+   * @return number of expressions in the expression list
+   * @since 2018.1
+   */
+  default int getExpressionCount() {
+    return getExpressions().length;
+  }
+
+  /**
+   * @return true if expression list contains no expressions
+   * @since 2018.1
+   */
+  default boolean isEmpty() {
+    return getExpressionCount() == 0;
+  }
 }

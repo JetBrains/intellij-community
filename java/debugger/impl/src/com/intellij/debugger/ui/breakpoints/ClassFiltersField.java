@@ -77,8 +77,8 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
     Arrays.stream(myClassFilters).filter(f -> !f.isEnabled()).forEach(classFilters::add);
     Arrays.stream(myClassExclusionFilters).filter(f -> !f.isEnabled()).forEach(classFilters::add);
 
-    myClassFilters = classFilters.toArray(new ClassFilter[classFilters.size()]);
-    myClassExclusionFilters = exclusionFilters.toArray(new ClassFilter[exclusionFilters.size()]);
+    myClassFilters = classFilters.toArray(ClassFilter.EMPTY_ARRAY);
+    myClassExclusionFilters = exclusionFilters.toArray(ClassFilter.EMPTY_ARRAY);
   }
 
   private void updateEditor() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.Result;
@@ -39,13 +25,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
-import org.jetbrains.idea.maven.dom.model.*;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugin;
+import org.jetbrains.idea.maven.dom.model.MavenDomPlugins;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.util.*;
 
@@ -109,6 +99,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
         if (managedDependency == null || StringUtil.isEmpty(managedDependency.getVersion().getStringValue())) {
           version = selectVersion(mavenId, minVersion, maxVersion);
+          scopeToSet = mavenScope;
         }
       }
 
@@ -189,11 +180,11 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
 
     new WriteCommandAction(myProject, "Add Maven Dependency", DomUtil.getFile(model)) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        MavenDomConfiguration configuration = getCompilerPlugin(model).getConfiguration();
-        XmlTag tag = configuration.ensureTagExists();
-        setChildTagValue(tag, "source", level.getCompilerComplianceDefaultOption());
-        setChildTagValue(tag, "target", level.getCompilerComplianceDefaultOption());
+      protected void run(@NotNull Result result) {
+        XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
+        String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
+        setChildTagValue(tag, "source", option);
+        setChildTagValue(tag, "target", option);
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
         if (document != null) {
           FileDocumentManager.getInstance().saveDocument(document);

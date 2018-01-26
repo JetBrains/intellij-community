@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -595,11 +595,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           ((JComponent)result).setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
           return result;
         }
-
-        @Override
-        public Object getCellEditorValue() {
-          return super.getCellEditorValue();
-        }
       });
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
@@ -632,7 +627,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? UI.getColor("link.foreground") : table.getForeground();
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBColor.link() : table.getForeground();
         final JBFont font = JBUI.Fonts.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);

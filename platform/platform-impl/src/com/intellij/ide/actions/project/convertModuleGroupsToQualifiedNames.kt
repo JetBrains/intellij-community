@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
@@ -12,6 +10,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.lang.StdLanguages
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -29,7 +28,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.panel.JBPanelFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
@@ -98,7 +96,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
 
   override fun createCenterPanel(): JPanel {
     val text = XmlStringUtil.wrapInHtml(ProjectBundle.message("convert.module.groups.description.text"))
-    val recordPreviousNames = JBPanelFactory.panel(recordPreviousNamesCheckBox)
+    val recordPreviousNames = com.intellij.util.ui.UI.PanelFactory.panel(recordPreviousNamesCheckBox)
       .withTooltip(ProjectBundle.message("convert.module.groups.record.previous.names.tooltip",
                                          ApplicationNamesInfo.getInstance().fullProductName)).createPanel()
     return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP)
@@ -177,11 +175,20 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       modules.forEach {
         model.setModuleGroupPath(it, null)
       }
-      runWriteAction {
-        model.commit()
+
+      val application = ApplicationManagerEx.getApplicationEx()
+      val doNotSaveValue = application.isDoNotSave
+      application.doNotSave(true)
+      try {
+        runWriteAction {
+          model.commit()
+        }
+        if (recordPreviousNamesCheckBox.isSelected) {
+          (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
+        }
       }
-      if (recordPreviousNamesCheckBox.isSelected) {
-        (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
+      finally {
+        application.doNotSave(doNotSaveValue)
       }
       project.save()
     }

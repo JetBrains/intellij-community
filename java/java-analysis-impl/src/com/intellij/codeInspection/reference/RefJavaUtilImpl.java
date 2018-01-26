@@ -56,8 +56,11 @@ public class RefJavaUtilImpl extends RefJavaUtil{
           for (PsiReference reference : expression.getReferences()) {
             PsiElement resolve = reference.resolve();
             if (resolve instanceof PsiMember) {
-              final RefElement refClass = refFrom.getRefManager().getReference(resolve);
-              refFrom.addReference(refClass, resolve, psiFrom, false, true, null);
+              final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
+              refFrom.addReference(refResolved, resolve, psiFrom, false, true, null);
+              if (refResolved instanceof RefMethod) {
+                updateRefMethod(resolve, refResolved, expression, psiFrom, refFrom);
+              }
             }
           }
         }
@@ -239,6 +242,14 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       }
       return;
     }
+    if (refExpression instanceof PsiLiteralExpression){ //references in literal expressions
+      PsiType returnType = psiMethod.getReturnType();
+      if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
+        refMethod.setReturnValueUsed(true);
+        addTypeReference(psiFrom, returnType, refFrom.getRefManager());
+      }
+      return;
+    }
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(
       refExpression,
       PsiMethodCallExpression.class
@@ -254,7 +265,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       }
 
       PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList.getExpressions().length > 0) {
+      if (!argumentList.isEmpty()) {
         refMethod.updateParameterValues(argumentList.getExpressions());
       }
 

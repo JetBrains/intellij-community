@@ -38,7 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,7 +140,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
       }
     }
-    UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
+    UsageInfo[] result = usages.toArray(UsageInfo.EMPTY_ARRAY);
     result = UsageViewUtil.removeDuplicatedUsages(result);
     Arrays.sort(result, (o1, o2) -> PsiUtilCore.compareElementsByPosition(o2.getElement(), o1.getElement()));
     return result;
@@ -363,7 +363,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         list.add(info);
       }
     }
-    return list.toArray(new UsageInfo[list.size()]);
+    return list.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -417,6 +417,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private String myCachedCommandName = null;
+  @NotNull
   @Override
   protected String getCommandName() {
     if (myCachedCommandName == null) {

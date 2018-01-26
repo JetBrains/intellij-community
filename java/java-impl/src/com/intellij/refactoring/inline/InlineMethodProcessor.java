@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -44,7 +45,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -119,6 +120,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
@@ -167,7 +169,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -178,6 +180,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return super.isPreviewUsages(usages);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
@@ -286,7 +289,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                    PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
                 targetContainingClasses.add(targetContainingClass);
               }
-              else if (element instanceof PsiReferenceExpression && !ControlFlowUtil.isUnqualified((PsiReferenceExpression)element)) {
+              else if (element instanceof PsiReferenceExpression && !ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)) {
                 qualifiedCall = ((PsiReferenceExpression)element).getQualifierExpression();
               }
             }
@@ -476,7 +479,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }
-          PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[refExprList.size()]);
+          PsiReferenceExpression[] refs = refExprList.toArray(new PsiReferenceExpression[0]);
           refs = addBracesWhenNeeded(refs);
           for (PsiReferenceExpression ref : refs) {
             if (ref instanceof PsiMethodReferenceExpression) {
@@ -1405,8 +1408,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       ref.putCopyableUserData(MARK_KEY, null);
     }
 
-    myAddedBraces = addedBracesVector.toArray(new PsiCodeBlock[addedBracesVector.size()]);
-    return refsVector.toArray(new PsiReferenceExpression[refsVector.size()]);
+    myAddedBraces = addedBracesVector.toArray(PsiCodeBlock.EMPTY_ARRAY);
+    return refsVector.toArray(new PsiReferenceExpression[0]);
   }
 
   private void inlineEnumConstantParameter(final List<PsiReferenceExpression> refsVector,
@@ -1625,6 +1628,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {

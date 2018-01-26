@@ -86,7 +86,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                              PyUtil.isTopLevel(element) ? ReferenceType.GLOBAL_VARIABLE : ReferenceType.INSTANCE_VARIABLE));
           result.addAll(referencesFromFields(expr, offset, sectioned.getReturnFields(), null));
         }
-        return result.toArray(new PsiReference[result.size()]);
+        return result.toArray(PsiReference.EMPTY_ARRAY);
       }
     }
     return PsiReference.EMPTY_ARRAY;

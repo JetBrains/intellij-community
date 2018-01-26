@@ -50,8 +50,6 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import one.util.streamex.StreamEx;
@@ -757,7 +755,7 @@ public class RefactoringUtil {
   private static PsiMethod findDefaultConstructor(final PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() == 0) return constructor;
+      if (constructor.getParameterList().isEmpty()) return constructor;
     }
 
     return null;
@@ -1413,7 +1411,7 @@ public class RefactoringUtil {
       used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }
 
-    PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
+    PsiTypeParameter[] typeParameters = used.toArray(PsiTypeParameter.EMPTY_ARRAY);
 
     Arrays.sort(typeParameters, Comparator.comparingInt(tp -> tp.getTextRange().getStartOffset()));
 

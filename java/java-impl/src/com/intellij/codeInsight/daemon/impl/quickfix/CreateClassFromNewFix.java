@@ -92,7 +92,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     PsiExpressionList argList = newExpression.getArgumentList();
     final Project project = aClass.getProject();
-    if (argList != null && argList.getExpressions().length > 0) {
+    if (argList != null && !argList.isEmpty()) {
       PsiMethod constructor = elementFactory.createConstructor();
       constructor = (PsiMethod)aClass.add(constructor);
 
@@ -147,7 +147,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       boolean hasDefaultConstructor = false;
 
       for (PsiMethod superConstructor : constructors) {
-        if (superConstructor.getParameterList().getParametersCount() == 0) {
+        if (superConstructor.getParameterList().isEmpty()) {
           hasDefaultConstructor = true;
           supConstructor = null;
           break;

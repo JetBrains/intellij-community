@@ -25,6 +25,7 @@ import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -115,7 +116,7 @@ public class CreateFromUsageUtils {
     if (argList == null) return false;
     if (candidate == null) {
       return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
+             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
     }
     else {
       return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
@@ -520,7 +521,7 @@ public class CreateFromUsageUtils {
     if (parent != null) {
       parent.accept(visitor);
     }
-    return result.toArray(new PsiReferenceExpression[result.size()]);
+    return result.toArray(new PsiReferenceExpression[0]);
   }
 
   @NotNull
@@ -578,7 +579,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    return result.toArray(new PsiVariable[result.size()]);
+    return result.toArray(new PsiVariable[0]);
   }
 
   private static void getExpectedInformation(final PsiExpression expression,
@@ -600,7 +601,7 @@ public class CreateFromUsageUtils {
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
           if (expressionList != null) {
-            int argCount = expressionList.getExpressions().length;
+            int argCount = expressionList.getExpressionCount();
             Comparator<ExpectedTypeInfo> mostSuitableMethodComparator =
               Comparator.comparingInt(typeInfo -> typeInfo.getCalledMethod().getParameterList().getParametersCount() == argCount ? 0 : 1);
             comparator = mostSuitableMethodComparator.thenComparing(comparator);
@@ -702,7 +703,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -754,7 +755,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -846,7 +847,7 @@ public class CreateFromUsageUtils {
     }
 
     if (!l.isEmpty()) {
-      types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
+      types.add(l.toArray(ExpectedTypeInfo.EMPTY_ARRAY));
     }
   }
 
@@ -1059,7 +1060,7 @@ public class CreateFromUsageUtils {
         }
       }
 
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Block;
@@ -17,7 +17,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -50,6 +49,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(
     JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD, JavaTokenType.THROWS_KEYWORD, JavaTokenType.WITH_KEYWORD);
+
+  private static final TokenSet ESCAPED_TOKENS = TokenSet.create(
+    JavaTokenType.LT, JavaTokenType.LTLT, JavaTokenType.LTLTEQ,
+    JavaTokenType.GT, JavaTokenType.GTGT, JavaTokenType.GTGTEQ, JavaTokenType.GTGTGTEQ,
+    JavaTokenType.AND, JavaTokenType.ANDAND, JavaTokenType.ANDEQ);
 
   private static final Map<Pair<IElementType, IElementType>, Boolean> ourTokenStickingMatrix = ContainerUtil.newConcurrentMap();
 
@@ -1208,7 +1212,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole2 == ChildRole.RPARENTH) {
       boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
-      if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+      if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
         createSpaceWithLinefeedIfListWrapped(list, space);
         return;
       }
@@ -1216,7 +1220,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.LPARENTH) {
       boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
-      if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressions().length > 1) {
+      if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
         createSpaceWithLinefeedIfListWrapped(list, space);
         return;
       }
@@ -1767,7 +1771,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
     if (result == null) {
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.HIGHEST);
-      String text1 = token1.getText(), text2 = token2.getText();
+      String text1 = unescapeTokenText(token1, type1), text2 = unescapeTokenText(token2, type2);
       lexer.start(text1 + text2);
       IElementType reparsedType1 = lexer.getTokenType();
       String reparsedText1 = lexer.getTokenText();
@@ -1779,6 +1783,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     return result.booleanValue();
+  }
+
+  private static String unescapeTokenText(ASTNode token, IElementType type) {
+    String text = token.getText();
+    if (ESCAPED_TOKENS.contains(type) && StringUtil.startsWithChar(text, '&')) {
+      text = StringUtil.unescapeXml(text);
+    }
+    return text;
   }
 
   private static boolean sameTokens(IElementType type, String text, IElementType reparsedType, String reparsedText) {

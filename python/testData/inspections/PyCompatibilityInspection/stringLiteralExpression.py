@@ -2,10 +2,10 @@ a = <warning descr="Python version 3.0, 3.1, 3.2 do not support a 'U' prefix">u<
 
 # Python 3.6
 
-a = <error descr="Python version 2.7 does not support a 'F' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.7 do not support a 'F' prefix">f</warning></error>""
-a = <error descr="Python version 2.7 does not support a 'F' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.7 do not support a 'F' prefix">F</warning></error>""
-a = <error descr="Python version 2.7 does not support a 'RF' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.7 do not support a 'RF' prefix">rf</warning></error>""
-a = <error descr="Python version 2.7 does not support a 'FR' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.7 do not support a 'FR' prefix">fr</warning></error>""
+a = <error descr="Python version 2.7 does not support a 'F' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5 do not support a 'F' prefix">f</warning></error>""
+a = <error descr="Python version 2.7 does not support a 'F' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5 do not support a 'F' prefix">F</warning></error>""
+a = <error descr="Python version 2.7 does not support a 'RF' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5 do not support a 'RF' prefix">rf</warning></error>""
+a = <error descr="Python version 2.7 does not support a 'FR' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5 do not support a 'FR' prefix">fr</warning></error>""
 a = <error descr="Python version 2.7 does not support a 'FU' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 do not support a 'FU' prefix">fu</warning></error>""
 a = <error descr="Python version 2.7 does not support a 'UF' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 do not support a 'UF' prefix">uf</warning></error>""
 a = <error descr="Python version 2.7 does not support a 'BF' prefix"><warning descr="Python version 2.6, 2.7, 3.0, 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 do not support a 'BF' prefix">bf</warning></error>""

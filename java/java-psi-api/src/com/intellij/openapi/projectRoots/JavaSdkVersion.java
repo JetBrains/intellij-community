@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.pom.java.LanguageLevel;
@@ -17,26 +15,24 @@ import java.util.Arrays;
  * @see LanguageLevel
  */
 public enum JavaSdkVersion {
-  JDK_1_0(LanguageLevel.JDK_1_3, new String[]{"1.0"}),
-  JDK_1_1(LanguageLevel.JDK_1_3, new String[]{"1.1"}),
-  JDK_1_2(LanguageLevel.JDK_1_3, new String[]{"1.2"}),
-  JDK_1_3(LanguageLevel.JDK_1_3, new String[]{"1.3"}),
-  JDK_1_4(LanguageLevel.JDK_1_4, new String[]{"1.4"}),
-  JDK_1_5(LanguageLevel.JDK_1_5, new String[]{"1.5", "5.0"}),
-  JDK_1_6(LanguageLevel.JDK_1_6, new String[]{"1.6", "6.0"}),
-  JDK_1_7(LanguageLevel.JDK_1_7, new String[]{"1.7", "7.0"}),
-  JDK_1_8(LanguageLevel.JDK_1_8, new String[]{"1.8", "8.0"}),
-  JDK_1_9(LanguageLevel.JDK_1_9, new String[]{"1.9", "9.0", "9-ea"}),
-  JDK_10(LanguageLevel.JDK_1_9, new String[]{"10.0", "10-ea"});
+  JDK_1_0(LanguageLevel.JDK_1_3),
+  JDK_1_1(LanguageLevel.JDK_1_3),
+  JDK_1_2(LanguageLevel.JDK_1_3),
+  JDK_1_3(LanguageLevel.JDK_1_3),
+  JDK_1_4(LanguageLevel.JDK_1_4),
+  JDK_1_5(LanguageLevel.JDK_1_5),
+  JDK_1_6(LanguageLevel.JDK_1_6),
+  JDK_1_7(LanguageLevel.JDK_1_7),
+  JDK_1_8(LanguageLevel.JDK_1_8),
+  JDK_1_9(LanguageLevel.JDK_1_9),
+  JDK_10(LanguageLevel.JDK_10);
 
-  private static final JavaSdkVersion MAX_JDK = JDK_1_9;
+  private static final JavaSdkVersion MAX_JDK = JDK_10;
 
   private final LanguageLevel myMaxLanguageLevel;
-  private final String[] myVersionStrings;
 
-  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel, @NotNull String[] description) {
+  JavaSdkVersion(@NotNull LanguageLevel maxLanguageLevel) {
     myMaxLanguageLevel = maxLanguageLevel;
-    myVersionStrings = description;
   }
 
   @NotNull
@@ -46,16 +42,12 @@ public enum JavaSdkVersion {
 
   @NotNull
   public String getDescription() {
-    return myVersionStrings[0];
+    int feature = ordinal();
+    return feature < 5 ? "1." + feature : String.valueOf(feature);
   }
 
   public boolean isAtLeast(@NotNull JavaSdkVersion version) {
     return compareTo(version) >= 0;
-  }
-
-  @Override
-  public String toString() {
-    return super.toString() + ", description: " + getDescription();
   }
 
   @NotNull

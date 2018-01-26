@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContributor;
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -37,7 +39,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +112,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (c == ';') {
-      if (handleSemicolon(editor, fileType)) return Result.STOP;
+      if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
     if (fileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
@@ -245,10 +249,12 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return false;
   }
 
-  private static boolean handleSemicolon(Editor editor, FileType fileType) {
+  private static boolean handleSemicolon(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (fileType != StdFileTypes.JAVA) return false;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) return false;
+
+    if (moveSemicolonAtRParen(project, editor, file, offset)) return true;
 
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
@@ -258,6 +264,72 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     EditorModificationUtil.moveCaretRelatively(editor, 1);
     return true;
+  }
+
+  private static boolean moveSemicolonAtRParen(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, int caretOffset) {
+    if (!Registry.is("editor.move.semicolon.after.paren")) {
+      return false;
+    }
+
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    // Note, this feature may be rewritten using only lexer if needed.
+    // In that case accuracy will not be 100%, but good enough.
+
+    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
+    int afterLastParenOffset = -1;
+
+    while (!it.atEnd()) {
+      if (isAtLineEnd(it)) {
+        break;
+      }
+      else if (it.getTokenType() == JavaTokenType.RBRACE) {
+        break;
+      }
+      else if (it.getTokenType() == JavaTokenType.RPARENTH) {
+        afterLastParenOffset = it.getEnd();
+      }
+      else if (it.getTokenType() != TokenType.WHITE_SPACE) {
+        // Other tokens are not permitted
+        return false;
+      }
+      it.advance();
+    }
+
+    if (!it.atEnd() && afterLastParenOffset >= 0 && afterLastParenOffset >= caretOffset) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      PsiElement curElement = file.findElementAt(caretOffset);
+      PsiStatement curStmt = PsiTreeUtil.getParentOfType(curElement, PsiStatement.class);
+      if (curStmt != null) {
+        if (curStmt instanceof PsiTryStatement) {
+          // try-with-resources can contain semicolons inside
+          return false;
+        }
+        if (curStmt instanceof PsiForStatement) {
+          // for loop can have semicolons inside
+          return false;
+        }
+        // It may worth to check if the error element is about expecting semicolon
+        if (PsiTreeUtil.getDeepestLast(curStmt) instanceof PsiErrorElement) {
+          int stmtEndOffset = curStmt.getTextRange().getEndOffset();
+          if (stmtEndOffset == afterLastParenOffset || stmtEndOffset == it.getStart()) {
+            editor.getDocument().insertString(stmtEndOffset, ";");
+            editor.getCaretModel().moveToOffset(stmtEndOffset + 1);
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static boolean isAtLineEnd(HighlighterIterator it) {
+    if (it.getTokenType() == TokenType.WHITE_SPACE) {
+      CharSequence tokenText = it.getDocument().getImmutableCharSequence().subSequence(it.getStart(), it.getEnd());
+      return CharArrayUtil.containLineBreaks(tokenText);
+    }
+    return false;
   }
 
   private static void autoPopupJavadocLookup(final Project project, final Editor editor) {
@@ -275,7 +347,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     PsiElement currElement = file.findElementAt(offset - 1);
     if (currElement != null) {
       PsiElement parent = currElement.getParent();
-      if (parent != null && parent instanceof PsiSwitchLabelStatement) {
+      if (parent instanceof PsiSwitchLabelStatement) {
         CodeStyleManager.getInstance(project).adjustLineIndent(file, parent.getTextOffset());
         return true;
       }

@@ -449,7 +449,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
       return true;
     });
-    return list.toArray(new PsiElement[list.size()]);
+    return list.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   private boolean invokeImpl(final Project project, final GrIntroduceContext context, final Editor editor) {

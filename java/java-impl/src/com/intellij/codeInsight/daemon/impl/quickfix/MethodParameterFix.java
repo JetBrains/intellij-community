@@ -142,6 +142,6 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     if (parameters.length == myIndex) {
       result.add(new ParameterInfoImpl(-1, newParameter.getName(), newParameter.getType()));
     }
-    return result.toArray(new ParameterInfoImpl[result.size()]);
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 }

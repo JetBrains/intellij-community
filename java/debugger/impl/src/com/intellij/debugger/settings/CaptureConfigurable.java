@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.settings;
 
@@ -10,6 +10,7 @@ import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -54,6 +55,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * @author egor
@@ -247,14 +249,10 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
     myDebuggerAgent = new JCheckBox(DebuggerBundle.message("label.capture.configurable.debugger.agent"));
-    if (Registry.is("debugger.capture.points.agent")) {
-      panel.addToTop(myDebuggerAgent);
-    }
+    panel.addToTop(myDebuggerAgent);
 
     BorderLayoutPanel debuggerPanel = JBUI.Panels.simplePanel();
-    if (Registry.is("debugger.capture.points.agent")) {
-      debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
-    }
+    debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
     debuggerPanel.addToCenter(decorator.createPanel());
 
     myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
@@ -289,44 +287,25 @@ public class CaptureConfigurable implements SearchableConfigurable {
     private void scanPoints() {
       if (Registry.is("debugger.capture.points.annotations")) {
         List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        scanPointsInt(true, capturePointsFromAnnotations);
-        scanPointsInt(false, capturePointsFromAnnotations);
+        processCaptureAnnotations((capture, e) -> {
+          if (e instanceof PsiMethod) {
+            addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
+          }
+          else if (e instanceof PsiParameter) {
+            PsiParameter psiParameter = (PsiParameter)e;
+            PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
+            addCapturePointIfNeeded(psiParameter, psiMethod,
+                                    DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
+                                    capture, capturePointsFromAnnotations);
+          }
+        });
 
         capturePointsFromAnnotations.forEach(this::addIfNeeded);
       }
     }
 
-    private static void scanPointsInt(boolean capture, List<CapturePoint> capturePointsFromAnnotations) {
-      try {
-        String annotationName = (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
-        Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
-        GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
-        PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
-        if (annotationClass != null) {
-          AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class).forEach(e -> {
-            if (e instanceof PsiMethod) {
-              addCapturePointIfNeeded(e, (PsiMethod)e, annotationName, "this", capture, capturePointsFromAnnotations);
-            }
-            else if (e instanceof PsiParameter) {
-              PsiParameter psiParameter = (PsiParameter)e;
-              PsiMethod psiMethod = (PsiMethod)psiParameter.getDeclarationScope();
-              addCapturePointIfNeeded(psiParameter, psiMethod, annotationName,
-                                      DecompiledLocalVariable.PARAM_PREFIX + psiMethod.getParameterList().getParameterIndex(psiParameter),
-                                      capture, capturePointsFromAnnotations);
-            }
-          });
-        }
-      }
-      catch (IndexNotReadyException ignore) {
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-
     private static void addCapturePointIfNeeded(PsiModifierListOwner psiElement,
                                                 PsiMethod psiMethod,
-                                                String annotationName,
                                                 String defaultExpression,
                                                 boolean capture,
                                                 List<CapturePoint> capturePointsFromAnnotations) {
@@ -343,7 +322,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
       PsiModifierList modifierList = psiElement.getModifierList();
       if (modifierList != null) {
-        PsiAnnotation annotation = modifierList.findAnnotation(annotationName);
+        PsiAnnotation annotation = modifierList.findAnnotation(getAnnotationName(capture));
         if (annotation != null) {
           PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
           String keyExpression = keyExpressionValue != null ? StringUtil.unquoteString(keyExpressionValue.getText()) : null;
@@ -524,5 +503,35 @@ public class CaptureConfigurable implements SearchableConfigurable {
   @Override
   public String getDisplayName() {
     return DebuggerBundle.message("async.stacktraces.configurable.display.name");
+  }
+
+  static void processCaptureAnnotations(BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    scanPointsInt(true, consumer);
+    scanPointsInt(false, consumer);
+  }
+
+  private static void scanPointsInt(boolean capture, BiConsumer<Boolean, PsiModifierListOwner> consumer) {
+    try {
+      String annotationName = getAnnotationName(capture);
+      Project project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
+      GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+      PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationName, allScope);
+      if (annotationClass != null) {
+        AnnotatedElementsSearch.searchElements(annotationClass, allScope, PsiMethod.class, PsiParameter.class)
+          .forEach(e -> {
+            consumer.accept(capture, e);
+          });
+      }
+    }
+    catch (IndexNotReadyException ignore) {
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  static String getAnnotationName(boolean capture) {
+    return (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
   }
 }

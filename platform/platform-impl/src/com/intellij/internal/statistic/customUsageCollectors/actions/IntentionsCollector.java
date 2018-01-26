@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.customUsageCollectors.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,7 +25,10 @@ import java.util.*;
  */
 @State(
   name = "IntentionsCollector",
-  storages = @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
   private State myState = new State();
@@ -36,7 +40,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 

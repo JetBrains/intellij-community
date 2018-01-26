@@ -574,7 +574,7 @@ public class CompleteReferenceExpression {
 
         list.add(result);
       }
-      return list.toArray(new GroovyResolveResult[list.size()]);
+      return list.toArray(GroovyResolveResult.EMPTY_ARRAY);
     }
 
     @NotNull

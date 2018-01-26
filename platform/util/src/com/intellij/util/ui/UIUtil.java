@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -195,8 +195,9 @@ public class UIUtil {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
+  /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
   public static boolean isAppleRetina() {
-    return isRetina() && SystemInfo.isAppleJvm;
+    return false;
   }
 
   public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
@@ -334,7 +335,7 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData;
 
-  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
+  public static float DEF_SYSTEM_FONT_SIZE = 12f;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -412,7 +413,7 @@ public class UIUtil {
       }
     }
     if (SystemInfo.isMac) {
-      jreHiDPI = !SystemInfo.isAppleJvm;
+      jreHiDPI = true;
     }
     return jreHiDPI;
   }
@@ -441,12 +442,9 @@ public class UIUtil {
      * value that has been got on AppKit previously.
      */
     static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
-
-      if (SystemInfo.isAppleJvm) return false;
-
       Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
 
-      if (isRetina != null){
+      if (isRetina != null) {
         return isRetina;
       }
 
@@ -481,28 +479,8 @@ public class UIUtil {
       return isRetina;
     }
 
-    /*
-      Could be quite easily implemented with [NSScreen backingScaleFactor]
-      and JNA
-     */
-    //private static boolean isAppleRetina (Graphics2D g2d) {
-    //  return false;
-    //}
-
-    /**
-     * For JDK6 we have a dedicated property which does not allow to understand anything
-     * per device but could be useful for image creation. We will get true in case
-     * if at least one retina device is present.
-     */
-    private static boolean hasAppleRetinaDevice() {
-      return (Float)Toolkit.getDefaultToolkit()
-        .getDesktopProperty(
-          "apple.awt.contentScaleFactor") != 1.0f;
-    }
-
     /**
      * This method perfectly detects retina Graphics2D for jdk7+
-     * For Apple JDK6 it returns false.
      * @param g graphics to be tested
      * @return false if the device of the Graphics2D is not a retina device,
      * jdk is an Apple JDK or Oracle API has been changed.
@@ -520,10 +498,6 @@ public class UIUtil {
      * @return true if at least one device is a retina device
      */
     private static boolean isRetina() {
-      if (SystemInfo.isAppleJvm) {
-        return hasAppleRetinaDevice();
-      }
-
       // Oracle JDK
 
       if (SystemInfo.isMac) {
@@ -544,11 +518,8 @@ public class UIUtil {
     }
   }
 
-  public static boolean isRetina (Graphics2D graphics) {
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-      return DetectRetinaKit.isMacRetina(graphics);
-    }
-    return isRetina();
+  public static boolean isRetina(Graphics2D graphics) {
+    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -565,32 +536,23 @@ public class UIUtil {
 
     if (Registry.is("new.retina.detection")) {
       return DetectRetinaKit.isRetina();
-    } else {
+    }
+    else {
       synchronized (ourRetina) {
         if (ourRetina.isNull()) {
           ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-          if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
-            if (!"false".equals(System.getProperty("ide.mac.retina"))) {
-              ourRetina.set(IsRetina.isRetina());
-              return ourRetina.get();
+          try {
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            final GraphicsDevice device = env.getDefaultScreenDevice();
+            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+            if (scale != null && scale.intValue() == 2) {
+              ourRetina.set(true);
+              return true;
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
-            try {
-              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-              final GraphicsDevice device = env.getDefaultScreenDevice();
-              Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-              if (scale != null && scale.intValue() == 2) {
-                ourRetina.set(true);
-                return true;
-              }
-            }
-            catch (AWTError ignore) {
-            }
-            catch (Exception ignore) {
-            }
-          }
+          catch (AWTError ignore) { }
+          catch (Exception ignore) { }
           ourRetina.set(false);
         }
 
@@ -712,7 +674,7 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
-    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4 
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
     if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
     if (SystemInfo.isMac) {
@@ -2975,17 +2937,20 @@ public class UIUtil {
     if (Registry.is("ide.ui.scale.override")) {
       forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
     }
-    else if (SystemInfo.isLinux && !SystemInfo.isJetBrainsJvm) {
-      // With Oracle JDK: derive scale from X server DPI
-      float scale = getScreenScale();
-      if (scale > 1f) {
-        forcedScale = Float.valueOf(scale);
+    else if (SystemInfo.isLinux) {
+      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      if (value instanceof Integer) {
+        // If the property is defined, then:
+        // 1) it provides correct system scale
+        // 2) the label font size is scaled
+        int dpi = ((Integer)value).intValue() / 1024;
+        if (dpi < 50) dpi = 50;
+        float scale = JBUI.discreteScale(dpi / 96f);
+        DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
       }
-      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
-      // If it is (likely with GTK DE), then the UI scale will be derived from it,
-      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
-      // not to bother about X server DPI settings. Users of other DEs (like KDE)
-      // will have to set X server DPI to meet their display.
+      else {
+        forcedScale = Float.valueOf(getScreenScale());
+      }
     }
     else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
@@ -3014,14 +2979,7 @@ public class UIUtil {
     }
     catch (HeadlessException ignored) {
     }
-    float scale = 1f;
-    if (dpi < 120) scale = 1f;
-    else if (dpi < 144) scale = 1.25f;
-    else if (dpi < 168) scale = 1.5f;
-    else if (dpi < 192) scale = 1.75f;
-    else scale = 2f;
-
-    return scale;
+    return JBUI.discreteScale(dpi / 96f);
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
@@ -3807,12 +3765,10 @@ public class UIUtil {
     }
   }
 
-  public static void setAutoRequestFocus (final Window onWindow, final boolean set){
-    if (SystemInfo.isMac) return;
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+  public static void setAutoRequestFocus(final Window onWindow, final boolean set) {
+    if (!SystemInfo.isMac) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
-        setAutoRequestFocusMethod.invoke(onWindow, set);
+        onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }
       catch (InvocationTargetException e) { LOG.debug(e); }
@@ -4214,5 +4170,37 @@ public class UIUtil {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
     if(component.isCursorSet() && component.getCursor() == cursor) return;
     component.setCursor(cursor);
+  }
+
+  public static boolean haveCommonOwner(Component c1, Component c2) {
+    if (c1 == null || c2 == null) return false;
+    Window c1Ancestor = findWindowAncestor(c1);
+    Window c2Ancestor = findWindowAncestor(c2);
+
+    Set <Window> ownerSet = new HashSet<Window>();
+
+    Window owner = c1Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      ownerSet.add(owner);
+      owner = owner.getOwner();
+    }
+
+    owner = c2Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      if (ownerSet.contains(owner)) return true;
+      owner = owner.getOwner();
+    }
+
+    return false;
+  }
+
+  private static Window findWindowAncestor(@NotNull Component c) {
+    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
+  }
+
+  public static boolean isHelpButton(JComponent button) {
+    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
   }
 }

@@ -44,6 +44,7 @@ import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Effects.VOLATILE_EFFECTS;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
@@ -54,7 +55,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  *
  * @author lambdamix
  */
-public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMethod, Equations>> {
+public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
 
   public static final Final FINAL_TOP = new Final(Value.Top);
   public static final Final FINAL_FAIL = new Final(Value.Fail);
@@ -62,21 +63,22 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
   public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
   public static final Final FINAL_NULL = new Final(Value.Null);
 
-  public static final Consumer<Map<HMethod, Equations>> ourIndexSizeStatistics =
+  public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
     ApplicationManager.getApplication().isUnitTestMode() ? new ClassDataIndexerStatistics() : map -> {};
 
   @Nullable
   @Override
-  public Map<HMethod, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
-    HashMap<HMethod, Equations> map = new HashMap<>();
+  public Map<HMember, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
+    HashMap<HMember, Equations> map = new HashMap<>();
     if (isFileExcluded(file)) {
       return map;
     }
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      Map<EKey, Equations> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
-      allEquations = solvePartially(allEquations);
-      allEquations.forEach((methodKey, equations) -> map.put(methodKey.method.hashed(md), hash(equations, md)));
+      ClassReader reader = new ClassReader(file.contentsToByteArray(false));
+      Map<EKey, Equations> allEquations = processClass(reader, file.getPresentableUrl());
+      allEquations = solvePartially(reader.getClassName(), allEquations);
+      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.member.hashed(md), hash(equations, md), BytecodeAnalysisIndex.MERGER));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -111,13 +113,15 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     return index > 0 && path.lastIndexOf("platforms/android-", index) > 0;
   }
 
-  private static Map<EKey, Equations> solvePartially(Map<EKey, Equations> map) {
+  private static Map<EKey, Equations> solvePartially(String className, Map<EKey, Equations> map) {
     PuritySolver solver = new PuritySolver();
-    BiFunction<EKey, Equations, EKey> keyCreator = (key, eqs) -> new EKey(key.method, Pure, eqs.stable, false);
+    BiFunction<EKey, Equations, EKey> keyCreator =
+      (key, eqs) -> new EKey(key.member, eqs.find(Volatile).isPresent() ? Volatile : Pure, eqs.stable, false);
     EntryStream.of(map).mapToKey(keyCreator)
       .flatMapValues(eqs -> eqs.results.stream().map(drp -> drp.result))
       .selectValues(Effects.class)
       .forKeyValue(solver::addEquation);
+    solver.addPlainFieldEquations(md -> md instanceof Member && ((Member)md).internalClassName.equals(className));
     Map<EKey, Effects> solved = solver.solve();
     Map<EKey, Effects> partiallySolvedPurity =
       StreamEx.of(solved, solver.pending).flatMapToEntry(Function.identity()).removeValues(Effects::isTop).toMap();
@@ -175,9 +179,20 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
     final Map<EKey, Equations> equations = new HashMap<>();
 
+    registerVolatileFields(equations, classReader);
+
+    if ((classReader.getAccess() & Opcodes.ACC_ENUM) != 0) {
+      // ordinal() method is final in java.lang.Enum, but for some reason referred on call sites using specific enum class
+      // it's used on every enum switch statement, so forcing its purity is important
+      EKey ordinalKey = new EKey(new Member(classReader.getClassName(), "ordinal", "()I"), Out, true);
+      equations.put(ordinalKey, new Equations(
+        Collections.singletonList(new DirectionResultPair(Pure.asInt(), new Effects(DataValue.LocalDataValue, Collections.emptySet()))),
+        true));
+    }
+
     classReader.accept(new KeyedMethodVisitor() {
 
-      protected MethodVisitor visitMethod(final MethodNode node, Method method, final EKey key) {
+      protected MethodVisitor visitMethod(final MethodNode node, Member method, final EKey key) {
         return new MethodVisitor(Opcodes.API_VERSION, node) {
           private boolean jsr;
 
@@ -205,7 +220,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
        * @param method a method descriptor
        * @param stable whether a method is stable (final or declared in a final class)
        */
-      private List<Equation> processMethod(final MethodNode methodNode, boolean jsr, Method method, boolean stable) {
+      private List<Equation> processMethod(final MethodNode methodNode, boolean jsr, Member method, boolean stable) {
         ProgressManager.checkCanceled();
         final Type[] argumentTypes = Type.getArgumentTypes(methodNode.desc);
         final Type resultType = Type.getReturnType(methodNode.desc);
@@ -264,7 +279,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         }
       }
 
-      private NegationAnalysis tryNegation(final Method method,
+      private NegationAnalysis tryNegation(final Member method,
                                            final Type[] argumentTypes,
                                            final ControlFlowGraph graph,
                                            final boolean isBooleanResult,
@@ -345,7 +360,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
               analyzer.analyze();
               return analyzer;
             }
-            catch (NegationAnalysisFailure ignore) {
+            catch (NegationAnalysisFailedException ignore) {
               return null;
             }
           }
@@ -354,7 +369,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         return null;
       }
 
-      private void processBranchingMethod(final Method method,
+      private void processBranchingMethod(final Member method,
                                           final MethodNode methodNode,
                                           final RichControlFlow richControlFlow,
                                           Type[] argumentTypes,
@@ -480,7 +495,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         }
       }
 
-      private void processNonBranchingMethod(Method method,
+      private void processNonBranchingMethod(Member method,
                                              Type[] argumentTypes,
                                              ControlFlowGraph graph,
                                              Type returnType,
@@ -505,7 +520,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         });
       }
 
-      private List<Equation> topEquations(Method method,
+      private List<Equation> topEquations(Member method,
                                           Type[] argumentTypes,
                                           boolean isReferenceResult,
                                           boolean isInterestingResult,
@@ -530,7 +545,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
       }
 
       @NotNull
-      private LeakingParameters leakingParametersAndFrames(Method method, MethodNode methodNode, Type[] argumentTypes, boolean jsr)
+      private LeakingParameters leakingParametersAndFrames(Member method, MethodNode methodNode, Type[] argumentTypes, boolean jsr)
         throws AnalyzerException {
         return argumentTypes.length < 32 ?
                 LeakingParameters.buildFast(method.internalClassName, methodNode, jsr) :
@@ -541,12 +556,25 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     return equations;
   }
 
-  private static class ClassDataIndexerStatistics implements Consumer<Map<HMethod, Equations>> {
+  private static void registerVolatileFields(Map<EKey, Equations> equations, ClassReader classReader) {
+    classReader.accept(new ClassVisitor(Opcodes.API_VERSION) {
+      @Override
+      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        if ((access & Opcodes.ACC_VOLATILE) != 0) {
+          EKey fieldKey = new EKey(new Member(classReader.getClassName(), name, desc), Out, true);
+          equations.put(fieldKey, new Equations(Collections.singletonList(new DirectionResultPair(Volatile.asInt(), VOLATILE_EFFECTS)), true));
+        }
+        return null;
+      }
+    }, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG | ClassReader.SKIP_CODE);
+  }
+
+  private static class ClassDataIndexerStatistics implements Consumer<Map<HMember, Equations>> {
     private static final AtomicLong ourTotalSize = new AtomicLong(0);
     private static final AtomicLong ourTotalCount = new AtomicLong(0);
 
     @Override
-    public void consume(Map<HMethod, Equations> map) {
+    public void consume(Map<HMember, Equations> map) {
       try {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);

@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.tree.java.MethodReferenceResolver;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class FunctionalExpressionCompletionProvider extends CompletionProvider<CompletionParameters> {
+  static final Key<Boolean> LAMBDA_ITEM = Key.create("LAMBDA_ITEM");
+  static final Key<Boolean> METHOD_REF_ITEM = Key.create("METHOD_REF_ITEM");
 
   private static final InsertHandler<LookupElement> CONSTRUCTOR_REF_INSERT_HANDLER = (context, item) -> {
     int start = context.getStartOffset();
@@ -53,14 +56,16 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
       JavaCompletionUtil.insertClassReference(psiClass, context.getFile(), start, start + insertedName.length());
     }
   };
-  static final Key<Boolean> FUNCTIONAL_EXPR_ITEM = Key.create("FUNCTIONAL_EXPR_ITEM");
 
   private static boolean isLambdaContext(@NotNull PsiElement element) {
     final PsiElement rulezzRef = element.getParent();
-    return rulezzRef != null &&
-           rulezzRef instanceof PsiReferenceExpression &&
+    return rulezzRef instanceof PsiReferenceExpression &&
            ((PsiReferenceExpression)rulezzRef).getQualifier() == null &&
            LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
+  }
+
+  static boolean isFunExprItem(LookupElement item) {
+    return item.getUserData(LAMBDA_ITEM) != null || item.getUserData(METHOD_REF_ITEM) != null;
   }
 
   @Override
@@ -106,14 +111,14 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
                 .withPresentableText(paramsString + " -> {}")
                 .withTypeText(functionalInterfaceType.getPresentableText())
                 .withIcon(AllIcons.Nodes.Function);
-            builder.putUserData(FUNCTIONAL_EXPR_ITEM, true);
+            builder.putUserData(LAMBDA_ITEM, true);
             result.consume(builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE));
           }
 
           addMethodReferenceVariants(
             smart, addInheritors, parameters, matcher, functionalInterfaceType, functionalInterfaceMethod, params, originalPosition, substitutor,
             element -> {
-              element.putUserData(FUNCTIONAL_EXPR_ITEM, true);
+              element.putUserData(METHOD_REF_ITEM, true);
               result.consume(smart ? JavaSmartCompletionContributor.decorate(element, Arrays.asList(expectedTypes)) : element);
             });
         }
@@ -176,12 +181,15 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
   private static LookupElement createConstructorReferenceLookup(@NotNull PsiType functionalInterfaceType, 
                                                                 @NotNull PsiType constructedType) {
     constructedType = TypeConversionUtil.erasure(constructedType);
+    PsiClass psiClass = PsiUtil.resolveClassInType(constructedType);
     return LookupElementBuilder
-                      .create(constructedType, constructedType.getPresentableText() + "::new")
-                      .withTypeText(functionalInterfaceType.getPresentableText())
-                      .withIcon(AllIcons.Nodes.MethodReference)
-                      .withInsertHandler(CONSTRUCTOR_REF_INSERT_HANDLER)
-                      .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+      .create(constructedType, constructedType.getPresentableText() + "::new")
+      .withTypeText(functionalInterfaceType.getPresentableText())
+      .withTailText(psiClass != null ? " (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")" : null, true)
+      .withPsiElement(psiClass)
+      .withIcon(AllIcons.Nodes.MethodReference)
+      .withInsertHandler(CONSTRUCTOR_REF_INSERT_HANDLER)
+      .withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
   }
 
   @NotNull

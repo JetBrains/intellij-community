@@ -17,10 +17,15 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -28,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * @author max
@@ -403,10 +409,10 @@ public class PyStubsTest extends PyTestCase {
     final PyClass c = file.findTopLevelClass("C");
     assertNotNull(c);
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
-    assertNotNull(c.getMetaClassType(context));
+    assertNotNull(c.getMetaClassType(false, context));
     final PyClass d = file.findTopLevelClass("D");
     assertNotNull(d);
-    assertNotNull(d.getMetaClassType(context));
+    assertNotNull(d.getMetaClassType(false, context));
     assertNotParsed(file);
   }
 
@@ -464,12 +470,12 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTupleArguments();
   }
 
-  public void _testImportedNamedTupleName() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedNamedTupleName() {
+    doTestUnsupportedNamedTuple(getTestFile());
   }
 
-  public void _testImportedNamedTupleFields() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedNamedTupleFields() {
+    doTestUnsupportedNamedTuple(getTestFile());
   }
 
   public void testFullyQualifiedTypingNamedTuple() {
@@ -512,12 +518,12 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingNamedTupleArguments();
   }
 
-  public void _testImportedTypingNamedTupleName() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleName() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
-  public void _testImportedTypingNamedTupleFields() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleFields() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
   public void testFullyQualifiedTypingNamedTupleKwargs() {
@@ -552,12 +558,12 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingNamedTupleArguments();
   }
 
-  public void _testImportedTypingNamedTupleKwargsName() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleKwargsName() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
-  public void _testImportedTypingNamedTupleKwargsFields() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleKwargsFields() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
   private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
@@ -600,7 +606,32 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst);
   }
 
-  private void doTestUnsupportedNamedTuple() {
+  private void doTestUnsupportedNamedTuple(@NotNull PsiElement anchor) {
+    doTestUnsupportedNT(
+      (typeFromAst, context) -> {
+        assertInstanceOf(typeFromAst, PyCallableType.class);
+
+        final PyType returnType = ((PyCallableType)typeFromAst).getReturnType(context);
+        assertEquals(PyBuiltinCache.getInstance(anchor).getTupleType(), returnType);
+      }
+    );
+  }
+
+  private void doTestUnsupportedTypingNamedTuple(@NotNull PsiElement anchor) {
+    final QualifiedName typingNTName = QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE);
+
+    final PsiElement member = PyResolveImportUtil.resolveTopLevelMember(typingNTName, PyResolveImportUtil.fromFoothold(anchor));
+    assertInstanceOf(member, PyClass.class);
+
+    doTestUnsupportedNT(
+      (typeFromAst, context) -> {
+        assertInstanceOf(typeFromAst, PyClassType.class);
+        assertEquals(member, ((PyClassType)typeFromAst).getPyClass());
+      }
+    );
+  }
+
+  private void doTestUnsupportedNT(@NotNull BiConsumer<PyType, TypeEvalContext> typeFromAstChecker) {
     final PyFile file = getTestFile();
 
     final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
@@ -613,8 +644,8 @@ public class PyStubsTest extends PyTestCase {
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
-    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
-    assertNull(typeFromAst);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), file);
+    typeFromAstChecker.accept(context.getType(attribute), context);
   }
 
   private static void doTestNamedTuple(@NotNull String expectedName,
@@ -843,6 +874,17 @@ public class PyStubsTest extends PyTestCase {
     assertNotParsed(file);
   }
 
+  // PY-25655
+  public void testBaseClassText() {
+    final PyFile file = getTestFile();
+    final PyClass pyClass = file.findTopLevelClass("Class");
+    final PyClassStub stub = pyClass.getStub();
+    assertNotNull(stub);
+    final List<String> genericBases = stub.getSuperClassesText();
+    assertContainsOrdered(genericBases, "Generic[T, V]", "BaseClass1", "SomeModule.SomeClass");
+    assertNotParsed(file);
+  }
+
   // PY-18816
   public void testComplexGenericType() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
@@ -865,5 +907,69 @@ public class PyStubsTest extends PyTestCase {
       final PyFunctionStub funcStub = func.getStub();
       assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
     });
+  }
+
+  // PY-26163
+  public void testClassAttributeTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyClass pyClass = file.findTopLevelClass("MyClass");
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
+
+      assertNotNull(pyClass.findClassAttribute("foo", false, context));
+      assertNotParsed(file);
+
+      //noinspection ResultOfMethodCallIgnored
+      pyClass.getText();
+      assertNotNull(pyClass.findClassAttribute("foo", false, context));
+    });
+  }
+
+  // PY-27398
+  public void testDataclassField() {
+    class FieldChecker {
+
+      @NotNull
+      private final PyClass myClass;
+
+      private FieldChecker(@NotNull PyClass cls) {
+        myClass = cls;
+      }
+
+      private void check(@NotNull String name, boolean hasDefault, boolean hasDefaultFactory, boolean initValue) {
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+        final PyTargetExpression field = myClass.findClassAttribute(name, false, context);
+
+        final PyDataclassFieldStub fieldStub = field.getStub().getCustomStub(PyDataclassFieldStub.class);
+        assertNotNull(fieldStub);
+
+        assertEquals(hasDefault, fieldStub.hasDefault());
+        assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
+        assertEquals(initValue, fieldStub.initValue());
+      }
+    }
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final PyFile file1 = getTestFile("dataclassField/a.py");
+        final PyFile file2 = getTestFile("dataclassField/dataclasses.py");
+        final PyFile file3 = getTestFile("dataclassField/b.py");
+
+        final FieldChecker checker = new FieldChecker(file1.findTopLevelClass("A"));
+        checker.check("a", true, false, true);
+        checker.check("b", false, true, true);
+        checker.check("c", false, false, false);
+        checker.check("d", false, false, true);
+        checker.check("e", false, false, false);
+        checker.check("f", false, false, false);
+        checker.check("g", false, false, true); // fallback `init` value
+        checker.check("h", false, false, true);
+
+        assertNotParsed(file1);
+        assertNotParsed(file2);
+        assertNotParsed(file3);
+      }
+    );
   }
 }

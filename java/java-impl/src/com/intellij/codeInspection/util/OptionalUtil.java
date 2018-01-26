@@ -237,7 +237,7 @@ public class OptionalUtil {
         TypeConversionUtil.isAssignable(type, exprType)) {
       if (falseExpression == null) return "";
       PsiType falseType = falseExpression.getType();
-      if (falseType != null && falseType.isAssignableFrom(exprType)) return "";
+      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiType.NULL))) return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }

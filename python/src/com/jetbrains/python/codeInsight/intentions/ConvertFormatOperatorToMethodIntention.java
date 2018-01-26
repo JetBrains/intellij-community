@@ -354,7 +354,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     PsiElement seeker = start;
     while (seeker != null) {
       seeker = seeker.getNextSibling();
-      if (seeker != null && seeker instanceof PsiWhiteSpace) sb.append(seeker.getText());
+      if (seeker instanceof PsiWhiteSpace) sb.append(seeker.getText());
       else break;
     }
     return Pair.create(sb.toString(), seeker);

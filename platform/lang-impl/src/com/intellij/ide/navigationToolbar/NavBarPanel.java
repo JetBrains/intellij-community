@@ -225,7 +225,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   public void clearItems() {
-    final NavBarItem[] toDispose = myList.toArray(new NavBarItem[myList.size()]);
+    final NavBarItem[] toDispose = myList.toArray(new NavBarItem[0]);
     myList.clear();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       for (NavBarItem item : toDispose) {
@@ -593,10 +593,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
       myNodePopup = new NavBarPopup(this, siblings, selectedIndex);
-      if (item != null && item.isShowing()) {
+     // if (item != null && item.isShowing()) {
         myNodePopup.show(item);
         item.update();
-      }
+     // }
     }
   }
 
@@ -710,7 +710,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       List<PsiElement> result = selection.get().filter(PsiElement.class)
         .filter(e -> e != null && e.isValid()).toList();
-      return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
+      return result.isEmpty() ? null : result.toArray(PsiElement.EMPTY_ARRAY);
     }
 
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
@@ -722,7 +722,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       List<Navigatable> elements = selection.get().filter(Navigatable.class).toList();
-      return elements.isEmpty() ? null : elements.toArray(new Navigatable[elements.size()]);
+      return elements.isEmpty() ? null : elements.toArray(new Navigatable[0]);
     }
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {

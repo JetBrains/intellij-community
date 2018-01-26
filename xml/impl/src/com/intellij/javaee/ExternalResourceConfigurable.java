@@ -304,21 +304,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
-      return String.class;
-    }
-
-    @Override
-    public boolean isEditable(int column) {
-      return false;
-    }
-
-    @Override
-    public void setValue(Object aValue, String data, int columnIndex) {
-
-    }
-
-    @Override
     public String getColumnName(int column) {
       return myNames[column];
     }

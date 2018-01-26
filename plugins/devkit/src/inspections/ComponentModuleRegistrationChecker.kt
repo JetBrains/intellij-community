@@ -156,7 +156,7 @@ fun isIdeaPlatformModule(module: Module?): Boolean {
 
 private fun findMatchingImplModule(module: Module): Module? {
   if (module.name == "openapi") {
-    return ModuleManager.getInstance(module.project).findModuleByName("java-impl")
+    return ModuleManager.getInstance(module.project).findModuleByName("intellij.java.impl")
   }
 
   if (module.name.endsWith("-api")) {

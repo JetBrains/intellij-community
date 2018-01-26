@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -35,7 +33,7 @@ public class Patches {
    * <p> http://bugs.openjdk.java.net/browse/JDK-6209673
    * <p> http://bugs.openjdk.java.net/browse/JDK-8041654
    */
-  public static final boolean REPAINT_MANAGER_LEAK = !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
+  public static final boolean REPAINT_MANAGER_LEAK = !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
    * Desktop API support on X Window is limited to GNOME (and even there it may work incorrectly).
@@ -47,7 +45,7 @@ public class Patches {
    * Java 7 incorrectly calculates screen insets on multi-monitor X Window configurations.
    * See https://bugs.openjdk.java.net/browse/JDK-8020443.
    */
-  public static final boolean SUN_BUG_ID_8020443 = SystemInfo.isXWindow && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
+  public static final boolean SUN_BUG_ID_8020443 = SystemInfo.isXWindow && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
    * Marker field to find all usages of the reflective access to JDK 7-specific methods
@@ -62,10 +60,10 @@ public class Patches {
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
 
   /**
-   * Support default methods in JDI
+   * Support default methods in JDI.
    * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
    */
-  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast("1.8.0_45");
+  public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast(8, 0, 45);
 
   /**
    * Enable workaround for jdk bug with leaking TargetVM.EventController, see IDEA-163334
@@ -99,15 +97,15 @@ public class Patches {
    * Older JDK versions could mistakenly use derived italics font, when genuine italics font was available in the system.
    * The issue was fixed in JDK 1.8.0_60 as part of <a href="https://bugs.openjdk.java.net/browse/JDK-8064833">JDK-8064833</a>.
    */
-  public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
+  public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 60);
 
   /**
-   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK.
+   * On macOS, font ligatures are not supported for natively loaded fonts, a font needs to be loaded explicitly by JDK.
    */
   public static final boolean JDK_BUG_ID_7162125;
   static {
     boolean value;
-    if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("9")) value = false;
+    if (!SystemInfo.isMac || SystemInfo.IS_AT_LEAST_JAVA9) value = false;
     else if (!SystemInfo.isJetBrainsJvm) value = true;
     else {
       try {
@@ -132,7 +130,11 @@ public class Patches {
   /**
    * Some HTTP connections lock the context class loader: https://bugs.openjdk.java.net/browse/JDK-8032832
    */
-  public static final boolean JDK_BUG_ID_8032832 = SystemInfo.isJavaVersionAtLeast("1.8.0_20");
+  public static final boolean JDK_BUG_ID_8032832 = SystemInfo.isJavaVersionAtLeast(8, 0, 20);
 
-  public static final boolean JDK_BUG_ID_8147994 = !SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_102");
+  /**
+   * Since 8u102, AWT supports Shift-scroll on all platforms (before, it only worked on macOS).
+   * Ultimately fixed by <a href="https://bugs.openjdk.java.net/browse/JDK-8147994">JDK-8147994</a>.
+   */
+  public static final boolean JDK_BUG_ID_8147994 = !(SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast(8, 0, 102));
 }

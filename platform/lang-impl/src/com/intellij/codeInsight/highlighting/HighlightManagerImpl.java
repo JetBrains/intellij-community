@@ -43,7 +43,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +103,7 @@ public class HighlightManagerImpl extends HighlightManager {
       HighlightInfo info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
     }
-    return set.toArray(new RangeHighlighter[set.size()]);
+    return set.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {
@@ -292,10 +292,6 @@ public class HighlightManagerImpl extends HighlightManager {
       requestHideHighlights(dataContext);
     }
 
-
-    @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
-    }
 
     @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {

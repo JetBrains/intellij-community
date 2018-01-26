@@ -87,7 +87,7 @@ public class TracRepository extends BaseRepositoryImpl {
       Task task = getTask((Integer)result.get(i), client, transport);
       ContainerUtil.addIfNotNull(tasks, task);
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private Vector<Object> runQuery(@Nullable String query, Transport transport, XmlRpcClient client, String search)

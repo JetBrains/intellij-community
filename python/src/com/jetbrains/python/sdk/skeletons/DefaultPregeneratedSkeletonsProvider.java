@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.regex.PatternSyntaxException;
 
 
 public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkeletonsProvider {
@@ -54,7 +55,11 @@ public class DefaultPregeneratedSkeletonsProvider implements PyPregeneratedSkele
 
   @VisibleForTesting
   public static boolean isApplicableZippedSkeletonsFileName(@NotNull String prebuiltSkeletonsName, @NotNull String fileName) {
-    return fileName.matches(".*" + prebuiltSkeletonsName + "\\.?\\d*\\.zip");
+    try {
+      return fileName.matches(".*" + prebuiltSkeletonsName + "\\.?\\d*\\.zip");
+    } catch (PatternSyntaxException e) {
+      return false;
+    }
   }
 
   @Nullable

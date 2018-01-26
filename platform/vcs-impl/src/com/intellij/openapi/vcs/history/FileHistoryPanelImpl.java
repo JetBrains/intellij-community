@@ -288,7 +288,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     }
     columns.add(new TreeNodeColumnInfoWrapper<>(new MessageColumnInfo(project)));
-    return columns.toArray(new DualViewColumnInfo[columns.size()]);
+    return columns.toArray(new DualViewColumnInfo[0]);
   }
 
   private void refresh(@NotNull VcsHistorySession session) {

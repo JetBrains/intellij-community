@@ -45,7 +45,7 @@ public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBa
     Set<URL> urls = new HashSet<>();
     urls.addAll(Arrays.asList(agentLibraryUrls));
     return myClassLoaderCache == null
-           ? new URLClassLoader(urls.toArray(new URL[urls.size()]), null)
+           ? new URLClassLoader(urls.toArray(new URL[0]), null)
            : myClassLoaderCache.getOrCreateClassLoader(urls);
   }
 

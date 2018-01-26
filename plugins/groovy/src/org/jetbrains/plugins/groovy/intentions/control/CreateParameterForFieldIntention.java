@@ -71,12 +71,6 @@ public class CreateParameterForFieldIntention extends Intention {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.intentions.control.CreateParameterForFieldIntention");
   private static final Key<CachedValue<List<GrField>>> FIELD_CANDIDATES = Key.create("Fields.candidates");
 
-  @NotNull
-  @Override
-  public String getText() {
-    return super.getText();
-  }
-
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor)
     throws IncorrectOperationException {
@@ -101,7 +95,7 @@ public class CreateParameterForFieldIntention extends Intention {
       return;
     }
 
-    final JList list = new JBList(constructors.toArray(new GrMethod[constructors.size()]));
+    final JList list = new JBList(constructors.toArray(GrMethod.EMPTY_ARRAY));
     list.setCellRenderer(new MethodCellRenderer(true));
 
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
@@ -127,7 +121,7 @@ public class CreateParameterForFieldIntention extends Intention {
       }
       return;
     }
-    final JList list = new JBList(candidates.toArray(new GrField[candidates.size()]));
+    final JList list = new JBList(candidates.toArray(GrField.EMPTY_ARRAY));
     list.setCellRenderer(new DefaultPsiElementCellRenderer());
 
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).

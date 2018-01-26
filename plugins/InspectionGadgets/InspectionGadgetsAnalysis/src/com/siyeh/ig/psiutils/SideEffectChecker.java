@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class SideEffectChecker {
   private static final Set<String> ourSideEffectFreeClasses = new THashSet<>(Arrays.asList(
@@ -72,6 +76,41 @@ public class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
+  /**
+   * Returns true if element execution may cause non-local side-effect. Side-effects like control flow within method; throw/return or
+   * local variable declaration or update are considered as local side-effects.
+   *
+   * @param element element to check
+   * @return true if element execution may cause non-local side-effect.
+   */
+  public static boolean mayHaveNonLocalSideEffects(@NotNull PsiElement element) {
+    return mayHaveSideEffects(element, SideEffectChecker::isLocalSideEffect);
+  }
+
+  private static boolean isLocalSideEffect(PsiElement e) {
+    if (e instanceof PsiContinueStatement ||
+        e instanceof PsiReturnStatement ||
+        e instanceof PsiThrowStatement) {
+      return true;
+    }
+    if (e instanceof PsiLocalVariable) return true;
+
+    PsiReferenceExpression ref = null;
+    if (e instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)e;
+      ref = tryCast(PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()), PsiReferenceExpression.class);
+    }
+    if (e instanceof PsiUnaryExpression) {
+      PsiExpression operand = ((PsiUnaryExpression)e).getOperand();
+      ref = tryCast(PsiUtil.skipParenthesizedExprDown(operand), PsiReferenceExpression.class);
+    }
+    if (ref != null) {
+      PsiElement target = ref.resolve();
+      if (target instanceof PsiLocalVariable || target instanceof PsiParameter) return true;
+    }
+    return false;
+  }
+
   public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects, element);
     element.accept(visitor);
@@ -79,7 +118,7 @@ public class SideEffectChecker {
   }
 
   public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
-    List<PsiElement> list = new ArrayList<>();
+    List<PsiElement> list = new SmartList<>();
     element.accept(new SideEffectsVisitor(list, element));
     return StreamEx.of(list).select(PsiExpression.class).toList();
   }
@@ -128,7 +167,8 @@ public class SideEffectChecker {
 
     protected boolean isPure(PsiMethod method) {
       if (method == null) return false;
-      if (PropertyUtil.isSimpleGetter(method)) return true;
+      PsiField field = PropertyUtil.getFieldOfGetter(method);
+      if (field != null) return !field.hasModifierProperty(PsiModifier.VOLATILE);
       return ControlFlowAnalyzer.isPure(method) && !mayHaveExceptionalSideEffect(method);
     }
 

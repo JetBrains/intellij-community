@@ -26,6 +26,6 @@ public class ProjectJdkNotFoundException extends ExternalSystemJdkException {
 
   public ProjectJdkNotFoundException() {
     super(ExternalSystemBundle.message("external.system.project_jdk.not_specified", OpenProjectJdkSettingsCallback.ID),
-          null, null, OpenProjectJdkSettingsCallback.ID);
+          null, OpenProjectJdkSettingsCallback.ID);
   }
 }

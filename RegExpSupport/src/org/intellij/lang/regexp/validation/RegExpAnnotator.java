@@ -544,12 +544,6 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
 
     @Override
-    public void visitRegExpBoundary(RegExpBoundary boundary) {
-      super.visitRegExpBoundary(boundary);
-      // is zero length
-    }
-
-    @Override
     public void visitRegExpNamedGroupRef(RegExpNamedGroupRef groupRef) {
       super.visitRegExpNamedGroupRef(groupRef);
       if (mySupport != RegExpLanguageHost.Lookbehind.FULL) {

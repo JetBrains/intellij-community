@@ -57,7 +57,7 @@ public class PyDebugSupportUtils {
         if (!(element instanceof PyExpression) || element instanceof PyLiteralExpression) {
           element = PsiTreeUtil.getParentOfType(element, PyExpression.class);
         }
-        if (element != null && element instanceof PyLiteralExpression) {
+        if (element instanceof PyLiteralExpression) {
           return null;
         }
         if (element != null && isSimpleEnough(element) && isExpression(project, document.getText(element.getTextRange()))) {

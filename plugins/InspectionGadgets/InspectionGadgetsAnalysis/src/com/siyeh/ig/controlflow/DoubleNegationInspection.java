@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,11 @@ public class DoubleNegationInspection extends BaseInspection {
           final PsiExpression secondOperand = operands[1];
           if (isNegation(firstOperand)) {
             PsiReplacementUtil
-              .replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand, tracker) + "==" + tracker.markUnchanged(secondOperand).getText(), tracker);
+              .replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand, tracker) + "==" + tracker.text(secondOperand), tracker);
           }
           else {
             PsiReplacementUtil
-              .replaceExpression(polyadicExpression, tracker.markUnchanged(firstOperand).getText() + "==" + BoolUtils.getNegatedExpressionText(secondOperand, tracker), tracker);
+              .replaceExpression(polyadicExpression, tracker.text(firstOperand) + "==" + BoolUtils.getNegatedExpressionText(secondOperand, tracker), tracker);
           }
         }
         else {
@@ -98,7 +98,7 @@ public class DoubleNegationInspection extends BaseInspection {
                 newExpressionText.append("==");
               }
             }
-            newExpressionText.append(tracker.markUnchanged(operands[i]).getText());
+            newExpressionText.append(tracker.text(operands[i]));
           }
           PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString(), tracker);
         }

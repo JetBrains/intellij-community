@@ -378,9 +378,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
-      myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
-                                                             mergeConverters(data.getLineConvertor2(), separatorLines));
+      TIntFunction foldingLineConvertor = myFoldingModel.getLineNumberConvertor();
+      TIntFunction contentConvertor1 = DiffUtil.getContentLineConvertor(getContent1());
+      TIntFunction contentConvertor2 = DiffUtil.getContentLineConvertor(getContent2());
+      myEditor.getGutterComponentEx().setLineNumberConvertor(
+        mergeLineConverters(contentConvertor1, data.getLineConvertor1(), foldingLineConvertor),
+        mergeLineConverters(contentConvertor2, data.getLineConvertor2(), foldingLineConvertor));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
@@ -442,9 +445,10 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return block;
   }
 
-  @Contract("!null, _ -> !null")
-  private static TIntFunction mergeConverters(@NotNull final TIntFunction convertor, @NotNull final TIntFunction separatorLines) {
-    return value -> convertor.execute(separatorLines.execute(value));
+  private static TIntFunction mergeLineConverters(@Nullable TIntFunction contentConvertor,
+                                                  @NotNull TIntFunction unifiedConvertor,
+                                                  @NotNull TIntFunction foldingConvertor) {
+    return DiffUtil.mergeLineConverters(DiffUtil.mergeLineConverters(contentConvertor, unifiedConvertor), foldingConvertor);
   }
 
   /*

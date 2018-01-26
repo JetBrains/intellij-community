@@ -83,7 +83,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
       return;
     }
 
-    OffsetKey refEnd = context.trackOffset(context.getTailOffset(), false);
+    OffsetKey refEnd = context.trackOffset(context.getTailOffset(), true);
 
     boolean fillTypeArgs = context.getCompletionChar() == '<';
     if (fillTypeArgs) {
@@ -98,6 +98,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
     }
 
     context.setTailOffset(context.getOffset(refEnd));
+    refEnd = context.trackOffset(context.getTailOffset(), false);
 
     context.commitDocument();
     if (item.getUserData(JavaChainLookupElement.CHAIN_QUALIFIER) == null &&

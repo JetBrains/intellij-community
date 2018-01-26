@@ -43,11 +43,6 @@ public class ModuleStructurePane extends ProjectViewPane {
       protected AbstractTreeNode createRoot(final Project project, ViewSettings settings) {
         return new StructureViewModuleNode(project, myModule, settings);
       }
-
-      @Override
-      public boolean isToBuildChildrenInBackground(Object element) {
-        return false;
-      }
     };
   }
 }

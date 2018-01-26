@@ -2,6 +2,7 @@
   <extensionPoints>
     <extensionPoint name="ep" beanClass="EP"/>
     <extensionPoint name="projectService" beanClass="SD"/>
+    <extensionPoint name="projectConfigurable" beanClass="SD"/>
   </extensionPoints>
   <extensions>
     <ep implementation="Ext"/>
@@ -9,5 +10,6 @@
     <ep implementation="ProjectComp"/>
     <ep implementation="ProjectComp"/>
     <projectService serviceImplementation="ProjectService"/>
+    <projectConfigurable instance="ProjectConfigurable"/>
   </extensions>
 </idea-plugin>

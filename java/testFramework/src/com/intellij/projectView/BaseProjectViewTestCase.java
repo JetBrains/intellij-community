@@ -15,13 +15,11 @@
  */
 package com.intellij.projectView;
 
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ClassesTreeStructureProvider;
 import com.intellij.ide.projectView.impl.nodes.PackageElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -104,10 +102,4 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   protected PsiDirectory getPackageDirectory() {
     return getPackageDirectory(getPackageRelativePath());
   }
-
-  @Override
-  protected String getTestDataPath() {
-    return PathManagerEx.getTestDataPath(getClass());
-  }
-
 }

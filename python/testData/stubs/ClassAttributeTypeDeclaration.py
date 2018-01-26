@@ -1,0 +1,2 @@
+class MyClass:
+    foo: int

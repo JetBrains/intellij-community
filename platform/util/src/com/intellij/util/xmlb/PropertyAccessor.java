@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ExceptionUtil;
@@ -27,7 +25,7 @@ public class PropertyAccessor implements MutableAccessor {
     this(descriptor.getName(), descriptor.getPropertyType(), descriptor.getReadMethod(), descriptor.getWriteMethod());
   }
 
-  public PropertyAccessor(String name, Class<?> type, @NotNull Method readMethod, @NotNull Method writeMethod) {
+  public PropertyAccessor(String name, Class<?> type, @NotNull Method readMethod, @Nullable Method writeMethod) {
     myName = name;
     myType = type;
     myReadMethod = readMethod;
@@ -36,7 +34,9 @@ public class PropertyAccessor implements MutableAccessor {
 
     try {
       myReadMethod.setAccessible(true);
-      myWriteMethod.setAccessible(true);
+      if (myWriteMethod != null) {
+        myWriteMethod.setAccessible(true);
+      }
     }
     catch (SecurityException ignored) { }
   }
@@ -126,7 +126,9 @@ public class PropertyAccessor implements MutableAccessor {
   @Override
   public <T extends Annotation> T getAnnotation(@NotNull Class<T> annotationClass) {
     T annotation = myReadMethod.getAnnotation(annotationClass);
-    if (annotation == null) annotation = myWriteMethod.getAnnotation(annotationClass);
+    if (annotation == null && myWriteMethod != null) {
+      annotation = myWriteMethod.getAnnotation(annotationClass);
+    }
     return annotation;
   }
 

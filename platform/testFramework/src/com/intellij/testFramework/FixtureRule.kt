@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -275,14 +275,14 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
 }
 
 fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
+  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
 }
 
-fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, projectCreator, false)
+fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
 }
 
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
+fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: (Project) -> Unit) {
   runInEdtAndWait {
     val filePath = if (projectCreator == null) {
       tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
@@ -292,12 +292,17 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
     }
 
     val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
-    project.runInLoadComponentStateMode {
+    if (loadComponentState) {
+      project.runInLoadComponentStateMode {
+        project.use(task)
+      }
+    }
+    else {
       project.use(task)
     }
   }
 }
 
 fun ComponentManager.saveStore() {
-  stateStore.save(SmartList())
+  stateStore.save(SmartList(), true)
 }

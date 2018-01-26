@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class ReplaceWhileLoopWithDoWhileLoopIntention extends Intention {
     if (!infiniteLoop) {
       doWhileStatementText.append("if(");
       if (condition != null) {
-        doWhileStatementText.append(tracker.markUnchanged((PsiElement)condition).getText());
+        doWhileStatementText.append(tracker.text(condition));
       }
       doWhileStatementText.append(") {\n");
     }
@@ -56,17 +56,17 @@ public class ReplaceWhileLoopWithDoWhileLoopIntention extends Intention {
       if (children.length > 2) {
         for (int i = 1; i < children.length - 1; i++) {
           final PsiElement child = children[i];
-          doWhileStatementText.append(tracker.markUnchanged(child).getText());
+          doWhileStatementText.append(tracker.text(child));
         }
       }
       doWhileStatementText.append('}');
     }
     else if (body != null) {
-      doWhileStatementText.append("do ").append(tracker.markUnchanged((PsiElement)body).getText()).append('\n');
+      doWhileStatementText.append("do ").append(tracker.text(body)).append('\n');
     }
     doWhileStatementText.append("while(");
     if (condition != null) {
-      doWhileStatementText.append(tracker.markUnchanged((PsiElement)condition).getText());
+      doWhileStatementText.append(tracker.text(condition));
     }
     doWhileStatementText.append(");");
     if (!infiniteLoop) {

@@ -168,7 +168,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
     if (classes.isEmpty()) return;
 
-    List<PsiClass> tenClassesMost = Arrays.asList(classes.toArray(new PsiClass[classes.size()]));
+    List<PsiClass> tenClassesMost = Arrays.asList(classes.toArray(PsiClass.EMPTY_ARRAY));
     if (tenClassesMost.size() > 10) {
       tenClassesMost = tenClassesMost.subList(0, 10);
     }
@@ -198,7 +198,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       fixes.add(new NavigateToOccurrencesFix(originalExpression));
     }
     createReplaceFixes(foundExpr, originalExpression, fixes);
-    LocalQuickFix[] array = fixes.toArray(new LocalQuickFix[fixes.size()]);
+    LocalQuickFix[] array = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
     holder.registerProblem(originalExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, array);
   }
 
@@ -336,7 +336,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           expressions.add((PsiExpression) element);
         }
       }
-      final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
+      final PsiExpression[] expressionArray = expressions.toArray(PsiExpression.EMPTY_ARRAY);
       final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
         @Override
         protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {

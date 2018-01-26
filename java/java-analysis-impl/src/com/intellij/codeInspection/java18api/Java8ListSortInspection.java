@@ -2,7 +2,10 @@
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +30,7 @@ public class Java8ListSortInspection extends AbstractBaseJavaLocalInspectionTool
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
         PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
-        if(nameElement != null && expression.getArgumentList().getExpressions().length == 2 &&
+        if(nameElement != null && expression.getArgumentList().getExpressionCount() == 2 &&
           "sort".equals(nameElement.getText())) {
           PsiMethod method = expression.resolveMethod();
           if(method != null) {

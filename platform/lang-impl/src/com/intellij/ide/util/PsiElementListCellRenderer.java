@@ -69,7 +69,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   private class MyAccessibleContext extends JPanel.AccessibleJPanel {
     @Override
     public String getAccessibleName() {
-      LayoutManager lm = PsiElementListCellRenderer.this.getLayout();
+      LayoutManager lm = getLayout();
       assert lm instanceof BorderLayout;
       Component leftCellRendererComp = ((BorderLayout)lm).getLayoutComponent(LEFT);
       return leftCellRendererComp instanceof Accessible ?
@@ -110,7 +110,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public static class ItemMatchers {
     @Nullable public final Matcher nameMatcher;
-    @Nullable public final Matcher locationMatcher;
+    @Nullable final Matcher locationMatcher;
 
     public ItemMatchers(@Nullable Matcher nameMatcher, @Nullable Matcher locationMatcher) {
       this.nameMatcher = nameMatcher;
@@ -122,7 +122,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     private final String myModuleName;
     private final ItemMatchers myMatchers;
 
-    public LeftRenderer(final String moduleName, @NotNull ItemMatchers matchers) {
+    LeftRenderer(final String moduleName, @NotNull ItemMatchers matchers) {
       myModuleName = moduleName;
       myMatchers = matchers;
     }
@@ -308,7 +308,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return ReadAction.compute(() -> {
       String elementText = getElementText(element);
       String containerText = getContainerText(element, elementText);
-      return containerText != null ? elementText + " " + containerText : elementText;
+      return containerText == null ? elementText : elementText + " " + containerText;
     });
   }
 
@@ -332,7 +332,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   /**
-   * User {@link #installSpeedSearch(com.intellij.openapi.ui.popup.PopupChooserBuilder)} instead
+   * User {@link #installSpeedSearch(PopupChooserBuilder)} instead
    */
   @Deprecated
   public void installSpeedSearch(JList list) {

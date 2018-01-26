@@ -215,7 +215,7 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     @NotNull
     @Override
     public String getText() {
-      return myArgList.getExpressions().length == 1
+      return myArgList.getExpressionCount() == 1
              ? QuickFixBundle.message("wrap.with.adapter.parameter.single.text", myArgumentFixerActionFactory)
              : QuickFixBundle.message("wrap.with.adapter.parameter.multiple.text", myIndex + 1, myArgumentFixerActionFactory);
     }

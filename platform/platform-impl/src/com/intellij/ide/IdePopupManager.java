@@ -47,12 +47,12 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.size() > 0;
   }
 
+  @Override
   public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
-    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!isPopupActive()) return;
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+        if (!isPopupActive()) return false;
 
         boolean shouldCloseAllPopup = false;
 
@@ -61,15 +61,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
         }
 
-        if (focused == null) {
-          shouldCloseAllPopup = true;
-        }
-
         Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
         Window sourceWindow = ((WindowEvent)e).getWindow();
         Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
 
-        if (!shouldCloseAllPopup && ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+        if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
           shouldCloseAllPopup = true;
         }
 
@@ -79,17 +75,11 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
               && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
             shouldCloseAllPopup = true;
           }
-          else if (focused instanceof Dialog && ((Dialog)focused).isModal()) {
-            // close all popups except one that is opening a modal dialog
-            closeAllPopups(true, focused.getOwner());
-            return;
-          }
         }
 
         if (shouldCloseAllPopup) {
           closeAllPopups();
         }
-      });
     }
 
     if (e instanceof KeyEvent || e instanceof MouseEvent) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl;
 
@@ -555,5 +555,17 @@ public class EditorImplTest extends AbstractEditorTest {
     myEditor.getSettings().setDndEnabled(false);
     mouse().alt().shift().middle().clickAt(0, 0);
     checkResultByText("<selection><caret>ab</selection>\n<selection><caret>cd</selection>");
+  }
+
+  public void testActionsFromPopupMenuCanBeInvokedForSelection() {
+    initText("abcd");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 100, 100);
+    myEditor.getSettings().setDndEnabled(false);
+    EditorMouseFixture mouse = mouse();
+    
+    mouse.pressAt(0, 1).dragTo(0, 3).release();
+    mouse.right().pressAt(0, 2);
+    checkResultByText("a<selection>bc</selection>d");
+    mouse.release();
   }
 }

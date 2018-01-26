@@ -308,11 +308,15 @@ public class ModuleHighlightUtil {
         HighlightInfoType type = statement.getRole() == Role.OPENS ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
         if (directories == null || directories.length == 0) {
           String message = JavaErrorMessages.message("package.not.found", packageName);
-          return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+          HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(info, factory().createCreateClassInPackageInModuleFix(module, packageName));
+          return info;
         }
         if (packageName != null && PsiUtil.isPackageEmpty(directories, packageName)) {
           String message = JavaErrorMessages.message("package.is.empty", packageName);
-          return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+          HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+          QuickFixAction.registerQuickFixAction(info, factory().createCreateClassInPackageInModuleFix(module, packageName));
+          return info;
         }
       }
     }
@@ -395,7 +399,7 @@ public class ModuleHighlightUtil {
 
         PsiMethod provider = ContainerUtil.find(
           implClass.findMethodsByName("provider", false),
-          m -> m.hasModifierProperty(PsiModifier.PUBLIC) && m.hasModifierProperty(PsiModifier.STATIC) && m.getParameterList().getParametersCount() == 0);
+          m -> m.hasModifierProperty(PsiModifier.PUBLIC) && m.hasModifierProperty(PsiModifier.STATIC) && m.getParameterList().isEmpty());
         if (provider != null) {
           PsiType type = provider.getReturnType();
           PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;

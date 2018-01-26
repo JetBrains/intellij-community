@@ -366,7 +366,7 @@ public class JavaCompletionUtil {
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
           PsiClass plainClass = plainResult.getElement();
           HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
-          if (plainClass != null && StreamEx.of(signature.getSuperSignatures()).prepend(signature)
+          if (plainClass != null && StreamEx.ofTree(signature, s -> StreamEx.of(s.getSuperSignatures()))
             .anyMatch(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true) != null)) {
             PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
 
@@ -669,7 +669,7 @@ public class JavaCompletionUtil {
       }
     }
 
-    if (toDelete.isValid()) {
+    if (toDelete != null && toDelete.isValid()) {
       document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
     }
 
@@ -685,22 +685,17 @@ public class JavaCompletionUtil {
     return psiReference.resolve();
   }
 
-  public static RangeMarker insertTemporary(final int endOffset, final Document document, final String temporary) {
+  @Nullable
+  public static RangeMarker insertTemporary(int endOffset, Document document, String temporary) {
     final CharSequence chars = document.getCharsSequence();
-    final int length = chars.length();
-    final RangeMarker toDelete;
-    if (endOffset < length && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
+    if (endOffset < chars.length() && Character.isJavaIdentifierPart(chars.charAt(endOffset))){
       document.insertString(endOffset, temporary);
-      toDelete = document.createRangeMarker(endOffset, endOffset + 1);
-    } else if (endOffset >= length) {
-      toDelete = document.createRangeMarker(length, length);
+      RangeMarker toDelete = document.createRangeMarker(endOffset, endOffset + 1);
+      toDelete.setGreedyToLeft(true);
+      toDelete.setGreedyToRight(true);
+      return toDelete;
     }
-    else {
-      toDelete = document.createRangeMarker(endOffset, endOffset);
-    }
-    toDelete.setGreedyToLeft(true);
-    toDelete.setGreedyToRight(true);
-    return toDelete;
+    return null;
   }
 
   public static void insertParentheses(final InsertionContext context,

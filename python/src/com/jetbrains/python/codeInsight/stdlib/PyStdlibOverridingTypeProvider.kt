@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyStdlibOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTypeProvider {
 
   override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyType? {
-    return PyStdlibTypeProvider.getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor)
+    return PyStdlibTypeProvider.getNamedTupleTypeForResolvedCallee(referenceTarget, context, anchor) ?:
+           PyStdlibTypeProvider.getNamedTupleReplaceType(referenceTarget, context, anchor)
   }
 }

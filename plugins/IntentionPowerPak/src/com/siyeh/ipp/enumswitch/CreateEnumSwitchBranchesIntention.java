@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class CreateEnumSwitchBranchesIntention extends Intention {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();
       CommentTracker commentTracker = new CommentTracker();
-      newStatementText.append("switch(").append(commentTracker.markUnchanged(switchExpression).getText()).append("){");
+      newStatementText.append("switch(").append(commentTracker.text(switchExpression)).append("){");
       for (PsiEnumConstant missingEnumElement : missingEnumElements) {
         newStatementText.append("case ").append(commentTracker.markUnchanged(missingEnumElement).getName()).append(": break;");
       }

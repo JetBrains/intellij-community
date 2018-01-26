@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
     }
 
     if (myScriptName.startsWith(TEST_PATTERN_PREFIX)) {
-      configuration.getTarget().setTargetType(TestTargetType.PATH);
+      configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
       configuration.getTarget().setTarget(".");
       configuration.setPattern(myScriptName.substring(TEST_PATTERN_PREFIX.length()));
     }

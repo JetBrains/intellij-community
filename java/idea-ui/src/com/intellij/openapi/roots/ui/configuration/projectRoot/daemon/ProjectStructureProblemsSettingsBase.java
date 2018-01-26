@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -24,7 +22,7 @@ public class ProjectStructureProblemsSettingsBase extends ProjectStructureProble
   }
 
   @Override
-  public void loadState(ProjectStructureProblemsSettingsBase state) {
+  public void loadState(@NotNull ProjectStructureProblemsSettingsBase state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

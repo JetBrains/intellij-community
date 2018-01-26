@@ -64,11 +64,6 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, null);
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @Nullable
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
@@ -188,7 +183,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   private static void showPopup(Editor editor, List<AnAction> applicable) {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
     JBPopupFactory.ActionSelectionAid mnemonics = JBPopupFactory.ActionSelectionAid.MNEMONICS;
-    DefaultActionGroup group = new DefaultActionGroup(applicable.toArray(new AnAction[applicable.size()]));
+    DefaultActionGroup group = new DefaultActionGroup(applicable.toArray(AnAction.EMPTY_ARRAY));
     JBPopupFactory.getInstance().createActionGroupPopup(CHOOSER_TITLE, group, context, mnemonics, true).showInBestPositionFor(editor);
   }
 

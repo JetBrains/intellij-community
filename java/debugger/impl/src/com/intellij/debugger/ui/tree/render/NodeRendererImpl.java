@@ -112,9 +112,8 @@ public abstract class NodeRendererImpl implements NodeRenderer{
       return cloned;
     }
     catch (CloneNotSupportedException e) {
-      LOG.error(e);
+      throw new RuntimeException(e); 
     }
-    return null;
   }
 
   @Override

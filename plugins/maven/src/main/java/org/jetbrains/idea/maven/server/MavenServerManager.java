@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -422,10 +408,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     final String root = pluginFileOrDir.getParent();
 
     if (pluginFileOrDir.isDirectory()) {
-      classpath.add(new File(root, "maven-server-api"));
+      classpath.add(new File(root, "intellij.maven.server"));
       File parentFile = getMavenPluginParentFile();
       if (StringUtil.compareVersionNumbers(mavenVersion, "3") < 0) {
-        classpath.add(new File(root, "maven2-server-impl"));
+        classpath.add(new File(root, "intellij.maven.server.m2.impl"));
         addDir(classpath, new File(parentFile, "maven2-server-impl/lib"));
         // use bundled maven 2.2.1 for all 2.0.x version (since we use org.apache.maven.project.interpolation.StringSearchModelInterpolator introduced in 2.1.0)
         if (StringUtil.compareVersionNumbers(mavenVersion, "2.1.0") < 0) {
@@ -433,14 +419,14 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
       }
       else {
-        classpath.add(new File(root, "maven3-server-common"));
+        classpath.add(new File(root, "intellij.maven.server.m3.common"));
         addDir(classpath, new File(parentFile, "maven3-server-common/lib"));
 
         if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
-          classpath.add(new File(root, "maven30-server-impl"));
+          classpath.add(new File(root, "intellij.maven.server.m30.impl"));
         }
         else {
-          classpath.add(new File(root, "maven3-server-impl"));
+          classpath.add(new File(root, "intellij.maven.server.m3.impl"));
         }
       }
     }
@@ -696,7 +682,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     if (state.vmOptions == null) {
       state.vmOptions = DEFAULT_VM_OPTIONS;
     }

@@ -38,12 +38,6 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
 
   @NotNull
   @Override
-  public String getDisplayName() {
-    return super.getDisplayName();
-  }
-
-  @NotNull
-  @Override
   public TextAttributesKey getKey() {
     return super.getKey();
   }

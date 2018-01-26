@@ -83,6 +83,8 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
 
+import com.intellij.openapi.vcs.ex.Range;
+
 public class TextMergeViewer implements MergeTool.MergeViewer {
   private static final Logger LOG = Logger.getInstance(TextMergeViewer.class);
 
@@ -1254,11 +1256,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         ThreeSide right = mySide.select(ThreeSide.BASE, ThreeSide.RIGHT);
         for (TextMergeChange mergeChange : myAllMergeChanges) {
           if (!mergeChange.isChange(mySide)) continue;
-          Color color = mergeChange.getDiffType().getColor(getEditor());
           boolean isResolved = mergeChange.isResolved(mySide);
-          if (!handler.process(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
-                               mergeChange.getStartLine(right), mergeChange.getEndLine(right),
-                               color, isResolved)) {
+          if (!handler.processResolvable(mergeChange.getStartLine(left), mergeChange.getEndLine(left),
+                                         mergeChange.getStartLine(right), mergeChange.getEndLine(right),
+                                         getEditor(), mergeChange.getDiffType(), isResolved)) {
             return;
           }
         }
@@ -1279,7 +1280,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     private class MyLineStatusMarkerRenderer extends LineStatusMarkerPopupRenderer {
-      public MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase tracker) {
+      public MyLineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
         super(tracker);
       }
 

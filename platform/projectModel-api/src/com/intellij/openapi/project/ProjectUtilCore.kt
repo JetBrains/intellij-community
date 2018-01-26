@@ -1,9 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
@@ -52,7 +52,13 @@ interface ProjectFileStoreOptionManager {
 
 val Project.isExternalStorageEnabled: Boolean
   get() {
+    if (projectFilePath?.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) == true) {
+      return false
+    }
+
     val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
     val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
-    return manager.isStoredExternally || Registry.`is`("store.imported.project.elements.separately", false)
+    return manager.isStoredExternally || isUseExternalStorage()
   }
+
+fun isUseExternalStorage() = (ApplicationManager.getApplication()?.isUnitTestMode ?: false) || Registry.`is`("store.imported.project.elements.separately")

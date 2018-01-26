@@ -227,7 +227,7 @@ public class LibrariesContainerFactory {
         return myRootModel.getModuleLibraryTable().getLibraries();
       }
       List<Library> libraries = OrderEntryUtil.getModuleLibraries(ModuleRootManager.getInstance(myModule));
-      return libraries.toArray(new Library[libraries.size()]);
+      return libraries.toArray(Library.EMPTY_ARRAY);
     }
 
     @Override

@@ -72,10 +72,6 @@ final class AntExplorerTreeBuilder extends AbstractTreeBuilder {
     super.dispose();
   }
 
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return false;
-  }
-
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return ((AntNodeDescriptor)nodeDescriptor).isAutoExpand();
   }

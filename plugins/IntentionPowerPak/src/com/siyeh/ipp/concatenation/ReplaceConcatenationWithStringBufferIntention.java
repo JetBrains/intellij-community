@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -49,7 +48,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isConcatenation(parent)) {
@@ -65,7 +64,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
 
       if (qualifierExpression != null) {
-        final String qualifierText = commentTracker.markUnchanged(qualifierExpression).getText();
+        final String qualifierText = commentTracker.text(qualifierExpression);
         newExpression.append(qualifierText);
       }
       turnExpressionIntoChainedAppends(expression, newExpression, commentTracker);
@@ -114,7 +113,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       final PsiPolyadicExpression concatenation = (PsiPolyadicExpression)expression;
       final PsiType type = concatenation.getType();
       if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        result.append(".append(").append(commentTracker.markUnchanged(concatenation).getText()).append(')');
+        result.append(".append(").append(commentTracker.text(concatenation)).append(')');
         return;
       }
       final PsiExpression[] operands = concatenation.getOperands();
@@ -138,8 +137,9 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
             turnExpressionIntoChainedAppends(operand, result, commentTracker);
             string = true;
           }
-          newExpressionText.append('+').append(commentTracker.markUnchanged(operand).getText());
-        } else {
+          newExpressionText.append('+').append(commentTracker.text(operand));
+        }
+        else {
           turnExpressionIntoChainedAppends(operand, result, commentTracker);
         }
       }
@@ -148,7 +148,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       final PsiExpression strippedExpression = ParenthesesUtils.stripParentheses(expression);
       result.append(".append(");
       if (strippedExpression != null) {
-        result.append(commentTracker.markUnchanged(strippedExpression).getText());
+        result.append(commentTracker.text(strippedExpression));
       }
       result.append(')');
     }

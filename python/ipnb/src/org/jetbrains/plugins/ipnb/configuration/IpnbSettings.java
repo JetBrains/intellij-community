@@ -75,7 +75,7 @@ public class IpnbSettings implements PersistentStateComponent<IpnbSettings> {
   }
 
   @Override
-  public void loadState(IpnbSettings state) {
+  public void loadState(@NotNull IpnbSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

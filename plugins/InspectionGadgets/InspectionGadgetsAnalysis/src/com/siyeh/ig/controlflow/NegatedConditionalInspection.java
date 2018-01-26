@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -86,8 +85,7 @@ public class NegatedConditionalInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element.getParent();
       assert conditionalExpression != null;
@@ -98,8 +96,7 @@ public class NegatedConditionalInspection extends BaseInspection {
       final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
       assert elseBranch != null;
       assert thenBranch != null;
-      final String newStatement = negatedCondition + '?' + tracker.markUnchanged(elseBranch).getText() +
-                                  ':' + tracker.markUnchanged(thenBranch).getText();
+      final String newStatement = negatedCondition + '?' + tracker.text(elseBranch) + ':' + tracker.text(thenBranch);
       PsiReplacementUtil.replaceExpression(conditionalExpression, newStatement);
     }
   }

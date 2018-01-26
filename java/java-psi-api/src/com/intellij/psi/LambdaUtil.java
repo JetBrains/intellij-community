@@ -17,7 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,8 +143,13 @@ public class LambdaUtil {
     return context instanceof PsiLambdaExpression ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression ||
-           context instanceof PsiVariable ||
+           context instanceof PsiVariable && !withInferredType((PsiVariable)context) ||
            context instanceof PsiArrayInitializerExpression;
+  }
+
+  private static boolean withInferredType(PsiVariable variable) {
+    PsiTypeElement typeElement = variable.getTypeElement();
+    return typeElement != null && typeElement.isInferredType();
   }
 
   @Contract("null -> null")
@@ -337,9 +342,9 @@ public class LambdaUtil {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
-      if (parent instanceof PsiConditionalExpression &&
-          ((PsiConditionalExpression)parent).getThenExpression() != element &&
-          ((PsiConditionalExpression)parent).getElseExpression() != element) break;
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
+        return PsiType.BOOLEAN;
+      }
       element = parent;
       parent = parent.getParent();
     }
@@ -797,7 +802,7 @@ public class LambdaUtil {
           final List<PsiType> conjuncts = ContainerUtil.map(types, type -> substitutor.substitute(type));
           //don't glb to avoid flattening = Object&Interface would be preserved
           //otherwise methods with different signatures could get same erasure
-          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(new PsiType[conjuncts.size()]));
+          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(PsiType.EMPTY_ARRAY));
           getFunctionalTypeMap().put(parameter, upperBound);
         }
       }

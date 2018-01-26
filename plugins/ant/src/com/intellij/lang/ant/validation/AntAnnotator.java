@@ -63,16 +63,6 @@ public class AntAnnotator implements DomElementsAnnotator {
         }
         super.visitAntDomCustomElement(custom);
       }
-
-      public void visitAntDomElement(AntDomElement element) {
-        //for (GenericDomValue child : DomUtil.getDefinedChildrenOfType(element, GenericDomValue.class, false, true)) {
-        //  final XmlElement valueElement = DomUtil.getValueElement(child);
-        //  if (valueElement != null) {
-        //    checkReferences(valueElement, holder, child);
-        //  }
-        //}
-        super.visitAntDomElement(element);
-      }
     });
   }
 

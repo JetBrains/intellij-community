@@ -66,11 +66,6 @@ public class SynchronizeDiff extends DirDiffAction {
   }
 
   @Override
-  protected boolean isFullReload() {
-    return false;
-  }
-
-  @Override
   protected boolean isReloadNeeded() {
     return false;
   }

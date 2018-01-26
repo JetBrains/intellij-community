@@ -21,6 +21,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
+import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
 import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
@@ -177,13 +178,15 @@ internal object JavaConverter {
         is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
         is PsiExpression -> convertExpression(el, givenParent, requiredType)
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
-        is PsiIdentifier -> el<USimpleNameReferenceExpression> {
-          JavaUSimpleNameReferenceExpression(el, el.text, givenParent)
-        }
+        is PsiIdentifier -> el<USimpleNameReferenceExpression> { JavaUSimpleNameReferenceExpression(el, el.text, givenParent) }
+                            ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
         is PsiNameValuePair -> el<UNamedExpression>(build(::JavaUNamedExpression))
         is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
         is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
+        is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
+            el<UExpression> { JavaUAnnotationCallExpression(it, givenParent) }
+          }
         else -> null
       }
     }

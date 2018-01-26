@@ -3,6 +3,6 @@ class Test {
     class Foo {
     }
 
-    Foo x;
+    Fo<caret>o x;
   };
 }

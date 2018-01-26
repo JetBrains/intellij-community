@@ -137,10 +137,4 @@ public class CreateLocalVariableFromUsageFix extends Intention {
     }
     return null;
   }
-
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

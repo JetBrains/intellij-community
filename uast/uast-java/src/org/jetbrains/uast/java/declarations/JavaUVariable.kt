@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElement(
-  givenParent), PsiVariable, UVariable, JavaUElementWithComments {
+  givenParent), PsiVariable, UVariable, JavaUElementWithComments, UAnchorOwner {
 
   abstract override val javaPsi: PsiVariable
 
@@ -37,7 +37,7 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
   override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
   override val typeReference by lz { getLanguagePlugin().convertOpt<UTypeReferenceExpression>(psi.typeElement, this) }
 
-  override val uastAnchor: UElement
+  override val uastAnchor: UIdentifier
     get() = UIdentifier(psi.nameIdentifier, this)
 
   override fun equals(other: Any?) = other is AbstractJavaUVariable && psi == other.psi
@@ -107,7 +107,7 @@ open class JavaULocalVariable(
 open class JavaUEnumConstant(
   psi: PsiEnumConstant,
   givenParent: UElement?
-) : AbstractJavaUVariable(givenParent), UEnumConstant, PsiEnumConstant by psi {
+) : AbstractJavaUVariable(givenParent), UEnumConstant, UCallExpressionEx, PsiEnumConstant by psi {
   override val initializingClass: UClass? by lz { getLanguagePlugin().convertOpt<UClass>(psi.initializingClass, this) }
 
   override val psi
@@ -137,6 +137,8 @@ open class JavaUEnumConstant(
       getLanguagePlugin().convertElement(it, this) as? UExpression ?: UastEmptyExpression(this)
     } ?: emptyList()
   }
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override val returnType: PsiType?
     get() = psi.type

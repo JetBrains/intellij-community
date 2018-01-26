@@ -71,7 +71,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   public AntBuildTarget[] getTargets() {
     final List<AntBuildTargetBase> list = getTargetsList();
-    return list.toArray(new AntBuildTargetBase[list.size()]);
+    return list.toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   public AntBuildTarget[] getFilteredTargets() {
@@ -81,7 +81,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         filtered.add(buildTarget);
       }
     }
-    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(new AntBuildTargetBase[filtered.size()]);
+    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   @Nullable

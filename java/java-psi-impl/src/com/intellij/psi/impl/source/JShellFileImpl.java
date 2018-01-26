@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JShellElementType;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,11 +34,6 @@ import java.util.List;
 public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile {
   public JShellFileImpl(FileViewProvider viewProvider) {
     super(JShellElementType.FILE, JShellElementType.FILE, viewProvider);
-  }
-
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    return super.processDeclarations(processor, state, lastParent, place);
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -71,7 +70,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiReferenceExpression nanExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiElement target = nanExpression.resolve();
       if (!(target instanceof PsiField)) {
@@ -95,7 +94,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
       }
       assert operand != null;
       CommentTracker commentTracker = new CommentTracker();
-      final String operandText = commentTracker.markUnchanged(operand).getText();
+      final String operandText = commentTracker.text(operand);
       final IElementType tokenType = comparison.getOperationTokenType();
       final String negationText;
       if (tokenType.equals(JavaTokenType.EQEQ)) {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -13,6 +11,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +59,7 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
   }
 
   @Override
-  public void loadState(ProjectDictionaryState state) {
+  public void loadState(@NotNull ProjectDictionaryState state) {
     if (state != null) {
       this.dictionaryStates = state.dictionaryStates;
     }

@@ -23,7 +23,7 @@ public class PyEnvSufficiencyTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testSufficiency() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && SETTINGS.isEnvConfiguration()) {
       checkStaging();
 
       Set<String> tags = Sets.newHashSet();

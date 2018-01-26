@@ -16,6 +16,7 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
@@ -112,7 +113,7 @@ public class ModelMergerImpl implements ModelMerger {
         }
         if ("equals".equals(methodName)) {
           final Object arg = args[0];
-          return arg != null && arg instanceof MergedObject && implementations.equals(((MergedObject)arg).getImplementations());
+          return arg instanceof MergedObject && implementations.equals(((MergedObject)arg).getImplementations());
 
         }
         return null;
@@ -235,8 +236,7 @@ public class ModelMergerImpl implements ModelMerger {
     final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), (Object[])implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
-    final T t = AdvancedProxy.createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
-    return t;
+    return AdvancedProxy.createProxy(handler, null, commonClasses.toArray(ArrayUtil.EMPTY_CLASS_ARRAY));
   }
 
   private static <T extends Collection<Class>> T getCommonClasses(final T result, final Object... implementations) {

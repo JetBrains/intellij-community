@@ -35,13 +35,14 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -91,7 +92,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
         for (String variant : myUnboundParams) {
           items.add(LookupElementBuilder.create(variant));
         }
-        LookupManager.getInstance(project).showLookup(editor, items.toArray(new LookupElement[items.size()]));
+        LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
       });
     }
   }
@@ -119,7 +120,7 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
       PsiJavaCodeReferenceElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
       if (element != null) {
         Collections.sort(originalClasses, new PsiProximityComparator(element.getElement()));
-        JList<PsiClass> list = new JBList<>(originalClasses.toArray(new PsiClass[originalClasses.size()]));
+        JList<PsiClass> list = new JBList<>(originalClasses.toArray(PsiClass.EMPTY_ARRAY));
         list.setCellRenderer(new FQNameCellRenderer());
         final Runnable runnable = () -> {
           if (!element.isValid()) return;

@@ -420,13 +420,6 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
   if (classPath.size() == 0) return false;
   vmOptionLines.push_back(std::string("-Djava.class.path=") + classPath);
 
-  std::string bootClassPathLibs = LoadStdString(IDS_BOOTCLASSPATH_LIBS);
-  std::string bootClassPath = CollectLibJars(bootClassPathLibs);
-  if (bootClassPath.size() > 0)
-  {
-    vmOptionLines.push_back(std::string("-Xbootclasspath/a:") + bootClassPath);
-  }
-
   return true;
 }
 

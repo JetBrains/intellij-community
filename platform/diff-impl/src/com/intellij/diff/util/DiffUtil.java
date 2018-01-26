@@ -30,8 +30,11 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -98,6 +101,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
+import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -252,6 +256,38 @@ public class DiffUtil {
     if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
+  }
+
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
+    assert foldingSupport.getCount() == 1;
+    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
+    editor.getGutterComponentEx().setLineNumberConvertor(foldingLineConvertor);
+  }
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
+    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    editor.getGutterComponentEx().setLineNumberConvertor(contentLineConvertor);
+  }
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
+                                          @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
+    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
+    editor.getGutterComponentEx().setLineNumberConvertor(mergeLineConverters(contentLineConvertor, foldingLineConvertor));
+  }
+
+  @Nullable
+  public static TIntFunction getContentLineConvertor(@NotNull DocumentContent content) {
+    return content.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
+  }
+
+  @Nullable
+  public static TIntFunction mergeLineConverters(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
+    if (convertor1 == null && convertor2 == null) return null;
+    if (convertor1 == null) return convertor2;
+    if (convertor2 == null) return convertor1;
+    return value -> convertor1.execute(convertor2.execute(value));
   }
 
   //
@@ -1522,6 +1558,23 @@ public class DiffUtil {
 
     List<T> filteredTools = ContainerUtil.filter(tools, tool -> !suppressedTools.contains(tool.getClass()));
     return filteredTools.isEmpty() ? tools : filteredTools;
+  }
+
+  @Nullable
+  public static DiffTool findToolSubstitutor(@NotNull DiffTool tool, @NotNull DiffContext context, @NotNull DiffRequest request) {
+    for (DiffToolSubstitutor substitutor : DiffToolSubstitutor.EP_NAME.getExtensions()) {
+      DiffTool replacement = substitutor.getReplacement(tool, context, request);
+      if (replacement == null) continue;
+
+      boolean canShow = replacement.canShow(context, request);
+      if (!canShow) {
+        LOG.error("DiffTool substitutor returns invalid tool");
+        continue;
+      }
+
+      return replacement;
+    }
+    return null;
   }
 
   //

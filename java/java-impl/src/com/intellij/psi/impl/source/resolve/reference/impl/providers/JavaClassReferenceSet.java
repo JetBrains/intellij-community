@@ -189,7 +189,7 @@ public class JavaClassReferenceSet {
       }
     }
 
-    myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
+    myReferences = referencesList.toArray(new JavaClassReference[0]);
   }
 
   private static int skipSpaces(int pos, int max, @NotNull String str, boolean allowSpaces) {

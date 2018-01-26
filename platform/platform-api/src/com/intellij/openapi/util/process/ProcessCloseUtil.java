@@ -30,6 +30,8 @@ public class ProcessCloseUtil {
   }
 
   public static void close(final Process process) {
+    if (!process.isAlive()) return;
+    
     final Semaphore outerSemaphore = new Semaphore();
     outerSemaphore.down();
 

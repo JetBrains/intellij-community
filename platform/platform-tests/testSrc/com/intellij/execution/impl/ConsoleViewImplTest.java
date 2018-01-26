@@ -415,31 +415,33 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
   public void testInputFilter() {
     Disposer.dispose(myConsole); // have to re-init extensions
     List<Pair<String, ConsoleViewContentType>> registered = new ArrayList<>();
-    ExtensionPoint<ConsoleInputFilterProvider> extensionPoint = Extensions.getRootArea().getExtensionPoint(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS);
     ConsoleInputFilterProvider crazyProvider = project -> new InputFilter[]{
       (text, contentType) -> {
         registered.add(Pair.create(text, contentType));
         return Collections.singletonList(Pair.create("+!" + text + "-!", contentType));
       }
     };
-    extensionPoint.registerExtension(crazyProvider);
+    PlatformTestUtil.registerExtension(ConsoleInputFilterProvider.INPUT_FILTER_PROVIDERS, crazyProvider, getTestRootDisposable());
     myConsole = createConsole();
-    try {
-      StringBuilder expectedText = new StringBuilder();
-      List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();
-      for (int i=0;i<25;i++) {
-        String chunk = i + "";
-        myConsole.print(chunk, ConsoleViewContentType.USER_INPUT);
-        expectedText.append("+!" + i + "-!");
-        expectedRegisteredTokens.add(Pair.create(chunk, ConsoleViewContentType.USER_INPUT));
+    StringBuilder expectedText = new StringBuilder();
+    List<Pair<String, ConsoleViewContentType>> expectedRegisteredTokens = new ArrayList<>();
+    for (int i=0;i<25;i++) {
+      String chunk = i + "";
+      myConsole.print(chunk, ConsoleViewContentType.USER_INPUT);
+      expectedText.append("+!" + i + "-!");
+      expectedRegisteredTokens.add(Pair.create(chunk, ConsoleViewContentType.USER_INPUT));
+
+      for (int j = 0; j < chunk.length(); j++) {
+        typeIn(myConsole.getEditor(), chunk.charAt(j));
       }
-      myConsole.flushDeferredText();
-      myConsole.waitAllRequests();
-      assertEquals(expectedText.toString(), myConsole.getText());
-      assertEquals(expectedRegisteredTokens, registered);
+      chunk.chars().forEach(c->{
+        expectedText.append("+!" + (char)c + "-!");
+        expectedRegisteredTokens.add(Pair.create(String.valueOf((char)c), ConsoleViewContentType.USER_INPUT));
+      });
     }
-    finally {
-      extensionPoint.unregisterExtension(crazyProvider);
-    }
+    myConsole.flushDeferredText();
+    myConsole.waitAllRequests();
+    assertEquals(expectedText.toString(), myConsole.getText());
+    assertEquals(expectedRegisteredTokens, registered);
   }
 }

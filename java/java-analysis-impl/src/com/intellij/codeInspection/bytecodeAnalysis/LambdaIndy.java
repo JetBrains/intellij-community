@@ -34,10 +34,10 @@ final class LambdaIndy {
     "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;";
   private final int myTag;
   private final Type myFunctionalMethodType;
-  private final Method myMethod;
+  private final Member myMethod;
   private final Type myFunctionalInterfaceType;
 
-  private LambdaIndy(int tag, Type functionalMethodType, Method lambdaMethod, Type functionalInterfaceType) {
+  private LambdaIndy(int tag, Type functionalMethodType, Member lambdaMethod, Type functionalInterfaceType) {
     myTag = tag;
     myFunctionalMethodType = functionalMethodType;
     myMethod = lambdaMethod;
@@ -69,7 +69,7 @@ final class LambdaIndy {
     return myFunctionalMethodType;
   }
 
-  public Method getMethod() {
+  public Member getMethod() {
     return myMethod;
   }
 
@@ -105,7 +105,7 @@ final class LambdaIndy {
        indyNode.bsmArgs.length >= 3 && indyNode.bsmArgs[1] instanceof Handle && indyNode.bsmArgs[2] instanceof Type) {
       Handle lambdaBody = (Handle)indyNode.bsmArgs[1];
       Type targetType = (Type)indyNode.bsmArgs[2];
-      Method targetMethod = new Method(lambdaBody.getOwner(), lambdaBody.getName(), lambdaBody.getDesc());
+      Member targetMethod = new Member(lambdaBody.getOwner(), lambdaBody.getName(), lambdaBody.getDesc());
       Type retType = Type.getReturnType(indyNode.desc);
       return new LambdaIndy(lambdaBody.getTag(), targetType, targetMethod, retType);
     }

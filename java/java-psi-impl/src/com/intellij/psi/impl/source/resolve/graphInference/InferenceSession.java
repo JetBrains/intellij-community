@@ -196,6 +196,9 @@ public class InferenceSession {
     if (parent instanceof PsiCall) {
       return MethodCandidateInfo.getCurrentMethod(((PsiCall)parent).getArgumentList());
     }
+    if (parent instanceof PsiAnonymousClass) {
+      return getCurrentProperties(parent.getParent());
+    }
     return null;
   }
 
@@ -378,6 +381,9 @@ public class InferenceSession {
       if (!repeatInferencePhases()) {
         if (expectedActualErrorMessage != null && myErrorMessages != null) {
           myErrorMessages.add(0, expectedActualErrorMessage);
+        }
+        if (isOverloadCheck()) {
+          return;
         }
       }
       //proceed to B3 constraints
@@ -651,7 +657,7 @@ public class InferenceSession {
                           InferenceBound.UPPER, null);
       }
     }
-    return result.toArray(new InferenceVariable[result.size()]);
+    return result.toArray(new InferenceVariable[0]);
   }
 
   public void registerReturnTypeConstraints(PsiType returnType, PsiType targetType, PsiElement context) {
@@ -1034,7 +1040,7 @@ public class InferenceSession {
         }
       }
       final List<PsiType> extendsTypes = typeParameter.getBounds(InferenceBound.UPPER);
-      final PsiType[] bounds = extendsTypes.toArray(new PsiType[extendsTypes.size()]);
+      final PsiType[] bounds = extendsTypes.toArray(PsiType.EMPTY_ARRAY);
       if (GenericsUtil.findTypeParameterBoundError(typeParameter, bounds, substitutor, myContext, true) != null) {
         return true;
       }
@@ -1681,7 +1687,7 @@ public class InferenceSession {
 
     siteSubstitutor1 = getSiteSubstitutor(siteSubstitutor1, params);
 
-    final InferenceSession session = new InferenceSession(params.toArray(new PsiTypeParameter[params.size()]), siteSubstitutor1, m2.getManager(), context);
+    final InferenceSession session = new InferenceSession(params.toArray(PsiTypeParameter.EMPTY_ARRAY), siteSubstitutor1, m2.getManager(), context);
 
     final PsiParameter[] parameters1 = m1.getParameterList().getParameters();
     final PsiParameter[] parameters2 = m2.getParameterList().getParameters();
@@ -1782,7 +1788,7 @@ public class InferenceSession {
 
         //Otherwise, if R1 and R2 are functional interface types, and neither interface is a subinterface of the other, 
         //then these rules are applied recursively to R1 and R2, for each result expression in expi.
-        if (!isFunctionalTypeMoreSpecific(sReturnType, tReturnType, session, returnExpressions.toArray(new PsiExpression[returnExpressions.size()]))) {
+        if (!isFunctionalTypeMoreSpecific(sReturnType, tReturnType, session, returnExpressions.toArray(PsiExpression.EMPTY_ARRAY))) {
           return false;
         }
       } else {

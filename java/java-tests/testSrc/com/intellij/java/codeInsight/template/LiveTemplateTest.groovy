@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
@@ -32,7 +18,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
@@ -46,7 +31,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author spleaner
  */
@@ -527,7 +511,7 @@ class Outer {
   }
 
   void "_testIterForceBraces"() {
-    def settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    def settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
     settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
 
     try {
@@ -1020,6 +1004,19 @@ class Foo {
     state.nextTab()
     assert !state
     myFixture.checkResult('tableName tableNameID c')
+  }
+  
+  void "test substringBefore macro"() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("result", "user", '$A$ $B$ $C$')
+    template.addVariable('A', 'substringBefore("hello.world", ".")', '"empty"', false)
+    template.addVariable('B', 'substringBefore("hello world", ".")', '"empty"', false)
+    template.addVariable('C', 'substringBefore("hello world")', '"empty"', false)
+    myFixture.configureByText "a.txt", "<caret>"
+    startTemplate(template)
+    state.nextTab()
+    assert !state
+    myFixture.checkResult('hello empty empty')
   }
 
   void "test snakeCase should convert hyphens to underscores"() {
@@ -1549,5 +1546,21 @@ java.util.List<? extends Integer> list;
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
     myFixture.checkResult ' foo g<caret>'
+  }
+
+  void testComments() {
+    myFixture.configureByText 'a.java', '<caret>'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$V1$ line comment\n$V2$ block comment $V3$\n$V4$ any comment $V5$')
+    template.addVariable("V1", 'lineCommentStart()', '', false)
+    template.addVariable("V2", 'blockCommentStart()', '', false)
+    template.addVariable("V3", 'blockCommentEnd()', '', false)
+    template.addVariable("V4", 'commentStart()', '', false)
+    template.addVariable("V5", 'commentEnd()', '', false)
+    
+    manager.startTemplate(myFixture.editor, template)
+    
+    myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
   }
 }

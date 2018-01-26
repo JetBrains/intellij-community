@@ -135,7 +135,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     for (PyBreakpointHandlerFactory factory : Extensions.getExtensions(PyBreakpointHandlerFactory.EP_NAME)) {
       breakpointHandlers.add(factory.createBreakpointHandler(this));
     }
-    myBreakpointHandlers = breakpointHandlers.toArray(new XBreakpointHandler[breakpointHandlers.size()]);
+    myBreakpointHandlers = breakpointHandlers.toArray(XBreakpointHandler.EMPTY_ARRAY);
 
     myEditorsProvider = new PyDebuggerEditorsProvider();
     mySmartStepIntoHandler = new PySmartStepIntoHandler(this);
@@ -1176,7 +1176,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     final PsiFile file = getPsiFile(currentPosition);
 
-    if (file == null || typeName == null || !(file instanceof PyFile)) return null;
+    if (typeName == null || !(file instanceof PyFile)) return null;
 
 
     final PyType pyType = resolveTypeFromString(typeName, file);

@@ -3,7 +3,10 @@ package com.intellij.vcs.log.util;
 
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -116,10 +119,10 @@ public class VcsLogUtil {
 
   @NotNull
   public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
-                                                    @NotNull VcsLogFilterCollection collection) {
-    return getAllVisibleRoots(roots, collection.getRootFilter(), collection.getStructureFilter());
+                                                    @NotNull VcsLogFilterCollection filters) {
+    return getAllVisibleRoots(roots, filters.get(VcsLogFilterCollection.ROOT_FILTER), filters.get(VcsLogFilterCollection.STRUCTURE_FILTER));
   }
-  
+
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
   @NotNull
@@ -153,8 +156,9 @@ public class VcsLogUtil {
   // so check that before calling this method
   @NotNull
   public static Set<FilePath> getFilteredFilesForRoot(@NotNull final VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
-    if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
-    Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
+    VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    if (structureFilter == null) return Collections.emptySet();
+    Collection<FilePath> files = structureFilter.getFiles();
 
     return new HashSet<>(ContainerUtil.filter(files, filePath -> {
       VirtualFile virtualFile = filePath.getVirtualFile();
@@ -168,7 +172,10 @@ public class VcsLogUtil {
   }
 
   @Nullable
-  public static String getSingleFilteredBranch(@NotNull VcsLogBranchFilter filter, @NotNull VcsLogRefs refs) {
+  public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
+    VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
+    if (filter == null) return null;
+    
     String branchName = null;
     Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
     for (VcsRef branch : refs.getBranches()) {
@@ -234,5 +241,19 @@ public class VcsLogUtil {
                                               new Date(detail.getCommitTime()),
                                               detail.getChanges(),
                                               convertToRevisionNumber(detail.getId()));
+  }
+
+  /**
+   * Registers disposable on both provided parent and project. When project is disposed, disposable is still accessed through parent,
+   * while when parent is disposed, disposable gets removed from memory. So this method is suitable for parents that depend on project,
+   * but could be created and disposed several times through one project life,
+   *
+   * @param parent     parent to register disposable on.
+   * @param project    project to register disposable on.
+   * @param disposable disposable to register.
+   */
+  public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
+    Disposer.register(parent, () -> Disposer.dispose(disposable));
+    Disposer.register(project, disposable);
   }
 }

@@ -184,9 +184,4 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public String getDataFileExtension() {
     return "exec";
   }
-
-  @Override
-  public boolean isCoverageByTestApplicable() {
-    return false;
-  }
 }

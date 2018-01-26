@@ -1,10 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ThreeState;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -17,7 +16,7 @@ import java.util.List;
 /**
  * @author nik
  */
-@State(name = "UnloadedModulesList", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "UnloadedModulesList", storages = @Storage(value = StoragePathMacros.WORKSPACE_FILE, useSaveThreshold = ThreeState.NO))
 public class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
   private List<String> myModuleNames = new ArrayList<>();
 
@@ -42,7 +41,7 @@ public class UnloadedModulesListStorage implements PersistentStateComponent<Unlo
   }
 
   @Override
-  public void loadState(UnloadedModulesListStorage state) {
+  public void loadState(@NotNull UnloadedModulesListStorage state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

@@ -102,7 +102,7 @@ public class RepositoryLibrarySupport {
     }
 
     LibraryProperties libraryProperties = libraryEx.getProperties();
-    if (libraryProperties == null || !(libraryProperties instanceof RepositoryLibraryProperties)) {
+    if (!(libraryProperties instanceof RepositoryLibraryProperties)) {
       return false;
     }
     RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)libraryProperties;

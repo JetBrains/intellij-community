@@ -98,7 +98,7 @@ public class StaticImportResolveProcessor implements PsiScopeProcessor, NameHint
     if (!myClassResult.isEmpty()) {
       myResults.addAll(myClassResult);
     }
-    return myResults.toArray(new JavaResolveResult[myResults.size()]);
+    return myResults.toArray(JavaResolveResult.EMPTY_ARRAY);
   }
 
   private static void filterInvalid(final List<JavaResolveResult> resultList) {

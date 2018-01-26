@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.build.BuildConsoleUtils;
 import com.intellij.build.BuildContentDescriptor;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.SyncViewManager;
@@ -36,6 +37,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
@@ -512,13 +514,12 @@ public class ExternalSystemUtil {
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
             String title = ExternalSystemBundle.message("notification.project.refresh.fail.title",
                                                         externalSystemId.getReadableName(), projectName);
-            FailureResultImpl failureResult = createFailureResult(title, e, externalSystemId, project);
+            com.intellij.build.events.FailureResult failureResult = createFailureResult(title, e, externalSystemId, project);
             String message = isPreviewMode ? "project preview creation failed" : "sync failed";
             ServiceManager.getService(project, SyncViewManager.class).onEvent(
               new FinishBuildEventImpl(id, null, System.currentTimeMillis(), message, failureResult));
-            String exceptionMessage = ExceptionUtil.getMessage(e);
-            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
-            processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+
+            printFailure(e, failureResult, consoleView, processHandler);
             processHandler.notifyProcessTerminated(1);
           }
 
@@ -625,11 +626,27 @@ public class ExternalSystemUtil {
     }
   }
 
+  public static void printFailure(@NotNull Exception e,
+                                  com.intellij.build.events.FailureResult failureResult,
+                                  ExecutionConsole consoleView,
+                                  ExternalSystemProcessHandler processHandler) {
+    if (consoleView instanceof ConsoleView) {
+      for (com.intellij.build.events.Failure failure : failureResult.getFailures()) {
+        BuildConsoleUtils.printDetails((ConsoleView)consoleView, failure);
+      }
+    }
+    else {
+      String exceptionMessage = ExceptionUtil.getMessage(e);
+      String text = exceptionMessage == null ? e.toString() : exceptionMessage;
+      processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+    }
+  }
+
   @NotNull
-  public static FailureResultImpl createFailureResult(@NotNull String title,
-                                                      @NotNull Exception exception,
-                                                      @NotNull ProjectSystemId externalSystemId,
-                                                      @NotNull Project project) {
+  public static com.intellij.build.events.FailureResult createFailureResult(@NotNull String title,
+                                                                            @NotNull Exception exception,
+                                                                            @NotNull ProjectSystemId externalSystemId,
+                                                                            @NotNull Project project) {
     ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
     NotificationData notificationData = notificationManager.createNotification(title, exception, externalSystemId, project);
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);

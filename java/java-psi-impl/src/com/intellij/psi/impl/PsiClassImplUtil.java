@@ -47,7 +47,7 @@ import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,19 +72,19 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiField[] getAllFields(@NotNull PsiClass aClass) {
     List<PsiField> map = getAllByMap(aClass, MemberType.FIELD);
-    return map.toArray(new PsiField[map.size()]);
+    return map.toArray(PsiField.EMPTY_ARRAY);
   }
 
   @NotNull
   public static PsiMethod[] getAllMethods(@NotNull PsiClass aClass) {
     List<PsiMethod> methods = getAllByMap(aClass, MemberType.METHOD);
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
   public static PsiClass[] getAllInnerClasses(@NotNull PsiClass aClass) {
     List<PsiClass> classes = getAllByMap(aClass, MemberType.CLASS);
-    return classes.toArray(new PsiClass[classes.size()]);
+    return classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -97,7 +97,7 @@ public class PsiClassImplUtil {
   public static PsiMethod[] findMethodsByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> methods = findByMap(aClass, name, checkBases, MemberType.METHOD);
     //noinspection SuspiciousToArrayCall
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -111,7 +111,7 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiMethod[] findMethodsBySignature(@NotNull PsiClass aClass, @NotNull PsiMethod patternMethod, final boolean checkBases) {
     List<PsiMethod> methods = findMethodsBySignature(aClass, patternMethod, checkBases, false);
-    return methods.toArray(new PsiMethod[methods.size()]);
+    return methods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -915,7 +915,7 @@ public class PsiClassImplUtil {
         result.add(psiClass);
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -1019,7 +1019,7 @@ public class PsiClassImplUtil {
           result.add((PsiClassType)conjunct);
         }
       }
-      return result.toArray(new PsiClassType[result.size()]);
+      return result.toArray(PsiClassType.EMPTY_ARRAY);
     }
     if (upperBound instanceof PsiClassType) {
       return new PsiClassType[] {(PsiClassType)upperBound};

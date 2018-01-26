@@ -85,6 +85,7 @@ public class RollbackWorker {
     if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
                                      new PerformInBackgroundOption() {
+                                       @Override
                                        public boolean shouldStartInBackground() {
                                          return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
                                        }
@@ -115,7 +116,7 @@ public class RollbackWorker {
   @NotNull
   private List<Change> revertPartialChanges(Collection<Change> changes) {
     return PartialChangesUtil.processPartialChanges(
-      myProject, changes,
+      myProject, changes, true,
       (partialChanges, tracker) -> {
         for (ChangeListChange change : partialChanges) {
           tracker.rollbackChangelistChanges(change.getChangeListId());

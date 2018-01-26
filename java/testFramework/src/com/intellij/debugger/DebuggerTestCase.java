@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
@@ -226,8 +224,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     DebuggerSettings.getInstance().DEBUGGER_TRANSPORT = transport;
 
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
-    debuggerRunnerSettings.LOCAL = true;
-    debuggerRunnerSettings.setDebugPort(String.valueOf(DEFAULT_ADDRESS));
+    debuggerRunnerSettings.setLocal(true);
+    debuggerRunnerSettings.setTransport(transport);
+    debuggerRunnerSettings.setDebugPort(transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : String.valueOf(DEFAULT_ADDRESS));
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)

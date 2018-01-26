@@ -159,7 +159,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       model.add(new NamedScope.UnnamedScope(unnamedScope));
     }
     model.remove(DefaultScopesProvider.getInstance(myProject).getProblemsScope());
-    return model.toArray(new NamedScope[model.size()]);
+    return model.toArray(new NamedScope[0]);
   }
 
   @Nullable

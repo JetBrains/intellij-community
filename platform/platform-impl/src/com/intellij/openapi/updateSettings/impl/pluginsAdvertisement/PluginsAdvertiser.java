@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.google.common.collect.ImmutableMap;
@@ -48,8 +34,9 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -215,7 +202,7 @@ public class PluginsAdvertiser implements StartupActivity {
     ShowSettingsUtil.getInstance()
       .editConfigurable(project, managerConfigurable, () -> {
         final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)createPanel.getPluginsModel();
-        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[disabledPlugins.size()]);
+        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[0]);
         pluginsModel.enableRows(descriptors, Boolean.TRUE);
         createPanel.getPluginTable().select(descriptors);
       });
@@ -271,7 +258,7 @@ public class PluginsAdvertiser implements StartupActivity {
         if (myAllPlugins != null) {
           final PluginsAdvertiserDialog advertiserDialog =
             new PluginsAdvertiserDialog(null,
-                                        myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                        myPlugins.toArray(new PluginDownloader[0]),
                                         myAllPlugins);
           if (advertiserDialog.showAndGet()) {
             onSuccess.run();
@@ -418,7 +405,8 @@ public class PluginsAdvertiser implements StartupActivity {
 
   @Tag("exts")
   public static class KnownExtensions {
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    @OptionTag
+    @XMap
     public Map<String, PluginSet> myExtensions = new HashMap<>();
 
     @SuppressWarnings("unused")
@@ -533,7 +521,7 @@ public class PluginsAdvertiser implements StartupActivity {
         else if ("configure".equals(description)) {
           LOG.assertTrue(myAllPlugins != null);
           notification.expire();
-          new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins).show();
+          new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[0]), myAllPlugins).show();
         }
         else if ("enable".equals(description)) {
           enablePlugins(myProject, myDisabledPlugins.values());

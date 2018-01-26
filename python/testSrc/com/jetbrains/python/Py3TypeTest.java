@@ -902,6 +902,38 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-27398
+  public void testDataclassPostInitParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("int",
+                            "from dataclasses import dataclass, InitVar\n" +
+                            "@dataclass\n" +
+                            "class Foo:\n" +
+                            "    i: int\n" +
+                            "    j: int\n" +
+                            "    d: InitVar[int]\n" +
+                            "    def __post_init__(self, d):\n" +
+                            "        expr = d")
+    );
+  }
+
+  // PY-27398
+  public void testDataclassPostInitParameterNoInit() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("Any",
+                            "from dataclasses import dataclass, InitVar\n" +
+                            "@dataclass(init=False)\n" +
+                            "class Foo:\n" +
+                            "    i: int\n" +
+                            "    j: int\n" +
+                            "    d: InitVar[int]\n" +
+                            "    def __post_init__(self, d):\n" +
+                            "        expr = d")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

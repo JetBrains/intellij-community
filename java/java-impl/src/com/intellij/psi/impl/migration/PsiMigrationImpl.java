@@ -22,7 +22,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMigration;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.ArrayList;
 import java.util.List;

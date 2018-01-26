@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -133,6 +133,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   protected abstract SettingsEditor<T> createConfigurationEditor();
 
+  /**
+   * <strong>Always call super</strong> when overwriting this method
+   */
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
@@ -332,7 +335,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   public static void copyParams(AbstractPythonRunConfigurationParams source, AbstractPythonRunConfigurationParams target) {
-    target.setEnvs(new HashMap<>(source.getEnvs()));
+    target.setEnvs(new LinkedHashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
     target.setSdkHome(source.getSdkHome());

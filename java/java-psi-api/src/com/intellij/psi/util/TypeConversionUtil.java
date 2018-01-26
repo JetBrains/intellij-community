@@ -658,7 +658,7 @@ public class TypeConversionUtil {
       final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)element;
       final PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       final PsiType type = arrayExpression.getType();
-      if (type == null || !(type instanceof PsiArrayType)) return false;
+      if (!(type instanceof PsiArrayType)) return false;
       final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
       if (indexExpression == null) return false;
       final PsiType indexType = indexExpression.getType();

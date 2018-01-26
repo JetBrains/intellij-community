@@ -64,7 +64,7 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
       }
     }
 
-    return result.toArray(new GrField[result.size()]);
+    return result.toArray(GrField.EMPTY_ARRAY);
   }
 
   @NotNull

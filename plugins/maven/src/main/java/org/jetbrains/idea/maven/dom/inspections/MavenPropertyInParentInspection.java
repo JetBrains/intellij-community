@@ -82,7 +82,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
         validate(manager, isOnTheFly, problems, mavenParent.getVersion());
 
         if (problems.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
-        return problems.toArray(new ProblemDescriptor[problems.size()]);
+        return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
       }
     }
 
@@ -124,7 +124,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     if (psiReference == null) return null;
 
     PsiElement resolvedElement = psiReference.resolve();
-    if (resolvedElement == null || !(resolvedElement instanceof MavenPsiElementWrapper)) return null;
+    if (!(resolvedElement instanceof MavenPsiElementWrapper)) return null;
 
     PsiElement xmlTag = ((MavenPsiElementWrapper)resolvedElement).getWrappee();
     if (!(xmlTag instanceof XmlTag)) return null;

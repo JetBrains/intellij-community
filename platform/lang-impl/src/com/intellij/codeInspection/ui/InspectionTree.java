@@ -1,14 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.BatchModeDescriptorsUtil;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,12 +15,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
@@ -38,6 +36,7 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
 
@@ -190,7 +189,7 @@ public class InspectionTree extends Tree {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
       }
-      return ArrayUtil.reverseArray(result.toArray(new RefEntity[result.size()]));
+      return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
     }
     return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
@@ -214,78 +213,50 @@ public class InspectionTree extends Tree {
 
   @NotNull
   public CommonProblemDescriptor[] getAllValidSelectedDescriptors() {
-    return getSelectedDescriptors(false, null, true, false);
+    return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, true));
   }
 
   @NotNull
   public CommonProblemDescriptor[] getSelectedDescriptors() {
-    return getSelectedDescriptors(false, null, false, false);
+    return BatchModeDescriptorsUtil.flattenDescriptors(getSelectedDescriptorPacks(false, null, false));
   }
 
   @NotNull
-  public CommonProblemDescriptor[] getSelectedDescriptors(boolean sortedByPosition,
-                                                          @Nullable Set<VirtualFile> readOnlyFilesSink,
-                                                          boolean allowResolved,
-                                                          boolean allowSuppressed) {
+  public List<CommonProblemDescriptor[]> getSelectedDescriptorPacks(boolean sortedByPosition,
+                                                                    @Nullable Set<VirtualFile> readOnlyFilesSink,
+                                                                    boolean allowResolved) {
     final TreePath[] paths = getSelectionPaths();
-    if (paths == null) return CommonProblemDescriptor.EMPTY_ARRAY;
-    final TreePath[] selectionPaths = TreeUtil.selectMaximals(paths);
-    final List<CommonProblemDescriptor> descriptors = new ArrayList<>();
+    if (paths == null) return Collections.emptyList();
 
-    MultiMap<Object, ProblemDescriptionNode> parentToChildNode = new MultiMap<>();
-    final List<InspectionTreeNode> nonDescriptorNodes = new SmartList<>();
-    for (TreePath path : selectionPaths) {
-      final Object[] pathAsArray = path.getPath();
-      final int length = pathAsArray.length;
-      final Object node = pathAsArray[length - 1];
-      if (node instanceof ProblemDescriptionNode) {
-        if (isNodeValidAndIncluded((ProblemDescriptionNode)node, allowResolved, allowSuppressed)) {
-          if (length >= 2) {
-            parentToChildNode.putValue(pathAsArray[length - 2], (ProblemDescriptionNode)node);
-          } else {
-            parentToChildNode.putValue(node, (ProblemDescriptionNode)node);
-          }
-        }
-      } else {
-        nonDescriptorNodes.add((InspectionTreeNode)node);
+    // key can be node or VirtualFile (if problem descriptor node parent is a file/member RefElementNode).
+    MultiMap<Object, CommonProblemDescriptor> parentToChildNode = new MultiMap<>();
+    TreeUtil
+      .treePathTraverser(this)
+      .withRoots(Arrays.asList(paths))
+      .traverse()
+      .map(p -> p.getLastPathComponent())
+      .filter(ProblemDescriptionNode.class)
+      .filter(node -> node.getDescriptor() != null && isNodeValidAndIncluded(node, allowResolved))
+      .consumeEach(node -> {
+        Object key = getVirtualFileOrEntity(node.getElement());
+        parentToChildNode.putValue(key, node.getDescriptor());
+      });
+
+
+    final List<CommonProblemDescriptor[]> descriptors = new ArrayList<>();
+    for (Map.Entry<Object, Collection<CommonProblemDescriptor>> entry : parentToChildNode.entrySet()) {
+      Object key = entry.getKey();
+      if (readOnlyFilesSink != null && key instanceof VirtualFile && !((VirtualFile)key).isWritable()) {
+        readOnlyFilesSink.add((VirtualFile)key);
       }
-    }
-
-    for (InspectionTreeNode node : nonDescriptorNodes) {
-      processChildDescriptorsDeep(node, descriptors, sortedByPosition, allowResolved, allowSuppressed, readOnlyFilesSink);
-    }
-
-    for (Map.Entry<Object, Collection<ProblemDescriptionNode>> entry : parentToChildNode.entrySet()) {
-      final Collection<ProblemDescriptionNode> siblings = entry.getValue();
-      if (siblings.size() == 1) {
-        final ProblemDescriptionNode descriptorNode = ContainerUtil.getFirstItem(siblings);
-        LOG.assertTrue(descriptorNode != null);
-        CommonProblemDescriptor descriptor = descriptorNode.getDescriptor();
-        if (descriptor != null) {
-          descriptors.add(descriptor);
-          if (readOnlyFilesSink != null) {
-            collectReadOnlyFiles(descriptor, readOnlyFilesSink);
-          }
-        }
-      } else {
-        List<CommonProblemDescriptor> currentDescriptors = new ArrayList<>();
-        for (ProblemDescriptionNode sibling : siblings) {
-          final CommonProblemDescriptor descriptor = sibling.getDescriptor();
-          if (descriptor != null) {
-            if (readOnlyFilesSink != null) {
-              collectReadOnlyFiles(descriptor, readOnlyFilesSink);
-            }
-            currentDescriptors.add(descriptor);
-          }
-        }
-        if (sortedByPosition) {
-          Collections.sort(currentDescriptors, DESCRIPTOR_COMPARATOR);
-        }
-        descriptors.addAll(currentDescriptors);
+      Stream<CommonProblemDescriptor> stream = entry.getValue().stream();
+      if (sortedByPosition) {
+        stream = stream.sorted(DESCRIPTOR_COMPARATOR);
       }
+      descriptors.add(stream.toArray(CommonProblemDescriptor.ARRAY_FACTORY::create));
     }
 
-    return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+    return descriptors;
   }
 
   @NotNull
@@ -371,48 +342,10 @@ public class InspectionTree extends Tree {
     return count;
   }
 
-  private static void processChildDescriptorsDeep(InspectionTreeNode node,
-                                                  List<CommonProblemDescriptor> descriptors,
-                                                  boolean sortedByPosition,
-                                                  boolean allowResolved,
-                                                  boolean allowSuppressed,
-                                                  @Nullable Set<VirtualFile> readOnlyFilesSink) {
-    List<CommonProblemDescriptor> descriptorChildren = null;
-    for (int i = 0; i < node.getChildCount(); i++) {
-      final TreeNode child = node.getChildAt(i);
-      if (child instanceof ProblemDescriptionNode) {
-        if (isNodeValidAndIncluded((ProblemDescriptionNode)child, allowResolved, allowSuppressed)) {
-          if (sortedByPosition) {
-            if (descriptorChildren == null) {
-              descriptorChildren = new ArrayList<>();
-            }
-            descriptorChildren.add(((ProblemDescriptionNode)child).getDescriptor());
-          } else {
-            descriptors.add(((ProblemDescriptionNode)child).getDescriptor());
-          }
-        }
-      }
-      else {
-        processChildDescriptorsDeep((InspectionTreeNode)child, descriptors, sortedByPosition, allowResolved, allowSuppressed, readOnlyFilesSink);
-      }
-    }
-
-    if (descriptorChildren != null) {
-      if (descriptorChildren.size() > 1) {
-        Collections.sort(descriptorChildren, DESCRIPTOR_COMPARATOR);
-      }
-      if (readOnlyFilesSink != null) {
-        collectReadOnlyFiles(descriptorChildren, readOnlyFilesSink);
-      }
-
-      descriptors.addAll(descriptorChildren);
-    }
-  }
-
-  private static boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved, boolean allowSuppressed) {
+  private static boolean isNodeValidAndIncluded(ProblemDescriptionNode node, boolean allowResolved) {
     return node.isValid() && (allowResolved ||
                               (!node.isExcluded() &&
-                               (!node.isAlreadySuppressedFromView() || (allowSuppressed && !node.getAvailableSuppressActions().isEmpty())) &&
+                               !node.isAlreadySuppressedFromView() &&
                                !node.isQuickFixAppliedFromView()));
   }
 
@@ -487,21 +420,6 @@ public class InspectionTree extends Tree {
     return (InspectionGroupNode)currentNode;
   }
 
-  private static void collectReadOnlyFiles(@NotNull Collection<CommonProblemDescriptor> descriptors, @NotNull Set<VirtualFile> readOnlySink) {
-    for (CommonProblemDescriptor descriptor : descriptors) {
-      collectReadOnlyFiles(descriptor, readOnlySink);
-    }
-  }
-
-  private static void collectReadOnlyFiles(@NotNull CommonProblemDescriptor descriptor, @NotNull Set<VirtualFile> readOnlySink) {
-    if (descriptor instanceof ProblemDescriptor) {
-      PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
-      if (psiElement != null && !psiElement.isWritable()) {
-        readOnlySink.add(psiElement.getContainingFile().getVirtualFile());
-      }
-    }
-  }
-
   @NotNull
   private static String[] getGroupPath(@NotNull InspectionGroupNode node) {
     List<String> path = new ArrayList<>(2);
@@ -512,5 +430,19 @@ public class InspectionTree extends Tree {
       path.add(node.getSubGroup());
     }
     return ArrayUtil.toStringArray(path);
+  }
+
+  @Nullable
+  private static Object getVirtualFileOrEntity(@Nullable RefEntity entity) {
+    if (entity instanceof RefElement) {
+      SmartPsiElementPointer pointer = ((RefElement)entity).getPointer();
+      if (pointer != null) {
+        VirtualFile file = pointer.getVirtualFile();
+        if (file != null) {
+          return file;
+        }
+      }
+    }
+    return entity;
   }
 }

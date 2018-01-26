@@ -37,6 +37,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -55,35 +56,36 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
   private final int myCaretOffset;
-  private final HighlightUsagesHandlerBase<PsiElement> myHighlightUsagesHandler;
+  private final ProperTextRange myVisibleRange;
 
   IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
     myCaretOffset = myEditor.getCaretModel().getOffset();
-    myHighlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
+    myVisibleRange = VisibleHighlightingPassFactory.calculateVisibleRange(myEditor);
   }
 
   @Override
   public void doCollectInformation(@NotNull final ProgressIndicator progress) {
-    if (myHighlightUsagesHandler != null) {
-      List<PsiElement> targets = myHighlightUsagesHandler.getTargets();
-      myHighlightUsagesHandler.computeUsages(targets);
-      final List<TextRange> readUsages = myHighlightUsagesHandler.getReadUsages();
+    final HighlightUsagesHandlerBase<PsiElement> highlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile, myVisibleRange);
+    if (highlightUsagesHandler != null) {
+      List<PsiElement> targets = highlightUsagesHandler.getTargets();
+      highlightUsagesHandler.computeUsages(targets);
+      final List<TextRange> readUsages = highlightUsagesHandler.getReadUsages();
       for (TextRange readUsage : readUsages) {
-        LOG.assertTrue(readUsage != null, "null text range from " + myHighlightUsagesHandler);
+        LOG.assertTrue(readUsage != null, "null text range from " + highlightUsagesHandler);
       }
       myReadAccessRanges.addAll(readUsages);
-      final List<TextRange> writeUsages = myHighlightUsagesHandler.getWriteUsages();
+      final List<TextRange> writeUsages = highlightUsagesHandler.getWriteUsages();
       for (TextRange writeUsage : writeUsages) {
-        LOG.assertTrue(writeUsage != null, "null text range from " + myHighlightUsagesHandler);
+        LOG.assertTrue(writeUsage != null, "null text range from " + highlightUsagesHandler);
       }
       myWriteAccessRanges.addAll(writeUsages);
-      if (!myHighlightUsagesHandler.highlightReferences()) return;
+      if (!highlightUsagesHandler.highlightReferences()) return;
     }
 
     int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;

@@ -21,7 +21,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -85,7 +84,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
     for (final PyClass pyDestinationClass : myTo) {
       result.add(new PyUsageInfo(pyDestinationClass));
     }
-    return result.toArray(new PyUsageInfo[result.size()]);
+    return result.toArray(new PyUsageInfo[0]);
   }
 
   @Override
@@ -98,7 +97,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
       //We collect destination info to pass it to members manager
       destinations.add(((PyUsageInfo)usage).getTo());
     }
-    MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(new PyClass[destinations.size()]));
+    MembersManager.moveAllMembers(myMembersToMove, myFrom, destinations.toArray(PyClass.EMPTY_ARRAY));
     PyClassRefactoringUtil.optimizeImports(myFrom.getContainingFile()); // To remove unneeded imports
   }
 
@@ -107,7 +106,7 @@ public abstract class PyMembersRefactoringBaseProcessor extends BaseRefactoringP
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myFrom);
-    data.addMembers(myMembersToMove.toArray(new PyMemberInfo[myMembersToMove.size()]), info -> info.getMember());
+    data.addMembers(myMembersToMove.toArray(new PyMemberInfo[0]), info -> info.getMember());
     return data;
   }
 

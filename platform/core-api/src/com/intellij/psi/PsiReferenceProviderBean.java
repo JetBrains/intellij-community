@@ -69,7 +69,7 @@ public class PsiReferenceProviderBean extends AbstractExtensionPointBean impleme
     if (patterns.length > 1) {
       List<ElementPattern<? extends PsiElement>> list = ContainerUtil.mapNotNull(patterns, PATTERN_NULLABLE_FUNCTION);
       //noinspection unchecked
-      return StandardPatterns.or(list.toArray(new ElementPattern[list.size()]));
+      return StandardPatterns.or(list.toArray(new ElementPattern[0]));
     }
     else if (patterns.length == 1) {
       return patterns[0].compilePattern();

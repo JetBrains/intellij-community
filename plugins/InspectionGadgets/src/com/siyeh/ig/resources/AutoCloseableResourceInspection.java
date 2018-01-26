@@ -64,6 +64,7 @@ public class AutoCloseableResourceInspection extends AutoCloseableResourceInspec
     checkBox.addChangeListener(e -> table2.setEnabled(!ignoreFromMethodCall));
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
+    panel.add(new CheckBox(InspectionGadgetsBundle.message("show.warning.for.stream.holding.resource"), this, "showWarningForStreamHoldingResource"));
     return panel;
   }
 }

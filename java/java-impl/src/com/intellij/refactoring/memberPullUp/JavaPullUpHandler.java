@@ -135,7 +135,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   @Override
   public boolean checkConflicts(final PullUpDialog dialog) {
     final List<MemberInfo> infos = dialog.getSelectedMemberInfos();
-    final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[infos.size()]);
+    final MemberInfo[] memberInfos = infos.toArray(new MemberInfo[0]);
     final PsiClass superClass = dialog.getSuperClass();
     if (superClass == null || !checkWritable(superClass, memberInfos)) return false;
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
@@ -148,7 +148,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
       ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, () ->
-        new PullUpProcessor(mySubclass, superClass, infos.toArray(new MemberInfo[infos.size()]), new DocCommentPolicy(dialog.getJavaDocPolicy())).run());
+        new PullUpProcessor(mySubclass, superClass, infos.toArray(new MemberInfo[0]), new DocCommentPolicy(dialog.getJavaDocPolicy())).run());
       boolean ok = conflictsDialog.showAndGet();
       if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
       return ok;

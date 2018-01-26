@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,9 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     CommentTracker commentTracker = new CommentTracker();
     if (BoolUtils.isTrue(condition)) {
       // no trickery needed
-      replacementText.append("while(").append(commentTracker.markUnchanged(condition).getText()).append(')');
+      replacementText.append("while(").append(commentTracker.text(condition)).append(')');
       if (body != null) {
-        replacementText.append(commentTracker.markUnchanged(body).getText());
+        replacementText.append(commentTracker.text(body));
       }
       PsiReplacementUtil.replaceStatement(doWhileStatement, replacementText.toString(), commentTracker);
       return;
@@ -57,7 +57,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
         if (child == doWhileStatement) {
           break;
         }
-        replacementText.append(commentTracker.markUnchanged(child).getText());
+        replacementText.append(commentTracker.text(child));
       }
       replacementText.append('{');
     }
@@ -82,7 +82,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
             }
           }
           if (noBraces) {
-            replacementText.append(commentTracker.markUnchanged(child).getText());
+            replacementText.append(commentTracker.text(child));
           }
           else {
             parent.addBefore(child, doWhileStatement);
@@ -92,7 +92,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     }
     else if (body != null) {
       if (noBraces) {
-        replacementText.append(commentTracker.markUnchanged(body).getText()).append("\n");
+        replacementText.append(commentTracker.text(body)).append("\n");
       }
       else {
         parent.addBefore(body, doWhileStatement);
@@ -100,7 +100,7 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
     }
     replacementText.append("while(");
     if (condition != null) {
-      replacementText.append(commentTracker.markUnchanged(condition).getText());
+      replacementText.append(commentTracker.text(condition));
     }
     replacementText.append(')');
     if (body instanceof PsiBlockStatement) {
@@ -120,20 +120,20 @@ public class ReplaceDoWhileLoopWithWhileLoopIntention extends Intention {
                 final PsiVariable variable = (PsiVariable)declaredElement;
                 final PsiExpression initializer = variable.getInitializer();
                 if (initializer != null) {
-                  replacementText.append(variable.getName()).append(" = ").append(commentTracker.markUnchanged(initializer).getText()).append(';');
+                  replacementText.append(variable.getName()).append(" = ").append(commentTracker.text(initializer)).append(';');
                 }
               }
             }
           }
           else {
-            replacementText.append(commentTracker.markUnchanged(child).getText());
+            replacementText.append(commentTracker.text(child));
           }
         }
       }
       replacementText.append('}');
     }
     else if (body != null) {
-      replacementText.append(commentTracker.markUnchanged(body).getText()).append("\n");
+      replacementText.append(commentTracker.text(body)).append("\n");
     }
     if (noBraces) {
       replacementText.append('}');

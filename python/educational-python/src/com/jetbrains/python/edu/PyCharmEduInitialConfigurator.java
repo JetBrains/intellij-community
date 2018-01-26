@@ -381,7 +381,7 @@ public class PyCharmEduInitialConfigurator {
     AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       AnAction actionGroup = actionManager.getAction(groupId);
-      if (actionGroup != null && actionGroup instanceof DefaultActionGroup) {
+      if (actionGroup instanceof DefaultActionGroup) {
         ((DefaultActionGroup)actionGroup).remove(action);
         actionManager.unregisterAction(actionId);
       }

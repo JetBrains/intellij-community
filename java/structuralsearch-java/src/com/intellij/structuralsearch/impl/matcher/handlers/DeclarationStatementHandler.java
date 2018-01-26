@@ -61,7 +61,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
       }
       boolean result = context.getMatcher().matchSequentially(
         new ArrayBackedNodeIterator(declared),
-        new ArrayBackedNodeIterator(matchNodes.toArray(new PsiElement[matchNodes.size()]))
+        new ArrayBackedNodeIterator(matchNodes.toArray(PsiElement.EMPTY_ARRAY))
       );
 
       if (result && declared[0] instanceof PsiVariable) {

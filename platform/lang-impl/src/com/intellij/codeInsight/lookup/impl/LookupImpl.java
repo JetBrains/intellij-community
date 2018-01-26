@@ -843,7 +843,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void fireItemSelected(@Nullable final LookupElement item, char completionChar){
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (item != null && item.requiresCommittedDocuments()) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    }
     myArranger.itemSelected(item, completionChar);
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, completionChar);
@@ -1090,7 +1092,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   public void dispose() {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert myHidden;
     if (myDisposed) {
       LOG.error(disposeTrace);

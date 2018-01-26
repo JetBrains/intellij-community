@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;
@@ -77,7 +77,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   protected File[] getFilesAsArray(CvsRootProvider root) {
     try {
       Collection<File> files = getRootsToFilesMap().get(root);
-      return files.toArray(new File[files.size()]);
+      return files.toArray(new File[0]);
     } catch (CannotFindCvsRootException e) {
       LOG.error(e);
       return new File[0];

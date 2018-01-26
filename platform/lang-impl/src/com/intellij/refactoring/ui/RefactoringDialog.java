@@ -162,7 +162,7 @@ public abstract class RefactoringDialog extends DialogWrapper {
     if (SystemInfo.isMac) {
       Collections.reverse(actions);
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   protected Project getProject() {

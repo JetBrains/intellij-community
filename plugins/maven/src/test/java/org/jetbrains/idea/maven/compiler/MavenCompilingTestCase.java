@@ -102,7 +102,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     for (String name : moduleNames) {
       modules.add(getModule(name));
     }
-    return new ModuleCompileScope(myProject, modules.toArray(new Module[modules.size()]), false);
+    return new ModuleCompileScope(myProject, modules.toArray(Module.EMPTY_ARRAY), false);
   }
 
   protected static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {

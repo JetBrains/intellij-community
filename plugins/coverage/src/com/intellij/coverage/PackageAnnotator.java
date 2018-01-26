@@ -36,7 +36,7 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -408,7 +408,7 @@ public class PackageAnnotator {
     }
     packageCoverageInfo.append(classWithoutSourceCoverageInfo);
 
-    return dirs.toArray(new DirCoverageInfo[dirs.size()]);
+    return dirs.toArray(new DirCoverageInfo[0]);
   }
 
   private static boolean isClassFile(File classFile) {

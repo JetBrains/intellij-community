@@ -183,7 +183,7 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isArray(@Nullable PsiType type) {
-    return type != null && type instanceof PsiArrayType;
+    return type instanceof PsiArrayType;
   }
 
   @Contract("null -> false")

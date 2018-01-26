@@ -137,7 +137,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
       actions.add(new ShowVarsAction(runner.getConsoleView(), runner.getPydevConsoleCommunication()));
 
-      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));
+      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(AnAction.EMPTY_ARRAY));
     }
     else if (emulateTerminal()) {
       setRunWithPty(true);

@@ -110,6 +110,22 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
         if (!hasUnnecessarySuperQualifier(methodCallExpression)) {
           return;
         }
+
+        if (myIgnoreClarification) {
+          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          if (containingClass != null) {
+            final PsiElement classParent = containingClass.getParent();
+            String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
+            if (referenceName != null) {
+              PsiExpression copyCall = JavaPsiFacade.getElementFactory(expression.getProject())
+                .createExpressionFromText(referenceName + methodCallExpression.getArgumentList().getText(), classParent);
+              PsiMethod method = ((PsiMethodCallExpression)copyCall).resolveMethod();
+              if (method != null && method != referenceExpression.resolve()) {
+                return;
+              }
+            }
+          }
+        }
       }
       else {
         if (!hasUnnecessarySuperQualifier(referenceExpression)) {

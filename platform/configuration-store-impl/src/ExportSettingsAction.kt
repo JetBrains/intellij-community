@@ -59,8 +59,7 @@ private class ExportSettingsAction : AnAction(), DumbAware {
 
     val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
                                                 IdeBundle.message("title.select.components.to.export"),
-                                                IdeBundle.message(
-                                                                                    "prompt.please.check.all.components.to.export"))
+                                                IdeBundle.message("prompt.please.check.all.components.to.export"))
     if (!dialog.showAndGet()) {
       return
     }
@@ -148,7 +147,7 @@ private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
 // onlyPaths - include only specified paths (relative to config dir, ends with "/" if directory)
 fun getExportableComponentsMap(onlyExisting: Boolean,
                                computePresentableNames: Boolean,
-                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager,
+                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.storageManager,
                                onlyPaths: Set<String>? = null): Map<Path, List<ExportableItem>> {
   val result = LinkedHashMap<Path, MutableList<ExportableItem>>()
   @Suppress("DEPRECATION")
@@ -259,7 +258,12 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 
   val defaultName = state.name
 
-  fun trimDefaultName() = defaultName.removeSuffix("Settings")
+  fun trimDefaultName(): String {
+    // Vcs.Log.App.Settings
+    return defaultName
+      .removeSuffix(".Settings")
+      .removeSuffix(".Settings")
+  }
 
   var resourceBundleName: String?
   if (pluginDescriptor is IdeaPluginDescriptor && "com.intellij" != pluginDescriptor.pluginId.idString) {

@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -33,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.RegExp;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
@@ -68,6 +70,19 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public BaseInjection(@NotNull final String id) {
     mySupportId = id;
+  }
+
+  public BaseInjection(@NotNull String supportId, @NotNull String injectedLanguageId, @NotNull String prefix, @NotNull String suffix, @NotNull InjectionPlace... places) {
+    mySupportId = supportId;
+    myInjectedLanguageId = injectedLanguageId;
+    myPrefix = prefix;
+    mySuffix = suffix;
+    myPlaces = places;
+  }
+
+  @Nullable
+  public Language getInjectedLanguage() {
+    return InjectedLanguage.findLanguageById(myInjectedLanguageId);
   }
 
   @NotNull
@@ -181,7 +196,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || !(o instanceof BaseInjection)) return false;
+    if (!(o instanceof BaseInjection)) return false;
 
     final BaseInjection that = (BaseInjection)o;
 
@@ -223,7 +238,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return this;
   }
 
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
     myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
     myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));

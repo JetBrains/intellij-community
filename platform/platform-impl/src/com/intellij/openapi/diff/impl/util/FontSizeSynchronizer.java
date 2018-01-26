@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

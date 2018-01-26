@@ -67,7 +67,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
       }
     });
 
-    MavenResourceRootDescriptor[] roots = files.keySet().toArray(new MavenResourceRootDescriptor[files.keySet().size()]);
+    MavenResourceRootDescriptor[] roots = files.keySet().toArray(new MavenResourceRootDescriptor[0]);
     Arrays.sort(roots, (r1, r2) -> {
       int res = r1.getIndexInPom() - r2.getIndexInPom();
 

@@ -535,7 +535,7 @@ public class PluginManagerCore {
       }
       loaders.add(loader);
     }
-    return loaders.toArray(new ClassLoader[loaders.size()]);
+    return loaders.toArray(new ClassLoader[0]);
   }
 
   public static boolean isRunningFromSources() {
@@ -786,7 +786,10 @@ public class PluginManagerCore {
         if (optionalDescriptor == null) {
           optionalDescriptor = loadDescriptor(file, optPathName, context);
         }
-        if (optionalDescriptor == null && directory) {
+        if (optionalDescriptor == null && (directory || resolveDescriptorsInResources())) {
+          // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream 
+          // and here code supports the same behavior. 
+          // Note that this code is meant for IDE development / testing purposes  
           URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optPathName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource, optPathName);
@@ -797,6 +800,10 @@ public class PluginManagerCore {
     }
 
     return descriptor;
+  }
+
+  private static boolean resolveDescriptorsInResources() {  
+    return System.getProperty("resolve.descriptors.in.resources") != null;
   }
 
   /*
@@ -1114,7 +1121,7 @@ public class PluginManagerCore {
 
   @NotNull // used in upsource
   public static IdeaPluginDescriptorImpl[] topoSortPlugins(@NotNull List<IdeaPluginDescriptorImpl> result, @NotNull List<String> errors) {
-    IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(new IdeaPluginDescriptorImpl[result.size()]);
+    IdeaPluginDescriptorImpl[] pluginDescriptors = result.toArray(IdeaPluginDescriptorImpl.EMPTY_ARRAY);
     final Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap = new THashMap<>();
     for (IdeaPluginDescriptorImpl descriptor : pluginDescriptors) {
       PluginId id = descriptor.getPluginId();
@@ -1148,7 +1155,7 @@ public class PluginManagerCore {
   public static void initClassLoader(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
     final List<File> classPath = descriptor.getClassPath();
     final ClassLoader loader =
-        createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);
+        createPluginClassLoader(classPath.toArray(new File[0]), new ClassLoader[]{parentLoader}, descriptor);
     descriptor.setLoader(loader);
   }
 
@@ -1332,7 +1339,7 @@ public class PluginManagerCore {
         final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
         final ClassLoader[] parentLoaders = getParentLoaders(idToDescriptorMap, dependentPluginIds);
 
-        ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
+        ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[0]),
                                                                 parentLoaders.length > 0 ? parentLoaders : new ClassLoader[] {parentLoader},
                                                                 pluginDescriptor);
         pluginDescriptor.setLoader(pluginClassLoader);

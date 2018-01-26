@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2011-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,13 +105,13 @@ public class ArrayEqualityInspection extends BaseInspection {
       else {
         newExpressionText.append("java.util.Arrays.equals(");
       }
-      newExpressionText.append(commentTracker.markUnchanged(binaryExpression.getLOperand()).getText());
+      newExpressionText.append(commentTracker.text(binaryExpression.getLOperand()));
       newExpressionText.append(',');
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs == null) {
         return;
       }
-      newExpressionText.append(commentTracker.markUnchanged(rhs).getText());
+      newExpressionText.append(commentTracker.text(rhs));
       newExpressionText.append(')');
       PsiReplacementUtil.replaceExpressionAndShorten(binaryExpression, newExpressionText.toString(), commentTracker);
     }

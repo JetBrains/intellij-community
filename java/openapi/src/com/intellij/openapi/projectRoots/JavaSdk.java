@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.projectRoots;
 
@@ -30,9 +30,6 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
   @Nullable
   public abstract JavaSdkVersion getVersion(@NotNull Sdk sdk);
 
-  @Nullable
-  public abstract JavaSdkVersion getVersion(@NotNull String versionString);
-
   public abstract boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version);
 
   /** @deprecated use {@link JdkUtil#checkForJdk} (to be removed in IDEA 2019) */
@@ -49,4 +46,7 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
   public static String getJdkVersion(@NotNull String sdkHome) {
     return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
+
+  /** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */
+  public abstract JavaSdkVersion getVersion(@NotNull String versionString);
 }

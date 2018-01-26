@@ -12,13 +12,14 @@ import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.PyTestConfiguration;
 import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PyTestFrameworkService;
-import com.jetbrains.python.testing.TestTargetType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,6 @@ import static org.junit.Assert.assertEquals;
 public final class PythonPyTestingTest extends PyEnvTestCase {
 
   private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST);
-
 
 
   // Ensures setup/teardown does not break anything
@@ -333,18 +333,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() {
-
-    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration> task =
-      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration>() {
-        @NotNull
-        @Override
-        protected PyTestFactory createFactory() {
-          return PyTestFactory.INSTANCE;
-        }
-      };
-    runPythonTest(task);
-    task.checkEmptyTarget();
+  public void testValidation() throws Throwable {
+    new PyConfigurationValidationTask<PyTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyTestFactory createFactory() {
+        return PyTestFactory.INSTANCE;
+      }
+    }.fetchException(this::runPythonTest);
   }
 
   @Test
@@ -438,7 +434,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
             configuration.getTarget().setTarget(fullFilePath.getPath());
-            configuration.getTarget().setTargetType(TestTargetType.PATH);
+            configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
           }
         };
       }

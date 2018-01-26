@@ -288,11 +288,6 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       final ModuleDependencyData data = getData();
       return data != null ? data.getExternalName() : "";
     }
-
-    @Override
-    public boolean isAlwaysLeaf() {
-      return false;
-    }
   }
 
   private static class LibraryDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<LibraryDependencyData> {
@@ -336,11 +331,6 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         }
       }
       return externalName;
-    }
-
-    @Override
-    public boolean isAlwaysLeaf() {
-      return false;
     }
   }
 }

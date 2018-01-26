@@ -4,6 +4,7 @@
     <extensionPoint qualifiedName="com.intellij.naming.convention.class" interface="com.intellij.codeInspection.naming.NamingConvention"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.method" interface="com.intellij.codeInspection.naming.NamingConvention"/>
     <extensionPoint qualifiedName="com.intellij.naming.convention.field" interface="com.intellij.codeInspection.naming.NamingConvention"/>
+    <extensionPoint qualifiedName="com.intellij.implicit.resource.closer" interface="com.intellij.codeInspection.resources.ImplicitResourceCloser"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
 
@@ -238,10 +239,6 @@
                      key="equals.doesnt.check.class.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EqualsWhichDoesntCheckParameterClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ForLoopThatDoesntUseLoopVariable" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="for.loop.not.use.loop.variable.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.ForLoopThatDoesntUseLoopVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonFinalFieldReferencedInHashCode" shortName="HashCodeUsesNonFinalVariable"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.final.field.in.hashcode.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
@@ -625,9 +622,6 @@
                      key="constant.conditional.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ConstantConditionalExpressionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantIfStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="constant.if.statement.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.ConstantIfStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ContinueStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="continue.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.ContinueStatementInspection"/>
@@ -684,7 +678,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.LabeledStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LoopConditionNotUpdatedInsideLoop" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="loop.condition.not.updated.inside.loop.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.LoopConditionNotUpdatedInsideLoopInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="LoopStatementThatDoesntLoop" shortName="LoopStatementsThatDontLoop"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="loop.statements.that.dont.loop.display.name"
@@ -729,7 +723,7 @@
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.PointlessIndexOfComparisonInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PointlessNullCheck" bundle="com.siyeh.InspectionGadgetsBundle" key="pointless.nullcheck.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.PointlessNullCheckInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableBooleanExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.boolean.expression.display.name" groupBundle="messages.InspectionsBundle"
@@ -2036,8 +2030,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ToArrayCallWithZeroLengthArrayArgument" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="to.array.call.with.zero.length.array.argument.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     key="to.array.call.style.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ConcatenationWithEmptyString" shortName="TrivialStringConcatenation"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="trivial.string.concatenation.display.name"
@@ -2795,6 +2789,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ConstantExpression" enabledByDefault="true" level="INFORMATION"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.constant.expression.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     implementationClass="com.siyeh.ig.style.ConstantExpressionInspection"/>
   </extensions>
 
 </idea-plugin>

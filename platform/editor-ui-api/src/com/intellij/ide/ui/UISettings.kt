@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.Disposable
@@ -104,7 +102,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by property(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by property(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by property(true)
-  var smoothScrolling by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.isJavaVersionAtLeast("9")))
+  var smoothScrolling by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.IS_AT_LEAST_JAVA9))
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by property(false)
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by property(false)
@@ -370,7 +368,16 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
         if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
       }
       else {
-        if (readScale != defFontScale) size = Math.round((readSize / readScale) * defFontScale)
+        var oldDefFontScale = defFontScale
+        if (SystemInfo.isLinux) {
+          val fdata = UIUtil.getSystemFontData()
+          if (fdata != null) {
+            // [tav] todo: temp workaround for transitioning IDEA 173 to 181
+            // not converting fonts stored with scale equal to the old calculation
+            oldDefFontScale = fdata.second / 12f
+          }
+        }
+        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size

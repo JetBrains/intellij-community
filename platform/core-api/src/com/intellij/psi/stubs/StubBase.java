@@ -50,7 +50,7 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
   @Override
   @SuppressWarnings("unchecked")
   public List<StubElement> getChildrenStubs() {
-    return ObjectUtils.chooseNotNull(myChildren, Collections.<StubElement>emptyList());
+    return ObjectUtils.chooseNotNull(myChildren, Collections.emptyList());
   }
 
   @Override

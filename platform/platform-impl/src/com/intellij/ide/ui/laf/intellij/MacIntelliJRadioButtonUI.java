@@ -27,7 +27,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJRadioButtonUI extends DarculaRadioButtonUI {
-  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(26));
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(22));
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

@@ -111,6 +111,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
 
   private boolean myShowErrorDialogs = true;
+  private boolean myIsPreviewSupported;
+  private boolean myPreviewDuplicates;
   protected boolean myCanBeStatic;
   protected boolean myCanBeChainedConstructor;
   protected boolean myIsChainedConstructor;
@@ -185,6 +187,14 @@ public class ExtractMethodProcessor implements MatchProvider {
    */
   public void setShowErrorDialogs(boolean showErrorDialogs) {
     myShowErrorDialogs = showErrorDialogs;
+  }
+
+  public void setPreviewSupported(boolean previewSupported) {
+    myIsPreviewSupported = previewSupported;
+  }
+
+  public boolean isPreviewDuplicates() {
+    return myPreviewDuplicates;
   }
 
   public void setChainedConstructor(final boolean isChainedConstructor) {
@@ -316,7 +326,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                                                           elements);
     }
     List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
-    myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
+    myThrownExceptions = exceptions.toArray(PsiClassType.EMPTY_ARRAY);
 
     if (container instanceof PsiMethod) {
       checkLocalClasses((PsiMethod) container);
@@ -585,6 +595,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnType != null) {
       myReturnType = returnType;
     }
+    myPreviewDuplicates = dialog.isPreviewUsages();
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
@@ -592,9 +603,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
+    int duplicatesCount = estimateDuplicatesCount();
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         myRefactoringName, myHelpId, myNullness, myElements) {
+                                                         myRefactoringName, myHelpId, myNullness, myElements,duplicatesCount) {
       protected boolean areTypesDirected() {
         return direct;
       }
@@ -643,12 +655,17 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         }
       }
+
+      @Override
+      protected boolean isPreviewSupported() {
+        return myIsPreviewSupported && getDuplicatesCount() != 0;
+      }
     };
   }
 
   public void setDataFromInputVariables() {
     final List<VariableData> variables = myInputVariables.getInputVariables();
-    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
+    myVariableDatum = variables.toArray(new VariableData[0]);
   }
 
   public PsiExpression[] findOccurrences() {
@@ -663,7 +680,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
     final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
-    return map.toArray(new PsiExpression[map.size()]);
+    return map.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private Nullness initNullness() {
@@ -850,6 +867,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  public void previewRefactoring() {
+    initDuplicates();
+    chooseAnchor();
+  }
+
   @Nullable
   private DuplicatesFinder initDuplicates() {
     PsiElement[] elements = StreamEx.of(myElements)
@@ -873,6 +895,35 @@ public class ExtractMethodProcessor implements MatchProvider {
       myDuplicates = new ArrayList<>();
     }
     return null;
+  }
+
+  private int estimateDuplicatesCount() {
+    PsiElement[] elements = StreamEx.of(myElements)
+                                    .filter(element -> !(element instanceof PsiWhiteSpace || element instanceof PsiComment))
+                                    .toArray(PsiElement[]::new);
+
+    ReturnValue value;
+    List<PsiVariable> parameters;
+    if (myExpression != null) {
+      value = null;
+      parameters = Collections.emptyList();
+    }
+    else if (elements.length != 0) {
+      value = myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null;
+      parameters = Arrays.asList(myOutputVariables);
+    }
+    else {
+      return 0;
+    }
+    DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), value, parameters);
+    List<Match> myDuplicates = finder.findDuplicates(myTargetClass);
+    if (!ContainerUtil.isEmpty(myDuplicates)) return myDuplicates.size();
+    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
+    if (parametrizedDuplicates != null) {
+      List<Match> duplicates = parametrizedDuplicates.getDuplicates();
+      return duplicates != null ? duplicates.size() : 0;
+    }
+    return 0;
   }
 
   public void doExtract() throws IncorrectOperationException {
@@ -1243,6 +1294,10 @@ public class ExtractMethodProcessor implements MatchProvider {
       return filterChainedConstructorDuplicates(myDuplicates);
     }
     return myDuplicates;
+  }
+
+  ParametrizedDuplicates getParametrizedDuplicates() {
+    return myParametrizedDuplicates;
   }
 
   private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
@@ -1962,7 +2017,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleExitPointsMessage() {
     if (myShowErrorDialogs) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-      PsiStatement[] exitStatementsArray = myExitStatements.toArray(new PsiStatement[myExitStatements.size()]);
+      PsiStatement[] exitStatementsArray = myExitStatements.toArray(PsiStatement.EMPTY_ARRAY);
       EditorColorsManager manager = EditorColorsManager.getInstance();
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
@@ -2031,8 +2086,14 @@ public class ExtractMethodProcessor implements MatchProvider {
       return true;
     }
 
+    if (initParametrizedDuplicates(true)) return null;
+    return false;
+  }
+
+  boolean initParametrizedDuplicates(boolean showDialog) {
     if (myExtractedMethod != null && myParametrizedDuplicates != null) {
-      if (ApplicationManager.getApplication().isUnitTestMode() ||
+      if (!showDialog ||
+          ApplicationManager.getApplication().isUnitTestMode() ||
           new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
                                               myParametrizedDuplicates.getSize()).showAndGet()) {
@@ -2043,7 +2104,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
         });
         myVariableDatum = myParametrizedDuplicates.getVariableDatum();
-        return null;
+        return true;
       }
     }
     return false;
@@ -2129,6 +2190,15 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public PsiElement[] getElements() {
     return myElements;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  public String getMethodName() {
+    return myMethodName;
   }
 
   public PsiVariable[] getOutputVariables() {

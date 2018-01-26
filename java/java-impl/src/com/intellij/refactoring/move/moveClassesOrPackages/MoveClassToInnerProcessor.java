@@ -102,7 +102,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       final String newName = myTargetClass.getQualifiedName() + "." + classToMove.getName();
       Collections.addAll(usages, MoveClassesOrPackagesUtil.findUsages(classToMove, mySearchInComments, mySearchInNonJavaFiles, newName));
     }
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
@@ -110,6 +110,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     return showConflicts(getConflicts(usages), usages);
   }
 
+  @Override
   protected void refreshElements(@NotNull final PsiElement[] elements) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass[] classesToMove = new PsiClass[elements.length];
@@ -129,7 +130,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       importStatements.addAll(handler.filterImports(usageList, myProject));
     }
 
-    usages = usageList.toArray(new UsageInfo[usageList.size()]);
+    usages = usageList.toArray(UsageInfo.EMPTY_ARRAY);
 
     saveNonCodeUsages(usages);
     final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<>();
@@ -198,6 +199,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void performPsiSpoilingRefactoring() {
     if (myNonCodeUsages != null) {
       RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
@@ -210,12 +212,14 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.class.to.inner.command.name",
                                      (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
                                      myTargetClass.getQualifiedName());
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     List<PsiElement> result = new ArrayList<>(super.getElementsToWrite(descriptor));

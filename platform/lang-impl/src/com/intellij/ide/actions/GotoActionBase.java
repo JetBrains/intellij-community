@@ -28,6 +28,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -328,6 +329,10 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
+
+    ActionCallback typeAhead = new ActionCallback();
+    IdeFocusManager.getGlobalInstance().typeAheadUntil(typeAhead, "GotoPopup");
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
 
   private static boolean historyEnabled() {

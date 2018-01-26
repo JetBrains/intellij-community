@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils

@@ -19,23 +19,31 @@ import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChainBase;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.List;
+import java.util.Objects;
 
 public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoToChangePopupBuilder.Chain {
+  private static final Logger LOG = Logger.getInstance(ChangeDiffRequestChain.class);
   @NotNull private final List<? extends Producer> myProducers;
 
   public ChangeDiffRequestChain(@NotNull List<? extends Producer> producers, int index) {
     super(index);
+    if (ContainerUtil.exists(producers, Objects::isNull)) {
+      producers = ContainerUtil.skipNulls(producers);
+      LOG.error("Producers must not be null");
+    }
     myProducers = producers;
   }
 

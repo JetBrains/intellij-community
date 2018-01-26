@@ -1,9 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -428,15 +431,15 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
         Component c = getAnchor(pane);
-        int y = c.getHeight() - 45;
+        int y = c.getHeight() - JBUI.scale(45);
         if (balloonLayout != null && !isBottomSideToolWindowsVisible(pane)) {
           Component component = balloonLayout.getTopBalloonComponent();
           if (component != null) {
-            y = SwingUtilities.convertPoint(component, 0, -45, c).y;
+            y = SwingUtilities.convertPoint(component, 0, -JBUI.scale(45), c).y;
           }
         }
 
-        return new RelativePoint(c, new Point(c.getWidth() - 150, y));
+        return new RelativePoint(c, new Point(c.getWidth() - JBUI.scale(150), y));
       }
     }, Balloon.Position.above);
   }
@@ -687,6 +690,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
         suspender.setSuspended(!suspender.isSuspended());
         updateProgressNow();
+        ActionsCollector.getInstance().record(suspender.isSuspended() ? "Progress Paused" : "Progress Resumed");
       }).setFillBg(false);
       suspendButton.setVisible(false);
 

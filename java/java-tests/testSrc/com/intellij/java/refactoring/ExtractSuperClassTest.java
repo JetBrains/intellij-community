@@ -34,7 +34,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 
@@ -159,7 +159,7 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
       protected void run() {
         ExtractSuperClassUtil
           .extractSuperClass(myProject, psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
-                             infos.toArray(new MemberInfo[infos.size()]), new DocCommentPolicy(DocCommentPolicy.ASIS));
+                             infos.toArray(new MemberInfo[0]), new DocCommentPolicy(DocCommentPolicy.ASIS));
       }
     }.execute();
     String rootAfter = getRoot() + "/after";

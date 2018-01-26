@@ -21,12 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 
 /**
  * @author Sergey Malenkov
  */
 public class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
+  private WindowFocusListener myWindowFocusAdapter = null;
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -56,6 +60,17 @@ public class MovablePopup {
       myAlwaysOnTop = value;
       disposeAndUpdate(true);
     }
+  }
+
+  public void onAncestorFocusLost(Runnable r) {
+    myWindowFocusAdapter = new WindowAdapter() {
+      @Override
+      public void windowLostFocus(WindowEvent e) {
+        super.windowLostFocus(e);
+        r.run();
+      }
+    };
+    SwingUtilities.getWindowAncestor(myOwner).addWindowFocusListener(myWindowFocusAdapter);
   }
 
   private static void setAlwaysOnTop(@NotNull Window window, boolean value) {
@@ -161,10 +176,13 @@ public class MovablePopup {
       Window owner = UIUtil.getWindow(myOwner);
       if (owner != null) {
         if (myHeavyWeight) {
-          Window view = HeavyWeightPopupCache.create(owner);
+          Window view = new JWindow(owner);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
+          view.setAutoRequestFocus(false);
+          view.setFocusable(false);
+          view.setFocusableWindowState(false);
           myView = view;
         }
         else if (owner instanceof RootPaneContainer) {
@@ -194,7 +212,7 @@ public class MovablePopup {
     }
   }
 
-  /**
+  /**al
    * Determines whether this popup should be visible.
    */
   public boolean isVisible() {
@@ -204,6 +222,7 @@ public class MovablePopup {
   private void disposeAndUpdate(boolean update) {
     if (myView != null) {
       myOwner.removeHierarchyListener(myListener);
+      SwingUtilities.getWindowAncestor(myOwner).removeWindowFocusListener(myWindowFocusAdapter);
       boolean visible = myView.isVisible();
       myView.setVisible(false);
       Container container = myContent.getParent();
@@ -212,7 +231,7 @@ public class MovablePopup {
       }
       if (myView instanceof Window) {
         myViewBounds = myView.getBounds();
-        HeavyWeightPopupCache.dispose((Window)myView);
+        ((Window)myView).dispose();
       }
       else {
         Container parent = myView.getParent();

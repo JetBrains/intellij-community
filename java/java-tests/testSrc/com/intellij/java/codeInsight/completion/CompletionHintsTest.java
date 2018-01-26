@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.codeInsight.completion;
 
@@ -20,8 +20,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
 
@@ -346,7 +348,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     next();
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/><caret>\"b\") } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/>\"b\"<caret>) } }");
   }
 
   public void testVararg() throws Exception {
@@ -829,6 +831,94 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2) } <caret>}");
   }
 
+  public void testEnumValueOf() throws Exception {
+    configureJava("class C { void m() { Thread.State.<caret> } }");
+    complete("valueOf(String name)");
+    checkResultWithInlays("class C { void m() { Thread.State.valueOf(<HINT text=\"name:\"/><caret>) } }");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>String</b></html>");
+  }
+
+  public void testBrokenPsiCall() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
+    type(';');
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(;<caret>, ) } }");
+    backspace();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
+  }
+
+  public void testKeepHintsLonger() throws Exception {
+    RegistryValue setting = Registry.get("editor.keep.completion.hints.longer");
+    boolean oldValue = setting.asBoolean();
+    try {
+      setting.setValue(true);
+      configureJava("class C {\n" +
+                    "  void m() { System.setPro<caret> }\n" +
+                    "}");
+      complete("setProperty");
+      checkResultWithInlays("class C {\n" +
+                            "  void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) }\n" +
+                            "}");
+      type("\"a");
+      next();
+      type("\"b");
+      home();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C {\n" +
+                            "  <caret>void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
+                            "}");
+      textStart();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("<caret>class C {\n" +
+                            "  void m() { System.setProperty(\"a\", \"b\") }\n" +
+                            "}");
+    }
+    finally {
+      setting.setValue(oldValue);
+    }
+  }
+
+  public void testKeepHintsEvenLonger() throws Exception {
+    RegistryValue setting = Registry.get("editor.keep.completion.hints.even.longer");
+    boolean oldValue = setting.asBoolean();
+    try {
+      setting.setValue(true);
+      configureJava("class C {\n\n\n\n\n\n" +
+                    "  void m() { System.setPro<caret> }\n" +
+                    "}");
+      EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 3);
+      complete("setProperty");
+      checkResultWithInlays("class C {\n\n\n\n\n\n" +
+                            "  void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) }\n" +
+                            "}");
+      type("\"a");
+      next();
+      type("\"b");
+      home();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C {\n\n\n\n\n\n" +
+                            "  <caret>void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
+                            "}");
+      up();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C {\n\n\n\n\n<caret>\n" +
+                            "  void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
+                            "}");
+      textStart();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("<caret>class C {\n\n\n\n\n\n" +
+                            "  void m() { System.setProperty(\"a\", \"b\") }\n" +
+                            "}");
+    }
+    finally {
+      setting.setValue(oldValue);
+    }
+  }
+
   private void enableConstructorVariantsCompletion() {
     Registry.get("java.completion.show.constructors").setValue(true);
     Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
@@ -862,12 +952,20 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
   }
 
+  private void up() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+  }
+
   private void methodOverloadDown() {
     myFixture.performEditorAction(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
   }
 
   private void home() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START);
+  }
+
+  private void textStart() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_TEXT_START);
   }
 
   private void delete() {

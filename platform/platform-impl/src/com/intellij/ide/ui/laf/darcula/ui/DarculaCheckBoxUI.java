@@ -33,12 +33,19 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaCheckBoxUI extends MetalCheckBoxUI {
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(20)).asUIResource();
+
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {
     if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
       c.setBorder(null);
     }
     return new DarculaCheckBoxUI();
+  }
+
+  @Override public void installDefaults(AbstractButton b) {
+    super.installDefaults(b);
+    b.setIconTextGap(JBUI.scale(4));
   }
 
   @Override
@@ -264,7 +271,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return EmptyIcon.create(JBUI.scale(20)).asUIResource();
+    return DEFAULT_ICON;
   }
 
   protected boolean isIndeterminate(AbstractButton checkBox) {

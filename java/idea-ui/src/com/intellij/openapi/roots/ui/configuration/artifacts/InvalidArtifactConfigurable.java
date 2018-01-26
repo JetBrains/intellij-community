@@ -58,10 +58,6 @@ public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
   public void apply() throws ConfigurationException {
   }
 
-  @Override
-  public void reset() {
-  }
-
   private static class InvalidArtifactComponent {
     private JPanel myMainPanel;
     private MultiLineLabel myDescriptionLabel;

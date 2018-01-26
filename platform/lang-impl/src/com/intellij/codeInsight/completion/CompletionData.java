@@ -126,7 +126,7 @@ public class CompletionData {
         scope = scope.getContext();
         if (scope instanceof PsiDirectory) break;
       }
-      return variants.toArray(new CompletionVariant[variants.size()]);
+      return variants.toArray(new CompletionVariant[0]);
   }
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
@@ -304,7 +304,7 @@ public class CompletionData {
     final PsiReference[] references = multiReference.getReferences();
     final List<PsiReference> hard = ContainerUtil.findAll(references, object -> !object.isSoft());
     if (!hard.isEmpty()) {
-      return hard.toArray(new PsiReference[hard.size()]);
+      return hard.toArray(PsiReference.EMPTY_ARRAY);
     }
     return references;
   }

@@ -391,7 +391,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
     else if (ViewContext.CONTENT_KEY.is(dataId)) {
       List<Content> contents = getContents();
-      return contents.toArray(new Content[contents.size()]);
+      return contents.toArray(new Content[0]);
     }
     return null;
   }

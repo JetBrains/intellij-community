@@ -34,7 +34,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
@@ -50,10 +49,10 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    HashSet<String> set = new HashSet<>();
-    cache.getAllMethodNames(set);
-    cache.getAllFieldNames(set);
-    cache.getAllClassNames(set);
+    Set<String> set = new HashSet<>();
+    Collections.addAll(set, cache.getAllMethodNames());
+    Collections.addAll(set, cache.getAllFieldNames());
+    Collections.addAll(set, cache.getAllClassNames());
     return ArrayUtil.toStringArray(set);
   }
 
@@ -81,7 +80,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
         result.add(aClass);
       }
     }
-    PsiMember[] array = result.toArray(new PsiMember[result.size()]);
+    PsiMember[] array = result.toArray(PsiMember.EMPTY_ARRAY);
     Arrays.sort(array, MyComparator.INSTANCE);
     return array;
   }

@@ -108,6 +108,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.width,
       size.height
     );
+
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(false);
+    }
+
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
     doWhenFirstShown(this, this::pack);
@@ -140,9 +145,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
-
-    // open project from welcome screen show progress dialog and call FocusTrackback.register()
-    FocusTrackback.release(this);
   }
 
   private static void saveLocation(Rectangle location) {

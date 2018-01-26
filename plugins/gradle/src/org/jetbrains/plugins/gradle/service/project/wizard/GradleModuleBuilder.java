@@ -8,10 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
@@ -64,7 +61,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -455,11 +451,11 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     if (settingsStep instanceof ProjectSettingsStep) {
       final ProjectSettingsStep projectSettingsStep = (ProjectSettingsStep)settingsStep;
       if (myProjectId != null) {
-        final JTextField moduleNameField = settingsStep.getModuleNameField();
-        if (moduleNameField != null) {
-          moduleNameField.setText(myProjectId.getArtifactId());
+        final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
+        String artifactId = myProjectId.getArtifactId();
+        if (nameLocationSettings != null && artifactId != null) {
+          nameLocationSettings.setModuleName(artifactId);
         }
-        projectSettingsStep.setModuleName(myProjectId.getArtifactId());
       }
       projectSettingsStep.bindModuleSettings();
     }

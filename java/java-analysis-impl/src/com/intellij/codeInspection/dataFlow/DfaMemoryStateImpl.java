@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
@@ -269,7 +270,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
     if (value instanceof DfaVariableValue && (value == flushed || myFactory.getVarFactory().getAllQualifiedBy(flushed).contains(value))) {
-      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL : ((DfaVariableValue)value).getInherentNullability();
+      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
+                             isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
     }
     return value;
@@ -517,6 +519,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean uniteClasses(int c1Index, int c2Index) {
+    if (!myDistinctClasses.unite(c1Index, c2Index)) return false;
+
     EqClass c1 = myEqClasses.get(c1Index);
     EqClass c2 = myEqClasses.get(c2Index);
 
@@ -553,9 +557,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       addToMap(c, c1Index);
     }
 
-    if (!myDistinctClasses.unite(c1Index, c2Index)) {
-      return false;
-    }
     myEqClasses.set(c2Index, null);
     checkInvariants();
 
@@ -629,6 +630,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public boolean isEmptyStack() {
     return myStack.isEmpty();
+  }
+
+  @Override
+  public void cleanUpTempVariables() {
+    Predicate<DfaVariableValue> sharesState = var ->
+      getConstantValue(var) == null &&
+      StreamEx.of(getEquivalentValues(var)).without(var).select(DfaVariableValue.class).findFirst().isPresent();
+    List<DfaVariableValue> values = StreamEx.ofKeys(myVariableStates)
+      .filter(var -> ControlFlowAnalyzer.isTempVariable(var.getPsiVariable()))
+      .remove(sharesState)
+      .toList();
+    values.forEach(this::flushVariable);
   }
 
   @Override
@@ -990,7 +1003,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
-      myDistinctClasses.add(c1Index, c2Index, false);
+      myDistinctClasses.addUnordered(c1Index, c2Index);
     }
     myCachedHash = null;
 
@@ -1012,7 +1025,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
     if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
     myCachedHash = null;
-    return myDistinctClasses.add(c1Index, c2Index, true);
+    return myDistinctClasses.addOrdered(c1Index, c2Index);
   }
 
   /**

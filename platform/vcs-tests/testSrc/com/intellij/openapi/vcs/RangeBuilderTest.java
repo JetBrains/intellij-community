@@ -129,7 +129,7 @@ public class RangeBuilderTest extends TestCase {
   private static void doTest(CharSequence upToDateContent, CharSequence currentContent, Range[] expected) {
     List<Range> result = RangesBuilder.createRanges(new DocumentImpl(currentContent),
                                                     new DocumentImpl(upToDateContent));
-    BaseLineStatusTrackerTestCase.assertEqualRanges(Arrays.asList(expected), result);
+    BaseLineStatusTrackerTestCase.assertEqualRanges(result, Arrays.asList(expected));
   }
 
   private static String createContentOn(String[] content) {

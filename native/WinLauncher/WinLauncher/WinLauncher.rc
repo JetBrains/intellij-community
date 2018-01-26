@@ -148,7 +148,6 @@ BEGIN
     IDC_WINLAUNCHER         "WINLAUNCHER"
     IDS_COMMAND_LINE_PROCESSOR_CLASS 
                             "com/intellij/ide/WindowsCommandLineProcessor"
-    IDS_BOOTCLASSPATH_LIBS  "boot.jar"
 END
 
 STRINGTABLE

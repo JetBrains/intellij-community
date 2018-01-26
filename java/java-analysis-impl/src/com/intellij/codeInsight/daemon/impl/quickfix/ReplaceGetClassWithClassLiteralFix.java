@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -62,9 +62,11 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
   }
 
   public static void registerFix(PsiMethodCallExpression callExpression, HighlightInfo errorResult) {
-    if (callExpression.getMethodExpression().getQualifierExpression() == null && 
-        CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").test(callExpression)) {
-      QuickFixAction.registerQuickFixAction(errorResult, new ReplaceGetClassWithClassLiteralFix(callExpression));
+    if (callExpression.getMethodExpression().getQualifierExpression() == null) {
+      PsiMethod method = callExpression.resolveMethod();
+      if (method != null && PsiTypesUtil.isGetClass(method)) {
+        QuickFixAction.registerQuickFixAction(errorResult, new ReplaceGetClassWithClassLiteralFix(callExpression));
+      }
     }
   }
 }

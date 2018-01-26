@@ -146,7 +146,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   @NotNull
   public LookupElement[] getResult() {
     final Collection<LookupElement> variants = myVariants.values();
-    return variants.toArray(new LookupElement[variants.size()]);
+    return variants.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @NotNull

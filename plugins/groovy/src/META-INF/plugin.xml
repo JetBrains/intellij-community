@@ -591,7 +591,7 @@
     <extendWordSelectionHandler implementation="org.jetbrains.plugins.groovy.editor.selection.GroovyStatementSelectioner"/>
 
 
-    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.AccessorMethodReferencesSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.PropertyMethodReferenceSearchExecutor"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.MethodLateBoundReferencesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReflectedMethodReferenceSearcher"/>
@@ -1730,8 +1730,7 @@
     <action id="ConvertToCompileStatic"
             class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
             text="Convert to @CompileStatic"
-            description="Convert Groovy files to @CompileStatic"
-            internal="true">
+            description="Convert Groovy files to @CompileStatic">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
@@ -1842,7 +1841,7 @@
   </project-components>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
-    <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyDummyUastPlugin"/>
+    <uastLanguagePlugin implementation="org.jetbrains.plugins.groovy.lang.psi.uast.GroovyUastPlugin"/>
   </extensions>
 
   <xi:include href="groovy-console.xml" xpointer="xpointer(/idea-plugin/*)"/>

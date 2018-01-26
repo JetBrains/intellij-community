@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -23,16 +21,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
@@ -78,8 +75,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
       // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
       if (buildRuntimeVersion != null && debuggeeVersion != null) {
-        JavaSdkVersion minVersion = buildRuntimeVersion.ordinal() > debuggeeVersion.ordinal() ? debuggeeVersion : buildRuntimeVersion;
-        String sourceOption = getSourceOption(minVersion.getMaxLanguageLevel());
+        JavaSdkVersion minVersion = debuggeeVersion.compareTo(buildRuntimeVersion) < 0 ? debuggeeVersion : buildRuntimeVersion;
+        String sourceOption = JpsJavaSdkType.complianceOption(minVersion.getMaxLanguageLevel().toJavaVersion());
         options.add("-source");
         options.add(sourceOption);
         options.add("-target");
@@ -117,11 +114,6 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       }
     }
     return myCompiledClasses;
-  }
-
-  @NotNull
-  private static String getSourceOption(@NotNull LanguageLevel languageLevel) {
-    return "1." + Integer.valueOf(3 + languageLevel.ordinal());
   }
 
   private File generateTempSourceFile(File workingDir) throws IOException {

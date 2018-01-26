@@ -19,17 +19,12 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PsiSuperMethodUtil {
   private PsiSuperMethodUtil() {}
@@ -97,7 +92,7 @@ public class PsiSuperMethodUtil {
     if (inRawContext) {
       Set<PsiTypeParameter> typeParams = superSubstitutor.getSubstitutionMap().keySet();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(superClass.getProject());
-      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(new PsiTypeParameter[typeParams.size()]));
+      superSubstitutor = factory.createRawSubstitutor(derivedSubstitutor, typeParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
     }
     Map<PsiTypeParameter, PsiType> map = null;
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(superClass)) {
@@ -176,14 +171,15 @@ public class PsiSuperMethodUtil {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
   }
 
-  @Contract("null, _ -> null")
-  public static PsiMethod correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
-    if (method == null) return null;
+  @NotNull
+  public static Optional<PsiMethod> correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
+    if (method == null) return Optional.empty();
     final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return method;
+    if (aClass == null) return Optional.empty();
     final PsiClass correctedClass = correctClassByScope(aClass, resolveScope);
-    if (correctedClass == null || correctedClass == aClass) return method;
+    if (correctedClass == null) return Optional.empty();
+    else if (correctedClass == aClass) return Optional.of(method);
     final PsiMethod correctedClassMethodBySignature = correctedClass.findMethodBySignature(method, false);
-    return correctedClassMethodBySignature == null ? method : correctedClassMethodBySignature;
+    return correctedClassMethodBySignature == null ? Optional.empty() : Optional.of(correctedClassMethodBySignature);
   }
 }

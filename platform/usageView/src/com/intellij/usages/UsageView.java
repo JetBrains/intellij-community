@@ -58,12 +58,12 @@ public interface UsageView extends Disposable {
 
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription);
 
   /**
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable
    */
-  void addPerformOperationAction(@NotNull Runnable processRunnable, String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
+  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString, @NotNull String shortDescription, boolean checkReadOnlyStatus);
 
   @NotNull
   UsageViewPresentation getPresentation();
@@ -71,11 +71,17 @@ public interface UsageView extends Disposable {
   @NotNull
   Set<Usage> getExcludedUsages();
 
-  @NotNull Set<Usage> getSelectedUsages();
-  @NotNull Set<Usage> getUsages();
-  @NotNull List<Usage> getSortedUsages();
+  @NotNull
+  Set<Usage> getSelectedUsages();
 
-  @NotNull JComponent getComponent();
+  @NotNull
+  Set<Usage> getUsages();
+
+  @NotNull
+  List<Usage> getSortedUsages();
+
+  @NotNull
+  JComponent getComponent();
 
   int getUsagesCount();
 

@@ -22,16 +22,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,6 +55,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -66,7 +66,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.*;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 3;
+  private static final int VERSION = 4;
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
@@ -395,39 +395,32 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     @NotNull
     @Override
-    protected ProgressIndicator startNewBackgroundTask() {
+    protected SingleTask startNewBackgroundTask() {
       ProgressIndicator indicator = myProgress.createProgressIndicator(false);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
-                                                           PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            int previousPriority = setMinimumPriority();
+      Consumer<ProgressIndicator> task = progressIndicator -> {
+        int previousPriority = setMinimumPriority();
+        try {
+          IndexingRequest request;
+          while ((request = popRequest()) != null) {
             try {
-              IndexingRequest request;
-              while ((request = popRequest()) != null) {
-                try {
-                  request.run(indicator);
-                  indicator.checkCanceled();
-                }
-                catch (ProcessCanceledException reThrown) {
-                  throw reThrown;
-                }
-                catch (Throwable t) {
-                  LOG.error("Error while indexing", t);
-                }
-              }
+              request.run(progressIndicator);
+              progressIndicator.checkCanceled();
             }
-            finally {
-              taskCompleted(null);
-              resetPriority(previousPriority);
+            catch (ProcessCanceledException reThrown) {
+              throw reThrown;
+            }
+            catch (Throwable t) {
+              LOG.error("Error while indexing", t);
             }
           }
-        };
-        myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
-      });
-      return indicator;
+        }
+        finally {
+          taskCompleted(null);
+          resetPriority(previousPriority);
+        }
+      };
+      Future<?> future = myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, "Indexing Commit Data", indicator);
+      return new SingleTaskImpl(future, indicator);
     }
 
     public void resetPriority(int previousPriority) {

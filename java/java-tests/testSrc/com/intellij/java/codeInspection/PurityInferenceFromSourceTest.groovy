@@ -231,6 +231,26 @@ class Another {
     """
   }
 
+  void "test plain field read"() {
+    assertPure true, """
+int x;
+
+int get() {
+  return x;
+}
+"""
+  }
+
+  void "test volatile field read"() {
+    assertPure false, """
+volatile int x;
+
+int get() {
+  return x;
+}
+"""
+  }
+
   private void assertPure(boolean expected, String classBody) {
     def clazz = myFixture.addClass("final class Foo { $classBody }")
     assert !((PsiFileImpl) clazz.containingFile).contentsLoaded

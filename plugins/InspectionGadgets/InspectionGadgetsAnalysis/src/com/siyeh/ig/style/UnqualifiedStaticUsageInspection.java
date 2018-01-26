@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -128,8 +127,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiMember member = (PsiMember)expression.resolve();
@@ -138,8 +136,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
       assert containingClass != null;
       final String className = containingClass.getName();
       CommentTracker commentTracker = new CommentTracker();
-      final String text = commentTracker.markUnchanged(expression).getText();
-      PsiReplacementUtil.replaceExpression(expression, className + '.' + text, commentTracker);
+      PsiReplacementUtil.replaceExpression(expression, className + '.' + commentTracker.text(expression), commentTracker);
     }
   }
 

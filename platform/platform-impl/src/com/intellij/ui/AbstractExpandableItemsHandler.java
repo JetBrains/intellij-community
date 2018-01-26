@@ -242,8 +242,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
            myComponent.isEnabled() &&
            myComponent.isShowing() &&
            myComponent.getVisibleRect().intersects(getVisibleRect(selected)) &&
-           (processIfUnfocused || myComponent.isFocusOwner()) &&
-           !isPopup();
+           (processIfUnfocused || myComponent.isFocusOwner());
   }
 
   private void doHandleSelectionChange(@NotNull KeyType selected, boolean processIfUnfocused) {
@@ -262,6 +261,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
       myPopup.setBounds(bounds);
+      myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
       repaintKeyItem();
     }

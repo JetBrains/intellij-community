@@ -168,7 +168,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       }
     });
     if (problems.isEmpty()) return null;
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable

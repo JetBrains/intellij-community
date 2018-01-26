@@ -1,17 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Factory;
@@ -90,8 +89,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   public void reset() {
     myAnyChangeCount.incrementAndGet();
     myState.reset();
-    ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged()),
-                                                    ModalityState.NON_MODAL, myProject.getDisposed());
+    DaemonCodeAnalyzer.getInstance(myProject).restart();
   }
 
   @Override
@@ -143,7 +141,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   private JsonSchemaObject readCachedObject(@NotNull VirtualFile schemaFile) {
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schemaFile);
-    if (psiFile == null || !(psiFile instanceof JsonFile)) return null;
+    if (!(psiFile instanceof JsonFile)) return null;
 
     final CachedValueProvider<JsonSchemaObject> provider = () -> {
       final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);

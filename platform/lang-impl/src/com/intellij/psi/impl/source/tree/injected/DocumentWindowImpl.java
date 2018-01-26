@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
+class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.injected.editor.DocumentWindowImpl");
   private final DocumentEx myDelegate;
   private final boolean myOneLine;
@@ -39,9 +40,9 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
   private CachedText myCachedText;
 
-  DocumentWindowImpl(@NotNull DocumentEx delegate, boolean oneLine, @NotNull Place shreds) {
+  DocumentWindowImpl(@NotNull DocumentEx delegate, @NotNull Place shreds) {
     myDelegate = delegate;
-    myOneLine = oneLine;
+    myOneLine = ContainerUtil.and(shreds, s->((ShredImpl)s).isOneLine());
     synchronized (myLock) {
       myShreds = shreds;
     }
@@ -517,7 +518,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
           markers.add(hostMarker);
         }
       }
-      return markers.isEmpty() ? Segment.EMPTY_ARRAY : markers.toArray(new Segment[markers.size()]);
+      return markers.isEmpty() ? Segment.EMPTY_ARRAY : markers.toArray(Segment.EMPTY_ARRAY);
     }
   }
 
@@ -660,8 +661,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     // heuristics: return offset closest to the caret
     Editor[] editors = EditorFactory.getInstance().getEditors(getDelegate());
     Editor editor  = editors.length == 0 ? null : editors[0];
-    if (editor != null)
-    {
+    if (editor != null) {
       if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
       int caret = editor.getCaretModel().getOffset();
       return Math.abs(caret - offsetInLeftFragment) < Math.abs(caret - offsetInRightFragment) ? offsetInLeftFragment : offsetInRightFragment;
@@ -872,8 +872,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
 
       Segment hostRange = shred.getHostRangeMarker();
       Segment other = otherShred.getHostRangeMarker();
-      if (hostRange == null || other == null || hostRange.getStartOffset() != other.getStartOffset()) return false;
-      if (hostRange.getEndOffset() != other.getEndOffset()) return false;
+      if (hostRange == null || other == null || !TextRange.areSegmentsEqual(hostRange, other)) return false;
     }
     return true;
   }
@@ -882,7 +881,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   public boolean isValid() {
     PsiLanguageInjectionHost.Shred[] shreds;
     synchronized (myLock) {
-      shreds = myShreds.toArray(new PsiLanguageInjectionHost.Shred[myShreds.size()]);
+      shreds = myShreds.toArray(new PsiLanguageInjectionHost.Shred[0]);
     }
     // can grab PsiLock in SmartPsiPointer.restore()
     for (PsiLanguageInjectionHost.Shred shred : shreds) {

@@ -22,6 +22,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated  // to be removed in 2018.1x
 public class StatisticsServiceEP extends AbstractExtensionPointBean implements KeyedLazyInstance<StatisticsService> {
   @Attribute("key")
   public String key;

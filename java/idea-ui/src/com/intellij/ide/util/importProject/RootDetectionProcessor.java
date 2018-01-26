@@ -193,7 +193,7 @@ public class RootDetectionProcessor {
   }
 
   private static void removeIncompatibleRoots(DetectedProjectRoot root, Map<File, DetectedRootData> rootData) {
-    DetectedRootData[] allRoots = rootData.values().toArray(new DetectedRootData[rootData.values().size()]);
+    DetectedRootData[] allRoots = rootData.values().toArray(new DetectedRootData[0]);
     for (DetectedRootData child : allRoots) {
       final File childDirectory = child.getDirectory();
       if (FileUtil.isAncestor(root.getDirectory(), childDirectory, true)) {

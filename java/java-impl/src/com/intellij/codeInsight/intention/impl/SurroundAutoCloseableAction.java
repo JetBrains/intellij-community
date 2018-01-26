@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.intention.impl;
 
@@ -52,23 +40,9 @@ import java.util.stream.Stream;
 public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
-    if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7)) return false;
-
-    PsiType type = null;
-
-    PsiLocalVariable variable = findVariable(element);
-    if (variable != null) {
-      type = variable.getType();
-    }
-    else {
-      PsiExpression expression = findExpression(element);
-      if (expression != null) {
-        type = expression.getType();
-      }
-    }
-
-    return type != null && rightType(type);
+    return element.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+           PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_7) &&
+           (findVariable(element) != null || findExpression(element) != null);
   }
 
   @Override
@@ -89,9 +63,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     PsiLocalVariable variable = PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class);
 
     if (variable != null &&
-        variable.getInitializer() != null &&
         variable.getParent() instanceof PsiDeclarationStatement &&
-        variable.getParent().getParent() instanceof PsiCodeBlock) {
+        variable.getParent().getParent() instanceof PsiCodeBlock &&
+        rightType(variable.getType()) &&
+        validExpression(variable.getInitializer())) {
       return variable;
     }
 
@@ -99,8 +74,11 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       PsiElement sibling = element.getPrevSibling();
       if (sibling instanceof PsiDeclarationStatement) {
         PsiElement lastVar = ArrayUtil.getLastElement(((PsiDeclarationStatement)sibling).getDeclaredElements());
-        if (lastVar instanceof PsiLocalVariable && ((PsiLocalVariable)lastVar).getInitializer() != null) {
-          return (PsiLocalVariable)lastVar;
+        if (lastVar instanceof PsiLocalVariable) {
+          variable = (PsiLocalVariable)lastVar;
+          if (rightType(variable.getType()) && validExpression(variable.getInitializer())) {
+            return variable;
+          }
         }
       }
     }
@@ -113,14 +91,18 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
     if (expression != null &&
         expression.getParent() instanceof PsiExpressionStatement &&
-        expression.getParent().getParent() instanceof PsiCodeBlock) {
+        expression.getParent().getParent() instanceof PsiCodeBlock &&
+        validExpression(expression)) {
       return expression;
     }
 
     if (expression == null && element instanceof PsiWhiteSpace) {
       PsiElement sibling = element.getPrevSibling();
       if (sibling instanceof PsiExpressionStatement) {
-        return ((PsiExpressionStatement)sibling).getExpression();
+        expression = ((PsiExpressionStatement)sibling).getExpression();
+        if (validExpression(expression)) {
+          return expression;
+        }
       }
     }
 
@@ -128,7 +110,13 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   private static boolean rightType(PsiType type) {
-    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
+    return type != null && InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
+  }
+
+  private static boolean validExpression(PsiExpression expression) {
+    return expression != null &&
+           rightType(expression.getType()) &&
+           PsiTreeUtil.findChildOfType(expression, PsiErrorElement.class) == null;
   }
 
   private static void processVariable(Project project, Editor editor, PsiLocalVariable variable) {
@@ -146,7 +134,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     }
 
     CommentTracker tracker = new CommentTracker();
-    String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + tracker.markUnchanged(initializer).getText() + ") {}";
+    String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + tracker.text(initializer) + ") {}";
     PsiTryStatement armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, text);
 
     List<PsiElement> toFormat = null;
@@ -213,7 +201,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
           CommentTracker commentTracker = new CommentTracker();
           PsiExpression varInit = var.getInitializer();
           if (varInit != null) {
-            String varAssignText = name + " = " + commentTracker.markUnchanged(varInit).getText() + ";";
+            String varAssignText = name + " = " + commentTracker.text(varInit) + ";";
             anchor = parent.addAfter(factory.createStatementFromText(varAssignText, parent), anchor);
           }
 
@@ -238,7 +226,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
     PsiElement statement = expression.getParent();
 
     CommentTracker commentTracker = new CommentTracker();
-    String text = "try (" + type.getCanonicalText(true) + " r = " + commentTracker.markUnchanged(expression).getText() + ") {}";
+    String text = "try (" + type.getCanonicalText(true) + " r = " + commentTracker.text(expression) + ") {}";
     PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
 
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);

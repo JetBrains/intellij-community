@@ -55,7 +55,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
       if (list.getData() != null) {
-        renderer.append(" \u24D8", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         renderer.setToolTipText(getTooltipText());
       }
       appendCount(renderer);

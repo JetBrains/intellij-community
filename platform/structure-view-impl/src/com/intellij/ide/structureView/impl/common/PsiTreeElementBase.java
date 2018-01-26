@@ -114,7 +114,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
         ContainerUtil.addAll(result, children);
       }
     }
-    return result.toArray(new StructureViewTreeElement[result.size()]);
+    return result.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
   @Override

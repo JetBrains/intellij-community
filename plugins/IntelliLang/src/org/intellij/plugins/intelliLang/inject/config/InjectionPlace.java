@@ -19,7 +19,6 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayFactory;
-import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Gregory.Shrago
@@ -32,10 +31,10 @@ public class InjectionPlace {
   public static final ArrayFactory<InjectionPlace> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new InjectionPlace[count];
 
   private final boolean myEnabled;
-  private final ElementPattern<PsiElement> myElementPattern;
+  private final ElementPattern<? extends PsiElement> myElementPattern;
 
 
-  public InjectionPlace(final ElementPattern<PsiElement> myElementPattern, final boolean enabled) {
+  public InjectionPlace(ElementPattern<? extends PsiElement> myElementPattern, boolean enabled) {
     this.myElementPattern = myElementPattern;
     myEnabled = enabled;
   }
@@ -48,7 +47,7 @@ public class InjectionPlace {
     return myElementPattern.toString();
   }
 
-  public ElementPattern<PsiElement> getElementPattern() {
+  public ElementPattern<? extends PsiElement> getElementPattern() {
     return myElementPattern;
   }
 

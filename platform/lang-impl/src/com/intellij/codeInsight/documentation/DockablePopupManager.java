@@ -56,6 +56,9 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract String getShowInToolWindowProperty();
   protected abstract String getAutoUpdateEnabledProperty();
+  protected boolean getAutoUpdateDefault() {
+    return false;
+  }
 
   protected abstract String getAutoUpdateTitle();
   protected abstract String getRestorePopupDescription();
@@ -100,8 +103,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myToolWindow.setToHideOnEmptyContent(false);
 
     setToolwindowDefaultState();
-    
-    ((ToolWindowEx)myToolWindow).setTitleActions(createRestorePopupAction());
+
+    installComponentActions(myToolWindow, component);
 
     final ContentManager contentManager = myToolWindow.getContentManager();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
@@ -118,7 +121,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {
-        restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty()));
+        restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));
       }
 
       @Override
@@ -133,6 +136,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     doUpdateComponent(element, originalElement, component);
   }
 
+  protected void installComponentActions(ToolWindow toolWindow, T component) {
+    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
+  }
+
   protected void setToolwindowDefaultState() {
     final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
     myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.FLOATING, rectangle);
@@ -143,21 +150,22 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
                                            AllIcons.General.AutoscrollFromSource) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty());
+        return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(),
+                                                            getAutoUpdateDefault());
       }
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state);
+        PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state, getAutoUpdateDefault());
         restartAutoUpdate(state);
       }
     };
-    return new AnAction[]{toggleAutoUpdateAction};
+    return new AnAction[]{createRestorePopupAction(), toggleAutoUpdateAction};
   }
 
   @NotNull
   protected AnAction createRestorePopupAction() {
-    return new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.General.AutohideOffPressed) {
+    return new AnAction("Open as Popup", getRestorePopupDescription(), AllIcons.General.AutohideOffPressed) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         restorePopupBehavior();

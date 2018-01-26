@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
@@ -58,9 +44,13 @@ import java.util.function.Consumer;
  * @author nik
  */
 public abstract class BaseCompilerTestCase extends ModuleTestCase {
-
   @Override
   protected void setUpModule() {
+  }
+
+  @Override
+  protected boolean isCreateProjectFileExplicitly() {
+    return false;
   }
 
   @Override
@@ -106,13 +96,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected String getProjectBasePath() {
-    return getBaseDir().getPath();
-  }
-
-  protected VirtualFile getBaseDir() {
-    final VirtualFile baseDir = myProject.getBaseDir();
-    Assert.assertNotNull(baseDir);
-    return baseDir;
+    return myProject.getBasePath();
   }
 
   protected void copyToProject(String relativePath) {
@@ -159,8 +143,8 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     return createFile(path, "");
   }
 
-  protected VirtualFile createFile(final String path, final String text) {
-    return VfsTestUtil.createFile(getBaseDir(), path, text);
+  protected VirtualFile createFile(@NotNull String path, final String text) {
+    return VfsTestUtil.createFile(getOrCreateProjectBaseDir(), path, text);
   }
 
   protected CompilationLog make(final Artifact... artifacts) {
@@ -244,7 +228,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
       @Override
       public void fileGenerated(String outputRoot, String relativePath) {
         generatedFilePaths.add(relativePath);
@@ -323,23 +307,15 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
-    final String baseUrl = myProject.getBaseDir().getUrl();
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(baseUrl + "/out");
-  }
 
-  @Override
-  protected File getIprFile() throws IOException {
-    File iprFile = super.getIprFile();
-    FileUtil.delete(iprFile);
-    return iprFile;
+    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl("file://" + myProject.getBasePath() + "/out");
   }
 
   @NotNull
   @Override
   protected Module doCreateRealModule(String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
-    final VirtualFile baseDir = myProject.getBaseDir();
-    Assert.assertNotNull(baseDir);
+    final VirtualFile baseDir = getOrCreateProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     PlatformTestCase.myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {

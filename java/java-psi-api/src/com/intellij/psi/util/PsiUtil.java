@@ -28,7 +28,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterable;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
@@ -460,12 +459,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiType convertAnonymousToBaseType(@NotNull PsiType type) {
     PsiClass psiClass = resolveClassInType(type);
     if (psiClass instanceof PsiAnonymousClass) {
-      int dims = type.getArrayDimensions();
-      type = ((PsiAnonymousClass) psiClass).getBaseClassType();
-      while (dims != 0) {
-        type = type.createArrayType();
-        dims--;
-      }
+      type = PsiTypesUtil.createArrayType(((PsiAnonymousClass) psiClass).getBaseClassType(), type.getArrayDimensions());
     }
     return type;
   }
@@ -1034,7 +1028,7 @@ public final class PsiUtil extends PsiUtilCore {
       for (PsiMethod cls: constructors) {
         if ((!checkModifiers || cls.hasModifierProperty(PsiModifier.PUBLIC) ||
              allowProtected && cls.hasModifierProperty(PsiModifier.PROTECTED)) &&
-            cls.getParameterList().getParametersCount() == 0) {
+            cls.getParameterList().isEmpty()) {
           return true;
         }
       }
@@ -1273,7 +1267,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (body != null) {
       addReturnStatements(vector, body);
     }
-    return vector.toArray(new PsiReturnStatement[vector.size()]);
+    return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
   private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {

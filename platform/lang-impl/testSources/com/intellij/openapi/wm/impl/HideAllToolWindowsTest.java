@@ -30,6 +30,8 @@ public class HideAllToolWindowsTest extends ToolWindowManagerTestCase {
     List<ToolWindowType> cycle = new ArrayList<>(Arrays.asList(ToolWindowType.values()));
     for (int i = 0; i < extensions.length; i++) {
       ToolWindowEP extension = extensions[i];
+      if (extension.getCondition() != null && !extension.getCondition().value(getProject()))
+        continue;
       myManager.initToolWindow(extension);
       myManager.showToolWindow(extension.id);
 

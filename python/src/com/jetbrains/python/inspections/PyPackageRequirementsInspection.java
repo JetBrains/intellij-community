@@ -113,7 +113,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(file, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
-                            quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+                            quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }
@@ -216,7 +216,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                         String.format("Package containing module '%s' is not listed in project requirements", packageName),
                         ProblemHighlightType.WEAK_WARNING,
                         null,
-                        quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+                        quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
   }

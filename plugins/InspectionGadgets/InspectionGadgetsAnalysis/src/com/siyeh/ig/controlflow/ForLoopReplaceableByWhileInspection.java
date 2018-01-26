@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
           final PsiExpression[] expressions = expressionList.getExpressions();
           updateStatements = new PsiStatement[expressions.length];
           for (int i = 0; i < expressions.length; i++) {
-            updateStatements[i] = factory.createStatementFromText(commentTracker.markUnchanged(expressions[i]).getText() + ';', element);
+            updateStatements[i] = factory.createStatementFromText(commentTracker.text(expressions[i]) + ';', element);
           }
         }
         else {

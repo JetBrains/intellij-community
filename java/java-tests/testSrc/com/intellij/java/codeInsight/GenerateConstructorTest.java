@@ -92,6 +92,8 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testNullableField() { doTest(); }
+
   private void doTest() {
     doTest(false);
   }
@@ -104,7 +106,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
       protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmpty, boolean copyJavadoc, Project project, Editor editor) {
         if (preSelect) {
           List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
-          return preselection.toArray(new ClassMember[preselection.size()]);
+          return preselection.toArray(ClassMember.EMPTY_ARRAY);
         }
         else {
           return members;

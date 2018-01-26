@@ -177,7 +177,7 @@ public class ImplementAbstractMethodHandler {
     if (!classNamesWithPotentialImplementations.isEmpty()) {
       problemDetected.set("Potential implementations with weaker access privileges are found: " + StringUtil.join(classNamesWithPotentialImplementations, ", "));
     }
-    return list.toArray(new PsiClass[list.size()]);
+    return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static class MyPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {

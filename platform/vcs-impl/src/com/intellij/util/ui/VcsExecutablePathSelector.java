@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBCheckBox;
@@ -44,9 +43,9 @@ public class VcsExecutablePathSelector {
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
 
-    myMainPanel = JBPanelFactory.grid()
-      .add(JBPanelFactory.panel(panel).withLabel(VcsBundle.getString("executable.select.label")))
-      .add(JBPanelFactory.panel(myProjectPathCheckbox))
+    myMainPanel = UI.PanelFactory.grid()
+      .add(UI.PanelFactory.panel(panel).withLabel(VcsBundle.getString("executable.select.label")))
+      .add(UI.PanelFactory.panel(myProjectPathCheckbox))
       .createPanel();
   }
 

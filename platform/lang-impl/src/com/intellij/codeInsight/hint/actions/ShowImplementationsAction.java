@@ -185,7 +185,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
       }
 
       if (!implsList.isEmpty()) {
-        impls = implsList.toArray(new PsiElement[implsList.size()]);
+        impls = implsList.toArray(PsiElement.EMPTY_ARRAY);
       }
     }
 

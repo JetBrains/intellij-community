@@ -490,12 +490,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testSideEffectReturn() {
     doTest();
-    checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
+    checkIntentionResult("Simplify 'Test.valueOf(...) != null' to true extracting side effects");
   }
 
   public void testSideEffectNoBrace() {
     doTest();
-    checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
+    checkIntentionResult("Simplify 'Test.valueOf(...) != null' to true extracting side effects");
   }
 
   public void testSimplifyConcatWithParentheses() {
@@ -581,4 +581,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testLessThanRelations() { doTest(); }
+  public void testAdvancedArrayAccess() { doTest(); }
+  public void testNullableGetterInLoop() { doTest(); }
+  public void testNullabilityBasics() { doTest(); }
+  public void testReassignedVarInLoop() { doTest(); }
+  public void testLoopDoubleComparisonNotComplex() { doTest(); }
 }

@@ -43,12 +43,11 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return
-      myToType != null &&
-      myToType.isValid() &&
-      myArgList.getExpressions().length > myIndex &&
-      myArgList.getExpressions()[myIndex] != null &&
-      myArgList.getExpressions()[myIndex].isValid();
+    if (myToType != null && myToType.isValid()) {
+      PsiExpression[] args = myArgList.getExpressions();
+      return args.length > myIndex && args[myIndex] != null && args[myIndex].isValid();
+    }
+    return false;
   }
 
   @Override

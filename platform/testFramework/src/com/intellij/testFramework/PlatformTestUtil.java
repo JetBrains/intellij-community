@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -53,7 +51,6 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
@@ -91,6 +88,7 @@ import java.util.function.Function;
 import java.util.jar.JarFile;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author yole
@@ -240,7 +238,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    Assert.assertEquals(expected, treeStringPresentation);
+    assertEquals(expected, treeStringPresentation);
   }
 
   public static void expand(JTree tree, int... rows) {
@@ -301,20 +299,6 @@ public class PlatformTestUtil {
     }
   }
 
-  public static void pumpInvocationEventsFor(long duration, @NotNull TimeUnit unit) {
-    pumpInvocationEventsFor(unit.toMillis(duration));
-  }
-
-  public static void pumpInvocationEventsFor(long millis) {
-    assert 0 <= millis && millis <= MAX_WAIT_TIME;
-    assertDispatchThreadWithoutWriteAccess();
-    long startTimeMillis = System.currentTimeMillis();
-    UIUtil.dispatchAllInvocationEvents();
-    while (getMillisSince(startTimeMillis) <= millis) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-  }
-
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
     callback.doWhenDone(() -> promise.setResult(null));
@@ -342,9 +326,6 @@ public class PlatformTestUtil {
     return result;
   }
 
-  /**
-   * @see #pumpInvocationEventsFor(long)
-   */
   public static void waitForAlarm(final int delay) {
     @NotNull Application app = getApplication();
     assertDispatchThreadWithoutWriteAccess();
@@ -519,7 +500,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
-    Assert.assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
+    assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
   }
 
   @NotNull
@@ -611,7 +592,7 @@ public class PlatformTestUtil {
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
     if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
     if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
   }
 
   @NotNull
@@ -621,13 +602,16 @@ public class PlatformTestUtil {
 
   @NotNull
   public static String getRtJarPath() {
-    String home = SystemProperties.getJavaHome();
-    return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
+    return SystemProperties.getJavaHome() + "/lib/rt.jar";
   }
 
   public static void saveProject(@NotNull Project project) {
+    saveProject(project, false);
+  }
+
+  public static void saveProject(@NotNull Project project, boolean isForce) {
     ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.save(ServiceKt.getStateStore(project), project);
+    StoreUtil.save(ServiceKt.getStateStore(project), project, isForce);
   }
 
   public static class TestInfo {
@@ -643,7 +627,7 @@ public class PlatformTestUtil {
 
     static {
       // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     }
 
     private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
@@ -879,7 +863,7 @@ public class PlatformTestUtil {
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    Assert.assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
+    assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -906,7 +890,7 @@ public class PlatformTestUtil {
       }
     }
 
-    Assert.assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
+    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
   }
 
   private static String sortAndJoin(List<String> strings) {
@@ -984,7 +968,7 @@ public class PlatformTestUtil {
   @Deprecated
   public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
+      assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -1078,7 +1062,7 @@ public class PlatformTestUtil {
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
-      Assert.assertEquals(output.getStdout(), 0, output.getExitCode());
+      assertEquals(output.getStdout(), 0, output.getExitCode());
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e);
@@ -1131,6 +1115,8 @@ public class PlatformTestUtil {
 
       cleanupAllProjects();
 
+      UIUtil.dispatchAllInvocationEvents();
+
       ApplicationImpl application = (ApplicationImpl)getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
@@ -1181,8 +1167,8 @@ public class PlatformTestUtil {
         int result12 = comparator.compare(value1, value2);
         int result21 = comparator.compare(value2, value1);
         if (equality.equals(value1, value2)) {
-          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
-          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
         }
         else {
           if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));

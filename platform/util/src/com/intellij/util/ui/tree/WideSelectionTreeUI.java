@@ -283,17 +283,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
   }
 
-  @Override
-  protected Color getHashColor() {
-    //if (invertLineColor && !ComparatorUtil.equalsNullable(UIUtil.getTreeSelectionForeground(), UIUtil.getTreeForeground())) {
-    //  final Color c = UIUtil.getTreeSelectionForeground();
-    //  if (c != null) {
-    //    return c.darker();
-    //  }
-    //}
-    return super.getHashColor();
-  }
-
   public boolean isWideSelection() {
     return myWideSelection;
   }

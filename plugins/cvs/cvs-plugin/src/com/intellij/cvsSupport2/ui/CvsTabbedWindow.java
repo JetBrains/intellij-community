@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.cvsSupport2.ui;
 
@@ -21,7 +9,10 @@ import com.intellij.cvsSupport2.config.ui.CvsConfigurationsListEditor;
 import com.intellij.cvsSupport2.errorHandling.CvsException;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
@@ -43,39 +34,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
-/**
- * author: lesya
- */
 public class CvsTabbedWindow implements Disposable {
-
   private final Project myProject;
   private Editor myOutput = null;
   private ErrorTreeView myErrorsView;
 
   public CvsTabbedWindow(Project project) {
     myProject = project;
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (myProject.isDisposed()) return;
-      final ToolWindow toolWindow = getToolWindow();
-      final ContentManager contentManager = toolWindow.getContentManager();
-      contentManager.addContentManagerListener(new ContentManagerAdapter() {
-        public void contentRemoved(ContentManagerEvent event) {
-          final JComponent component = event.getContent().getComponent();
-          final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
-                                              ((CvsTabbedWindowComponent)component).getComponent() : component;
-          if (removedComponent == myErrorsView) {
-            myErrorsView.dispose();
-            myErrorsView = null;
-          }
-          else if (myOutput != null && removedComponent == myOutput.getComponent()) {
-            EditorFactory.getInstance().releaseEditor(myOutput);
-            myOutput = null;
-          }
+
+    ApplicationManager.getApplication().invokeLater(() -> initToolWindow());
+  }
+
+  private void initToolWindow() {
+    if (myProject.isDisposed()) {
+      return;
+    }
+
+    final ToolWindow toolWindow = getToolWindow();
+    final ContentManager contentManager = toolWindow.getContentManager();
+    contentManager.addContentManagerListener(new ContentManagerAdapter() {
+      public void contentRemoved(ContentManagerEvent event) {
+        final JComponent component = event.getContent().getComponent();
+        final JComponent removedComponent = component instanceof CvsTabbedWindowComponent ?
+                                            ((CvsTabbedWindowComponent)component).getComponent() : component;
+        if (removedComponent == myErrorsView) {
+          myErrorsView.dispose();
+          myErrorsView = null;
         }
-      });
-      toolWindow.installWatcher(contentManager);
+        else if (myOutput != null && removedComponent == myOutput.getComponent()) {
+          EditorFactory.getInstance().releaseEditor(myOutput);
+          myOutput = null;
+        }
+      }
     });
+    toolWindow.installWatcher(contentManager);
   }
 
   public void dispose() {
@@ -141,7 +135,7 @@ public class CvsTabbedWindow implements Disposable {
   public ErrorTreeView getErrorsTreeView() {
     if (myErrorsView == null) {
       myErrorsView = ErrorViewFactory.SERVICE.getInstance()
-        .createErrorTreeView(myProject, null, true, new AnAction[]{(DefaultActionGroup)ActionManager.getInstance().getAction("CvsActions")},
+        .createErrorTreeView(myProject, null, true, new AnAction[]{ActionManager.getInstance().getAction("CvsActions")},
                              new AnAction[]{new GlobalCvsSettingsAction(), new ReconfigureCvsRootAction()}, new ContentManagerProvider() {
           public ContentManager getParentContent() {
             return getToolWindow().getContentManager();
@@ -196,7 +190,7 @@ public class CvsTabbedWindow implements Disposable {
 
     public void actionPerformed(AnActionEvent e) {
       Object data = ErrorTreeView.CURRENT_EXCEPTION_DATA_KEY.getData(e.getDataContext());
-      CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)data).getCvsRoot(), myProject);
+      CvsConfigurationsListEditor.reconfigureCvsRoot(((CvsException)Objects.requireNonNull(data)).getCvsRoot(), myProject);
     }
   }
 }

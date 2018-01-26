@@ -197,7 +197,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   }
 
   private static CheckedTreeNode createRoot(Collection<SuggestedChildRootInfo> suggestedRoots) {
-    SuggestedChildRootInfo[] sortedRoots = suggestedRoots.toArray(new SuggestedChildRootInfo[suggestedRoots.size()]);
+    SuggestedChildRootInfo[] sortedRoots = suggestedRoots.toArray(new SuggestedChildRootInfo[0]);
     Arrays.sort(sortedRoots,
                 (o1, o2) -> o1.getDetectedRoot().getFile().getPresentableUrl().compareTo(o2.getDetectedRoot().getFile().getPresentableUrl()));
 

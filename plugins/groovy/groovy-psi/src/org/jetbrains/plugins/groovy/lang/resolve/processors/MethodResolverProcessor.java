@@ -152,7 +152,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
   private GroovyResolveResult[] filterCandidates() {
     List<GroovyMethodResult> array = getCandidatesInternal();
-    if (array.size() == 1) return array.toArray(new GroovyResolveResult[array.size()]);
+    if (array.size() == 1) return array.toArray(GroovyResolveResult.EMPTY_ARRAY);
 
     List<GroovyMethodResult> result = ContainerUtil.newArrayList();
 
@@ -177,7 +177,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       result.add(resolveResult);
     }
 
-    return result.toArray(new GroovyResolveResult[result.size()]);
+    return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   @Override

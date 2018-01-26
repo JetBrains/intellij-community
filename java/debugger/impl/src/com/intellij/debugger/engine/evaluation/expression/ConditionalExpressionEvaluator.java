@@ -41,7 +41,7 @@ class ConditionalExpressionEvaluator implements Evaluator {
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value condition = (Value)myConditionEvaluator.evaluate(context);
-    if (condition == null || !(condition instanceof BooleanValue)) {
+    if (!(condition instanceof BooleanValue)) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.condition.expected"));
     }
     return ((BooleanValue)condition).booleanValue()? myThenEvaluator.evaluate(context) : myElseEvaluator.evaluate(context);

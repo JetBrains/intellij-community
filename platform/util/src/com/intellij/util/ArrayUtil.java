@@ -233,9 +233,8 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   @Contract(pure=true)
   public static Object[] toObjectArray(@NotNull Collection<?> collection) {
-    if (collection.isEmpty()) return EMPTY_OBJECT_ARRAY;
     //noinspection SSBasedInspection
-    return collection.toArray(new Object[collection.size()]);
+    return collection.toArray(EMPTY_OBJECT_ARRAY);
   }
 
   @NotNull

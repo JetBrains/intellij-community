@@ -105,12 +105,12 @@ public class CompilerPaths {
    */
   @Nullable
   public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
-    final String outPathUrl;
-    final Application application = ApplicationManager.getApplication();
     final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     if (extension == null) {
       return null;
     }
+    final String outPathUrl;
+    final Application application = ApplicationManager.getApplication();
     if (forTestClasses) {
       if (application.isDispatchThread()) {
         final String url = extension.getCompilerOutputUrlForTests();

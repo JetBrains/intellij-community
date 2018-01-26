@@ -40,11 +40,6 @@ public class XmlElementDescriptorByType extends XmlElementDescriptorImpl {
   public XmlElementDescriptorByType() {}
 
   @Override
-  public XmlTag getDeclaration(){
-    return myDescriptorTag;
-  }
-
-  @Override
   public String getName(PsiElement context){
     return myDescriptorTag.getName();
   }

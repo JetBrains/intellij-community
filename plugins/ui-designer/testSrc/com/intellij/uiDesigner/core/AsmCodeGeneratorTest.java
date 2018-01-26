@@ -77,13 +77,13 @@ public class AsmCodeGeneratorTest extends TestCase {
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/RuntimeBundle.properties"));
-    appendPath(cp, GridLayoutManager.class); // forms_rt
+    appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
     myClassFinder = new MyClassFinder(
       new URL[] {new File(swingPath).toURI().toURL()},
-      cp.toArray(new URL[cp.size()])
+      cp.toArray(new URL[0])
     );
   }
 

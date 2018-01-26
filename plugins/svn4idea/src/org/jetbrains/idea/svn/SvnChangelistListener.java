@@ -36,10 +36,6 @@ public class SvnChangelistListener implements ChangeListListener {
     };
   }
 
-  public void changeListAdded(final ChangeList list) {
-    // SVN change list exists only when there are any files in it
-  }
-
   public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
     if (LocalChangeList.DEFAULT_NAME.equals(fromList.getName())) {
       return;
@@ -63,9 +59,6 @@ public class SvnChangelistListener implements ChangeListListener {
     return ContainerUtil.findAll(ChangesUtil.getPaths(changes), myUnderSvnCondition);
   }
 
-  public void changeListChanged(final ChangeList list) {
-  }
-
   public void changeListRenamed(final ChangeList list, final String oldName) {
     if (Comparing.equal(list.getName(), oldName)) {
       return;
@@ -75,9 +68,6 @@ public class SvnChangelistListener implements ChangeListListener {
       return;
     }
     addToChangeList(list.getName(), list.getChanges());
-  }
-
-  public void changeListCommentChanged(final ChangeList list, final String oldComment) {
   }
 
   public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
@@ -91,15 +81,6 @@ public class SvnChangelistListener implements ChangeListListener {
 
     final String[] fromLists = LocalChangeList.DEFAULT_NAME.equals(fromList.getName()) ? null : new String[] {fromList.getName()};
     addToChangeList(toList.getName(), changes, fromLists);
-  }
-
-  public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-  }
-
-  public void unchangedFileStatusChanged() {
-  }
-
-  public void changeListUpdateDone() {
   }
 
   @Nullable

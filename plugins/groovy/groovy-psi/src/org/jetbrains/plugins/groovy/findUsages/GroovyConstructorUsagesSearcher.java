@@ -244,7 +244,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
       GrParameter[] grParameters = (GrParameter[])constructor.getParameterList().getParameters();
       if (grParameters.length > 0 && !grParameters[0].isOptional()) return;
     }
-    else if (constructor.getParameterList().getParameters().length > 0) return;
+    else if (!constructor.getParameterList().isEmpty()) return;
 
 
     PsiManager manager = constructor.getManager();

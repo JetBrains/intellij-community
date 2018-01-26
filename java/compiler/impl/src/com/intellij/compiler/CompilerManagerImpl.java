@@ -223,7 +223,7 @@ public class CompilerManagerImpl extends CompilerManager {
         beforeTasks.add(extension.getTaskInstance());
       }
     }
-    return beforeTasks.toArray(new CompileTask[beforeTasks.size()]);
+    return beforeTasks.toArray(new CompileTask[0]);
   }
 
   @Override

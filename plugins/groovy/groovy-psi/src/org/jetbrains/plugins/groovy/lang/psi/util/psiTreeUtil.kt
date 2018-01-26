@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -8,6 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
@@ -29,9 +30,17 @@ fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = Re
   return true
 }
 
-fun PsiElement.treeWalkUpAndGetArray(processor: GrResolverProcessor<*>): Array<out GroovyResolveResult> {
+fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGet(processor: GrResolverProcessor<T>): List<T> {
   treeWalkUp(processor, ResolveState.initial(), this)
-  return processor.resultsArray
+  return processor.results
+}
+
+fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGetSingleResult(processor: GrResolverProcessor<T>): T? {
+  return treeWalkUpAndGet(processor).singleOrNull()
+}
+
+fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResolverProcessor<ElementGroovyResult<T>>): T? {
+  return treeWalkUpAndGetSingleResult(processor)?.element
 }
 
 inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)

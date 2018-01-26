@@ -88,7 +88,7 @@ public class InferenceFromSourceUtil {
   }
 
   static boolean suppressNullable(PsiMethod method) {
-    if (method.getParameterList().getParametersCount() == 0) return false;
+    if (method.getParameterList().isEmpty()) return false;
 
     for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
       if (contract.returnValue == MethodContract.ValueConstraint.NULL_VALUE) {

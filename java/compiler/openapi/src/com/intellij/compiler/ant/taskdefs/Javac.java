@@ -55,7 +55,7 @@ public class Javac extends Tag {
                 pairs.add(pair("executable", getExecutable(moduleChunk.getName())));
             }
         }
-        return pairs.toArray(new Pair[pairs.size()]);
+        return pairs.toArray(new Pair[0]);
     }
 
     @Nullable

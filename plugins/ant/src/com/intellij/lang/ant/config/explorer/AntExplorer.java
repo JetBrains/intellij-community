@@ -456,11 +456,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         }
         return null;
       });
-      return virtualFiles == null ? null : virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
+      return virtualFiles == null ? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile);
-      return elements == null ? null : elements.toArray(new PsiElement[elements.size()]);
+      return elements == null ? null : elements.toArray(PsiElement.EMPTY_ARRAY);
     } 
     return super.getData(dataId);
   }

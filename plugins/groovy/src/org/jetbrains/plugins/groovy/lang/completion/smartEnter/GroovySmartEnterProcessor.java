@@ -92,7 +92,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
         new GrListFixer(),
         new GrMethodCallWithSingleClosureArgFixer()
       );
-    addFixers(ourFixers.toArray(new Fixer[ourFixers.size()]));
+    addFixers(ourFixers.toArray(new Fixer[0]));
     addEnterProcessors(new GroovyPlainEnterProcessor());
   }
 

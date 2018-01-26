@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -83,6 +84,7 @@ public class SvnRootsDetector {
     if (clearState) {
       // clear what was reported before (could be for currently-not-existing roots)
       myNestedCopiesHolder.getAndClear();
+      VcsDirtyScopeManager.getInstance(myVcs.getProject()).filesDirty(null, basicVfRoots);
     }
     clManager.invokeAfterUpdate(() -> {
       final List<RootUrlInfo> nestedRoots = new ArrayList<>();
@@ -110,11 +112,7 @@ public class SvnRootsDetector {
       myMapping.applyDetectionResult(myResult);
 
       callback.run();
-    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, vcsDirtyScopeManager -> {
-      if (clearState) {
-        vcsDirtyScopeManager.filesDirty(null, basicVfRoots);
-      }
-    }, null);
+    }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, null);
   }
 
   private static void putWcDbFilesToVfs(@NotNull Collection<RootUrlInfo> infos) {

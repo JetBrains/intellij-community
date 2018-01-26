@@ -113,13 +113,32 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
     while (iterator.hasNext()) {
       EditorWindowImpl editorWindow = iterator.next();
       if (!editorWindow.isValid()) {
-        editorWindow.dispose();
-
-        InjectedLanguageUtil.clearCaches(editorWindow.myInjectedFile, editorWindow.getDocument());
+        disposeEditor(editorWindow);
         iterator.remove();
       }
     }
   }
+
+  private static void disposeEditor(@NotNull EditorWindow editorWindow) {
+    EditorWindowImpl impl = (EditorWindowImpl)editorWindow;
+    impl.dispose();
+
+    InjectedLanguageUtil.clearCaches(impl.myInjectedFile, impl.getDocument());
+  }
+
+  static void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
+    synchronized (allEditors) {
+      for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
+        EditorWindowImpl editor = iterator.next();
+        if (InjectionRegistrarImpl.intersect(editor.getDocument(), (DocumentWindowImpl)documentWindow)) {
+          disposeEditor(editor);
+          iterator.remove();
+          break;
+        }
+      }
+    }
+  }
+
 
   @Override
   public boolean isValid() {

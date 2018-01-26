@@ -57,7 +57,7 @@ public class JavaVarArgNextParameterHandler extends EditorActionHandler {
           CharSequence text = editor.getDocument().getImmutableCharSequence();
           int next = CharArrayUtil.shiftForward(text, offset, " \t");
           PsiExpressionList list = (PsiExpressionList)exprList;
-          int actualParameterCount = list.getExpressions().length;
+          int actualParameterCount = list.getExpressionCount();
           int lastParamStart = actualParameterCount == 0 ? list.getTextOffset() + 1 : list.getExpressions()[actualParameterCount - 1].getTextOffset();
           if (next >= lastParamStart) {
             int prev = CharArrayUtil.shiftBackward(text, lastParamStart - 1, " \t");

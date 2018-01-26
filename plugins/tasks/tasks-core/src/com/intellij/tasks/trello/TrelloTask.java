@@ -66,7 +66,7 @@ public class TrelloTask extends Task {
   @Override
   public Comment[] getComments() {
     List<TrelloCommentAction> comments = myCard.getComments();
-    return comments.toArray(new Comment[comments.size()]);
+    return comments.toArray(Comment.EMPTY_ARRAY);
   }
 
   @NotNull

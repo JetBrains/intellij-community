@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -9,7 +9,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -54,7 +53,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       }
     }
 
-    return problems == null ? null : problems.toArray(new CommonProblemDescriptor[problems.size()]);
+    return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -164,17 +163,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                           boolean isOnTheFly,
                                           @NotNull LocalInspectionToolSession session) {
       return new JavaElementVisitor() {
-        private final UnusedDeclarationInspectionBase myDeadCodeTool;
-
-        {
-          InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
-          UnusedDeclarationInspectionBase deadCodeTool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
-          myDeadCodeTool = deadCodeTool == null ? new UnusedDeclarationInspectionBase() : deadCodeTool;
-        }
+        private final UnusedDeclarationInspectionBase myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
 
         @Override
         public void visitMethod(PsiMethod method) {
           if (method.isConstructor() || VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), highestModifier) < 0) return;
+
+          if (method.hasModifierProperty(PsiModifier.NATIVE)) return;
+
           PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return;
 
@@ -248,8 +244,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     final String name = parameter.getName();
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                     "<code>" + name + "</code>",
-                                                                     "<code>" + StringUtil.unquoteString(value) + "</code>"),
+                                                                     name,
+                                                                     StringUtil.unquoteString(value)),
                                            usedForWriting ? null : createFix(name, value),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }

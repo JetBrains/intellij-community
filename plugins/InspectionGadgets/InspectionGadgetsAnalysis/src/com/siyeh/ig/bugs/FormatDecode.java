@@ -252,7 +252,7 @@ class FormatDecode {
       checkText(formatString.substring(i));
     }
 
-    return parameters.toArray(new Validator[parameters.size()]);
+    return parameters.toArray(new Validator[0]);
   }
 
   private static void checkNoPrecision(String precision, String specifier) {

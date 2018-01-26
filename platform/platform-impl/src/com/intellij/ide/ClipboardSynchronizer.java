@@ -266,12 +266,6 @@ public class ClipboardSynchronizer implements Disposable, ApplicationComponent {
     }
 
     @Override
-    public void resetContent() {
-      //myFullTransferable = null;
-      super.resetContent();
-    }
-
-    @Override
     public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
       if (Registry.is("ide.mac.useNativeClipboard") && content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
         try {
