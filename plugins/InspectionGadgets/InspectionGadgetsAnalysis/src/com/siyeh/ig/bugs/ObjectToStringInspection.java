@@ -187,7 +187,7 @@ public class ObjectToStringInspection extends BaseInspection {
           continue;
         }
         final PsiParameterList parameterList = method.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           return true;
         }
       }

@@ -108,7 +108,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         }
       }
       final PsiParameterList parameterList = constructor.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       if (ignoreAnnotations) {

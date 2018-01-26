@@ -255,10 +255,10 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       if (method.getName().startsWith("test")) {
         addMethodJavadocLine(factory, method, " * @testng.test");
       }
-      else if ("setUp".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("setUp".equals(method.getName()) && method.getParameterList().isEmpty()) {
         addMethodJavadocLine(factory, method, " * @testng.before-test");
       }
-      else if ("tearDown".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("tearDown".equals(method.getName()) && method.getParameterList().isEmpty()) {
         addMethodJavadocLine(factory, method, " * @testng.after-test");
       }
     }
@@ -309,10 +309,10 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       if (method.getName().startsWith("test")) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
       }
-      else if ("setUp".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("setUp".equals(method.getName()) && method.getParameterList().isEmpty()) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.BeforeMethod", method);
       }
-      else if ("tearDown".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("tearDown".equals(method.getName()) && method.getParameterList().isEmpty()) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
       }
       if (annotation != null) {

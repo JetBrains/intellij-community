@@ -372,7 +372,7 @@ public class GdkMethodUtil {
     String name = method.getName();
     return "getMetaClass".equals(name) &&
            containingClass != null &&
-           (method.getParameterList().getParametersCount() == 0 ^
+           (method.getParameterList().isEmpty() ^
             GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName()));
   }
 

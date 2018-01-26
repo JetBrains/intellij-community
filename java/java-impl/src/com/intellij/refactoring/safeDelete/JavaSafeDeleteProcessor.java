@@ -53,7 +53,6 @@ import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -773,7 +772,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   }
 
   private static boolean isTheOnlyEmptyDefaultConstructor(final PsiMethod constructor) {
-    if (constructor.getParameterList().getParameters().length > 0) return false;
+    if (!constructor.getParameterList().isEmpty()) return false;
     final PsiCodeBlock body = constructor.getBody();
     if (body != null && body.getStatements().length > 0) return false;
     return constructor.getContainingClass().getConstructors().length == 1;

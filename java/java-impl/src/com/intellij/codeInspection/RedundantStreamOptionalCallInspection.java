@@ -198,7 +198,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     if (aClass == null) return false;
     PsiType primitiveCandidate = null;
     PsiParameterList list = method.getParameterList();
-    if (list.getParametersCount() == 0) {
+    if (list.isEmpty()) {
       primitiveCandidate = method.getReturnType();
     }
     else if (list.getParametersCount() == 1) {

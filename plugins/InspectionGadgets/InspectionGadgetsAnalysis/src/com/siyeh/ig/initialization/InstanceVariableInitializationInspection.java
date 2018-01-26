@@ -162,7 +162,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
         }
         final PsiParameterList parameterList =
           method.getParameterList();
-        if (parameterList.getParametersCount() != 0) {
+        if (!parameterList.isEmpty()) {
           continue;
         }
         if (PsiType.VOID.equals(method.getReturnType())) {

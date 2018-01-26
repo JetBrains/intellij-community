@@ -2843,7 +2843,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
     final PsiElement parent = list.getParent();
-    if (PsiUtil.isAnnotationMethod(parent) && list.getParametersCount() > 0) {
+    if (PsiUtil.isAnnotationMethod(parent) && !list.isEmpty()) {
       final String message = JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters");
       final HighlightInfo highlightInfo =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(message).create();

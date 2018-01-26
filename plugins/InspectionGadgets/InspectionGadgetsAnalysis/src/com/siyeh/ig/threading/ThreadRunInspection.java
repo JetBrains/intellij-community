@@ -87,7 +87,7 @@ public class ThreadRunInspection extends BaseInspection {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       final PsiClass methodClass = method.getContainingClass();

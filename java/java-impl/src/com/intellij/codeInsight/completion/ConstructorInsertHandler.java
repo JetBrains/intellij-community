@@ -243,7 +243,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiElement place = context.getFile().findElementAt(context.getStartOffset());
     assert place != null;
-    boolean hasParams = constructor != null ? constructor.getParameterList().getParametersCount() > 0 : hasConstructorParameters(psiClass, place);
+    boolean hasParams = constructor != null ? !constructor.getParameterList().isEmpty() : hasConstructorParameters(psiClass, place);
 
     RangeMarker refEnd = context.getDocument().createRangeMarker(context.getTailOffset(), context.getTailOffset());
     
@@ -264,7 +264,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     boolean hasParams = false;
     for (PsiMethod constructor : psiClass.getConstructors()) {
       if (!resolveHelper.isAccessible(constructor, place, null)) continue;
-      if (constructor.getParameterList().getParametersCount() > 0) {
+      if (!constructor.getParameterList().isEmpty()) {
         hasParams = true;
         break;
       }

@@ -147,7 +147,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       boolean hasDefaultConstructor = false;
 
       for (PsiMethod superConstructor : constructors) {
-        if (superConstructor.getParameterList().getParametersCount() == 0) {
+        if (superConstructor.getParameterList().isEmpty()) {
           hasDefaultConstructor = true;
           supConstructor = null;
           break;

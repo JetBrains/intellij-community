@@ -598,7 +598,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean notHasGeneratedFields() {
-    return !myMultipleExitPoints && getMethod().getParameterList().getParametersCount() == 0;
+    return !myMultipleExitPoints && getMethod().getParameterList().isEmpty();
   }
 
   private void createInnerClassConstructor(final PsiParameter[] parameters) throws IncorrectOperationException {

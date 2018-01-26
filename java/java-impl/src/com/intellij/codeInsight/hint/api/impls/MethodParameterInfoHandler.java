@@ -226,7 +226,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       PsiElement e = ((CandidateInfo)c).getElement();
       if (!(e instanceof PsiMethod)) return false;
       PsiMethod m = (PsiMethod)e;
-      return m.getParameterList().getParametersCount() == 0 && m.getName().equals(methodName);
+      return m.getParameterList().isEmpty() && m.getName().equals(methodName);
     }) != null;
   }
 

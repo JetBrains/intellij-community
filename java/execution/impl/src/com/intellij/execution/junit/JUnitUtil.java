@@ -101,7 +101,7 @@ public class JUnitUtil {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (psiMethod.isConstructor()) return false;
-    if (psiMethod.getParameterList().getParametersCount() > 0) return false;
+    if (!psiMethod.getParameterList().isEmpty()) return false;
     final PsiType returnType = psiMethod.getReturnType();
     if (returnType == null || returnType instanceof PsiPrimitiveType) return false;
     return returnType.equalsToText(TEST_INTERFACE) ||
@@ -137,7 +137,7 @@ public class JUnitUtil {
         return !isInheritorOrSelfRunner(annotation, RUNNERS_REQUIRE_ANNOTATION_ON_TEST_METHOD);
       }
     }
-    if (psiMethod.getParameterList().getParametersCount() > 0) return false;
+    if (!psiMethod.getParameterList().isEmpty()) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) return false;
     if (!psiMethod.getName().startsWith("test")) return false;
     if (checkClass) {

@@ -120,7 +120,7 @@ public class GuavaPredicatesUtil {
     if (method == null) return false;
     final PsiParameterList parameters = method.getParameterList();
     if (parameters.getParametersCount() != 1) {
-      return parameters.getParametersCount() != 0;
+      return !parameters.isEmpty();
     }
     final PsiParameter parameter = parameters.getParameters()[0];
     final PsiType type = parameter.getType();

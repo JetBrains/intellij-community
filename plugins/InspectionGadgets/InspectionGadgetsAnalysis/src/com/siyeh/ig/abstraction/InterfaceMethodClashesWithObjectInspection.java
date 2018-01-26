@@ -20,7 +20,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.siyeh.InspectionGadgetsBundle;import com.siyeh.ig.BaseInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +58,7 @@ public class InterfaceMethodClashesWithObjectInspection extends BaseInspection {
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (method.getParameterList().getParametersCount() != 0) {
+      if (!method.getParameterList().isEmpty()) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();

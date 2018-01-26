@@ -248,7 +248,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
-    if (method.getParameterList().getParametersCount() == 0 ||
+    if (method.getParameterList().isEmpty() ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
         !ParameterInfoController.areParameterTemplatesEnabledOnCompletion()) {
       return false;

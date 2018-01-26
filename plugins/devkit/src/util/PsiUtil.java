@@ -49,7 +49,7 @@ public class PsiUtil {
     if (constructors.length == 0) return true;
 
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParameters().length == 0
+      if (constructor.getParameterList().isEmpty()
           && constructor.hasModifierProperty(PsiModifier.PUBLIC)) {
         return true;
       }
@@ -117,7 +117,7 @@ public class PsiUtil {
   public static PsiMethod findNearestMethod(String name, @Nullable PsiClass cls) {
     if (cls == null) return null;
     for (PsiMethod method : cls.getMethods()) {
-      if (method.getParameterList().getParametersCount() == 0 && method.getName().equals(name)) {
+      if (method.getParameterList().isEmpty() && method.getName().equals(name)) {
         return method.getModifierList().hasModifierProperty(PsiModifier.ABSTRACT) ? null : method;
       }
     }

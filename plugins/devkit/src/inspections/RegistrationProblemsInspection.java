@@ -384,7 +384,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       final PsiMethod[] constructors = checkedClass.getConstructors();
       if (constructors.length > 0) {
         for (PsiMethod ctor : constructors) {
-          if (ctor.getParameterList().getParametersCount() == 0) {
+          if (ctor.getParameterList().isEmpty()) {
             return new ConstructorType(ctor);
           }
         }

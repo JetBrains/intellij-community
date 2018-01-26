@@ -213,7 +213,7 @@ public class GroovyPropertyUtils {
 
   public static boolean isSimplePropertyGetter(PsiMethod method, @Nullable String propertyName) {
     if (method == null || method.isConstructor()) return false;
-    if (method.getParameterList().getParametersCount() != 0) return false;
+    if (!method.getParameterList().isEmpty()) return false;
     if (!isGetterName(method.getName())) return false;
     boolean booleanReturnType = isBooleanOrBoxed(method.getReturnType());
     if (method.getName().startsWith(IS_PREFIX) && !booleanReturnType) {

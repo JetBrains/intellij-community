@@ -118,7 +118,7 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
 
         PsiMethod constructor = result == null ? null : result.getElement();
         if (constructor != null && expression.getClassOrAnonymousClassReference() != null) {
-          if (expression.getClassReference() == null && constructor.getParameterList().getParametersCount() == 0) return;
+          if (expression.getClassReference() == null && constructor.getParameterList().isEmpty()) return;
           checkDeprecated(constructor, expression.getClassOrAnonymousClassReference(), null, myIgnoreInsideDeprecated,
                           myIgnoreImportStatements, true, myIgnoreInSameOutermostClass, myHolder, myForRemoval, myHighlightType);
         }
@@ -203,7 +203,7 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static boolean hasDefaultDeprecatedConstructor(PsiClass superClass, boolean forRemoval) {
     return superClass != null && Arrays.stream(superClass.getConstructors())
-      .anyMatch(constructor -> constructor.getParameterList().getParametersCount() == 0 &&
+      .anyMatch(constructor -> constructor.getParameterList().isEmpty() &&
                                constructor.isDeprecated() &&
                                isMarkedForRemoval(constructor, forRemoval));
   }

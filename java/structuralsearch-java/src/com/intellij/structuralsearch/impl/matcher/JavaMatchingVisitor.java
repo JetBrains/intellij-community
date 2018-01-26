@@ -369,7 +369,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiLambdaExpression expression2 = (PsiLambdaExpression)other;
       boolean result = true;
       final PsiParameterList parameterList1 = expression.getParameterList();
-      if (parameterList1.getParametersCount() != 0) {
+      if (!parameterList1.isEmpty()) {
         result = myMatchingVisitor.matchSons(parameterList1, expression2.getParameterList());
       }
       final PsiElement body1 = getElementToMatch(expression.getBody());

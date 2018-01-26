@@ -102,7 +102,7 @@ public class ConstructionUtils {
       PsiExpressionList argumentList = call.getArgumentList();
       if(name != null && name.startsWith("new") && argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
-        if(method != null && method.getParameterList().getParametersCount() == 0) {
+        if(method != null && method.getParameterList().isEmpty()) {
           PsiClass aClass = method.getContainingClass();
           if(aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
@@ -147,7 +147,7 @@ public class ConstructionUtils {
       PsiExpressionList argumentList = call.getArgumentList();
       if (name != null && name.startsWith("new") && !argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
-        if (method != null && method.getParameterList().getParametersCount() > 0) {
+        if (method != null && !method.getParameterList().isEmpty()) {
           PsiClass aClass = method.getContainingClass();
           if (aClass != null) {
             String qualifiedName = aClass.getQualifiedName();
