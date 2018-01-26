@@ -157,7 +157,11 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
         if (!fromIdeaProject) {
           String bootPath = "/lib/boot.jar";
-          vm.add("-Xbootclasspath/a:" + ideaJdkHome + toSystemDependentName(bootPath));
+          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          if (new File(bootJarPath).exists()) {
+            //there is no need to add boot.jar in modern IDE builds (181.*)
+            vm.add("-Xbootclasspath/a:" + bootJarPath);
+          }
         }
 
         vm.defineProperty("idea.config.path", canonicalSandbox + File.separator + "config");

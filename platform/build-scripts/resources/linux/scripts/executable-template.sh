@@ -195,7 +195,6 @@ fi
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
-  "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
