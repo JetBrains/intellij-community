@@ -29,7 +29,7 @@ import javax.swing.text.Position;
 import java.io.IOException;
 import java.io.StringWriter;
 
-public class HtmlPanel extends JEditorPane implements HyperlinkListener {
+public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener {
   public HtmlPanel() {
     super(UIUtil.HTML_MIME, "");
     setEditable(false);
@@ -73,5 +73,20 @@ public class HtmlPanel extends JEditorPane implements HyperlinkListener {
               text +
               "</body></html>");
     }
+  }
+
+  @NotNull
+  protected abstract String getBody();
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    update();
+  }
+
+  public void update() {
+    setBody(getBody());
+    revalidate();
+    repaint();
   }
 }

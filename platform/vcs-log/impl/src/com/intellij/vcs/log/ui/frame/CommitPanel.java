@@ -160,12 +160,6 @@ public class CommitPanel extends JBPanel {
     }
 
     @Override
-    public void updateUI() {
-      super.updateUI();
-      update();
-    }
-
-    @Override
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
         CommitId commitId = notNull(myPresentation).parseTargetCommit(e);
@@ -189,8 +183,14 @@ public class CommitPanel extends JBPanel {
       }
     }
 
-    void update() {
-      setBody(myPresentation == null ? "" : myPresentation.getText());
+    @NotNull
+    @Override
+    protected String getBody() {
+      return myPresentation == null ? "" : myPresentation.getText();
+    }
+
+    public void update() {
+      setBody(getBody());
 
       customizeLinksStyle();
       revalidate();
@@ -222,21 +222,15 @@ public class CommitPanel extends JBPanel {
       }
     }
 
-    @Override
-    public void updateUI() {
-      super.updateUI();
-      update();
-    }
-
     void setBranches(@Nullable List<String> branches) {
       myBranches = branches;
       myExpanded = false;
     }
 
-    void update() {
-      setBody(CommitPresentationUtil.getBranchesText(myBranches, myExpanded));
-      revalidate();
-      repaint();
+    @NotNull
+    @Override
+    protected String getBody() {
+      return CommitPresentationUtil.getBranchesText(myBranches, myExpanded);
     }
 
     @Override

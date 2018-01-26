@@ -41,14 +41,14 @@ import static com.intellij.openapi.vcs.ui.FontUtil.getHtmlWithFonts;
 class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   @NotNull private final Project myProject;
   @NotNull private final StatusText myStatusText;
-  @NotNull private String myText = "";
+  @Nullable private List<TreeNodeOnVcsRevision> mySelection;
 
   public DetailsPanel(@NotNull Project project) {
     myProject = project;
     myStatusText = new StatusText() {
       @Override
       protected boolean isStatusVisible() {
-        return StringUtil.isEmpty(myText);
+        return mySelection == null || mySelection.isEmpty();
       }
     };
     myStatusText.setText("Commit message");
@@ -64,13 +64,21 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
   }
 
   public void update(@NotNull List<TreeNodeOnVcsRevision> selection) {
-    if (selection.isEmpty()) {
-      setText("");
-      return;
+    mySelection = selection;
+    update();
+    setCaretPosition(0);
+  }
+
+  @NotNull
+  @Override
+  protected String getBody() {
+    if (mySelection == null || mySelection.isEmpty()) {
+      return "";
     }
-    boolean addRevisionInfo = selection.size() > 1;
+
+    boolean addRevisionInfo = mySelection.size() > 1;
     StringBuilder html = new StringBuilder();
-    for (TreeNodeOnVcsRevision revision : selection) {
+    for (TreeNodeOnVcsRevision revision : mySelection) {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
       if (html.length() > 0) {
@@ -83,10 +91,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
       }
       html.append(getHtmlWithFonts(formatTextWithLinks(myProject, message)));
     }
-    myText = html.toString();
-
-    setBody(myText);
-    setCaretPosition(0);
+    return html.toString();
   }
 
   @Override
