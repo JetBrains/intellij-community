@@ -57,7 +57,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   private MouseListener buttonReleaseListener;
   private MouseListener buttonHoverListener;
-  private PropertyChangeListener propertyListener;
 
   private MouseListener editorHoverListener;
 
@@ -72,33 +71,29 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     if (!comboBox.isEditable()) {
       comboBox.addMouseListener(mouseListener = new ComboBoxMouseListener());
     }
+  }
 
-    propertyListener = (evt) -> {
-      if("enabled".equals(evt.getPropertyName())) {
+  @Override public void uninstallListeners() {
+    super.uninstallListeners();
+    comboBox.removeMouseListener(mouseListener);
+  }
+
+  @Override
+  protected PropertyChangeListener createPropertyListener() {
+    return e -> {
+      if("enabled".equals(e.getPropertyName())) {
         EditorTextField etf = UIUtil.findComponentOfType((JComponent)editor, EditorTextField.class);
         if (etf != null) {
           etf.setBackground(getComboBackground(true));
         }
-      } else if ("editable".equals(evt.getPropertyName())) {
-        if (evt.getNewValue() == Boolean.TRUE) {
+      } else if ("editable".equals(e.getPropertyName())) {
+        if (e.getNewValue() == Boolean.TRUE) {
           comboBox.removeMouseListener(mouseListener);
         } else {
           comboBox.addMouseListener(mouseListener);
         }
       }
     };
-
-    comboBox.addPropertyChangeListener(propertyListener);
-  }
-
-  @Override public void uninstallListeners() {
-    super.uninstallListeners();
-    comboBox.removeMouseListener(mouseListener);
-
-    if (propertyListener != null) {
-      comboBox.removePropertyChangeListener(propertyListener);
-      propertyListener = null;
-    }
   }
 
   @Override public void paint(Graphics g, JComponent c) {
