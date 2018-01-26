@@ -141,7 +141,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
+      if (!argumentList.isEmpty()) {
         return false;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();

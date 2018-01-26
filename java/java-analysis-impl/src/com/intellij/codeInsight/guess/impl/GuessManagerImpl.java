@@ -269,7 +269,7 @@ public class GuessManagerImpl extends GuessManager {
       PsiMethodCallExpression callExpr = (PsiMethodCallExpression)expr;
       PsiReferenceExpression methodExpr = callExpr.getMethodExpression();
       String methodName = methodExpr.getReferenceName();
-      MethodPattern pattern = myMethodPatternMap.findPattern(methodName, callExpr.getArgumentList().getExpressions().length);
+      MethodPattern pattern = myMethodPatternMap.findPattern(methodName, callExpr.getArgumentList().getExpressionCount());
       if (pattern != null && pattern.parameterIndex < 0/* return value */){
         PsiExpression qualifier = methodExpr.getQualifierExpression();
         if (qualifier != null) {

@@ -74,13 +74,13 @@ public class CollectionFactoryInliner implements CallInliner {
     if (info != null) return info;
     if (JDK9_FACTORIES.test(call)) {
       int size =
-        JDK9_ARRAY_FACTORIES.test(call) && !MethodCallUtils.isVarArgCall(call) ? -1 : call.getArgumentList().getExpressions().length;
+        JDK9_ARRAY_FACTORIES.test(call) && !MethodCallUtils.isVarArgCall(call) ? -1 : call.getArgumentList().getExpressionCount();
       return new FactoryInfo(size, COLLECTION_SIZE, true);
     }
     if (JDK9_MAP_FACTORIES.test(call)) {
       boolean ofEntries = "ofEntries".equals(call.getMethodExpression().getReferenceName());
       int size =
-        ofEntries && !MethodCallUtils.isVarArgCall(call) ? -1 : call.getArgumentList().getExpressions().length / (ofEntries ? 1 : 2);
+        ofEntries && !MethodCallUtils.isVarArgCall(call) ? -1 : call.getArgumentList().getExpressionCount() / (ofEntries ? 1 : 2);
       return new FactoryInfo(size, MAP_SIZE, true);
     }
     return null;

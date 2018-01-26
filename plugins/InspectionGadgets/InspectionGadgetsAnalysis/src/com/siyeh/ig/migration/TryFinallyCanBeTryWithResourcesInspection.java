@@ -455,7 +455,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return false;
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
+      if (!argumentList.isEmpty()) {
         return false;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();

@@ -67,7 +67,7 @@ public class StreamApiUtil {
     if (!(expression instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
     String name = call.getMethodExpression().getReferenceName();
-    if ((!"empty".equals(name) && !"of".equals(name)) || !(call.getArgumentList().getExpressions().length == 0)) {
+    if ((!"empty".equals(name) && !"of".equals(name)) || !call.getArgumentList().isEmpty()) {
       return false;
     }
     PsiMethod method = call.resolveMethod();

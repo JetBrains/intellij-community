@@ -257,7 +257,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     if (!ArrayUtil.contains(name, methodNames)) return false;
     PsiMethod maybeMapMethod = call.resolveMethod();
     if (maybeMapMethod == null ||
-        maybeMapMethod.getParameterList().getParametersCount() != call.getArgumentList().getExpressions().length) {
+        maybeMapMethod.getParameterList().getParametersCount() != call.getArgumentList().getExpressionCount()) {
       return false;
     }
     PsiClass containingClass = maybeMapMethod.getContainingClass();

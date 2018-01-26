@@ -129,7 +129,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
         boolean suitableMethod = method != null &&
                                  referenceNameElement != null &&
                                  !method.isVarArgs() &&
-                                 call.getArgumentList().getExpressions().length == method.getParameterList().getParametersCount() &&
+                                 call.getArgumentList().getExpressionCount() == method.getParameterList().getParametersCount() &&
                                  elementContainerPredicate.test(call);
         if (!suitableMethod) return;
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);

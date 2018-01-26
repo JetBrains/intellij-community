@@ -13,12 +13,12 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -209,7 +209,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
           PsiExpression expression = statement.getExpression();
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-            if (methodCall.getArgumentList().getExpressions().length == 1) {
+            if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&
                   "TestCase".equals(resolved.getName())) {

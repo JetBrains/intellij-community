@@ -89,7 +89,7 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
           final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
           if (parentType == null || JBEmptyBorder.class.getName().equals(parentType.getCanonicalText())) return null;
         }
-        if (arguments.getExpressions().length == 4) {
+        if (arguments.getExpressionCount() == 4) {
           return manager.createProblemDescriptor(expression, "Replace with JBUI.Borders.empty(...)", new ConvertToJBBorderQuickFix(),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         }

@@ -258,7 +258,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     context.commitDocument();
     PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCall.class, false);
     PsiExpressionList argList = call == null ? null : call.getArgumentList();
-    if (argList == null || argList.getExpressions().length > 0) {
+    if (argList == null || !argList.isEmpty()) {
       return false;
     }
 

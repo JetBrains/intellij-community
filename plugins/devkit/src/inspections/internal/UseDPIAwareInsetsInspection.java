@@ -71,7 +71,7 @@ public class UseDPIAwareInsetsInspection extends DevKitInspectionBase {
           final PsiType parentType = ((PsiNewExpression)parent.getParent()).getType();
           if (parentType == null || JBInsets.class.getName().equals(parentType.getCanonicalText())) return null;
         }
-        if (arguments.getExpressions().length == 4) {
+        if (arguments.getExpressionCount() == 4) {
           return manager.createProblemDescriptor(expression, "Replace with JBUI.insets(...)", new ConvertToJBInsetsQuickFix(),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         }

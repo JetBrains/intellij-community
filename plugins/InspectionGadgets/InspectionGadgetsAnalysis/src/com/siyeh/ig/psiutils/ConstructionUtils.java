@@ -90,7 +90,7 @@ public class ConstructionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
       PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList != null && argumentList.getExpressions().length == 0) {
+      if (argumentList != null && argumentList.isEmpty()) {
         PsiType type = expression.getType();
         return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
                com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);
@@ -100,7 +100,7 @@ public class ConstructionUtils {
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
-      if(name != null && name.startsWith("new") && argumentList.getExpressions().length == 0) {
+      if(name != null && name.startsWith("new") && argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
         if(method != null && method.getParameterList().getParametersCount() == 0) {
           PsiClass aClass = method.getContainingClass();
@@ -127,7 +127,7 @@ public class ConstructionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
       PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList == null || argumentList.getExpressions().length == 0) return false;
+      if (argumentList == null || argumentList.isEmpty()) return false;
       PsiMethod constructor = ((PsiNewExpression)expression).resolveConstructor();
       if (constructor == null) return false;
       PsiClass aClass = constructor.getContainingClass();
@@ -145,7 +145,7 @@ public class ConstructionUtils {
       if (ENUM_SET_NONE_OF.test(call)) return true;
       String name = call.getMethodExpression().getReferenceName();
       PsiExpressionList argumentList = call.getArgumentList();
-      if (name != null && name.startsWith("new") && argumentList.getExpressions().length > 0) {
+      if (name != null && name.startsWith("new") && !argumentList.isEmpty()) {
         PsiMethod method = call.resolveMethod();
         if (method != null && method.getParameterList().getParametersCount() > 0) {
           PsiClass aClass = method.getContainingClass();

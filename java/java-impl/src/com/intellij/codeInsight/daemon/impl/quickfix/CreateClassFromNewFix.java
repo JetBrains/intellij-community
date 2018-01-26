@@ -92,7 +92,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
 
     PsiExpressionList argList = newExpression.getArgumentList();
     final Project project = aClass.getProject();
-    if (argList != null && argList.getExpressions().length > 0) {
+    if (argList != null && !argList.isEmpty()) {
       PsiMethod constructor = elementFactory.createConstructor();
       constructor = (PsiMethod)aClass.add(constructor);
 
