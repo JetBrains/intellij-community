@@ -190,16 +190,7 @@ public class CommitPanel extends JBPanel {
     }
 
     void update() {
-      if (myPresentation == null) {
-        setText("");
-      }
-      else {
-        setText("<html><head>" +
-                UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
-                "</head><body>" +
-                myPresentation.getText() +
-                "</body></html>");
-      }
+      setBody(myPresentation == null ? "" : myPresentation.getText());
 
       customizeLinksStyle();
       revalidate();
@@ -243,11 +234,7 @@ public class CommitPanel extends JBPanel {
     }
 
     void update() {
-      setText("<html><head>" +
-              UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
-              "</head><body>" +
-              CommitPresentationUtil.getBranchesText(myBranches, myExpanded) +
-              "</body></html>");
+      setBody(CommitPresentationUtil.getBranchesText(myBranches, myExpanded));
       revalidate();
       repaint();
     }

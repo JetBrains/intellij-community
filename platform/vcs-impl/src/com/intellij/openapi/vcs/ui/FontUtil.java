@@ -64,6 +64,11 @@ public class FontUtil {
 
   @NotNull
   public static Font getCommitDetailsFont() {
+    return getEditorFont();
+  }
+
+  @NotNull
+  public static Font getEditorFont() {
     return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 }

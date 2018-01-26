@@ -16,7 +16,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -58,5 +60,18 @@ public class HtmlPanel extends JEditorPane implements HyperlinkListener {
     catch (BadLocationException | IOException ignored) {
     }
     return super.getSelectedText();
+  }
+
+  public void setBody(@NotNull String text) {
+    if (text.isEmpty()) {
+      setText("");
+    }
+    else {
+      setText("<html><head>" +
+              UIUtil.getCssFontDeclaration(FontUtil.getCommitDetailsFont()) +
+              "</head><body>" +
+              text +
+              "</body></html>");
+    }
   }
 }
