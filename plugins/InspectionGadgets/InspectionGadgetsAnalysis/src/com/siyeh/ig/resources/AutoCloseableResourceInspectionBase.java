@@ -42,6 +42,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -53,6 +55,8 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream");
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
+
+  public boolean showWarningForStreamHoldingResource = true;
 
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   protected final MethodMatcher myMethodMatcher;
@@ -66,6 +70,8 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       .add("java.io.PrintWriter", "printf")
       .finishDefault();
   }
+
+  CallMatcher STREAM_HOLDING_RESOURCE = CallMatcher.staticCall("java.nio.file.Files",  "lines", "walk", "list", "find");
 
   @Nls
   @NotNull
@@ -148,7 +154,12 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
     return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE) &&
-           !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes);
+           (isStreamHoldingResource(expression)
+            || !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes));
+  }
+
+  private boolean isStreamHoldingResource(PsiExpression expression) {
+    return showWarningForStreamHoldingResource && STREAM_HOLDING_RESOURCE.matches(tryCast(expression, PsiMethodCallExpression.class));
   }
 
   @Override
@@ -178,7 +189,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || isSafelyClosedResource(expression)) {
         return;
       }
-      registerMethodCallError(expression, expression.getType(), Boolean.TRUE);
+      registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
     }
 
     @Override
