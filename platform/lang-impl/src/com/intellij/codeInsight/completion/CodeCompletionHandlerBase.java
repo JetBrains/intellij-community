@@ -152,11 +152,6 @@ public class CodeCompletionHandlerBase {
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
     boolean repeated = phase.indicator != null && phase.indicator.isRepeatedInvocation(completionType, editor);
-    /*
-    if (repeated && isAutocompleteCommonPrefixOnInvocation() && phase.fillInCommonPrefix()) {
-      return;
-    }
-    */
 
     final int newTime = phase.newCompletionStarted(time, repeated);
     if (invokedExplicitly) {
