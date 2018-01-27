@@ -203,7 +203,8 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector"/>
+    <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
+        serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector"/>
 
@@ -394,7 +395,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector$ActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector$IntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.RegistryUsagesCollector"/>
