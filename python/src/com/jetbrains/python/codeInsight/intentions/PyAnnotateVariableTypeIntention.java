@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -60,7 +61,8 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
 
   @NotNull
   private static List<PyTargetExpression> findSuitableTargetsUnderCaret(@NotNull Project project, Editor editor, PsiFile file) {
-    final PyReferenceOwner elementAtCaret = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    final PyReferenceOwner elementAtCaret = PsiTreeUtil.getParentOfType(file.findElementAt(offset),
                                                                         PyReferenceExpression.class, PyTargetExpression.class);
     if (elementAtCaret == null) {
       return Collections.emptyList();
