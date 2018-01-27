@@ -63,12 +63,16 @@ public class FontUtil {
   }
 
   @NotNull
-  public static Font getCommitDetailsFont() {
-    return getEditorFont();
+  public static Font getEditorFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 
   @NotNull
-  public static Font getEditorFont() {
-    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+  public static Font getCommitMessageFont() {
+    return getEditorFont();
+  }
+
+  public static Font getCommitMetadataFont() {
+    return UIUtil.getLabelFont();
   }
 }

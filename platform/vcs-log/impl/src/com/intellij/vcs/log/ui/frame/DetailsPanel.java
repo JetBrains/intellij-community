@@ -172,8 +172,8 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     if (selectionLength > MAX_ROWS) {
       myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       JBLabel label = new JBLabel("(showing " + MAX_ROWS + " of " + selectionLength + " selected commits)");
-      label.setFont(FontUtil.getCommitDetailsFont());
-      label.setBorder(CommitPanel.getDetailsBorder());
+      label.setFont(FontUtil.getCommitMetadataFont());
+      label.setBorder(JBUI.Borders.emptyLeft(CommitPanel.SIDE_BORDER));
       myMainContentPanel.add(label);
     }
 

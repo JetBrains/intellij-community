@@ -52,7 +52,7 @@ public class VcsCommitInfoBalloon {
     myEditorPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.getInformationColor());
-    myEditorPane.setFont(FontUtil.getCommitDetailsFont());
+    myEditorPane.setFont(FontUtil.getCommitMessageFont());
     myEditorPane.setBorder(HintUtil.createHintBorder());
     Border margin = JBUI.Borders.empty(3);
     myEditorPane.setBorder(new CompoundBorder(myEditorPane.getBorder(), margin));

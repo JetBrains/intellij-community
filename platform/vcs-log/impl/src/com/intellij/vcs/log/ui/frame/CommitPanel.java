@@ -1,48 +1,50 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.HtmlPanel;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.render.RectanglePainter;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.vcs.ui.FontUtil.getCommitDetailsFont;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;
 
 public class CommitPanel extends JBPanel {
-  public static final int BOTTOM_BORDER = 2;
-  private static final int REFERENCES_BORDER = 12;
+  public static final int SIDE_BORDER = 14;
+  private static final int INTERNAL_BORDER = 10;
+  private static final int EXTERNAL_BORDER = 14;
 
   @NotNull private final VcsLogData myLogData;
 
   @NotNull private final ReferencesPanel myBranchesPanel;
   @NotNull private final ReferencesPanel myTagsPanel;
   @NotNull private final MessagePanel myMessagePanel;
+  @NotNull private final HashAndAuthorPanel myHashAndAuthorPanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final Consumer<CommitId> myNavigate;
 
   @Nullable private CommitId myCommit;
+  @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
   public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<CommitId> navigate) {
     myLogData = logData;
@@ -52,33 +54,36 @@ public class CommitPanel extends JBPanel {
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     setOpaque(false);
 
-    myBranchesPanel = new ReferencesPanel();
-    myBranchesPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
-    myTagsPanel = new ReferencesPanel();
-    myTagsPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
     myMessagePanel = new MessagePanel();
+    myHashAndAuthorPanel = new HashAndAuthorPanel();
+    myBranchesPanel = new ReferencesPanel();
+    myTagsPanel = new ReferencesPanel();
     myContainingBranchesPanel = new BranchesPanel();
 
+    myMessagePanel.setBorder(JBUI.Borders.empty(EXTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, SIDE_BORDER));
+    myHashAndAuthorPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER));
+    myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
+    myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
+    myContainingBranchesPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, EXTERNAL_BORDER, SIDE_BORDER));
+
     add(myMessagePanel);
+    add(myHashAndAuthorPanel);
     add(myBranchesPanel);
     add(myTagsPanel);
     add(myContainingBranchesPanel);
-
-    setBorder(getDetailsBorder());
   }
 
   public void setCommit(@NotNull CommitId commit, @NotNull CommitPresentationUtil.CommitPresentation presentation) {
     if (!commit.equals(myCommit) || presentation.isResolved()) {
       myCommit = commit;
-      myMessagePanel.setData(presentation);
+      myPresentation = presentation;
+
+      myMessagePanel.update();
+      myHashAndAuthorPanel.update();
     }
 
     List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
     myContainingBranchesPanel.setBranches(branches);
-
-    myMessagePanel.update();
-    myContainingBranchesPanel.update();
-    revalidate();
   }
 
   public void setRefs(@NotNull Collection<VcsRef> refs) {
@@ -89,6 +94,7 @@ public class CommitPanel extends JBPanel {
 
   public void update() {
     myMessagePanel.update();
+    myHashAndAuthorPanel.update();
     myBranchesPanel.update();
     myTagsPanel.update();
     myContainingBranchesPanel.update();
@@ -112,11 +118,6 @@ public class CommitPanel extends JBPanel {
     return ContainerUtil.sorted(refs, myLogData.getLogProvider(ref.getRoot()).getReferenceManager().getLabelsOrderComparator());
   }
 
-  @NotNull
-  public static JBEmptyBorder getDetailsBorder() {
-    return JBUI.Borders.empty();
-  }
-
   @Override
   public Color getBackground() {
     return getCommitDetailsBackground();
@@ -128,14 +129,12 @@ public class CommitPanel extends JBPanel {
 
   @NotNull
   public static Color getCommitDetailsBackground() {
-    return UIUtil.getTableBackground();
+    return UIUtil.getPanelBackground();
   }
 
   private class MessagePanel extends HtmlPanel {
-    @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
-
     MessagePanel() {
-      setBorder(JBUI.Borders.empty(0, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
+      setOpaque(true);
     }
 
     @Override
@@ -149,10 +148,6 @@ public class CommitPanel extends JBPanel {
       }
     }
 
-    void setData(@Nullable CommitPresentationUtil.CommitPresentation presentation) {
-      myPresentation = presentation;
-    }
-
     @NotNull
     @Override
     protected String getBody() {
@@ -161,17 +156,36 @@ public class CommitPanel extends JBPanel {
 
     @Override
     public Color getBackground() {
-      return getCommitDetailsBackground();
+      if (UIUtil.isUnderDarcula()) {
+        return getCommitDetailsBackground();
+      }
+      return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
+    }
+
+    @Override
+    public void update() {
+      setVisible(myPresentation != null); // looks weird when empty
+      super.update();
+    }
+  }
+
+  private class HashAndAuthorPanel extends HtmlPanel {
+    @NotNull
+    @Override
+    protected String getBody() {
+      return myPresentation == null ? "" : myPresentation.getHashAndAuthor();
+    }
+
+    @NotNull
+    @Override
+    protected Font getBodyFont() {
+      return FontUtil.getCommitMetadataFont();
     }
   }
 
   private static class BranchesPanel extends HtmlPanel {
     @Nullable private List<String> myBranches;
     private boolean myExpanded = false;
-
-    BranchesPanel() {
-      setBorder(JBUI.Borders.empty(REFERENCES_BORDER, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
-    }
 
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
@@ -184,6 +198,8 @@ public class CommitPanel extends JBPanel {
     void setBranches(@Nullable List<String> branches) {
       myBranches = branches;
       myExpanded = false;
+
+      update();
     }
 
     @NotNull
@@ -199,6 +215,12 @@ public class CommitPanel extends JBPanel {
 
     public boolean isExpanded() {
       return myExpanded;
+    }
+
+    @NotNull
+    @Override
+    protected Font getBodyFont() {
+      return FontUtil.getCommitMetadataFont();
     }
   }
 }

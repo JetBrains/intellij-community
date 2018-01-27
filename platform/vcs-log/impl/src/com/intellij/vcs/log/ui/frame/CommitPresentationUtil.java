@@ -28,7 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
-import static com.intellij.openapi.vcs.ui.FontUtil.getCommitDetailsFont;
+import static com.intellij.openapi.vcs.ui.FontUtil.getCommitMessageFont;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class CommitPresentationUtil {
@@ -37,16 +37,6 @@ public class CommitPresentationUtil {
 
   @NotNull static final String GO_TO_HASH = "go-to-hash:";
   @NotNull static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
-
-  @NotNull
-  private static String getHtmlWithFonts(@NotNull String input) {
-    return getHtmlWithFonts(input, getCommitDetailsFont().getStyle());
-  }
-
-  @NotNull
-  private static String getHtmlWithFonts(@NotNull String input, int style) {
-    return FontUtil.getHtmlWithFonts(input, style, getCommitDetailsFont());
-  }
 
   @NotNull
   private static String escapeMultipleSpaces(@NotNull String text) {
@@ -113,14 +103,13 @@ public class CommitPresentationUtil {
   private static String formatCommitText(@NotNull Project project,
                                          @NotNull String subject,
                                          @NotNull String description,
-                                         @NotNull String hashAndAuthor,
                                          @NotNull Set<String> resolvedHashes) {
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
+    Font font = getCommitMessageFont();
     return "<b>" +
-           getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, subject, convertor)), Font.BOLD) +
+           FontUtil.getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, subject, convertor)), Font.BOLD, font) +
            "</b>" +
-           getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, description, convertor))) +
-           "<br/><br/>" + hashAndAuthor;
+           FontUtil.getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, description, convertor)), font.getStyle(), font);
   }
 
   @NotNull
@@ -262,17 +251,18 @@ public class CommitPresentationUtil {
   public static CommitPresentation buildPresentation(@NotNull Project project,
                                                      @NotNull VcsFullCommitDetails commit,
                                                      @NotNull Set<String> unresolvedHashes) {
+    Font font = FontUtil.getCommitMetadataFont();
     String hash = commit.getId().toShortString();
-    String hashAndAuthor = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1));
+    String hashAndAuthor = FontUtil.getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1), font.getStyle(), font);
     String fullMessage = commit.getFullMessage();
     int separator = fullMessage.indexOf("\n\n");
     String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
     String description = fullMessage.substring(subject.length());
 
     Set<String> unresolvedHashesForCommit = findHashes(project, subject, description);
-    String text = formatCommitText(project, subject, description, hashAndAuthor, Collections.emptySet());
+    String text = formatCommitText(project, subject, description, Collections.emptySet());
     if (unresolvedHashesForCommit.isEmpty()) {
-      return new CommitPresentation(text, commit.getRoot(), MultiMap.empty());
+      return new CommitPresentation(text, hashAndAuthor, commit.getRoot(), MultiMap.empty());
     }
 
     unresolvedHashes.addAll(unresolvedHashesForCommit);
@@ -283,7 +273,6 @@ public class CommitPresentationUtil {
     private final Project myProject;
     private final String mySubject;
     private final String myDescription;
-    private final String myHashAndAuthor;
 
     public UnresolvedPresentation(@NotNull Project project,
                                   @NotNull VirtualFile root,
@@ -291,17 +280,16 @@ public class CommitPresentationUtil {
                                   @NotNull String description,
                                   @NotNull String hashAndAuthor,
                                   @NotNull String text) {
-      super(text, root, MultiMap.empty());
+      super(text, hashAndAuthor, root, MultiMap.empty());
       myProject = project;
       mySubject = subject;
       myDescription = description;
-      myHashAndAuthor = hashAndAuthor;
     }
 
     @NotNull
     public CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {
-      String text = formatCommitText(myProject, mySubject, myDescription, myHashAndAuthor, resolvedHashes.keySet());
-      return new CommitPresentation(text, myRoot, resolvedHashes);
+      String text = formatCommitText(myProject, mySubject, myDescription, resolvedHashes.keySet());
+      return new CommitPresentation(text, myHashAndAuthor, myRoot, resolvedHashes);
     }
 
     @Override
@@ -312,12 +300,14 @@ public class CommitPresentationUtil {
 
   public static class CommitPresentation {
     @NotNull protected final String myText;
+    @NotNull protected final String myHashAndAuthor;
     @NotNull protected final VirtualFile myRoot;
     @NotNull private final MultiMap<String, CommitId> myResolvedHashes;
 
-    public CommitPresentation(@NotNull String text,
+    public CommitPresentation(@NotNull String text, @NotNull String hashAndAuthor,
                               @NotNull VirtualFile root, @NotNull MultiMap<String, CommitId> resolvedHashes) {
       myText = text;
+      myHashAndAuthor = hashAndAuthor;
       myRoot = root;
       myResolvedHashes = resolvedHashes;
     }
@@ -325,6 +315,11 @@ public class CommitPresentationUtil {
     @NotNull
     public String getText() {
       return myText;
+    }
+
+    @NotNull
+    public String getHashAndAuthor() {
+      return myHashAndAuthor;
     }
 
     @Nullable

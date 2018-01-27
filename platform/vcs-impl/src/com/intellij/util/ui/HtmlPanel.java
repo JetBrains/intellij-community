@@ -31,6 +31,7 @@ import javax.swing.text.Document;
 import javax.swing.text.Position;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
+import java.awt.*;
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -76,11 +77,16 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     }
     else {
       setText("<html><head>" +
-              UIUtil.getCssFontDeclaration(FontUtil.getCommitDetailsFont()) +
+              UIUtil.getCssFontDeclaration(getBodyFont()) +
               "</head><body>" +
               text +
               "</body></html>");
     }
+  }
+
+  @NotNull
+  protected Font getBodyFont() {
+    return FontUtil.getCommitMessageFont();
   }
 
   @NotNull
