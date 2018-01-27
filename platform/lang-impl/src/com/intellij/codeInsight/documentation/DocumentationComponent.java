@@ -673,6 +673,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, final String ref) {
+    if (myManager == null) return;
+
     setElement(element);
     
     highlightLink(-1);
