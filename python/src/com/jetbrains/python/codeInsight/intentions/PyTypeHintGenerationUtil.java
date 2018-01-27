@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
@@ -293,16 +294,23 @@ public class PyTypeHintGenerationUtil {
         collectImportTargetsFromType(pyType, classes, names);
       }
     }
-    else if (type instanceof PyClassType) {
-      classes.add(((PyClassType)type).getPyClass());
-    }
     else if (type instanceof PyCollectionType) {
       if (type instanceof PyCollectionTypeImpl) {
-        classes.add(((PyCollectionTypeImpl)type).getPyClass());
+        final PyClass pyClass = ((PyCollectionTypeImpl)type).getPyClass();
+        final String typingCollectionName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(pyClass.getQualifiedName());
+        if (typingCollectionName != null && type.isBuiltin()) {
+          names.add(typingCollectionName);
+        }
+        else {
+          classes.add(pyClass);
+        }
       }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, classes, names);
       }
+    }
+    else if (type instanceof PyClassType) {
+      classes.add(((PyClassType)type).getPyClass());
     }
     if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
       names.add("Type");
