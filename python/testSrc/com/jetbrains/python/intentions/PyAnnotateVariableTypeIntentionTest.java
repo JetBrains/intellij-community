@@ -191,6 +191,14 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doNegativeTest();
   }
 
+  public void testAnnotationCaretAtReferenceEnd() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationCaretAtDefinitionNameEnd() {
+    doAnnotationTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
