@@ -304,6 +304,9 @@ public class PyTypeHintGenerationUtil {
         collectImportTargetsFromType(pyType, classes, names);
       }
     }
+    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+      names.add("Type");
+    }
   }
 
   public static final class AnnotationInfo {
