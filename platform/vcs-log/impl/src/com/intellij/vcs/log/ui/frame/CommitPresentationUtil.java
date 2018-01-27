@@ -168,38 +168,51 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  static String getBranchesText(@Nullable List<String> branches, boolean expanded) {
+  static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth, @NotNull FontMetrics metrics) {
     if (branches == null) {
       return "In branches: loading...";
     }
     if (branches.isEmpty()) return "Not in any branch";
 
+    String head = "In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ": ";
+
     if (expanded) {
-      return "In " + branches.size() + " " + StringUtil.pluralize("branch", branches.size()) + ": " +
-             "<a href=\"" + SHOW_HIDE_BRANCHES + "\">Hide</a><br>" +
+      return head +
+             "<a href=\"" + SHOW_HIDE_BRANCHES + "\">Hide</a><br/>" +
              StringUtil.join(branches, "<br/>");
     }
-    else {
-      int totalMax = 0;
-      int charCount = 0;
-      for (String b : branches) {
-        totalMax++;
-        charCount += b.length();
-        if (charCount >= 50) break;
-      }
 
-      String branchText;
-      if (branches.size() <= totalMax) {
-        branchText = StringUtil.join(branches, ", ");
+    String tail = "… <a href=\"" + SHOW_HIDE_BRANCHES + "\">Show all</a>";
+    int headWidth = metrics.stringWidth(head);
+    int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
+    if (availableWidth <= headWidth + tailWidth) {
+      return head + tail; // oh well
+    }
+
+    availableWidth -= headWidth;
+    StringBuilder branchesText = new StringBuilder();
+    for (int i = 0; i < branches.size(); i++) {
+      String branch = branches.get(i) + (i != branches.size() - 1 ? ", " : "");
+      int branchWidth = metrics.stringWidth(branch);
+      if (branchWidth + tailWidth < availableWidth) {
+        branchesText.append(branch);
+        availableWidth -= branchWidth;
       }
       else {
-        branchText = StringUtil.join(ContainerUtil.getFirstItems(branches, totalMax), ", ") +
-                     "… <a href=\"" +
-                     SHOW_HIDE_BRANCHES +
-                     "\">Show all</a>";
+        StringBuilder shortenedBranch = new StringBuilder();
+        for (char c : branch.toCharArray()) {
+          if (metrics.stringWidth(shortenedBranch.toString() + c) + tailWidth >= availableWidth) {
+            break;
+          }
+          shortenedBranch.append(c);
+        }
+        branchesText.append(shortenedBranch);
+        branchesText.append(tail);
+        break;
       }
-      return "In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ": " + branchText;
     }
+
+    return head + branchesText.toString();
   }
 
   @NotNull

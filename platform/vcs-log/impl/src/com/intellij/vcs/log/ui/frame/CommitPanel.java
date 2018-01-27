@@ -184,6 +184,13 @@ public class CommitPanel extends JBPanel {
     private boolean myExpanded = false;
 
     @Override
+    public void reshape(int x, int y, int w, int h) {
+      int oldWidth = getWidth();
+      super.reshape(x, y, w, h);
+      if (w != oldWidth) update();
+    }
+
+    @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_HIDE_BRANCHES.equals(e.getDescription())) {
         myExpanded = !myExpanded;
@@ -201,7 +208,11 @@ public class CommitPanel extends JBPanel {
     @NotNull
     @Override
     protected String getBody() {
-      return CommitPresentationUtil.getBranchesText(myBranches, myExpanded);
+      Insets insets = getInsets();
+      String text = CommitPresentationUtil.getBranchesText(myBranches, myExpanded, getWidth() - insets.left - insets.right,
+                                                           getFontMetrics(getBodyFont()));
+      if (myExpanded) return text;
+      return "<nobr>" + text + "</nobr>";
     }
 
     @Override
