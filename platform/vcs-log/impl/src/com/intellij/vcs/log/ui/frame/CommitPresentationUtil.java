@@ -33,7 +33,6 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
-  private static final int PER_ROW = 2;
 
   @NotNull static final String GO_TO_HASH = "go-to-hash:";
   @NotNull static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
@@ -176,53 +175,9 @@ public class CommitPresentationUtil {
     if (branches.isEmpty()) return "Not in any branch";
 
     if (expanded) {
-      int rowCount = (int)Math.ceil((double)branches.size() / PER_ROW);
-
-      int[] means = new int[PER_ROW - 1];
-      int[] max = new int[PER_ROW - 1];
-
-      for (int i = 0; i < rowCount; i++) {
-        for (int j = 0; j < PER_ROW - 1; j++) {
-          int index = rowCount * j + i;
-          if (index < branches.size()) {
-            means[j] += branches.get(index).length();
-            max[j] = Math.max(branches.get(index).length(), max[j]);
-          }
-        }
-      }
-      for (int j = 0; j < PER_ROW - 1; j++) {
-        means[j] /= rowCount;
-      }
-
-      HtmlTableBuilder builder = new HtmlTableBuilder();
-      for (int i = 0; i < rowCount; i++) {
-        builder.startRow();
-        for (int j = 0; j < PER_ROW; j++) {
-          int index = rowCount * j + i;
-          if (index >= branches.size()) {
-            builder.append("");
-          }
-          else {
-            String branch = branches.get(index);
-            if (index != branches.size() - 1) {
-              int space = 0;
-              if (j < PER_ROW - 1 && branch.length() == max[j]) {
-                space = Math.max(means[j] + 20 - max[j], 5);
-              }
-              builder.append(branch + StringUtil.repeat("&nbsp;", space), "left");
-            }
-            else {
-              builder.append(branch, "left");
-            }
-          }
-        }
-
-        builder.endRow();
-      }
-
       return "In " + branches.size() + " " + StringUtil.pluralize("branch", branches.size()) + ": " +
              "<a href=\"" + SHOW_HIDE_BRANCHES + "\">Hide</a><br>" +
-             builder.build();
+             StringUtil.join(branches, "<br/>");
     }
     else {
       int totalMax = 0;

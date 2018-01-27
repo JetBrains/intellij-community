@@ -123,10 +123,6 @@ public class CommitPanel extends JBPanel {
     return getCommitDetailsBackground();
   }
 
-  public boolean isExpanded() {
-    return myContainingBranchesPanel.isExpanded();
-  }
-
   @NotNull
   public static Color getCommitDetailsBackground() {
     return UIUtil.getPanelBackground();
@@ -211,10 +207,6 @@ public class CommitPanel extends JBPanel {
     @Override
     public Color getBackground() {
       return getCommitDetailsBackground();
-    }
-
-    public boolean isExpanded() {
-      return myExpanded;
     }
 
     @NotNull

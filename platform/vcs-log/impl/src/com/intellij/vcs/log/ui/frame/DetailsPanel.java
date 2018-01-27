@@ -41,7 +41,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -343,31 +342,14 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   private class MyMainContentPanel extends ScrollablePanel {
     @Override
     public boolean getScrollableTracksViewportWidth() {
-      boolean expanded = false;
-      for (Component c : getComponents()) {
-        if (c instanceof CommitPanel && ((CommitPanel)c).isExpanded()) {
-          expanded = true;
-          break;
-        }
-      }
-      // expanded containing branches are displayed in a table, it is more convenient to have a scrollbar in this case
-      return !expanded;
+      return true;
     }
 
     @Override
     public Dimension getPreferredSize() {
       Dimension preferredSize = super.getPreferredSize();
       int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
-      JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
-      if (scrollPane == null || getScrollableTracksViewportWidth()) {
-        return new Dimension(preferredSize.width, height);
-      }
-      else {
-        // we want content panel to fill all available horizontal space in order to display root label in the upper-right corner
-        // but when containing branches are expanded, we show a horizontal scrollbar, so content panel width wont be automatically adjusted
-        // here it is done manually
-        return new Dimension(Math.max(preferredSize.width, scrollPane.getViewport().getWidth()), height);
-      }
+      return new Dimension(preferredSize.width, height);
     }
 
     @Override
