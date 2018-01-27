@@ -19,6 +19,7 @@ import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Anno
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -49,7 +50,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
       return false;
     }
     final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(project, editor, file);
-    if (resolved.isEmpty() || resolved.size() > 1) {
+    if (resolved.size() != 1) {
       return false;
     }
 
@@ -69,12 +70,29 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(project, file);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
     // TODO filter out targets defined in stubs
-    return StreamEx.of(PyUtil.multiResolveTopPriority(elementAtCaret, resolveContext))
+    return StreamEx.of(resolveReferenceAugAssignmentsAware(elementAtCaret, resolveContext))
       .select(PyTargetExpression.class)
       .filter(target -> !index.isInLibraryClasses(target.getContainingFile().getVirtualFile()))
       .filter(target -> canBeAnnotated(target))
       .filter(target -> !isAnnotated(target, typeEvalContext))
       .toList();
+  }
+
+  @NotNull
+  private static StreamEx<PsiElement> resolveReferenceAugAssignmentsAware(@NotNull PyReferenceOwner element,
+                                                                          @NotNull PyResolveContext resolveContext) {
+    return StreamEx.of(PyUtil.multiResolveTopPriority(element, resolveContext))
+                   .filter(resolved -> resolved instanceof PyTargetExpression || resolved != element)
+                   .flatMap(resolved -> expandResolveAugAssignments(resolved, resolveContext))
+                   .distinct();
+  }
+
+  @NotNull
+  private static StreamEx<PsiElement> expandResolveAugAssignments(@NotNull PsiElement element, @NotNull PyResolveContext context) {
+    if (element instanceof PyReferenceExpression && PyAugAssignmentStatementNavigator.getStatementByTarget(element) != null) {
+      return StreamEx.of(resolveReferenceAugAssignmentsAware((PyReferenceOwner)element, context));
+    }
+    return StreamEx.of(element);
   }
 
   private static boolean canBeAnnotated(@NotNull PyTargetExpression target) {
