@@ -324,9 +324,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
 
       context.setUIComponentEnabled(i, enabled);
-      if (!enabled && context.getHighlightedParameter() == candidate) {
-        context.setHighlightedParameter(null);
-      }
       if (candidates.length > 1 && enabled) {
         if (PsiManager.getInstance(context.getProject()).areElementsEquivalent(chosenMethod, method)) {
           chosenInfo = candidate;
