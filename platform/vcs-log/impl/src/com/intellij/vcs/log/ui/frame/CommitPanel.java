@@ -32,7 +32,6 @@ import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRA
 public class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
   private static final int REFERENCES_BORDER = 12;
-  private static final int TOP_BORDER = 4;
 
   @NotNull private final VcsLogData myLogData;
 
@@ -40,7 +39,6 @@ public class CommitPanel extends JBPanel {
   @NotNull private final ReferencesPanel myTagsPanel;
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
-  @NotNull private final RootPanel myRootPanel;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final Consumer<CommitId> myNavigate;
 
@@ -54,7 +52,6 @@ public class CommitPanel extends JBPanel {
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     setOpaque(false);
 
-    myRootPanel = new RootPanel();
     myBranchesPanel = new ReferencesPanel();
     myBranchesPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
     myTagsPanel = new ReferencesPanel();
@@ -62,7 +59,6 @@ public class CommitPanel extends JBPanel {
     myMessagePanel = new MessagePanel();
     myContainingBranchesPanel = new BranchesPanel();
 
-    add(myRootPanel);
     add(myMessagePanel);
     add(myBranchesPanel);
     add(myTagsPanel);
@@ -75,13 +71,6 @@ public class CommitPanel extends JBPanel {
     if (!commit.equals(myCommit) || presentation.isResolved()) {
       myCommit = commit;
       myMessagePanel.setData(presentation);
-
-      if (myColorManager.isMultipleRoots()) {
-        myRootPanel.setRoot(commit.getRoot().getName(), VcsLogGraphTable.getRootBackgroundColor(commit.getRoot(), myColorManager));
-      }
-      else {
-        myRootPanel.setRoot("", null);
-      }
     }
 
     List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
@@ -100,7 +89,6 @@ public class CommitPanel extends JBPanel {
 
   public void update() {
     myMessagePanel.update();
-    myRootPanel.update();
     myBranchesPanel.update();
     myTagsPanel.update();
     myContainingBranchesPanel.update();
@@ -211,82 +199,6 @@ public class CommitPanel extends JBPanel {
 
     public boolean isExpanded() {
       return myExpanded;
-    }
-  }
-
-  private static class RootPanel extends JPanel {
-    private static final int RIGHT_BORDER = Math.max(UIUtil.getScrollBarWidth(), JBUI.scale(14));
-    @NotNull private final RectanglePainter myLabelPainter;
-    @NotNull private String myText = "";
-    @NotNull private Color myColor = getCommitDetailsBackground();
-
-    RootPanel() {
-      myLabelPainter = new RectanglePainter(true) {
-        @Override
-        protected Font getLabelFont() {
-          return RootPanel.getLabelFont();
-        }
-      };
-      setOpaque(false);
-    }
-
-    @NotNull
-    private static Font getLabelFont() {
-      Font font = getCommitDetailsFont();
-      return font.deriveFont(font.getSize() - 2f);
-    }
-
-    public void setRoot(@NotNull String text, @Nullable Color color) {
-      myText = text;
-      if (text.isEmpty() || color == null) {
-        myColor = getCommitDetailsBackground();
-      }
-      else {
-        myColor = color;
-      }
-    }
-
-    public void update() {
-      revalidate();
-      repaint();
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      if (!myText.isEmpty()) {
-        Dimension painterSize = myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
-        JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, this);
-        int width;
-        if (scrollPane == null) {
-          width = getWidth();
-        }
-        else {
-          width = scrollPane.getViewport().getViewRect().x + scrollPane.getWidth();
-        }
-        myLabelPainter.paint((Graphics2D)g, myText, width - painterSize.width - RIGHT_BORDER, 0, myColor);
-      }
-    }
-
-    @Override
-    public Color getBackground() {
-      return getCommitDetailsBackground();
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return getPreferredSize();
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      if (myText.isEmpty()) return new JBDimension(0, TOP_BORDER);
-      Dimension size = myLabelPainter.calculateSize(myText, getFontMetrics(getLabelFont()));
-      return new Dimension(size.width + JBUI.scale(RIGHT_BORDER), size.height);
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return getPreferredSize();
     }
   }
 }
