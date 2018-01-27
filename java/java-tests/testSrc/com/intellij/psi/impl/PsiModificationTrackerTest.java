@@ -425,7 +425,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
   public void testNoIncrementOnWorkspaceFileChange() {
     FixtureRuleKt.runInLoadComponentStateMode(myProject, () -> {
-      ProjectKt.getStateStore(myProject).save(new SmartList<>(), false);
+      ProjectKt.getStateStore(myProject).save(new SmartList<>(), true);
 
       PsiModificationTracker tracker = getTracker();
       long mc = tracker.getModificationCount();
@@ -503,10 +503,10 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       TextRange methodRange = anon.getMethods()[0].getTextRange();
       getEditor().getDocument().deleteString(methodRange.getStartOffset(), methodRange.getEndOffset());
-      
+
       int gooIndex = file.getText().indexOf("goo");
       getEditor().getDocument().deleteString(gooIndex, gooIndex + 3);
-      
+
       PsiDocumentManager.getInstance(myProject).commitDocument(getEditor().getDocument());
     });
 
@@ -542,7 +542,7 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
 
     PsiUtilCore.ensureValid(method);
     Arrays.stream(method.findSuperMethods()).forEach(PsiUtilCore::ensureValid);
-    
+
     assertFalse(javaCount == getTracker().getJavaStructureModificationCount());
   }
 
@@ -550,5 +550,4 @@ public class PsiModificationTrackerTest extends CodeInsightTestCase {
   private PsiModificationTracker getTracker() {
     return PsiManager.getInstance(getProject()).getModificationTracker();
   }
-
 }
