@@ -546,8 +546,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           return candidates
             .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
             .nonNull()
-            .map(Ref::get)
             .findFirst()
+            .map(Ref::get)
             .orElse(null);
         }
       }
