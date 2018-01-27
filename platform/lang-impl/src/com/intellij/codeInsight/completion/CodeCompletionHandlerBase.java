@@ -297,16 +297,19 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
+    CompletionThreadingBase threading = ApplicationManager.getApplication().isWriteAccessAllowed() ? new SyncCompletion() : new AsyncCompletion();
     CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
                                                                             invocationCount, this,
-                                                                            initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
+                                                                            initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup,
+                                                                            threading);
     Disposer.register(indicator, hostCopyOffsets.getOffsets());
     Disposer.register(indicator, finalOffsets.getOffsets());
     Disposer.register(indicator, translator);
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
-
-    indicator.startCompletion(initContext, finalOffsets);
+    
+    threading.startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> 
+      indicator.runContributors(initContext, finalOffsets)));
 
     if (!synchronous) {
       return;

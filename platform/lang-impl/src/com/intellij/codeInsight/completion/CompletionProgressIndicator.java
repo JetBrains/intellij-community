@@ -74,8 +74,10 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -130,11 +132,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private final Queue<Runnable> myAdvertiserChanges = new ConcurrentLinkedQueue<>();
   private final List<CompletionResult> myDelayedMiddleMatches = ContainerUtil.newArrayList();
   private final int myStartCaret;
-  private CompletionThreadingBase myStrategy;
+  private final CompletionThreadingBase myThreading;
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
-                              boolean hasModifiers, LookupImpl lookup) {
+                              boolean hasModifiers, LookupImpl lookup, CompletionThreadingBase threading) {
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
@@ -144,6 +146,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
+    myThreading = threading;
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
@@ -785,32 +788,23 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return true;
   }
 
-
-  void startCompletion(CompletionInitializationContext initContext, OffsetsInFile offsets) {
+  void runContributors(CompletionInitializationContext initContext, OffsetsInFile offsets) {
     CompletionParameters parameters = createCompletionParameters(offsets);
     myParameters = parameters;
 
-    boolean sync = ApplicationManager.getApplication().isWriteAccessAllowed();
-    myStrategy = sync ? new SyncCompletion() : new AsyncCompletion();
-    myStrategy.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));
-    final WeighingDelegate weigher = myStrategy.delegateWeighing(this);
+    myThreading.startThread(ProgressWrapper.wrap(this), ()-> AsyncCompletion.tryReadOrCancel(this, () -> scheduleAdvertising(parameters)));
+    WeighingDelegate weigher = myThreading.delegateWeighing(this);
 
-    class CalculateItems implements Runnable {
-      @Override
-      public void run() {
-        try {
-          calculateItems(initContext, weigher, parameters);
-        }
-        catch (ProcessCanceledException ignore) {
-          cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
-        }
-        catch (Throwable t) {
-          cancel();
-          LOG.error(t);
-        }
-      }
+    try {
+      calculateItems(initContext, weigher, parameters);
     }
-    myStrategy.startThread(this, ()->AsyncCompletion.tryReadOrCancel(this, new CalculateItems()));
+    catch (ProcessCanceledException ignore) {
+      cancel(); // some contributor may just throw PCE; if indicator is not canceled everything will hang
+    }
+    catch (Throwable t) {
+      cancel();
+      LOG.error(t);
+    }
   }
 
   private void calculateItems(CompletionInitializationContext initContext, WeighingDelegate weigher, CompletionParameters parameters) {
@@ -826,7 +820,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   @Nullable
   CompletionThreadingBase getCompletionThreading() {
-    return myStrategy;
+    return myThreading;
   }
 
   public void addAdvertisement(@NotNull final String text, @Nullable final Color bgColor) {
