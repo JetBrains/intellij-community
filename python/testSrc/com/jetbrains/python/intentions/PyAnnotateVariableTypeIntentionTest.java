@@ -175,6 +175,22 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doMultiFileAnnotationTest();
   }
 
+  public void testAnnotationAugmentedAssignment() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationMultiPathAugmentedAssignment() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationAugmentedAssignmentWithAmbiguousTarget() {
+    doNegativeTest();
+  }
+
+  public void testAnnotationUnresolvedAugmentedAssignmentTarget() {
+    doNegativeTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
