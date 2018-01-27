@@ -473,11 +473,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
     editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; }");
-    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 5px 7px; }");
-    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 5px 7px; }");
+    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 0 7px; }");
+    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
     editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
