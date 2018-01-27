@@ -3,8 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.BrowserHyperlinkListener;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
@@ -21,10 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.DefaultCaret;
-import javax.swing.text.Document;
-import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
@@ -44,7 +38,7 @@ public class CommitPanel extends JBPanel {
 
   @NotNull private final ReferencesPanel myBranchesPanel;
   @NotNull private final ReferencesPanel myTagsPanel;
-  @NotNull private final DataPanel myDataPanel;
+  @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final VcsLogColorManager myColorManager;
@@ -65,11 +59,11 @@ public class CommitPanel extends JBPanel {
     myBranchesPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
     myTagsPanel = new ReferencesPanel();
     myTagsPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
-    myDataPanel = new DataPanel();
+    myMessagePanel = new MessagePanel();
     myContainingBranchesPanel = new BranchesPanel();
 
     add(myRootPanel);
-    add(myDataPanel);
+    add(myMessagePanel);
     add(myBranchesPanel);
     add(myTagsPanel);
     add(myContainingBranchesPanel);
@@ -80,7 +74,7 @@ public class CommitPanel extends JBPanel {
   public void setCommit(@NotNull CommitId commit, @NotNull CommitPresentationUtil.CommitPresentation presentation) {
     if (!commit.equals(myCommit) || presentation.isResolved()) {
       myCommit = commit;
-      myDataPanel.setData(presentation);
+      myMessagePanel.setData(presentation);
 
       if (myColorManager.isMultipleRoots()) {
         myRootPanel.setRoot(commit.getRoot().getName(), VcsLogGraphTable.getRootBackgroundColor(commit.getRoot(), myColorManager));
@@ -93,7 +87,7 @@ public class CommitPanel extends JBPanel {
     List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
     myContainingBranchesPanel.setBranches(branches);
 
-    myDataPanel.update();
+    myMessagePanel.update();
     myContainingBranchesPanel.update();
     revalidate();
   }
@@ -105,7 +99,7 @@ public class CommitPanel extends JBPanel {
   }
 
   public void update() {
-    myDataPanel.update();
+    myMessagePanel.update();
     myRootPanel.update();
     myBranchesPanel.update();
     myTagsPanel.update();
@@ -149,10 +143,10 @@ public class CommitPanel extends JBPanel {
     return UIUtil.getTableBackground();
   }
 
-  private class DataPanel extends HtmlPanel {
+  private class MessagePanel extends HtmlPanel {
     @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
-    DataPanel() {
+    MessagePanel() {
       setBorder(JBUI.Borders.empty(0, ReferencesPanel.H_GAP, BOTTOM_BORDER, 0));
     }
 
