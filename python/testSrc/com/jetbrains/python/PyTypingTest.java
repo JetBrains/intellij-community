@@ -777,6 +777,17 @@ public class PyTypingTest extends PyTestCase {
            "expr = x");
   }
 
+  // PY-16412
+  public void testLocalVariableAnnotationAheadOfTimeExplicitAny() {
+    doTest("Any",
+           "from typing import Any\n" +
+           "\n" +
+           "def func(x):\n" +
+           "    var: Any\n" +
+           "    var = x\n" +
+           "    expr = var\n");
+  }
+
   // PY-21864
   public void testClassAttributeAnnotationAheadOfTimeInAnotherFile() {
     doMultiFileStubAwareTest("int",

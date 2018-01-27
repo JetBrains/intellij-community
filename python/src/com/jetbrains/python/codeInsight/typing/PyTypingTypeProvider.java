@@ -16,8 +16,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import java.util.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -36,8 +34,8 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -543,8 +541,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           return candidates
             .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
             .nonNull()
-            .map(Ref::get)
             .findFirst()
+            .map(Ref::get)
             .orElse(null);
         }
       }
