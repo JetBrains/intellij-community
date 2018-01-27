@@ -171,9 +171,9 @@ public class CommitPresentationUtil {
   @NotNull
   static String getBranchesText(@Nullable List<String> branches, boolean expanded) {
     if (branches == null) {
-      return "<i>In branches: loading...</i>";
+      return "In branches: loading...";
     }
-    if (branches.isEmpty()) return "<i>Not in any branch</i>";
+    if (branches.isEmpty()) return "Not in any branch";
 
     if (expanded) {
       int rowCount = (int)Math.ceil((double)branches.size() / PER_ROW);
@@ -220,8 +220,8 @@ public class CommitPresentationUtil {
         builder.endRow();
       }
 
-      return "<i>In " + branches.size() + " branches:</i> " +
-             "<a href=\"" + SHOW_HIDE_BRANCHES + "\"><i>(click to hide)</i></a><br>" +
+      return "In " + branches.size() + " " + StringUtil.pluralize("branch", branches.size()) + ": " +
+             "<a href=\"" + SHOW_HIDE_BRANCHES + "\">Hide</a><br>" +
              builder.build();
     }
     else {
@@ -241,9 +241,9 @@ public class CommitPresentationUtil {
         branchText = StringUtil.join(ContainerUtil.getFirstItems(branches, totalMax), ", ") +
                      "… <a href=\"" +
                      SHOW_HIDE_BRANCHES +
-                     "\"><i>(click to show all)</i></a>";
+                     "\">Show all</a>";
       }
-      return "<i>In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ":</i> " + branchText;
+      return "In " + branches.size() + StringUtil.pluralize(" branch", branches.size()) + ": " + branchText;
     }
   }
 
