@@ -98,6 +98,68 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     return new UnnecessaryUnicodeEscapeVisitor();
   }
 
+  // @VisibleForTesting
+  static void forEachUnicodeSequence(String text, Charset charset, Callback callback) {
+    final CharsetEncoder encoder = charset.newEncoder().onUnmappableCharacter(CodingErrorAction.REPORT);
+    final CharBuffer charBuffer = CharBuffer.allocate(1);
+    final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+    final int length = text.length();
+    for (int i = 0; i < length; i++) {
+      final char c = text.charAt(i);
+      if (c != '\\') {
+        continue;
+      }
+      boolean isEscape = true;
+      int previousChar = i - 1;
+      while (previousChar >= 0 && text.charAt(previousChar) == '\\') {
+        isEscape = !isEscape;
+        previousChar--;
+      }
+      if (!isEscape) {
+        continue;
+      }
+      int nextChar = i + 1;
+      // \\uuuu0061 is a legal unicode escape
+      while (nextChar < length && text.charAt(nextChar) == 'u') {
+        nextChar++;
+      }
+      if (nextChar == i + 1 || nextChar + 3 >= length) {
+        continue;
+      }
+      if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        final int escapeEnd = nextChar + 4;
+        final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
+        final int type = Character.getType(d);
+        if (type == Character.CONTROL ||
+            type == Character.FORMAT ||
+            type == Character.PRIVATE_USE ||
+            type == Character.SURROGATE ||
+            type == Character.UNASSIGNED ||
+            type == Character.LINE_SEPARATOR ||
+            type == Character.PARAGRAPH_SEPARATOR) {
+          continue;
+        }
+        if (type == Character.SPACE_SEPARATOR && d != ' ') {
+          continue;
+        }
+        byteBuffer.clear();
+        charBuffer.clear();
+        charBuffer.put(d).rewind();
+        final CoderResult coderResult = encoder.encode(charBuffer, byteBuffer, true);
+        if (coderResult.isError()) {
+          continue;
+        }
+
+        if (!callback.foundSequence(text, i, escapeEnd, d)) {
+          return;
+        }
+      }
+    }
+  }
+
   private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
@@ -113,69 +175,24 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
       final VirtualFile virtualFile = file.getVirtualFile();
       final String text = file.getText();
       final Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
-      final CharsetEncoder encoder = charset.newEncoder().onUnmappableCharacter(CodingErrorAction.REPORT);
-      final CharBuffer charBuffer = CharBuffer.allocate(1);
-      final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
-      final int length = text.length();
-      for (int i = 0; i < length; i++) {
-        final char c = text.charAt(i);
-        if (c != '\\') {
-          continue;
-        }
-        boolean isEscape = true;
-        int previousChar = i - 1;
-        while (previousChar >= 0 && text.charAt(previousChar) == '\\') {
-          isEscape = !isEscape;
-          previousChar--;
-        }
-        if (!isEscape) {
-          continue;
-        }
-        int nextChar = i;
-        do {
-          nextChar++;
-          if (nextChar >= length) {
-            break;
-          }
-        }
-        while (text.charAt(nextChar) == 'u'); // \\uuuu0061 is a legal unicode escape
-        if (nextChar == i + 1 || nextChar + 3 >= length) {
-          continue;
-        }
-        if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
-          final int escapeEnd = nextChar + 4;
-          final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
-          final int type = Character.getType(d);
-          if (type == Character.CONTROL ||
-              type == Character.FORMAT ||
-              type == Character.PRIVATE_USE ||
-              type == Character.SURROGATE ||
-              type == Character.UNASSIGNED ||
-              type == Character.LINE_SEPARATOR ||
-              type == Character.PARAGRAPH_SEPARATOR) {
-            continue;
-          }
-          if (type == Character.SPACE_SEPARATOR && d != ' ') {
-            continue;
-          }
-          byteBuffer.clear();
-          charBuffer.clear();
-          charBuffer.put(d).rewind();
-          final CoderResult coderResult = encoder.encode(charBuffer, byteBuffer, true);
-          if (coderResult.isError()) {
-            continue;
-          }
-          final PsiElement element = file.findElementAt(i);
+
+      forEachUnicodeSequence(text, charset, new Callback() {
+        @Override
+        public boolean foundSequence(String text, int start, int end, char codeUnit) {
+          final PsiElement element = file.findElementAt(start);
           if (element != null && isSuppressedFor(element)) {
-            return;
+            return false;
           }
-          final RangeMarker rangeMarker = document.createRangeMarker(i, escapeEnd);
-          registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d), rangeMarker);
+          final RangeMarker rangeMarker = document.createRangeMarker(start, end);
+          registerErrorAtOffset(file, start, end - start, Character.valueOf(codeUnit), rangeMarker);
+          return true;
         }
-      }
+      });
     }
+  }
+
+  // @VisibleForTesting
+  interface Callback {
+    boolean foundSequence(String text, int start, int end, char codeUnit);
   }
 }
