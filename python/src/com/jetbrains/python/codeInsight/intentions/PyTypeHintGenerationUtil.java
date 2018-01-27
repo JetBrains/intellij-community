@@ -305,6 +305,9 @@ public class PyTypeHintGenerationUtil {
           classes.add(pyClass);
         }
       }
+      else if (type instanceof PyTupleType) {
+        names.add("Tuple");
+      }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
         collectImportTargetsFromType(pyType, classes, names);
       }
