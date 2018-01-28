@@ -95,8 +95,10 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -1231,13 +1233,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private void runReadAction(@NotNull Runnable action) {
-      runReadAction(action, false);
-    }
-
-    private void runReadAction(@NotNull Runnable action, boolean isPreserveSelection) {
       if (!DumbService.getInstance(myProject).isDumb()) {
         ApplicationManager.getApplication().runReadAction(action);
-        updatePopup(isPreserveSelection);
+        updatePopup();
       }
     }
 
@@ -1409,12 +1407,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       buildRecentUndefined();
     }
 
-    private void updatePopup() {
-      updatePopup(false);
-    }
-
     @SuppressWarnings("SSBasedInspection")
-    private void updatePopup(boolean isPreserveSelection) {
+    private void updatePopup() {
       check();
       SwingUtilities.invokeLater(new Runnable() {
         @Override
@@ -1614,7 +1608,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         catch (Exception e) {
           myDone.setRejected();
         }
-      }, true));
+      }));
       return myDone;
     }
 
