@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,10 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
 
   @NotNull
   public List<DocumentationProvider> getAllProviders() {
-    return ContainerUtil.concat(getProviders(), Arrays.asList(Extensions.getExtensions(EP_NAME)));
+    List<DocumentationProvider> result = new SmartList<>(getProviders());
+    result.addAll(Arrays.asList(Extensions.getExtensions(EP_NAME)));
+    ContainerUtil.removeDuplicates(result);
+    return result;
   }
 
   @NotNull
