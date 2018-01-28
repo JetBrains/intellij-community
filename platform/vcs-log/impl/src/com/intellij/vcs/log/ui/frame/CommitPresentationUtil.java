@@ -112,7 +112,7 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
+  private static String getAuthorText(@NotNull VcsFullCommitDetails commit) {
     long authorTime = commit.getAuthorTime();
     long commitTime = commit.getCommitTime();
 
@@ -125,22 +125,18 @@ public class CommitPresentationUtil {
       else {
         commitTimeText = "";
       }
-      authorText += getCommitterText(commit.getCommitter(), commitTimeText, offset);
+      authorText += "<br/>" + getCommitterText(commit.getCommitter(), commitTimeText);
     }
     else if (authorTime != commitTime) {
-      authorText += getCommitterText(null, formatDateTime(commitTime), offset);
+      authorText += "<br/>" + getCommitterText(null, formatDateTime(commitTime));
     }
     return authorText;
   }
 
   @NotNull
-  private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
-    String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
-    String gray = ColorUtil.toHex(JBColor.GRAY);
-
-    String graySpan = "<span style='color:#" + gray + "'>";
-
-    String text = alignment + graySpan + "committed";
+  private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText) {
+    String graySpan = "<span style='color:#" + ColorUtil.toHex(JBColor.GRAY) + "'>";
+    String text = graySpan + "committed";
     if (committer != null) {
       text += " by " + VcsUserUtil.getShortPresentation(committer);
       if (!committer.getEmail().isEmpty()) {
@@ -220,8 +216,7 @@ public class CommitPresentationUtil {
                                                      @NotNull VcsFullCommitDetails commit,
                                                      @NotNull Set<String> unresolvedHashes) {
     Font font = FontUtil.getCommitMetadataFont();
-    String hash = commit.getId().toShortString();
-    String hashAndAuthor = FontUtil.getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1), font.getStyle(), font);
+    String hashAndAuthor = FontUtil.getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit), font.getStyle(), font);
     String fullMessage = commit.getFullMessage();
     int separator = fullMessage.indexOf("\n\n");
     String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
