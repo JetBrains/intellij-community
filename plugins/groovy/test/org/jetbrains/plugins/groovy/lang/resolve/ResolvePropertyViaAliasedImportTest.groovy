@@ -21,7 +21,7 @@ class ResolvePropertyViaAliasedImportTest extends GrHighlightingTestBase {
     fixture.addFileToProject 'com/foo/Bar.groovy', '''\
 package com.foo
 class Bar {
-  static String myProperty = 'hello'
+  static def myProperty = 'hello'
 }
 '''
   }
@@ -40,6 +40,18 @@ class Bar {
   }
 
   void 'test getter with setter alias'() {
+    doTest()
+  }
+
+  void 'test property with alias'() {
+    doTest()
+  }
+
+  void 'test property with getter alias'() {
+    doTest()
+  }
+
+  void 'test property with setter alias'() {
     doTest()
   }
 }
