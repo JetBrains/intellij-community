@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
@@ -65,10 +64,10 @@ public class RunAnythingUtil {
       new SeparatorComponent(titleLabel.getPreferredSize().height / 2, new JBColor(Gray._220, Gray._80), null);
 
     return JBUI.Panels.simplePanel(5, 10)
-      .addToCenter(separatorComponent)
-      .addToLeft(titleLabel)
-      .withBorder(RENDERER_TITLE_BORDER)
-      .withBackground(UIUtil.getListBackground());
+                      .addToCenter(separatorComponent)
+                      .addToLeft(titleLabel)
+                      .withBorder(RENDERER_TITLE_BORDER)
+                      .withBackground(UIUtil.getListBackground());
   }
 
   public static Color defaultActionForeground(boolean isSelected, @Nullable Presentation presentation) {
@@ -143,14 +142,6 @@ public class RunAnythingUtil {
       popup.setSize(r.getSize());
       popup.setLocation(r.getLocation());
     }
-  }
-
-  @NotNull
-  public static Executor getExecutor() {
-    final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-    final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
-
-    return !RunAnythingAction.ourShiftIsPressed.get() ? runExecutor : debugExecutor;
   }
 
   @Nullable
@@ -363,21 +354,21 @@ public class RunAnythingUtil {
         TemporaryConfigurationRunAnythingItem temporaryConfigurationRunAnythingItem =
           new TemporaryConfigurationRunAnythingItem(project, pattern, configuration);
 
-        temporaryConfigurationRunAnythingItem.run(getExecutor(), workDirectory);
+        temporaryConfigurationRunAnythingItem.run(RunAnythingAction.getExecutor(), workDirectory);
         return;
       }
     }
 
     RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, StringUtil.trim(pattern));
-    undefinedRunAnythingItem.run(getExecutor(), workDirectory);
+    undefinedRunAnythingItem.run(RunAnythingAction.getExecutor(), workDirectory);
   }
 
   public static void performRunAnythingAction(@NotNull Object element,
-                                             @Nullable final Project project,
-                                             Component component,
-                                             @Nullable AnActionEvent e) {
+                                              @Nullable final Project project,
+                                              @Nullable Component component,
+                                              @Nullable AnActionEvent e) {
     ApplicationManager.getApplication()
-      .invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, e)));
+                      .invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, e)));
   }
 
   private static String getShortcut() {

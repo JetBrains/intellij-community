@@ -8,6 +8,7 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.actions.ExecutorProvider;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -94,10 +95,8 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -160,6 +159,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private DataContext myDataContext;
   private static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
   private JLabel myTextFieldTitle;
+  private boolean myIsItemSelected;
+  private String myLastInputText = null;
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
@@ -315,7 +316,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       protected void textChanged(DocumentEvent e) {
         final String pattern = editor.getText();
         if (editor.hasFocus()) {
-          rebuildList(pattern);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            myIsItemSelected = false;
+          });
+
+          if (!myIsItemSelected) {
+            myLastInputText = null;
+            clearSelection();
+
+            rebuildList(pattern);
+          }
         }
       }
     });
@@ -353,6 +363,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         onPopupFocusLost();
       }
     });
+  }
+
+  private void clearSelection() {
+    if (myList.getModel().getSize() > 0) {
+      myList.getSelectionModel().removeSelectionInterval(0, myList.getModel().getSize() - 1);
+    }
   }
 
 
@@ -478,7 +494,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
       VirtualFile directory = getWorkDirectory(module);
       if (value instanceof RunAnythingUndefinedItem) {
-        onDone = () -> ((RunAnythingUndefinedItem)value).run(RunAnythingUtil.getExecutor(), directory);
+        onDone = () -> ((RunAnythingUndefinedItem)value).run(getExecutor(), directory);
       }
       else if (value == null) {
         onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(project, pattern, module, directory);
@@ -690,7 +706,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(3, 5, 5, 0));
     if (SystemInfo.isMac) {
       myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD, myTextFieldTitle.getFont().getSize() - 1f));
-    } else {
+    }
+    else {
       myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD));
     }
 
@@ -725,6 +742,32 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       public void valueChanged(ListSelectionEvent e) {
         updateAdText();
+
+        Object selectedValue = myList.getSelectedValue();
+        if (selectedValue == null || tryGetSearchingModel(myList) == null) return;
+
+        String lastInput = myTextField.getText();
+        myIsItemSelected = true;
+
+        if (isMoreItem(myList.getSelectedIndex()) && myLastInputText != null) {
+          myTextField.setText(myLastInputText);
+          return;
+        }
+
+        if (selectedValue instanceof RunAnythingItem) {
+          myTextField.setText(((RunAnythingItem)selectedValue).getText());
+        }
+        else if (selectedValue instanceof AnAction) {
+          myTextField.setText(((AnAction)selectedValue).getTemplatePresentation().getText());
+        }
+        else if (selectedValue instanceof ChooseRunConfigurationPopup.ItemWrapper) {
+          myTextField.setText(((ChooseRunConfigurationPopup.ItemWrapper)selectedValue).getText());
+        }
+        else {
+          myTextField.setText(myLastInputText);
+        }
+
+        if (myLastInputText == null) myLastInputText = lastInput;
       }
     });
 
@@ -818,7 +861,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private void initActions() {
     myBundlerActions = Stream.of(((DefaultActionGroup)ActionManager.getInstance().getAction("BUNDLER_ACTIONS")).getChildren(myActionEvent))
-      .filter(action -> action instanceof AbstractBundlerAction).toArray(AnAction[]::new);
+                             .filter(action -> action instanceof AbstractBundlerAction).toArray(AnAction[]::new);
 
     //todo move to EP
     Module myModule = getModule();
@@ -826,14 +869,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       RakeTask rakeTasks = RakeTaskModuleCache.getInstance(myModule).getRakeTasks();
       if (rakeTasks != null) {
         myRakeActions = Arrays.stream(RakeTaskModuleCache.getInstance(myModule).getRakeActions())
-          .filter(RakeAction.class::isInstance)
-          .map(RakeAction.class::cast)
-          .filter(action -> {
-            RakeTask task = action.getTask(myModule);
-            return task != null && task.isDescriptionProvided();
-          })
-          .peek(rakeAction -> rakeAction.updateAction(myDataContext, rakeAction.getTemplatePresentation()))
-          .toArray(AnAction[]::new);
+                              .filter(RakeAction.class::isInstance)
+                              .map(RakeAction.class::cast)
+                              .filter(action -> {
+                                RakeTask task = action.getTask(myModule);
+                                return task != null && task.isDescriptionProvided();
+                              })
+                              .peek(rakeAction -> rakeAction.updateAction(myDataContext, rakeAction.getTemplatePresentation()))
+                              .toArray(AnAction[]::new);
       }
 
       myGeneratorsActions = GeneratorsActionGroup.collectGeneratorsActions(myModule, false).toArray(AnAction.EMPTY_ARRAY);
@@ -907,9 +950,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     final JTextField editor = searchTextField.getTextEditor();
     DumbAwareAction.create(e -> RunAnythingUtil.jumpNextGroup(true, myList))
-      .registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
+                   .registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
     DumbAwareAction.create(e -> RunAnythingUtil.jumpNextGroup(false, myList))
-      .registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
+                   .registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(e -> {
       if (myBalloon != null && myBalloon.isVisible()) {
@@ -921,7 +964,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
 
     DumbAwareAction.create(e -> executeCommand())
-      .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER", "alt ENTER", "meta ENTER"), editor, balloon);
+                   .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER", "alt ENTER", "meta ENTER"), editor,
+                                              balloon);
 
     DumbAwareAction.create(e -> {
       //todo
@@ -974,6 +1018,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   public void setAdText(@NotNull final String s) {
     myAdComponent.setText(s);
+  }
+
+  @NotNull
+  public static Executor getExecutor() {
+    final Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
+    final Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+
+    return !ourShiftIsPressed.get() ? runExecutor : debugExecutor;
   }
 
   private class MyListRenderer extends ColoredListCellRenderer {
@@ -1374,10 +1426,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           myList.revalidate();
           myList.repaint();
 
-          if (!isPreserveSelection) {
-            myList.getSelectionModel().removeSelectionInterval(0, myListModel.getSize() - 1);
-          }
-
           myRenderer.recalculateWidth();
           if (myBalloon == null || myBalloon.isDisposed()) {
             return;
@@ -1409,7 +1457,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             content.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             content.setMinimumSize(new Dimension(myBalloon.getSize().width, 30));
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
-              .createComponentPopupBuilder(content, null);
+                                                                .createComponentPopupBuilder(content, null);
             myPopup = builder
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
@@ -1427,7 +1475,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                   balloon == null || balloon.isDisposed() || (!getField().getTextEditor().hasFocus() && !mySkipFocusGain);
                 if (canClose) {
                   PropertiesComponent.getInstance()
-                    .setValue("run.anything.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)), JBUI.scale(600));
+                                     .setValue("run.anything.max.popup.width", Math.max(content.getWidth(), JBUI.scale(600)),
+                                               JBUI.scale(600));
                 }
                 return canClose;
               })
@@ -1454,6 +1503,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                     }
                   }
                   myActionEvent = null;
+                  myLastInputText = null;
                 });
               }
             });
@@ -1554,6 +1604,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                     break;
                 }
               }
+
+              clearSelection();
               ScrollingUtil.selectItem(myList, index);
               myDone.setDone();
             }
