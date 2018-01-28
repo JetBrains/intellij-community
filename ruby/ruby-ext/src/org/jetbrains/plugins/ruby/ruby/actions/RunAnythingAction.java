@@ -366,11 +366,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private void clearSelection() {
-    if (myList.getModel().getSize() > 0) {
-      myList.getSelectionModel().removeSelectionInterval(0, myList.getModel().getSize() - 1);
-    }
+    myList.getSelectionModel().clearSelection();
   }
-
 
   @NotNull
   private ActionCallback onPopupFocusLost() {
@@ -1431,7 +1428,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             return;
           }
           if (myPopup == null || !myPopup.isVisible()) {
-            ScrollingUtil.installActions(myList, getField().getTextEditor());
+            installActions();
             JBScrollPane content = new JBScrollPane(myList) {
               {
                 if (UIUtil.isUnderDarcula()) {
@@ -1670,6 +1667,16 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       ApplicationManager.getApplication().executeOnPooledThread(this);
       return myDone;
     }
+  }
+
+  private void installActions() {
+    RunAnythingScrollingUtil.installActions(myList, getField().getTextEditor(), () -> {
+      myIsItemSelected = true;
+      getField().getTextEditor().setText(myLastInputText);
+      clearSelection();
+    });
+
+    ScrollingUtil.installActions(myList, getField().getTextEditor());
   }
 
   protected void resetFields() {
