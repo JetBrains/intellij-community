@@ -48,6 +48,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control UP",               "EditorScrollUp", "EditorLookupUp"},
     { "control SUBTRACT",         "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
+    { "control alt K",            "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
     { "control alt E",            "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
     { "control alt G",            "DatabaseView.SqlGenerator", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
