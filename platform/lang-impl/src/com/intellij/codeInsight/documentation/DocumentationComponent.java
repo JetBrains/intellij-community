@@ -14,9 +14,10 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -84,6 +85,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
@@ -780,14 +782,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private String decorate(String text) {
+    text = text.trim();
+    text = StringUtil.trimEnd(text, "</html>", true);
+    text = text.trim();
+    text = StringUtil.trimEnd(text, "</body>", true);
     boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
     if (!hasContent && !text.contains(DocumentationMarkup.DEFINITION_START)) {
       int bodyStart = findContentStart(text);
       if (bodyStart > 0) {
-        int bodyEnd = findContentEnd(text, bodyStart);
         text = text.substring(0, bodyStart) +
                DocumentationMarkup.CONTENT_START +
-               text.substring(bodyStart, bodyEnd > 0 ? bodyEnd : text.length()) +
+               text.substring(bodyStart) +
                DocumentationMarkup.CONTENT_END;
       } else {
         text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
@@ -798,19 +803,84 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (location != null) {
       text = text + getBottom(hasContent) + location + "</div>";
     }
-    if (hasExternalDoc() && myEffectiveExternalUrl == null) {
-      final PsiElement element = getElement();
-      String title = element != null ? myManager.getTitle(element) : "";
-      text = text + getBottom(location != null) + "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+    String links = getExternalText();
+    if (links != null) {
+      text = text + getBottom(location != null) + links;
     }
 
     text = addExternalLinksIcon(text);
     return text;
   }
 
-  private static int findContentEnd(String text, int bodyStart) {
-    int i = StringUtil.indexOfIgnoreCase(text, "</body>", bodyStart);
-    return i >= 0 ? i : StringUtil.indexOfIgnoreCase(text, "</html>", bodyStart);
+  @Nullable
+  private String getExternalText() {
+    final PsiElement element = getElement();
+    if (element == null) return null;
+
+    String title = myManager.getTitle(element);
+    final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+    if (myEffectiveExternalUrl == null) {
+      if (!isExternalHandler(provider)) {
+        final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+        List<String> urls = provider.getUrlFor(element, originalElement);
+        if (urls != null) {
+          boolean hasBadUrl = false;
+          StringBuilder result = new StringBuilder();
+          for (String url : urls) {
+            String link = getLink(title, url);
+            if (link == null) {
+              hasBadUrl = true;
+              break;
+            }
+
+            if (result.length() > 0) result.append("<p>");
+            result.append(link);
+          }
+          if (!hasBadUrl) return result.toString();
+        }
+        else {
+          return null;
+        }
+      }
+    } else {
+      String link = getLink(title, myEffectiveExternalUrl);
+      if (link != null) return link;
+    }
+
+    return "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+  }
+
+  private static String getLink(String title, String url) {
+    StringBuilder result = new StringBuilder();
+    String hostname = getHostname(url);
+    if (hostname == null) {
+      return null;
+    }
+
+    result.append("<a href='");
+    result.append(url);
+    result.append("'>");
+    result.append(title.substring(4)).append(" on ").append(hostname);
+    result.append("</a>");
+    return result.toString();
+  }
+
+  private static boolean isExternalHandler(DocumentationProvider provider) {
+    if (provider instanceof CompositeDocumentationProvider) {
+      for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
+        if (documentationProvider instanceof ExternalDocumentationHandler) return true;
+      }
+      return false;
+    }
+    return provider instanceof ExternalDocumentationHandler;
+  }
+
+  private static String getHostname(String url) {
+    try {
+      return new URL(url).toURI().getHost();
+    }
+    catch (URISyntaxException|MalformedURLException ignored) {}
+    return null;
   }
 
   private static int findContentStart(String text) {
@@ -1061,13 +1131,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       final PsiElement element = myElement.getElement();
       final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
       final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-      if (provider instanceof ExternalDocumentationProvider) {
-        enabled = element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement);
-      }
-      else {
-        final List<String> urls = provider.getUrlFor(element, originalElement);
-        enabled = element != null && urls != null && !urls.isEmpty();
-      }
+      enabled = element != null && CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement);
     }
     return enabled;
   }

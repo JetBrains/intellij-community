@@ -207,17 +207,9 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationProvider) {
-        if (((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement)) {
-          LOG.debug("hasDocumentationFor: ", provider);
-          return true;
-        }
-      }
-      else {
-        if (hasUrlsFor(provider, element, originalElement)) {
-          LOG.debug("handleExternal(hasUrlsFor): ", provider);
-          return true;
-        }
+      if (hasUrlsFor(provider, element, originalElement)) {
+        LOG.debug("handleExternal(hasUrlsFor): ", provider);
+        return true;
       }
     }
     return false;
