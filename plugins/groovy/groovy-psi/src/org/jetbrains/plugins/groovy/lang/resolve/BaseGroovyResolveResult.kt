@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiElement
@@ -11,27 +11,27 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 open class BaseGroovyResolveResult<out T : PsiElement>(
   element: T,
-  protected val myPlace: PsiElement?,
-  private val myResolveContext: PsiElement? = null,
-  protected val mySubstitutor: PsiSubstitutor = PsiSubstitutor.EMPTY
+  private val place: PsiElement?,
+  private val resolveContext: PsiElement? = null,
+  private val substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY
 ) : ElementGroovyResult<T>(element) {
 
   private val accessible by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    myElement !is PsiMember || myPlace == null || PsiUtil.isAccessible(myPlace, myElement)
+    element !is PsiMember || place == null || PsiUtil.isAccessible(place, element)
   }
 
   override fun isAccessible(): Boolean = accessible
 
   private val staticsOk by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    myResolveContext is GrImportStatement ||
-    myElement !is PsiModifierListOwner ||
-    myPlace == null ||
-    GrStaticChecker.isStaticsOK(myElement, myPlace, myResolveContext, false)
+    resolveContext is GrImportStatement ||
+    element !is PsiModifierListOwner ||
+    place == null ||
+    GrStaticChecker.isStaticsOK(element, place, resolveContext, false)
   }
 
   override fun isStaticsOK(): Boolean = staticsOk
 
-  override fun getCurrentFileResolveContext(): PsiElement? = myResolveContext
+  override fun getCurrentFileResolveContext(): PsiElement? = resolveContext
 
-  override fun getSubstitutor(): PsiSubstitutor = mySubstitutor
+  override fun getSubstitutor(): PsiSubstitutor = substitutor
 }
