@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -17,6 +18,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Pep484IncompatibleTypeException;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
@@ -192,11 +194,16 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final List<PyTargetExpression> targets = findSuitableTargetsUnderCaret(project, editor, file);
     assert targets.size() == 1;
     final PyTargetExpression annotationTarget = targets.get(0);
-    if (preferSyntacticAnnotation(annotationTarget)) {
-      insertVariableAnnotation(annotationTarget);
+    try {
+      if (preferSyntacticAnnotation(annotationTarget)) {
+        insertVariableAnnotation(annotationTarget);
+      }
+      else {
+        insertVariableTypeComment(annotationTarget);
+      }
     }
-    else {
-      insertVariableTypeComment(annotationTarget);
+    catch (Pep484IncompatibleTypeException e) {
+      HintManager.getInstance().showErrorHint(editor, e.getMessage());
     }
   }
 
@@ -207,6 +214,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   private static void insertVariableAnnotation(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final PyType inferredType = context.getType(target);
+    PyTypeHintGenerationUtil.checkPep484Compatibility(inferredType);
     final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
     final AnnotationInfo info = new AnnotationInfo(annotationText, inferredType);
     if (isInstanceAttribute(target, context)) {
@@ -277,6 +285,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     }
     else if (target instanceof PyTypedElement) {
       final PyType singleTargetType = context.getType((PyTypedElement)target);
+      PyTypeHintGenerationUtil.checkPep484Compatibility(singleTargetType);
       final String singleTargetAnnotation = PythonDocumentationProvider.getTypeName(singleTargetType, context);
       types.add(singleTargetType);
       typeRanges.add(TextRange.from(builder.length(), singleTargetAnnotation.length()));

@@ -215,6 +215,14 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationNotPossibleForStructuralType() {
+    doAnnotationTest();
+  }
+
+  public void testAnnotationNotPossibleForNestedStructuralType() {
+    doAnnotationTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
