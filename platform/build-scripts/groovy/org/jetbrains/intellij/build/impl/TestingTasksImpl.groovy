@@ -109,8 +109,8 @@ class TestingTasksImpl extends TestingTasks {
       options.testPatterns = junitClass
     }
 
-    def configPath = "$tempDir/config".toString()
-    def systemPath = "$tempDir/system".toString()
+    def configPath = "$context.paths.projectHome/out/tmp/config".toString()
+    def systemPath = "$context.paths.projectHome/out/tmp/system".toString()
 
     removeConfigAndSystemDirectories(configPath, systemPath)
 
