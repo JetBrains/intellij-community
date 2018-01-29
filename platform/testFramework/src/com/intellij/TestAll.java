@@ -16,6 +16,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.*;
+import org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.runner.Description;
@@ -406,7 +407,7 @@ public class TestAll implements Test {
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass)) {
         boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
-        if (runEverything) return new JUnit4TestAdapter(testCaseClass);
+        if (runEverything) return new JUnit4TestAdapter(testCaseClass, CustomJUnit4TestAdapterCache.getInstance());
 
         final RunWith runWithAnnotation = testCaseClass.getAnnotation(RunWith.class);
         if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
@@ -415,11 +416,11 @@ public class TestAll implements Test {
             return null;
           }
           else {
-            return new JUnit4TestAdapter(testCaseClass);
+            return new JUnit4TestAdapter(testCaseClass, CustomJUnit4TestAdapterCache.getInstance());
           }
         }
 
-        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
+        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass, CustomJUnit4TestAdapterCache.getInstance());
         try {
           adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
         }

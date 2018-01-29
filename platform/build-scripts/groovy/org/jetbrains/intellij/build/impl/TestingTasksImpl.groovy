@@ -323,6 +323,7 @@ class TestingTasksImpl extends TestingTasks {
           pathelement(location: context.getModuleTestsOutputPath(context.findRequiredModule("intellij.platform.buildScripts")))
         }
         formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
+        context.messages.info("Added JUnitLiveTestProgressFormatter formatter to JUnit task")
       }
 
       //if it is Windows OS, test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
@@ -382,6 +383,8 @@ class TestingTasksImpl extends TestingTasks {
 
   static boolean dependenciesInstalled
   private def setupTestingDependencies() {
+
+
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
       context.gradle.run('Setting up testing dependencies', 'setupKotlinPlugin')
