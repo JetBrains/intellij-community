@@ -411,7 +411,6 @@ class PyDBFrame:
     #     cdef bint has_breakpoint_in_frame;
     # ELSE
     def trace_dispatch(self, frame, event, arg):
-        print('in trace_dispatch ' + str(frame) + ' ' + str(event) + ' ' + str(arg))
     # ENDIF
 
         main_debugger, filename, info, thread, frame_skips_cache, frame_cache_key = self._args

@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
@@ -51,7 +52,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
   private JBCheckBox myMixedDebugCheckbox;
-  private RawCommandLineEditor myDebuggableNativeLibsTextField;
+  private RawCommandLineEditor myDebuggableNativeLibsEditor;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
@@ -98,6 +99,13 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     });
 
     setAnchor(myCommonOptionsForm.getAnchor());
+
+    if (!Registry.is("python.debugger.crossdebug")) {
+      myMixedDebugCheckbox.setSelected(false);
+      myMixedDebugCheckbox.setEnabled(false);
+      myMixedDebugCheckbox.setVisible(false);
+      myDebuggableNativeLibsEditor.setVisible(false);
+    }
   }
 
   private void updateShowCommandLineEnabled() {
@@ -170,12 +178,12 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
   @Override
   public String getDebuggableExternalLibs() {
-    return myDebuggableNativeLibsTextField.getText();
+    return myDebuggableNativeLibsEditor.getText();
   }
 
   @Override
   public void setDebuggableExternalLibs(String debuggableExternalLibs) {
-    myDebuggableNativeLibsTextField.setText(debuggableExternalLibs);
+    myDebuggableNativeLibsEditor.setText(debuggableExternalLibs);
   }
 
   @Override
