@@ -280,6 +280,8 @@ public class JBLabel extends JLabel implements AnchorableComponent {
   }
 
   private void updateStyle(@NotNull  JEditorPane pane) {
+    myEditorPane.setFont(getFont());
+    myEditorPane.setForeground(getForeground());
     EditorKit kit = pane.getEditorKit();
     if (kit instanceof HTMLEditorKit) {
       StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
