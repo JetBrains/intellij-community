@@ -5,6 +5,8 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +58,21 @@ public class FoldingUtil {
   static boolean caretInsideRange(final Editor editor, final TextRange range) {
     final int offset = editor.getCaretModel().getOffset();
     return range.contains(offset) && range.getStartOffset() != offset;
+  }
+
+  public static boolean isHighlighterFolded(@NotNull Editor editor, @NotNull RangeHighlighter highlighter) {
+    int startOffset = highlighter instanceof RangeHighlighterEx ?
+                      ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset() :
+                      highlighter.getStartOffset();
+    int endOffset = highlighter instanceof RangeHighlighterEx ?
+                    ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() :
+                    highlighter.getEndOffset();
+    return isTextRangeFolded(editor, new TextRange(startOffset, endOffset));
+  }
+
+  public static boolean isTextRangeFolded(@NotNull Editor editor, @NotNull TextRange range) {
+    FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(range.getStartOffset());
+    return foldRegion != null && range.getEndOffset() <= foldRegion.getEndOffset();
   }
 
   /**

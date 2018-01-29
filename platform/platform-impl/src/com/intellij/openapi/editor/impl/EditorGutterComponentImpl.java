@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.NonHideableIconGutterMark;
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
@@ -829,14 +830,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private boolean isHighlighterVisible(RangeHighlighter highlighter) {
-    int startOffset = highlighter instanceof RangeHighlighterEx ?
-                      ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset() :
-                      highlighter.getStartOffset();
-    int endOffset = highlighter instanceof RangeHighlighterEx ?
-                    ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset() :
-                    highlighter.getEndOffset();
-    FoldRegion foldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(startOffset);
-    return foldRegion == null || foldRegion.getEndOffset() < endOffset;
+    return !FoldingUtil.isHighlighterFolded(myEditor, highlighter);
   }
 
   private void paintGutterRenderers(final Graphics2D g, int firstVisibleOffset, int lastVisibleOffset) {
