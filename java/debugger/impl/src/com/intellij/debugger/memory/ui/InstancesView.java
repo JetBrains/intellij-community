@@ -196,8 +196,11 @@ class InstancesView extends InstancesViewBase {
 
         if (evaluationContext != null) {
           synchronized (myFilteringTaskLock) {
-            myFilteringTask = new MyFilteringWorker(instances, myFilterConditionEditor.getExpression(), evaluationContext);
-            myFilteringTask.execute();
+            List<ObjectReference> finalInstances = instances;
+            ApplicationManager.getApplication().runReadAction(() -> {
+              myFilteringTask = new MyFilteringWorker(finalInstances, myFilterConditionEditor.getExpression(), evaluationContext);
+              myFilteringTask.execute();
+            });
           }
         }
       }
