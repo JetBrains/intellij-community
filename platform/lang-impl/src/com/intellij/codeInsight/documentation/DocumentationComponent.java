@@ -56,6 +56,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -147,7 +148,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   };
   private Runnable myToolwindowCallback;
-
+  private final ActionButton myCorner;
 
   public AnAction[] getActions() {
     return myToolBar.getActions().stream().filter((action -> !(action instanceof Separator))).toArray(AnAction[]::new);
@@ -158,7 +159,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public void removeCornerMenu() {
-    myScrollPane.resetCorners();
+    myCorner.setVisible(false);
   }
 
   public void setToolwindowCallback(Runnable callback) {
@@ -389,7 +390,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     setLayout(new BorderLayout());
 
     mySettingsPanel = createSettingsPanel();
-    add(myScrollPane, BorderLayout.CENTER);
+    //add(myScrollPane, BorderLayout.CENTER);
     setOpaque(true);
     myScrollPane.setBorder(JBUI.Borders.empty());
 
@@ -440,6 +441,47 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     new ActivateLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), this);
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true);
+
+    JLayeredPane layeredPane = new JBLayeredPane() {
+      @Override
+      public void doLayout() {
+        final Rectangle r = getBounds();
+        for (Component component : getComponents()) {
+          if (component instanceof JScrollPane) {
+            component.setBounds(0, 0, r.width, r.height);
+          }
+          else {
+            int insets = 3;
+            Dimension d = component.getPreferredSize();
+            component.setBounds(r.width - d.width - insets, r.height - d.height - insets, d.width, d.height);
+          }
+        }
+      }
+    };
+    layeredPane.add(myScrollPane);
+    layeredPane.setLayer(myScrollPane, 0);
+
+    final DefaultActionGroup gearActions = new MyGearActionGroup();
+    gearActions.add(new ShowAsToolwindowAction());
+    gearActions.add(new MyShowSettingsAction());
+    gearActions.add(new ShowToolbarAction());
+    gearActions.addSeparator();
+    gearActions.addAll(actions);
+    Presentation presentation = new Presentation();
+    presentation.setIcon(AllIcons.General.GearPlain);
+    myCorner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(22, 22)) {
+      @Override
+      public void paintComponent(Graphics g) {
+        g.setColor(myEditorPane.getBackground());
+        g.fillRect(0, 0, getSize().width, getSize().height);
+        paintButtonLook(g);
+      }
+    };
+    myCorner.setOpaque(true);
+    myCorner.setNoIconsInPopup(true);
+    layeredPane.add(myCorner);
+    layeredPane.setLayer(myCorner, JLayeredPane.POPUP_LAYER);
+    add(layeredPane, BorderLayout.CENTER);
 
     myControlPanel = new JPanel(new BorderLayout(5, 5));
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
@@ -988,25 +1030,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myControlPanelVisible = false;
       remove(myControlPanel);
       if (myHint == null) return;
-      final DefaultActionGroup gearActions = new MyGearActionGroup();
-      gearActions.add(new ShowAsToolwindowAction());
-      gearActions.add(new MyShowSettingsAction());
-      gearActions.add(new ShowToolbarAction());
-      gearActions.addSeparator();
-      gearActions.addAll(getActions());
-      Presentation presentation = new Presentation();
-      presentation.setIcon(AllIcons.General.GearPlain);
-      ActionButton corner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(22, 22)) {
-        @Override
-        public void paintComponent(Graphics g) {
-          g.setColor(getBackground());
-          g.fillRect(0, 0, getSize().width, getSize().height);
-          paintButtonLook(g);
-        }
-      };
-      corner.setOpaque(true);
-      corner.setNoIconsInPopup(true);
-      myScrollPane.setCorner(ScrollPaneConstants.LOWER_RIGHT_CORNER, corner);
+      myCorner.setVisible(true);
     }
   }
 
@@ -1437,38 +1461,23 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class MyScrollPane extends JBScrollPane {
     public MyScrollPane() {
-      super(myEditorPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_ALWAYS);
+      super(myEditorPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
       setLayout(new Layout() {
         @Override
         public void layoutContainer(Container parent) {
           super.layoutContainer(parent);
-          if (!(lowerRight instanceof ActionButton)) return;
+          if (!myCorner.isVisible()) return;
           if (vsb != null) {
             Rectangle bounds = vsb.getBounds();
-            vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - lowerRight.getPreferredSize().height - 3);
+            vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - myCorner.getPreferredSize().height - 3);
           }
           if (hsb != null) {
             Rectangle bounds = hsb.getBounds();
             int vsbOffset = vsb != null ? vsb.getBounds().width : 0;
-            hsb.setBounds(bounds.x, bounds.y, bounds.width - lowerRight.getPreferredSize().width - 3 + vsbOffset, bounds.height);
+            hsb.setBounds(bounds.x, bounds.y, bounds.width - myCorner.getPreferredSize().width - 3 + vsbOffset, bounds.height);
           }
-          Rectangle bounds = lowerRight.getBounds();
-          lowerRight.setBounds(bounds.x - lowerRight.getPreferredSize().width - 3,
-                               bounds.y - lowerRight.getPreferredSize().height - 3,
-                               lowerRight.getPreferredSize().width,
-                               lowerRight.getPreferredSize().height);
         }
       });
-    }
-
-    public void resetCorners() {
-      setupCorners();
-    }
-
-    @Override
-    protected void setupCorners() {
-      super.setupCorners();
-      setBorder(JBUI.Borders.empty());
     }
 
     @Override
