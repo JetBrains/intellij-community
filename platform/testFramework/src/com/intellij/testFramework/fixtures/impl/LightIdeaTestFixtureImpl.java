@@ -16,7 +16,6 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -87,7 +86,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyle.getSettings(getProject());
+    return CodeStyleSettingsManager.getSettings(getProject());
   }
 
   @Override

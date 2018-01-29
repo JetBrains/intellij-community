@@ -187,28 +187,4 @@ public class CodeStyle {
     return getIndentOptions(file).INDENT_SIZE;
   }
 
-  /**
-   * Set temporary settings for the project. Temporary settings will override any user settings until {@link #dropTemporarySettings(Project)}
-   * is called.
-   *
-   * @param project The project.
-   * @param settings The settings to use temporarily with the project.
-   */
-  public static void setTemporarySettings(@NotNull Project project, @NotNull CodeStyleSettings settings) {
-    //noinspection deprecation
-    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
-  }
-
-
-  /**
-   * Drop temporary settings.
-   *
-   * @param project The project to drop temporary settings for.
-   * @see #setTemporarySettings(Project, CodeStyleSettings)
-   */
-  public static void dropTemporarySettings(@NotNull Project project) {
-    //noinspection deprecation
-    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-  }
-
 }
