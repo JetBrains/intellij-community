@@ -44,7 +44,6 @@ class PropertyProcessor(
       resolveContext = state[ClassHint.RESOLVE_CONTEXT],
       partialSubstitutor = state[PsiSubstitutor.KEY],
       substitutorComputer = substitutorComputer,
-      propertyKind = propertyKind,
       argumentTypes = argumentTypes,
       spreadState = state[SpreadState.SPREAD_STATE]
     )

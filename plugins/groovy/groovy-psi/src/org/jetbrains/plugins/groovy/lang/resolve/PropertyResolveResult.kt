@@ -15,7 +15,6 @@ class PropertyResolveResult(
   resolveContext: PsiElement?,
   partialSubstitutor: PsiSubstitutor,
   substitutorComputer: SubstitutorComputer,
-  propertyKind: PropertyKind,
   argumentTypes: Array<PsiType?>?,
   private val spreadState: SpreadState?
 ) : BaseGroovyResolveResult<PsiMethod>(element, place, resolveContext) {
@@ -27,7 +26,7 @@ class PropertyResolveResult(
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
   private val applicability by lazy {
-    propertyKind != PropertyKind.SETTER || isApplicable(argumentTypes, element, substitutor, place, true)
+    isApplicable(argumentTypes, element, substitutor, place, true)
   }
 
   override fun isApplicable(): Boolean = applicability
