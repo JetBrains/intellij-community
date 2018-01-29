@@ -16,9 +16,11 @@ import java.util.Objects;
 
 public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   @NotNull private final AnAction myAction;
+  @NotNull private final String myText;
 
-  public RunAnythingActionItem(@NotNull AnAction action) {
+  public RunAnythingActionItem(@NotNull AnAction action, @NotNull String text) {
     myAction = action;
+    myText = text;
   }
 
   @Override
@@ -33,7 +35,7 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   @NotNull
   @Override
   public String getText() {
-    return ObjectUtils.notNull(myAction.getTemplatePresentation().getText(), "Undefined action");
+    return myText;
   }
 
   @NotNull
@@ -51,7 +53,7 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
   @NotNull
   @Override
   public Component getComponent(boolean isSelected) {
-    return RunAnythingUtil.getActionCellRendererComponent(myAction, isSelected);
+    return RunAnythingUtil.getActionCellRendererComponent(myAction, isSelected, myText);
   }
 
   @Override
@@ -59,12 +61,12 @@ public class RunAnythingActionItem extends RunAnythingItem<AnAction> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     RunAnythingActionItem item = (RunAnythingActionItem)o;
-    return Objects.equals(myAction, item.myAction);
+    return Objects.equals(myAction, item.myAction) &&
+           Objects.equals(myText, item.myText);
   }
 
   @Override
   public int hashCode() {
-
-    return Objects.hash(myAction);
+    return Objects.hash(myAction, myText);
   }
 }

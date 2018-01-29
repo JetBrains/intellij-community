@@ -210,7 +210,7 @@ public class RunAnythingUtil {
     return new JLabel(layeredIcon);
   }
 
-  static Component getActionCellRendererComponent(AnAction value, boolean isSelected) {
+  static Component getActionCellRendererComponent(@NotNull AnAction value, boolean isSelected, @NotNull String text) {
     boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
     //boolean showIcon = true;
     JPanel panel = new JPanel(new BorderLayout());
@@ -241,7 +241,7 @@ public class RunAnythingUtil {
       Icon icon = presentation.getIcon();
       panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
     }
-    appendWithColoredMatches(nameComponent, StringUtil.notNullize(presentation.getText()), "", fg, isSelected);
+    appendWithColoredMatches(nameComponent, StringUtil.notNullize(text), "", fg, isSelected);
     panel.setToolTipText(presentation.getDescription());
 
     Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(value)).getShortcuts();

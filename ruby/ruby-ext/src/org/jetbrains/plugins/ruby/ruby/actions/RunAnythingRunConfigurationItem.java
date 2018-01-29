@@ -72,7 +72,6 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
 
   @Override
   public int hashCode() {
-
     return Objects.hash(myWrapper);
   }
 }

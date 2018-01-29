@@ -66,6 +66,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -131,7 +133,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(RubyIcons.RunAnything.Run_anything, 16, 16);
-  private AnAction[] myRakeActions = AnAction.EMPTY_ARRAY;
+  private RakeAction[] myRakeActions = new RakeAction[0];
   private AnAction[] myGeneratorsActions = AnAction.EMPTY_ARRAY;
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
@@ -838,7 +840,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                               .filter(RakeAction.class::isInstance)
                               .map(RakeAction.class::cast)
                               .peek(rakeAction -> rakeAction.updateAction(myDataContext, rakeAction.getTemplatePresentation()))
-                              .toArray(AnAction[]::new);
+                              .toArray(RakeAction[]::new);
       }
 
       myGeneratorsActions = GeneratorsActionGroup.collectGeneratorsActions(myModule, false).toArray(AnAction.EMPTY_ARRAY);
@@ -1197,16 +1199,27 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private SearchResult getActions(final String pattern, final int max, AnAction[] actions, String prefix) {
+      return getActions(pattern, max, actions, prefix, null);
+    }
+
+    private <T extends AnAction> SearchResult getActions(@NotNull String pattern,
+                                                         int max,
+                                                         @NotNull T[] actions,
+                                                         @NotNull String prefix,
+                                                         @Nullable NotNullFunction<T, String> getActionText) {
       final SearchResult result = new SearchResult();
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
 
-      for (AnAction action : actions) {
-        if (!myListModel.contains(action) && matcher.matches(prefix + " " + RunAnythingUtil.getPresentationText(action))) {
+      for (T action : actions) {
+        RunAnythingActionItem actionItem = new RunAnythingActionItem(action, getActionText == null ? ObjectUtils
+          .notNull(action.getTemplatePresentation().getText(), "Undefined action") : getActionText.fun(action));
+
+        if (!myListModel.contains(actionItem) && matcher.matches(prefix + " " + RunAnythingUtil.getPresentationText(action))) {
           if (result.size() == max) {
             result.needMore = true;
             break;
           }
-          result.add(new RunAnythingActionItem(action));
+          result.add(actionItem);
         }
         check();
       }
@@ -1294,12 +1307,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
         if (!filter.test(wrapper)) continue;
 
-        if (matcher.matches(wrapper.getText()) && !myListModel.contains(wrapper)) {
+        RunAnythingRunConfigurationItem runConfigurationItem = new RunAnythingRunConfigurationItem(wrapper);
+        if (matcher.matches(wrapper.getText()) && !myListModel.contains(runConfigurationItem)) {
           if (configurations.size() == max) {
             configurations.needMore = true;
             break;
           }
-          configurations.add(new RunAnythingRunConfigurationItem(wrapper));
+          configurations.add(runConfigurationItem);
         }
         check();
       }
@@ -1582,7 +1596,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     private SearchResult getRakeTasks(String pattern, int count) {
       if (!Registry.is("run.anything.rake.tasks")) return new SearchResult();
 
-      return getActions(pattern, count, myRakeActions, "rake");
+      return getActions(pattern, count, myRakeActions, "rake", action -> action.getTaskFullCmd());
     }
 
     private SearchResult getGenerators(String pattern, int count) {
