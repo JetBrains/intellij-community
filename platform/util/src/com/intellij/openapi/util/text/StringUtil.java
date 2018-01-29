@@ -21,6 +21,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
+import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -49,6 +50,16 @@ public class StringUtil extends StringUtilRt {
   @NonNls private static final Pattern EOL_SPLIT_PATTERN = Pattern.compile(" *(\r|\n|\r\n)+ *");
   @NonNls private static final Pattern EOL_SPLIT_PATTERN_WITH_EMPTY = Pattern.compile(" *(\r|\n|\r\n) *");
   @NonNls private static final Pattern EOL_SPLIT_DONT_TRIM_PATTERN = Pattern.compile("(\r|\n|\r\n)+");
+
+  @NotNull
+  public static MergingCharSequence replaceSubSequence(@NotNull CharSequence charSeq,
+                                                       int start,
+                                                       int end,
+                                                       @NotNull CharSequence replacement) {
+    return new MergingCharSequence(
+          new MergingCharSequence(charSeq.subSequence(0, start), replacement),
+          charSeq.subSequence(end, charSeq.length()));
+  }
 
   private static class MyHtml2Text extends HTMLEditorKit.ParserCallback {
     @NotNull private final StringBuilder myBuffer = new StringBuilder();
