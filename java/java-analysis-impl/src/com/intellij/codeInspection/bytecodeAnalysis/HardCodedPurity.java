@@ -39,6 +39,8 @@ class HardCodedPurity {
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
     new Member("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
+    // Cycle in AbstractStringBuilder ctor and this method disallows to infer the purity
+    new Member("java/lang/StringUTF16", "newBytesFor", "(I)[B"),
     // Declared in final class StringBuilder
     new Member("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
     new Member("java/lang/StringBuffer", "toString", "()Ljava/lang/String;"),
