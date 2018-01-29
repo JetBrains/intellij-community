@@ -73,21 +73,16 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
       }
       else {
         command = getRubyAwareCommand(sdk, env);
-        if (SystemInfoRt.isWindows) {
-          command = ExecUtil.getWindowsShellName() + " /c " + command;
-        }
       }
     }
 
-    List<String> args = ParametersListUtil.parse(command, false, true);
-    String exePath = ContainerUtil.getFirstItem(args);
-    List<String> parameters = ContainerUtil.newArrayList(args);
-    parameters.remove(0);
-
-    commandLine.withExePath(Objects.requireNonNull(exePath))
-               .withParameters(parameters)
-               .withEnvironment(env)
-               .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(myProject, workDirectory));
+    List<String> shellCommand = getShellCommand();
+    commandLine
+      .withExePath(shellCommand.size() > 0 ? shellCommand.get(0) : ParametersListUtil.parse(command).get(0))
+      .withParameters(shellCommand.size() == 2 ? ContainerUtil.immutableSingletonList(shellCommand.get(1)) : ContainerUtil.emptyList())
+      .withParameters(command)
+      .withEnvironment(env)
+      .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(myProject, workDirectory));
 
     runInConsole(commandLine);
   }
@@ -123,6 +118,14 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
     catch (ExecutionException e) {
       Messages.showInfoMessage(myProject, e.getMessage(), RBundle.message("run.anything.console.error.title"));
     }
+  }
+
+  @NotNull
+  private static List<String> getShellCommand() {
+    if (SystemInfoRt.isWindows) return ContainerUtil.immutableList(ExecUtil.getWindowsShellName(), "/c");
+
+    String shell = System.getenv("SHELL");
+    return shell == null || !new File(shell).canExecute() ? ContainerUtil.emptyList() : ContainerUtil.immutableList(shell, "-c");
   }
 
   private String getRubyAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env) {
