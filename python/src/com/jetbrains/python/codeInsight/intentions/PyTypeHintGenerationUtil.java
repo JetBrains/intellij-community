@@ -128,10 +128,10 @@ public class PyTypeHintGenerationUtil {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)target.getParent();
       final SmartPsiElementPointer<PyAssignmentStatement> pointer = manager.createSmartPsiElementPointer(assignment);
       addOrUpdateAnnotatedStatement = () -> {
-        return PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
           document.insertString(target.getTextRange().getEndOffset(), ": " + info.getAnnotationText());
-          return pointer.getElement();
         });
+        return pointer.getElement();
       };
     }
     else {

@@ -223,6 +223,10 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationCallableType() {
+    doAnnotationTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
