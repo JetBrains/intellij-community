@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -45,6 +46,7 @@ public interface Content extends UserDataHolder, ComponentContainer {
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
   Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
+  Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");
 
   String PROP_ALERT = "alerting";
 

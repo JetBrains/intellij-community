@@ -115,6 +115,10 @@ public class BaseLabel extends JLabel {
 
       final boolean show = Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON));
       if (show) {
+        ComponentOrientation componentOrientation = content.getUserData(Content.TAB_LABEL_ORIENTATION_KEY);
+        if(componentOrientation != null) {
+          setComponentOrientation(componentOrientation);
+        }
         if (isSelected) {
           setIcon(content.getIcon());
         }
