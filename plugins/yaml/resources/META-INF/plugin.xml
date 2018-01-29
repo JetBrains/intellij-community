@@ -15,7 +15,7 @@
     <lang.braceMatcher language="yaml" implementationClass="org.jetbrains.yaml.YAMLPairedBraceMatcher"/>
     <lang.findUsagesProvider language="yaml" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
     <lang.foldingBuilder language="yaml" implementationClass="org.jetbrains.yaml.folding.YAMLFoldingBuilder"/>
-    <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader"/>
+    <fileTypeFactory implementation="org.jetbrains.yaml.YAMLFileTypeLoader" id="yamlFileTypeLoader"/>
     <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>

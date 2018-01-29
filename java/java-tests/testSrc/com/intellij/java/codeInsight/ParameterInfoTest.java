@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
 import com.intellij.JavaTestUtil;
@@ -19,14 +19,13 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext;
 import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext;
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
+public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/parameterInfo/";
@@ -361,27 +360,22 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
-  public void _testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-
-    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
-    PsiExpressionList argList = handler.findElementForParameterInfo(context);
-    assertNotNull(argList);
-    Object[] items = context.getItemsToShow();
-    assertSize(2, items);
-
-    MockUpdateParameterInfoContext updateContext = updateParameterInfo(handler, argList, items);
-    assertTrue(updateContext.isUIComponentEnabled(0));
-    assertTrue(updateContext.isUIComponentEnabled(1));
-    assertEquals(0, updateContext.getCurrentParameter());
-
-    myFixture.type("1, ");
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    handler.updateParameterInfo(argList, updateContext);
-    assertFalse(updateContext.isUIComponentEnabled(0));
-    assertTrue(updateContext.isUIComponentEnabled(1));
-    assertEquals(1, updateContext.getCurrentParameter());
+  public void testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() throws Exception {
+    configureJava("class A {\n" +
+                  "    void foo() {}\n" +
+                  "    void foo(int a, int b, int c) {}\n" +
+                  "    {\n" +
+                  "        foo(<caret>)\n" +
+                  "    }\n" +
+                  "}");
+    showParameterInfo();
+    checkHintContents("[<html>&lt;no parameters&gt;</html>]\n" +
+                      "-\n" +
+                      "<html><b>int a</b>, int b, int c</html>");
+    type("1, ");
+    waitForAllAsyncStuff();
+    checkHintContents("[<html><font color=gray>&lt;no parameters&gt;</font color=gray></html>]\n" +
+                      "-\n" +
+                      "<html>int a, <b>int b</b>, int c</html>");
   }
-
 }

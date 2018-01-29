@@ -39,14 +39,12 @@ import java.util.List;
  * User : catherine
  */
 public class DocutilsConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-  private PsiFile mySourceFile = null;
-
   public DocutilsConfigurationProducer() {
     super(RestRunConfigurationType.getInstance().DOCUTILS_FACTORY);
   }
 
   public PsiElement getSourceElement() {
-    return mySourceFile;
+    return restoreSourceElement();
   }
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
@@ -55,12 +53,12 @@ public class DocutilsConfigurationProducer extends RuntimeConfigurationProducer 
       return null;
     }
     Module module = ModuleUtil.findModuleForPsiElement(script);
-    mySourceFile = script;
+    storeSourceElement(script);
 
-    final Project project = mySourceFile.getProject();
+    final Project project = script.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     DocutilsRunConfiguration configuration = (DocutilsRunConfiguration) settings.getConfiguration();
-    final VirtualFile vFile = mySourceFile.getVirtualFile();
+    final VirtualFile vFile = script.getVirtualFile();
     if (vFile == null) return null;
     configuration.setInputFile(vFile.getPath());
     configuration.setName(script.getName());

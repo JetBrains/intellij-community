@@ -343,11 +343,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       context.setHighlightedParameter(completeMatch);
     }
 
-    Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
-    if (highlightedCandidate != null) {
-      PsiMethod method = (PsiMethod)(highlightedCandidate instanceof CandidateInfo 
-                                     ? ((CandidateInfo)highlightedCandidate).getElement() : highlightedCandidate);
-      if (!method.isVarArgs() && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
+    if (context.isSingleParameterInfo()) {
+      Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
+      if (highlightedCandidate != null) {
+        PsiMethod method = (PsiMethod)(highlightedCandidate instanceof CandidateInfo 
+                                       ? ((CandidateInfo)highlightedCandidate).getElement() : highlightedCandidate);
+        if (!method.isVarArgs() && index >= method.getParameterList().getParametersCount()) context.setCurrentParameter(-1);
+      }
     }
   }
 

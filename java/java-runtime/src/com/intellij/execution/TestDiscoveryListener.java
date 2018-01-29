@@ -42,7 +42,7 @@ public abstract class TestDiscoveryListener {
   }
 
   protected Object getData() throws Exception {
-    return Class.forName("com.intellij.rt.coverage.data.ProjectData")
+    return Class.forName("com.intellij.rt.coverage.data.TestDiscoveryProjectData")
         .getMethod("getProjectData", new Class[0])
         .invoke(null, new Object[0]);
   }

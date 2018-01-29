@@ -62,7 +62,6 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -701,33 +700,40 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private void showHint() {
     LookupEx lookup = LookupManager.getActiveLookup(myManager.getEditor());
+    int maxWidth = JBUI.scale(lookup != null ? 435 : 650);
+    boolean lookupActive = lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing();
     if (myHint != null && myHint.getDimensionServiceKey() == null) {
       Dimension preferredSize = myEditorPane.getPreferredSize();
       int width = definitionPreferredWidth();
       width = width < 0 ? preferredSize.width : width;
       myResizing = true;
-      int maxWidth = JBUI.scale(lookup != null ? 435 : 650);
       int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-      myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(JBUI.scale(300), width)),
-                                   Math.min(JBUI.scale(500), Math.max(JBUI.scale(59), height))));
+      Dimension hintSize = new Dimension(Math.min(maxWidth, Math.max(JBUI.scale(300), width)),
+                                         Math.min(JBUI.scale(500), Math.max(JBUI.scale(59), height)));
+      if (lookupActive && myHint.getLocationOnScreen().x < lookup.getComponent().getLocationOnScreen().x) {
+        myHint.setLocation(new RelativePoint(lookup.getComponent(), new Point(-hintSize.width - 5, 0)));
+      }
+      myHint.setSize(hintSize);
     }
 
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
       myResizing = true;
       Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
       DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-      if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
-        // always position documentation to the right
+      if (lookupActive) {
         Component lookupComponent = lookup.getComponent();
         Point lookupPosition = lookupComponent.getLocationOnScreen();
         Rectangle screenRectangle = ScreenUtil.getScreenRectangle(lookupComponent);
         int lookupWidthAndGap = lookupComponent.getWidth() + 5;
         int x = lookupPosition.x + lookupWidthAndGap;
-        Dimension hintSize = myHint.getSize() != null ? myHint.getSize() : new JBDimension(300, 59);
-        if (x + hintSize.width > screenRectangle.width) {
-          myHint.setSize(new Dimension(screenRectangle.width - x, hintSize.height));
+        Dimension hintSize = myHint.getSize();
+        RelativePoint point;
+        if (x + Math.max(hintSize.width, maxWidth) > screenRectangle.width) {
+          point = new RelativePoint(lookupComponent, new Point(-hintSize.width - 5, 0));
+        } else {
+          point = new RelativePoint(lookupComponent, new Point(lookupWidthAndGap, 0));
         }
-        myHint.show(new RelativePoint(lookupComponent, new Point(lookupWidthAndGap, 0)));
+        myHint.show(point);
         lookup.addLookupListener(new LookupAdapter() {
           @Override
           public void lookupCanceled(LookupEvent event) {
