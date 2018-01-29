@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -317,6 +318,38 @@ public class PyTypeHintGenerationUtil {
     }
     if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
       names.add("Type");
+    }
+  }
+
+  public static void checkPep484Compatibility(@Nullable PyType type) {
+    if (type == null ||
+        type instanceof PyNoneType ||
+        type instanceof PyCallableTypeImpl ||
+        type instanceof PyGenericType ||
+        type instanceof PyFunctionType) {
+      return;
+    }
+    else if (type instanceof PyUnionType) {
+      for (PyType memberType : ((PyUnionType)type).getMembers()) {
+        checkPep484Compatibility(memberType);
+      }
+    }
+    else if (type instanceof PyCollectionType) {
+      for (PyType typeParam : ((PyCollectionType)type).getElementTypes()) {
+        checkPep484Compatibility(typeParam);
+      }
+    }
+    else if (type instanceof PyClassType) {
+      // In this order since PyCollectionTypeImpl implements PyClassType
+    }
+    else {
+      throw new Pep484IncompatibleTypeException(PyBundle.message("INTN.annotate.variable.type.PEP484.incompatible.type", type.getName()));
+    }
+  }
+
+  public static final class Pep484IncompatibleTypeException extends RuntimeException {
+    public Pep484IncompatibleTypeException(String message) {
+      super(message);
     }
   }
 
