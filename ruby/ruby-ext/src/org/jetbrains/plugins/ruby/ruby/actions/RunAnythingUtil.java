@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.RunnerRegistry;
+import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.OptionDescription;
@@ -36,6 +34,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -348,13 +347,29 @@ public class RunAnythingUtil {
 
     RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
-      new TemporaryConfigurationRunAnythingItem(project, pattern, provider.createConfiguration(project, pattern, workDirectory))
-        .run(RunAnythingAction.getExecutor(), workDirectory);
+      runMatchedConfiguration(RunAnythingAction.getExecutor(), workDirectory, project,
+                              provider.createConfiguration(project, pattern, workDirectory));
       return;
     }
 
-    RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, StringUtil.trim(pattern));
-    undefinedRunAnythingItem.run(RunAnythingAction.getExecutor(), workDirectory);
+    RunAnythingUndefinedItem.runCommand(workDirectory, project, StringUtil.trim(pattern), module, RunAnythingAction.getExecutor());
+  }
+
+
+  private static void runMatchedConfiguration(@NotNull Executor executor,
+                                              @Nullable VirtualFile workDirectory,
+                                              @NotNull Project project,
+                                              @NotNull RunnerAndConfigurationSettings settings) {
+    RunManagerEx.getInstanceEx(project).setTemporaryConfiguration(settings);
+    RunManager.getInstance(project).setSelectedConfiguration(settings);
+    RunConfiguration configuration = settings.getConfiguration();
+
+    if (configuration instanceof AbstractRubyRunConfiguration) {
+      ((AbstractRubyRunConfiguration)configuration)
+        .setWorkingDirectory(RunAnythingItem.getActualWorkDirectory(project, workDirectory));
+    }
+
+    ExecutionUtil.runConfiguration(settings, executor);
   }
 
   public static void performRunAnythingAction(@NotNull Object element,

@@ -66,7 +66,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -112,7 +111,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final String RUN_ANYTHING_HISTORY_KEY = "RunAnythingHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final String UNKNOWN_CONFIGURATION = "UNKNOWN_CONFIGURATION";
-  public static final String RUN_ICON_TEXT = "RUN_ICON_TEXT";
   public static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
   public static final AtomicBoolean ourAltIsPressed = new AtomicBoolean(false);
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
@@ -318,9 +316,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       protected void textChanged(DocumentEvent e) {
         final String pattern = editor.getText();
         if (editor.hasFocus()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myIsItemSelected = false;
-          });
+          ApplicationManager.getApplication().invokeLater(() -> myIsItemSelected = false);
 
           if (!myIsItemSelected) {
             myLastInputText = null;
@@ -465,35 +461,21 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     Runnable onDone = null;
     AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      if (isActionValue(value) || isRunConfigurationItem(value)) {
+      if (value instanceof RunAnythingActionItem || value instanceof RunAnythingRunConfigurationItem) {
         focusManager.requestDefaultFocus(true);
         final Component comp = myContextComponent;
         final AnActionEvent event = myActionEvent;
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           Component c = comp;
-          if (c == null) {
-            c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-          }
+          if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-          if (isRunConfigurationItem(value)) {
-            ChooseRunConfigurationPopup.ItemWrapper itemWrapper = (ChooseRunConfigurationPopup.ItemWrapper)value;
-            RunnerAndConfigurationSettings settings = ObjectUtils.tryCast(itemWrapper.getValue(), RunnerAndConfigurationSettings.class);
-            if (settings != null) {
-              Executor executor = RunAnythingUtil.findExecutor(settings);
-              if (executor != null) {
-                itemWrapper.perform(project, executor, DataManager.getInstance().getDataContext(c));
-              }
-            }
-          }
-          else {
-            RunAnythingUtil.performRunAnythingAction(value, project, c, event);
-          }
+          ((RunAnythingItem)value).run(getExecutor(), null, c, project, event);
         });
         return;
       }
       VirtualFile directory = getWorkDirectory(module);
       if (value instanceof RunAnythingUndefinedItem) {
-        onDone = () -> ((RunAnythingUndefinedItem)value).run(getExecutor(), directory);
+        onDone = () -> ((RunAnythingUndefinedItem)value).run(getExecutor(), directory, null, project, null);
       }
       else if (value == null) {
         onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(project, pattern, module, directory);
@@ -753,18 +735,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           return;
         }
 
-        if (selectedValue instanceof RunAnythingItem) {
-          myTextField.setText(((RunAnythingItem)selectedValue).getText());
-        }
-        else if (selectedValue instanceof AnAction) {
-          myTextField.setText(((AnAction)selectedValue).getTemplatePresentation().getText());
-        }
-        else if (selectedValue instanceof ChooseRunConfigurationPopup.ItemWrapper) {
-          myTextField.setText(((ChooseRunConfigurationPopup.ItemWrapper)selectedValue).getText());
-        }
-        else {
-          myTextField.setText(myLastInputText);
-        }
+        myTextField.setText(selectedValue instanceof RunAnythingItem ? ((RunAnythingItem)selectedValue).getText() : myLastInputText);
 
         if (myLastInputText == null) myLastInputText = lastInput;
       }
@@ -844,10 +815,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     Object value = myList.getSelectedValue();
 
     String text = AD_MODULE_CONTEXT;
-    if (isRunConfigurationItem(value)) {
+    if (value instanceof RunAnythingRunConfigurationItem) {
       text += " , " + AD_DEBUG_TEXT;
     }
-    else if (isActionValue(value)) {
+    else if (value instanceof RunAnythingActionItem) {
       text = AD_ACTION_TEXT;
     }
 
@@ -902,13 +873,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
     HistoryType type = null;
     String fqn = null;
-    if (isActionValue(value)) {
+    if (value instanceof RunAnythingActionItem) {
       type = HistoryType.ACTION;
-      fqn = ActionManager.getInstance().getId((AnAction)value);
+      fqn = ActionManager.getInstance().getId(((RunAnythingActionItem)value).getValue());
     }
-    else if (isRunConfigurationItem(value)) {
+    else if (value instanceof RunAnythingRunConfigurationItem) {
       type = HistoryType.RUN_CONFIGURATION;
-      fqn = ((ChooseRunConfigurationPopup.ItemWrapper)value).getText();
+      fqn = ((RunAnythingRunConfigurationItem)value).getText();
     }
 
     final PropertiesComponent storage = PropertiesComponent.getInstance(project);
@@ -1032,14 +1003,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       if (cmp == null) {
-        if (isActionValue(value)) {
-          cmp = RunAnythingUtil.getActionCellRendererComponent(((AnAction)value), isSelected);
-        }
-        else if (isRunConfigurationItem(value)) {
-          cmp = RunAnythingUtil.getRunConfigurationCellRendererComponent(((ChooseRunConfigurationPopup.ItemWrapper)value), isSelected);
-        }
-        else if (isUndefined(value)) {
-          cmp = RunAnythingUtil.getUndefinedCommandCellRendererComponent(((RunAnythingUndefinedItem)value), isSelected);
+        if (value instanceof RunAnythingItem) {
+          cmp = ((RunAnythingItem)value).getComponent(isSelected);
         }
         else {
           cmp = super.getListCellRendererComponent(list, value, index, isSelected, isSelected);
@@ -1049,7 +1014,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           cmp = p;
         }
 
-        if (isSetting(value)) {
+        if (value instanceof BooleanOptionDescription) {
           final JPanel panel = new JPanel(new BorderLayout());
           panel.setBackground(UIUtil.getListBackground(isSelected));
           panel.add(cmp, BorderLayout.CENTER);
@@ -1119,23 +1084,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myTitle.setForeground(Gray._122);
       myTitle.setAlignmentY(BOTTOM_ALIGNMENT);
     }
-  }
-
-  private static boolean isActionValue(Object o) {
-    return o instanceof AnAction;
-  }
-
-  //todo remain bool options
-  private static boolean isSetting(Object o) {
-    return o instanceof BooleanOptionDescription;
-  }
-
-  private static boolean isRunConfigurationItem(Object o) {
-    return o instanceof ChooseRunConfigurationPopup.ItemWrapper;
-  }
-
-  private static boolean isUndefined(Object o) {
-    return o instanceof RunAnythingUndefinedItem;
   }
 
   enum WidgetID {PERMANENT, RAKE, BUNDLER, TEMPORARY, GENERATORS, UNDEFINED}
@@ -1258,7 +1206,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             result.needMore = true;
             break;
           }
-          result.add(action);
+          result.add(new RunAnythingActionItem(action));
         }
         check();
       }
@@ -1351,7 +1299,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             configurations.needMore = true;
             break;
           }
-          configurations.add(wrapper);
+          configurations.add(new RunAnythingRunConfigurationItem(wrapper));
         }
         check();
       }
@@ -1377,7 +1325,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private synchronized void buildRecentUndefined() {
-      SearchResult recentUndefined = getUndefinedCommands(myPattern, MAX_UNDEFINED_FILES);
+      SearchResult recentUndefined = getCommands(myPattern, MAX_UNDEFINED_FILES);
 
       if (recentUndefined.size() > 0) {
         SwingUtilities.invokeLater(() -> {
@@ -1544,7 +1492,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
               result = getGenerators(myPattern, DEFAULT_MORE_STEP_COUNT);
               break;
             case UNDEFINED:
-              result = getUndefinedCommands(myPattern, DEFAULT_MORE_STEP_COUNT);
+              result = getCommands(myPattern, DEFAULT_MORE_STEP_COUNT);
               break;
           }
 
@@ -1605,7 +1553,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     @NotNull
-    private SearchResult getUndefinedCommands(@NotNull String pattern, int max) {
+    private SearchResult getCommands(@NotNull String pattern, int max) {
       SearchResult result = new SearchResult();
       MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
 
@@ -1739,7 +1687,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
   }
 
-  static class SearchResult extends ArrayList<Object> {
+  static class SearchResult extends ArrayList<RunAnythingItem> {
     boolean needMore;
   }
 
