@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RunAnythingProvider {
-  public static final ExtensionPointName<RunAnythingProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingConfigurationProvider");
+  public static final ExtensionPointName<RunAnythingProvider> EP_NAME =
+    ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingConfigurationProvider");
 
   public abstract boolean isMatched(Project project, @NotNull String commandLine, @Nullable VirtualFile workDirectory);
 
@@ -20,4 +21,17 @@ public abstract class RunAnythingProvider {
 
   @NotNull
   public abstract ConfigurationFactory getConfigurationFactory();
+
+  @Nullable
+  public static RunAnythingProvider findMatchedProvider(@NotNull Project project,
+                                                        @NotNull String pattern,
+                                                        @Nullable VirtualFile workDirectory) {
+    for (RunAnythingProvider provider : EP_NAME.getExtensions()) {
+      if (provider.isMatched(project, pattern, workDirectory)) {
+        return provider;
+      }
+    }
+
+    return null;
+  }
 }

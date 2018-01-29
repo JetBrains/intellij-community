@@ -826,12 +826,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           return;
         }
 
-        String name = null;
-        for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
-          if (provider.isMatched(getProject(), pattern, getWorkDirectory(getModule()))) {
-            name = provider.getConfigurationFactory().getName();
-          }
-        }
+        RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(getProject(), pattern, getWorkDirectory(getModule()));
+        String name = provider != null ? provider.getConfigurationFactory().getName() : null;
 
         if (name != null) {
           textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, name);

@@ -346,17 +346,11 @@ public class RunAnythingUtil {
                                           @Nullable VirtualFile workDirectory) {
     if (pattern.isEmpty()) return;
 
-    RunAnythingProvider[] extensions = RunAnythingProvider.EP_NAME.getExtensions();
-    for (RunAnythingProvider provider : extensions) {
-      if (provider.isMatched(project, pattern, workDirectory)) {
-        RunnerAndConfigurationSettings configuration = provider.createConfiguration(project, pattern, workDirectory);
-
-        TemporaryConfigurationRunAnythingItem temporaryConfigurationRunAnythingItem =
-          new TemporaryConfigurationRunAnythingItem(project, pattern, configuration);
-
-        temporaryConfigurationRunAnythingItem.run(RunAnythingAction.getExecutor(), workDirectory);
-        return;
-      }
+    RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
+    if (provider != null) {
+      new TemporaryConfigurationRunAnythingItem(project, pattern, provider.createConfiguration(project, pattern, workDirectory))
+        .run(RunAnythingAction.getExecutor(), workDirectory);
+      return;
     }
 
     RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, StringUtil.trim(pattern));
@@ -368,7 +362,8 @@ public class RunAnythingUtil {
                                               @Nullable Component component,
                                               @Nullable AnActionEvent e) {
     ApplicationManager.getApplication()
-                      .invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, e)));
+                      .invokeLater(
+                        () -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> performAction(element, component, e)));
   }
 
   private static String getShortcut() {
