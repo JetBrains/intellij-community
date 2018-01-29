@@ -53,17 +53,17 @@ public class JBColor extends Color {
   }
 
   public static Color linkHover() {
-    Color hoverColor = UIManager.getColor("link.foreground.hover");
+    Color hoverColor = UIManager.getColor("link.hover.foreground");
     return hoverColor == null ? link() : hoverColor;
   }
 
   public static Color linkPressed() {
-    Color pressedColor = UIManager.getColor("link.foreground.pressed");
+    Color pressedColor = UIManager.getColor("link.pressed.foreground");
     return pressedColor == null ? new JBColor(0xf00000, 0xba6f25) : pressedColor;
   }
 
   public static Color linkVisited() {
-    Color visitedColor = UIManager.getColor("link.foreground.visited");
+    Color visitedColor = UIManager.getColor("link.visited.foreground");
     return visitedColor == null ? new JBColor(0x800080, 0x9776a9) : visitedColor;
   }
 
