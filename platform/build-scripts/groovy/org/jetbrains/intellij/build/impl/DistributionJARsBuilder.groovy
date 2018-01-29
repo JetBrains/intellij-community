@@ -538,7 +538,7 @@ class DistributionJARsBuilder {
                                       "most probably it means that '$module' isn't include into the product distribution so it makes no sense to define excludes for it.")
         }
         if (createFileSet(pattern, moduleOutput).size() == 0) {
-          buildContext.messages.error("Incorrect exludes for module '$module': nothing matches to $pattern in the module output")
+          buildContext.messages.error("Incorrect excludes for module '$module': nothing matches to $pattern in the module output at $moduleOutput")
         }
       }
     }

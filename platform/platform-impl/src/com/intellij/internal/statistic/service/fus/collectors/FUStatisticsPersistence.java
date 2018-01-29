@@ -29,6 +29,7 @@ public class FUStatisticsPersistence {
     LOG = Logger.getInstance("com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence");
 
   private static final String FILE_EXTENSION = "json";
+  private static final String PERSISTENCE_STATE_FILE_EXTENSION = "fus-sent-data.json";
   public static final String FUS_CACHE_PATH = "fus-sessions";
 
   // 1. this method is regularly  invoked by the statistics scheduler (see StatisticsJobsScheduler) to persist statistics data  for current project.
@@ -94,6 +95,7 @@ public class FUStatisticsPersistence {
       File[] children = statisticsCacheDir.listFiles();
       if (children != null) {
         for (File child : children) {
+          if(PERSISTENCE_STATE_FILE_EXTENSION.equals(child.getName())) continue;
           try {
             BasicFileAttributes attr = Files.readAttributes(child.toPath(), BasicFileAttributes.class);
             if (dataTime > attr.creationTime().toMillis()) {
@@ -127,6 +129,13 @@ public class FUStatisticsPersistence {
         allSessions.addAll(sessions);
       }
     }  catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+  public static void persistSentState(@NotNull String sentContent) {
+    try {
+      FileUtil.writeToFile(new File(getStatisticsSystemCacheDirectory(), "/" + PERSISTENCE_STATE_FILE_EXTENSION), sentContent);
+    } catch (IOException e) {
       LOG.info(e);
     }
   }

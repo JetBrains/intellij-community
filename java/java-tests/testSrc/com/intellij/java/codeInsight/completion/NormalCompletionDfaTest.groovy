@@ -44,6 +44,9 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
   void testAssignmentPreciseTypeDfa() { doTest() }
+  void testAssignmentTwicePreciseTypeDfa() { doTest() }
+  void testAssignmentParameterDfa() { doTest() }
+  void testAssignmentNoPreciseTypeDfa() { doTest() }
   void testDeclarationPreciseTypeDfa() { doTest() }
   void testInstanceOfAssignmentDfa() { doTest() }
   void testStreamDfa() { doTest() }

@@ -27,6 +27,7 @@ import com.intellij.ui.popup.list.ListPopupModel
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Timeout
 import org.hamcrest.BaseMatcher
@@ -115,19 +116,23 @@ class JBListPopupFixture private constructor(jbList: JBList<*>, robot: Robot) : 
                                                          robot: Robot,
                                                          timeout: Timeout): Pair<JListFixture, Int> {
       val fixtureAndClickableItemRef = Ref<Pair<JListFixture, Int>>()
-      waitUntilFound<JBList<*>>(robot, root, object : GenericTypeMatcher<JBList<*>>(JBList::class.java) {
-        override fun isMatching(list: JBList<*>): Boolean {
-          val model = list.model
-          if (model is ListPopupModel) {
-            val fixtureAndClickableItem = getJListFixtureAndClickableItemByList(labelMatcher, robot, list)
-            if (fixtureAndClickableItem != null) {
-              fixtureAndClickableItemRef.set(fixtureAndClickableItem)
-              return true
+      try {
+        waitUntilFound<JBList<*>>(robot, root, object : GenericTypeMatcher<JBList<*>>(JBList::class.java) {
+          override fun isMatching(list: JBList<*>): Boolean {
+            val model = list.model
+            if (model is ListPopupModel) {
+              val fixtureAndClickableItem = getJListFixtureAndClickableItemByList(labelMatcher, robot, list)
+              if (fixtureAndClickableItem != null) {
+                fixtureAndClickableItemRef.set(fixtureAndClickableItem)
+                return true
+              }
             }
+            return false
           }
-          return false
-        }
-      }, timeout)
+        }, timeout)
+      } catch (e: WaitTimedOutError){
+        throw ComponentLookupException("Unable to get JListFixture because: ${e.message}")
+      }
       return fixtureAndClickableItemRef.get() ?: throw ComponentLookupException("Unable to get JListFixture by matcher $labelMatcher")
     }
 

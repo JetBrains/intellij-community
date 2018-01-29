@@ -388,20 +388,24 @@ open class GuiTestCase {
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
   fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, timeout: Long = defaultTimeout): JTextComponentFixture {
-    if (target() is Container) {
-      val container = target() as Container
-      if (textLabel.isNullOrEmpty()) {
-        val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
-        return JTextComponentFixture(guiTestRule.robot(), jTextField)
-      }
-      //wait until label has appeared
-      waitUntilFound(container, Component::class.java, timeout) {
-        it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
-      }
-      val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, textLabel!!, JTextComponent::class.java)
-      return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
+    val target = target()
+    if (target is Container) {
+      return textfield(textLabel, target, timeout)
     }
     else throw unableToFindComponent("""JTextComponent (JTextField) by label "$textLabel"""")
+  }
+
+  fun textfield(textLabel: String?, container: Container, timeout: Long): JTextComponentFixture {
+    if (textLabel.isNullOrEmpty()) {
+      val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
+      return JTextComponentFixture(guiTestRule.robot(), jTextField)
+    }
+    //wait until label has appeared
+    waitUntilFound(container, Component::class.java, timeout) {
+      it.isShowing && it.isVisible && it.isTextComponent() && it.getComponentText() == textLabel
+    }
+    val jTextComponent = findBoundedComponentByText(guiTestRule.robot(), container, textLabel!!, JTextComponent::class.java)
+    return JTextComponentFixture(guiTestRule.robot(), jTextComponent)
   }
 
   /**

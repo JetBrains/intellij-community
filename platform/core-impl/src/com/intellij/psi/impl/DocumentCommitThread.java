@@ -552,6 +552,11 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
   }
 
   @TestOnly
+  // waits for all tasks in 'documentsToCommit' queue to be finished, i.e. wait
+  // - for 'commitUnderProgress' executed for all documents from there,
+  // - for (potentially) a number of documents added to 'documentsToApplyInEDT'
+  // - for these apply tasks (created in 'createFinishCommitInEDTRunnable') executed in EDT
+  // NB: failures applying EDT tasks are not handled - i.e. failed documents are added back to the queue and the method returns
   void waitForAllCommits() throws ExecutionException, InterruptedException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();

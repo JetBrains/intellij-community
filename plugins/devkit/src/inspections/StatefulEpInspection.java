@@ -18,6 +18,8 @@ import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UElementKt;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class StatefulEpInspection extends DevKitUastInspectionBase {
@@ -26,11 +28,9 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
   public ProblemDescriptor[] checkClass(@NotNull UClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     PsiField[] fields = psiClass.getFields();
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
-
     PsiClass javaClass = UElementKt.getAsJavaPsiElement(psiClass, PsiClass.class);
     boolean isQuickFix = InheritanceUtil.isInheritor(javaClass, LocalQuickFix.class.getCanonicalName());
-    ExtensionLocator locator = ExtensionLocator.byPsiClass(javaClass);
-    List<ExtensionCandidate> targets = locator.findCandidates();
+    Collection<ExtensionCandidate> targets = findEpCandidates(javaClass);
     if (isQuickFix || !targets.isEmpty()) {
       boolean isProjectComponent = InheritanceUtil.isInheritor(javaClass, ProjectComponent.class.getCanonicalName());
       boolean projectInjectableEP = ContainerUtil.find(targets, candidate -> {
@@ -46,7 +46,7 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
           String message = c == PsiElement.class
                            ? "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead" +
                              (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "")
-                           : "Don't use " + c.getSimpleName() + " as a field in " + ( isQuickFix ? "quick fix" : "extension");
+                           : "Don't use " + c.getSimpleName() + " as a field in " + (isQuickFix ? "quick fix" : "extension");
           if (InheritanceUtil.isInheritor(field.getType(), c.getCanonicalName())) {
             result.add(manager.createProblemDescriptor(field, message, true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }
@@ -55,5 +55,18 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
       return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
     }
     return super.checkClass(psiClass, manager, isOnTheFly);
+  }
+
+  @NotNull
+  private static Collection<ExtensionCandidate> findEpCandidates(@Nullable PsiClass javaClass) {
+    String name = javaClass != null ? javaClass.getName() : null;
+    if (name == null) return Collections.emptyList();
+    return ContainerUtil.filter(ExtensionLocator.byPsiClass(javaClass).findCandidates(), candidate -> {
+      XmlTag element = candidate.pointer.getElement();
+      if (element == null) return false;
+      String forClass = element.getAttributeValue("forClass");
+      if (forClass != null && forClass.contains(name)) return false;
+      return true;
+    });
   }
 }

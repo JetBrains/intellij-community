@@ -137,6 +137,8 @@ public class GuessManagerImpl extends GuessManager {
 
   @Nullable
   private static MultiMap<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace, boolean onlyForPlace) {
+    PsiType type = forPlace.getType();
+    if (type == null) return null;
     PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       PsiFile file = forPlace.getContainingFile();
@@ -155,80 +157,12 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace);
+    TypeConstraint initial = TypeConstraint.EMPTY.withInstanceofValue(runner.getFactory().createDfaType(type));
+    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
     }
     return null;
-  }
-
-  private static boolean mayHaveMorePreciseType(PsiExpression expr) {
-    PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
-    if (place instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)place).resolve();
-      if (target instanceof PsiParameter) {
-        PsiElement parent = target.getParent();
-        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-          return true;
-        }
-      }
-    }
-    if (place == null) return false;
-    PsiType type = place.getType();
-    if (type == null) return false;
-    final int start = place.getTextRange().getStartOffset();
-    class Visitor extends JavaRecursiveElementWalkingVisitor {
-      public boolean hasInteresting;
-
-      @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), place) &&
-            expression.getRExpression() != null && !type.equals(expression.getRExpression().getType())) {
-          hasInteresting = true;
-          stopWalking();
-        }
-        super.visitAssignmentExpression(expression);
-      }
-
-      @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
-        if (variable.getInitializer() != null && ExpressionUtils.isReferenceTo(place, variable) &&
-          !type.equals(variable.getInitializer().getType())) {
-          hasInteresting = true;
-          stopWalking();
-        }
-        super.visitLocalVariable(variable);
-      }
-
-      @Override
-      public void visitTypeCastExpression(PsiTypeCastExpression expression) {
-        if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), place)) {
-          hasInteresting = true;
-          stopWalking();
-        }
-        super.visitTypeCastExpression(expression);
-      }
-
-      @Override
-      public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
-        if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), place)) {
-          hasInteresting = true;
-          stopWalking();
-        }
-        super.visitInstanceOfExpression(expression);
-      }
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (element.getTextRange().getStartOffset() > start) {
-          stopWalking();
-        }
-        super.visitElement(element);
-      }
-    }
-    Visitor visitor = new Visitor();
-    getTopmostBlock(place).accept(visitor);
-    return visitor.hasInteresting;
   }
 
   private static PsiElement getTopmostBlock(PsiElement scope) {
@@ -407,10 +341,28 @@ public class GuessManagerImpl extends GuessManager {
   @NotNull
   @Override
   public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
-    if (!mayHaveMorePreciseType(expr)) {
-      return Collections.emptyList(); //optimization
+    PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
+    if (place instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)place).resolve();
+      if (target instanceof PsiParameter) {
+        PsiElement parent = target.getParent();
+        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
+          return getTypesFromDfa(expr);
+        }
+      }
     }
+    if (place == null) return Collections.emptyList();
+    GuessTypeVisitor visitor = new GuessTypeVisitor(place);
+    getTopmostBlock(place).accept(visitor);
 
+    if (visitor.isDfaNeeded()) {
+      return getTypesFromDfa(expr);
+    }
+    return visitor.mySpecificType == null ? Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
+  }
+
+  @NotNull
+  private static List<PsiType> getTypesFromDfa(@NotNull PsiExpression expr) {
     MultiMap<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr, true);
     if (fromDfa != null) {
       Collection<PsiType> conjuncts = fromDfa.get(expr);
@@ -419,7 +371,6 @@ public class GuessManagerImpl extends GuessManager {
         return ContainerUtil.mapNotNull(flatTypes, type -> tryGenerify(expr, type));
       }
     }
-
     return Collections.emptyList();
   }
 
@@ -438,15 +389,96 @@ public class GuessManagerImpl extends GuessManager {
     return GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
   }
 
+  static class GuessTypeVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final @NotNull PsiExpression myPlace;
+    PsiType mySpecificType;
+    private boolean myNeedDfa;
+    private boolean myDeclared;
+    private int myStart;
+
+    GuessTypeVisitor(@NotNull PsiExpression place) {
+      myPlace = place;
+      myStart = place.getTextRange().getStartOffset();
+    }
+
+    private void handleAssignment(@Nullable PsiExpression expression) {
+      if (expression == null) return;
+      PsiType type = expression.getType();
+      PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
+      if (rawType == null) return;
+      if (mySpecificType == null) {
+        mySpecificType = rawType;
+      }
+      else if (!mySpecificType.equals(rawType)) {
+        myNeedDfa = true;
+        stopWalking();
+      }
+    }
+
+    @Override
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
+      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getLExpression(), myPlace)) {
+        handleAssignment(expression.getRExpression());
+      }
+      super.visitAssignmentExpression(expression);
+    }
+
+    @Override
+    public void visitLocalVariable(PsiLocalVariable variable) {
+      if (ExpressionUtils.isReferenceTo(myPlace, variable)) {
+        myDeclared = true;
+        handleAssignment(variable.getInitializer());
+      }
+      super.visitLocalVariable(variable);
+    }
+
+    @Override
+    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
+        myNeedDfa = true;
+        stopWalking();
+      }
+      super.visitTypeCastExpression(expression);
+    }
+
+    @Override
+    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+      if (ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals(expression.getOperand(), myPlace)) {
+        myNeedDfa = true;
+        stopWalking();
+      }
+      super.visitInstanceOfExpression(expression);
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (element.getTextRange().getStartOffset() > myStart) {
+        stopWalking();
+      }
+      super.visitElement(element);
+    }
+
+    public boolean isDfaNeeded() {
+      if (myNeedDfa) return true;
+      if (myDeclared || mySpecificType == null) return true;
+      PsiType type = myPlace.getType();
+      PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
+      return !mySpecificType.equals(rawType);
+    }
+  }
   private static class ExpressionTypeInstructionVisitor extends StandardInstructionVisitor {
+    private final TypeConstraint myInitial;
     private MultiMap<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
     private TypeConstraint myConstraint = null;
     private final boolean myOnlyForPlace;
 
-    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace, boolean onlyForPlace) {
+    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace,
+                                             boolean onlyForPlace,
+                                             TypeConstraint initial) {
       myOnlyForPlace = onlyForPlace;
       myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
+      myInitial = initial;
     }
 
     MultiMap<PsiExpression, PsiType> getResult() {
@@ -531,6 +563,9 @@ public class GuessManagerImpl extends GuessManager {
         DfaMemoryState memoryState = state.getMemoryState();
         if (myConstraint == TypeConstraint.EMPTY) return;
         TypeConstraint constraint = memoryState.getValueFact(memoryState.peek(), DfaFactType.TYPE_CONSTRAINT);
+        if (constraint == null) {
+          constraint = myInitial;
+        }
         if (constraint != null) {
           myConstraint = myConstraint == null ? constraint : myConstraint.union(constraint);
           if (myConstraint == null) {
