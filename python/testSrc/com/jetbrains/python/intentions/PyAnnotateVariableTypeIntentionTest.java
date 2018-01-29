@@ -183,11 +183,11 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
-  public void testAnnotationAugmentedAssignmentWithAmbiguousTarget() {
+  public void testNotSuggestedForAugmentedAssignmentWithAmbiguousTarget() {
     doNegativeTest();
   }
 
-  public void testAnnotationUnresolvedAugmentedAssignmentTarget() {
+  public void testNotSuggestedForUnresolvedAugmentedAssignmentTarget() {
     doNegativeTest();
   }
 
