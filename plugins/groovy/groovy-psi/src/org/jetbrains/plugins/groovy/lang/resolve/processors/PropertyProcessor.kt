@@ -46,7 +46,7 @@ class PropertyProcessor(
       substitutorComputer = substitutorComputer,
       propertyKind = propertyKind,
       argumentTypes = argumentTypes,
-      mySpreadState = state[SpreadState.SPREAD_STATE]
+      spreadState = state[SpreadState.SPREAD_STATE]
     )
 
     return true
