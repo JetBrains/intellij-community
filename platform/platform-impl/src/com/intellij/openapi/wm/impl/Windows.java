@@ -94,9 +94,10 @@ public class Windows {
             source = ((source.getParent() != null) && (source.getParent() instanceof JComponent)) ? ((JComponent)source.getParent()) : null;
           }
         }
+        return source != null;
       }
 
-      return source != null;
+      return false;
     }
 
     public Shortcut[] findShortcuts (String actionId) {
