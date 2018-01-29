@@ -116,7 +116,14 @@ class PyProtocolInspection : PyInspection() {
       if (!isProtocol(type, myTypeEvalContext)) return
 
       val correctBase: (PyClassLikeType?) -> Boolean = {
-        it == null || it.classQName == PyTypingTypeProvider.PROTOCOL || it is PyClassType && isProtocol(it, myTypeEvalContext)
+        if (it == null) true
+        else {
+          val classQName = it.classQName
+
+          classQName == PyTypingTypeProvider.PROTOCOL ||
+          classQName == PyTypingTypeProvider.PROTOCOL_EXT ||
+          it is PyClassType && isProtocol(it, myTypeEvalContext)
+        }
       }
 
       if (!superClassTypes.all(correctBase)) {

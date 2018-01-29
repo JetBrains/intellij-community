@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTypedElement
@@ -14,13 +16,9 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
-fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext): Boolean {
-  return classLikeType.getSuperClassTypes(context).any { type -> PROTOCOL == type?.classQName }
-}
+fun isProtocol(classLikeType: PyClassLikeType, context: TypeEvalContext) = containsProtocol(classLikeType.getSuperClassTypes(context))
 
-fun isProtocol(cls: PyClass, context: TypeEvalContext): Boolean {
-  return cls.getSuperClassTypes(context).any { type -> PROTOCOL == type?.classQName }
-}
+fun isProtocol(cls: PyClass, context: TypeEvalContext) = containsProtocol(cls.getSuperClassTypes(context))
 
 fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: TypeEvalContext) = expected is PyClassLikeType &&
                                                                                                 actual is PyClassLikeType &&
@@ -39,6 +37,10 @@ fun inspectProtocolSubclass(protocol: PyClassType,
 
   protocol.toInstance().visitMembers(
     { e ->
+      if (FileUtil.getNameWithoutExtension(e.containingFile.name) == "typing_extensions") {
+        return@visitMembers result
+      }
+
       if (result && e is PyTypedElement) {
         val name = e.name ?: return@visitMembers result
         val resolveResults = subclassAsInstance.resolveMember(name, null, AccessDirection.READ, resolveContext)
@@ -56,4 +58,9 @@ fun inspectProtocolSubclass(protocol: PyClassType,
 interface InspectingProtocolSubclassCallback {
   fun onUnresolved(protocolElement: PyTypedElement): Boolean
   fun onResolved(protocolElement: PyTypedElement, subclassElements: List<RatedResolveResult>): Boolean
+}
+
+private fun containsProtocol(types: List<PyClassLikeType?>) = types.any { type ->
+  val classQName = type?.classQName
+  PROTOCOL == classQName || PROTOCOL_EXT == classQName
 }

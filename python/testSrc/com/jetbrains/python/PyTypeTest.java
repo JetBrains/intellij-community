@@ -3092,6 +3092,25 @@ public class PyTypeTest extends PyTestCase {
            "expr = collections.OrderedDict((('name', 'value'), ('another_name', 'another_value')))");
   }
 
+  // PY-26628
+  public void testGenericTypingProtocolExt() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        doMultiFileTest("int",
+                        "from typing_extensions import Protocol\n" +
+                        "from typing import TypeVar\n" +
+                        "T = TypeVar(\"T\")\n" +
+                        "class MyProto1(Protocol[T]):\n" +
+                        "    def func(self) -> T:\n" +
+                        "        pass\n" +
+                        "class MyClass1(MyProto1[int]):\n" +
+                        "    pass\n" +
+                        "expr = MyClass1().func()");
+      }
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

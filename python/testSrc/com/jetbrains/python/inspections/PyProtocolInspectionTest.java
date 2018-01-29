@@ -34,6 +34,12 @@ public class PyProtocolInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26628
+  public void testProtocolExtBases() {
+    myFixture.copyFileToProject(getTestCaseDirectory() + "typing_extensions.py", "typing_extensions.py");
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doTest());

@@ -63,6 +63,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String NAMEDTUPLE = "typing.NamedTuple";
   public static final String GENERIC = "typing.Generic";
   public static final String PROTOCOL = "typing.Protocol";
+  public static final String PROTOCOL_EXT = "typing_extensions.Protocol";
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
   public static final String CALLABLE = "typing.Callable";
@@ -117,6 +118,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR)
     // type aliases
     .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
+    .add(PROTOCOL_EXT)
     .build();
 
   /**
