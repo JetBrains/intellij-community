@@ -151,15 +151,7 @@ public class TransferableFileEditorStateSupport {
     public void syncStatesNow() {
       if (myEditors.size() < 2) return;
 
-      TransferableFileEditorState sourceState = getEditorState(myEditors.get(0));
-      if (sourceState == null) return;
-
-      Map<String, String> options = sourceState.getTransferableOptions();
-      String id = sourceState.getEditorId();
-
-      for (int i = 1; i < myEditors.size(); i++) {
-        updateEditor(myEditors.get(i), id, options);
-      }
+      syncStateFrom(myEditors.get(0));
     }
 
     public void install(@NotNull Disposable disposable) {
@@ -184,14 +176,18 @@ public class TransferableFileEditorStateSupport {
       if (myDuringUpdate || !isEnabled()) return;
       if (!(evt.getSource() instanceof FileEditor)) return;
 
-      TransferableFileEditorState sourceState = getEditorState(((FileEditor)evt.getSource()));
+      syncStateFrom((FileEditor)evt.getSource());
+    }
+
+    private void syncStateFrom(@NotNull FileEditor sourceEditor) {
+      TransferableFileEditorState sourceState = getEditorState(sourceEditor);
       if (sourceState == null) return;
 
       Map<String, String> options = sourceState.getTransferableOptions();
       String id = sourceState.getEditorId();
 
       for (FileEditor editor : myEditors) {
-        if (evt.getSource() != editor) {
+        if (sourceEditor != editor) {
           updateEditor(editor, id, options);
         }
       }
