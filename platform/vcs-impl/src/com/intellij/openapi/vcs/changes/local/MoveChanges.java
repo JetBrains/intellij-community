@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -31,7 +32,7 @@ public class MoveChanges implements ChangeListCommand {
   private MultiMap<LocalChangeList, Change> myMovedFrom;
   private LocalChangeList myListCopy;
 
-  public MoveChanges(String name, Change[] changes) {
+  public MoveChanges(@NotNull String name, @NotNull Change[] changes) {
     myName = name;
     myChanges = changes;
   }

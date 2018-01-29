@@ -385,7 +385,7 @@ public class ChangeListWorker {
   }
 
 
-  public boolean setDefaultList(String name) {
+  public boolean setDefaultList(@NotNull String name) {
     ListData newDefault = getDataByName(name);
     if (newDefault == null || newDefault.isDefault) return false;
 
@@ -401,7 +401,7 @@ public class ChangeListWorker {
     return true;
   }
 
-  public boolean setReadOnly(String name, boolean value) {
+  public boolean setReadOnly(@NotNull String name, boolean value) {
     ListData list = getDataByName(name);
     if (list == null || list.isReadOnly) return false;
 
