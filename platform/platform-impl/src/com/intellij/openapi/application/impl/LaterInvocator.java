@@ -312,7 +312,8 @@ public class LaterInvocator {
     requestFlush();
   }
 
-  public static Object[] getCurrentModalEntitiesForProject(Project project) {
+  @NotNull
+  private static Object[] getCurrentModalEntitiesForProject(Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (project == null || !ourModalEntities.isEmpty()) {
       return ArrayUtil.toObjectArray(ourModalEntities);
@@ -456,7 +457,9 @@ public class LaterInvocator {
   public static Collection<RunnableInfo> getLaterInvocatorQueue() {
     // used by leak hunter as root, so we must not copy it here to another list 
     // to avoid walking over obsolete queue 
-    return ourQueue;
+    synchronized (LOCK) {
+      return ourQueue;
+    }
   }
 
   public static void purgeExpiredItems() {
