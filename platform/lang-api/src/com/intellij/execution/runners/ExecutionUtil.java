@@ -226,6 +226,10 @@ public class ExecutionUtil {
   }
 
   public static Icon getLiveIndicator(@Nullable final Icon base) {
+    return getLiveIndicator(base, 13, 13);
+  }
+
+  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
     return new LayeredIcon(base, new Icon() {
       @SuppressWarnings("UseJBColor")
       @Override
@@ -248,12 +252,12 @@ public class ExecutionUtil {
 
       @Override
       public int getIconWidth() {
-        return base != null ? base.getIconWidth() : 13;
+        return base != null ? base.getIconWidth() : emptyIconWidth;
       }
 
       @Override
       public int getIconHeight() {
-        return base != null ? base.getIconHeight() : 13;
+        return base != null ? base.getIconHeight() : emptyIconHeight;
       }
     });
   }
