@@ -44,7 +44,7 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-  protected PsiElement mySourceElement;
+  private SmartPsiElementPointer<PsiElement> myPointer;
 
   public GroovyScriptRunConfigurationProducer() {
     super(GroovyScriptRunConfigurationType.getInstance());
@@ -52,7 +52,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
 
   @Override
   public PsiElement getSourceElement() {
-    return mySourceElement;
+    return myPointer == null ? null : myPointer.getElement();
   }
 
   @Override
@@ -72,7 +72,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     if (aClass instanceof GroovyScriptClass || GroovyRunnerPsiUtil.isRunnable(aClass)) {
       final RunnerAndConfigurationSettings settings = createConfiguration(aClass);
       if (settings != null) {
-        mySourceElement = element;
+        myPointer = SmartPointerManager.createPointer(element);
         final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
         GroovyScriptUtil.getScriptType(groovyFile).tuneConfiguration(groovyFile, configuration, location);
         return settings;
@@ -84,15 +84,13 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
       ConfigurationFromContext settings = producer.createConfigurationFromContext(context);
       if (settings != null) {
         PsiElement src = settings.getSourceElement();
-        mySourceElement = src;
+        myPointer = SmartPointerManager.createPointer(src);
         return createConfiguration(src instanceof PsiMethod ? ((PsiMethod)src).getContainingClass() : (PsiClass)src);
       }
 
       return null;
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   @Override
