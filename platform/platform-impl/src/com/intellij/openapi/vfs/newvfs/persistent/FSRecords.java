@@ -36,6 +36,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -150,16 +151,17 @@ public class FSRecords {
     }
   }
 
-  static void requestVfsRebuild(Throwable e) {
-    //noinspection ThrowableResultOfMethodCallIgnored
+  @Contract("_->fail")
+  static void requestVfsRebuild(@NotNull Throwable e) {
     DbConnection.handleError(e);
   }
 
+  @NotNull
   static File basePath() {
     return new File(DbConnection.getCachesDir());
   }
 
-  public static class DbConnection {
+  private static class DbConnection {
     private static boolean ourInitialized;
 
     private static PersistentStringEnumerator myNames;
@@ -172,7 +174,7 @@ public class FSRecords {
       new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
-    private static boolean myDirty;
+    private static boolean myDirty; /** guarded by {@link #r}/{@link #w} */
     private static ScheduledFuture<?> myFlushingFuture;
     @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static boolean myCorrupted;
 
@@ -514,6 +516,7 @@ public class FSRecords {
 
     private static final Object CORRUPTION_LOCK = new Object();
 
+    @Contract("_->fail")
     private static void handleError(@NotNull Throwable e) throws RuntimeException, Error {
       if (!ourIsDisposed) { // No need to forcibly mark VFS corrupted if it is already shut down
         synchronized (CORRUPTION_LOCK) {  
@@ -779,8 +782,8 @@ public class FSRecords {
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
-      return ArrayUtil.EMPTY_INT_ARRAY;
     }
+    return ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   @TestOnly
@@ -978,8 +981,8 @@ public class FSRecords {
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
-      return ArrayUtil.EMPTY_INT_ARRAY;
     }
+    return ArrayUtil.EMPTY_INT_ARRAY;
   }
 
   public static class NameId {
@@ -1027,8 +1030,8 @@ public class FSRecords {
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
-      return NameId.EMPTY_ARRAY;
     }
+    return NameId.EMPTY_ARRAY;
   }
 
   static boolean wereChildrenAccessed(int id) {
@@ -1225,8 +1228,8 @@ public class FSRecords {
     }
     catch (Throwable e) {
       DbConnection.handleError(e);
-      return "";
     }
+    return "";
   }
 
   public static String getNameByNameId(int nameId) {
@@ -2078,62 +2081,8 @@ public class FSRecords {
     }
   }
 
-  public static void handleError(Throwable e) throws RuntimeException, Error {
+  @Contract("_->fail")
+  static void handleError(Throwable e) throws RuntimeException, Error {
     DbConnection.handleError(e);
   }
-
-  /*
-  public interface BulkAttrReadCallback {
-    boolean accepts(int fileId);
-    boolean execute(int fileId, DataInputStream is);
-  }
-
-  // custom DataInput implementation instead of DataInputStream (without extra allocations) (api change)
-  // store each attr in separate file: pro: read only affected data, easy versioning
-
-  public static void readAttributeInBulk(FileAttribute attr, BulkAttrReadCallback callback) throws IOException {
-    String attrId = attr.getId();
-    int encodedAttrId = DbConnection.getAttributeId(attrId);
-    synchronized (attrId) {
-      Storage storage = getAttributesStorage();
-      RecordIterator recordIterator = storage.recordIterator();
-      while (recordIterator.hasNextRecordId()) {
-        int recordId = recordIterator.nextRecordId();
-        DataInputStream stream = storage.readStream(recordId);
-
-        int currentAttrId = DataInputOutputUtil.readINT(stream);
-        int fileId = DataInputOutputUtil.readINT(stream);
-        if (!callback.accepts(fileId)) continue;
-
-        if (currentAttrId == DbConnection.RESERVED_ATTR_ID) {
-          if (!inlineAttributes) continue;
-
-          while(stream.available() > 0) {
-            int directoryAttrId = DataInputOutputUtil.readINT(stream);
-            int directoryAttrAddressOrSize = DataInputOutputUtil.readINT(stream);
-
-            if (directoryAttrId != encodedAttrId) {
-              if (directoryAttrAddressOrSize < MAX_SMALL_ATTR_SIZE) stream.skipBytes(directoryAttrAddressOrSize);
-            } else {
-              if (directoryAttrAddressOrSize < MAX_SMALL_ATTR_SIZE) {
-                byte[] b = new byte[directoryAttrAddressOrSize];
-                stream.readFully(b);
-                DataInputStream inlineAttrStream = new DataInputStream(new ByteArrayInputStream(b));
-                int version = DataInputOutputUtil.readINT(inlineAttrStream);
-                if (version != attr.getVersion()) continue;
-                boolean result = callback.execute(fileId, inlineAttrStream); // todo
-                if (!result) break;
-              }
-            }
-          }
-        } else if (currentAttrId == encodedAttrId) {
-          int version = DataInputOutputUtil.readINT(stream);
-          if (version != attr.getVersion()) continue;
-
-          boolean result = callback.execute(fileId, stream); // todo
-          if (!result) break;
-        }
-      }
-    }
-  }*/
 }
