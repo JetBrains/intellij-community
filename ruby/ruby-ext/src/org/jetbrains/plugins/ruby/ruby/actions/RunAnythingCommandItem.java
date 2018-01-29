@@ -3,43 +3,71 @@ package org.jetbrains.plugins.ruby.ruby.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.net.NetUtils;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import icons.RubyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
+import org.jetbrains.plugins.ruby.gem.GemsDataKeys;
 import org.jetbrains.plugins.ruby.remote.RubyRemoteInterpreterManager;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
+import org.jetbrains.plugins.ruby.ruby.RubyUtil;
+import org.jetbrains.plugins.ruby.ruby.debugger.*;
+import org.jetbrains.plugins.ruby.ruby.debugger.impl.LocalPositionConverter;
+import org.jetbrains.plugins.ruby.ruby.debugger.impl.RubyDebugProcess;
+import org.jetbrains.plugins.ruby.ruby.debugger.settings.RubyDebuggerSettings;
+import org.jetbrains.plugins.ruby.ruby.run.PortForwarding;
 import org.jetbrains.plugins.ruby.ruby.run.RubyAbstractRunner;
+import org.jetbrains.plugins.ruby.ruby.run.RubyLocalRunner;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.DebugGemHelper;
+import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyAbstractCommandLineState;
+import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkAdditionalData;
+import org.jetbrains.plugins.ruby.ruby.sdk.RubySdkUtil;
 import org.jetbrains.plugins.ruby.rvm.RVMSupportUtil;
+import org.jetbrains.plugins.ruby.testing.testunit.runConfigurations.RakeRunnerConstants;
 import org.jetbrains.plugins.ruby.utils.OSUtil;
 import org.jetbrains.plugins.ruby.version.management.rbenv.gemsets.RbenvGemsetManager;
+import org.rubyforge.debugcommons.RubyDebuggerProxy;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.RunProfileState;
 
 public class RunAnythingCommandItem extends RunAnythingItem<String> {
   private static final Logger LOG = Logger.getInstance(RunAnythingCommandItem.class);
@@ -102,38 +130,25 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
       .withEnvironment(env)
       .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(project, workDirectory));
 
-    runInConsole(commandLine, project);
+    HashMap<String, Object> dataMap = new HashMap<>();
+    dataMap.put(LangDataKeys.MODULE.getName(), module);
+    dataMap.put(GemsDataKeys.SDK.getName(), sdk);
+    runInConsole(project, commandLine, executor, SimpleDataContext.getSimpleContext(dataMap, DataContext.EMPTY_CONTEXT));
   }
 
-  private static void runInConsole(@NotNull GeneralCommandLine commandLine, @NotNull Project project) {
+  private static void runInConsole(@NotNull Project project,
+                                   @NotNull GeneralCommandLine commandLine,
+                                   @NotNull Executor executor,
+                                   @NotNull DataContext dataContext) {
     try {
-      KillableColoredProcessHandler processHandler = new KillableColoredProcessHandler(commandLine) {
-        @Override
-        protected void notifyProcessTerminated(int exitCode) {
-          RunContentDescriptor contentDescriptor = ExecutionManager.getInstance(project).getContentManager()
-                                                                   .findContentDescriptor(DefaultRunExecutor.getRunExecutorInstance(),
-                                                                                          this);
+      ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(project, executor, new AnythingRunProfile(project, commandLine))
+                                                                    .dataContext(dataContext)
+                                                                    .build();
 
-          if (contentDescriptor != null && contentDescriptor.getExecutionConsole() instanceof ConsoleView) {
-            ((ConsoleView)contentDescriptor.getExecutionConsole())
-              .print(RBundle.message("run.anything.console.process.finished", exitCode), ConsoleViewContentType.SYSTEM_OUTPUT);
-          }
-          super.notifyProcessTerminated(exitCode);
-        }
-      };
-
-      final RunContentExecutor contentExecutor = new RunContentExecutor(project, processHandler)
-        .withTitle(RBundle.message("run.anything.console.title"))
-        .withStop(processHandler::destroyProcess, () -> !processHandler.isProcessTerminated())
-        .withActivateToolWindow(true);
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed()) {
-          contentExecutor.run();
-        }
-      });
+      environment.getRunner().execute(environment);
     }
     catch (ExecutionException e) {
+      LOG.warn(e);
       Messages.showInfoMessage(project, e.getMessage(), RBundle.message("run.anything.console.error.title"));
     }
   }
@@ -242,5 +257,164 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   @Override
   public Component getComponent(boolean isSelected) {
     return RunAnythingUtil.getUndefinedCommandCellRendererComponent(this, isSelected);
+  }
+
+
+  private static class AnythingRunProfile implements DebuggableRunProfile {
+    @NotNull
+    private Project myProject;
+    @NotNull
+    private final GeneralCommandLine myCommandLine;
+
+    @Nullable
+    private ProcessHandler myProcessHandler;
+
+    public AnythingRunProfile(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
+      myCommandLine = commandLine;
+      myProject = project;
+    }
+
+    @NotNull
+    @Override
+    public XDebugSession createDebugSession(@NotNull RunProfileState runProfileState, @NotNull ExecutionEnvironment environment)
+      throws ExecutionException {
+      if (environment.getDataContext() == null) {
+        throw new ExecutionException("Module should be passed as data to ExecutionEnvironment");
+      }
+
+      final Project project = environment.getProject();
+      final Module module = LangDataKeys.MODULE.getData(environment.getDataContext());
+
+      final RubyLocalRunner rubyRunner = RubyLocalRunner.getRunner(module);
+      Pair<PortForwarding, PortForwarding> pair = rubyRunner.getDebuggerForwardings();
+
+      final int debuggerPort = pair.getFirst().getLocalPort();
+      final int dispatcher = pair.getSecond().getLocalPort();
+
+      final Sdk sdk = RModuleUtil.getInstance().findRubySdkForModule(module);
+      if (sdk == null) {
+        throw new ExecutionException("Can't debug without sdk");
+      }
+
+      final DebugGemHelper debugGemHelper = RubyAbstractCommandLineState.selectDebugGemHelper(sdk, module, RubyDebugMode.NORMAL_MODE);
+
+      if (debugGemHelper.needsDebugPreLoader()) {
+        applyDebugStarterToEnv(rubyRunner, debuggerPort, dispatcher, sdk, debugGemHelper);
+      }
+
+      int timeout = RubyDebuggerSettings.getInstance().getState().getTimeout();
+
+      boolean supportsNonSuspendedFramesReading = RubyDebugRunner.supportsNonSuspendedFramesReading(debugGemHelper, sdk);
+      boolean supportsCatchpointRemoval = debugGemHelper.supportsCatchpointRemoval();
+      final String localHostString = NetUtils.getLocalHostString();
+      final ProcessHandler serverProcessHandler = getProcessHandler();
+
+      final RubyDebuggerProxy rubyDebuggerProxy =
+        new RubyDebuggerProxy(timeout, supportsNonSuspendedFramesReading, false, supportsCatchpointRemoval);
+
+      final RubyProcessDispatcher acceptor = RubyDebugRunner
+        .getAcceptor(supportsNonSuspendedFramesReading, localHostString, supportsCatchpointRemoval, Integer.valueOf(dispatcher));
+
+      rubyDebuggerProxy.setDebugTarget(
+        RubyDebugRunner.getDebugTarget(null, serverProcessHandler, debuggerPort, rubyDebuggerProxy, localHostString));
+
+      boolean myEnableFileFiltering = debugGemHelper.supportFileFiltering()
+                                      && RubyDebuggerSettings.getInstance().getState().isStepIntoProjectOnly();
+      final SourcePositionConverter converter = new LocalPositionConverter(project, !RubySdkUtil.isRuby18(sdk));
+
+      final XDebugProcessStarter processStarter = new XDebugProcessStarter() {
+        @NotNull
+        public XDebugProcess start(@NotNull final XDebugSession session) {
+          return new RubyDebugProcess(session, runProfileState, serverProcessHandler, rubyDebuggerProxy, timeout, converter,
+                                      environment.getExecutor(), acceptor, debugGemHelper.pauseActionSupported(),
+                                      false,
+                                      myEnableFileFiltering, debugGemHelper.getSourceRoots(project),
+                                      debugGemHelper.getExcludedDirs(project)) {
+            @NotNull
+            @Override
+            public ExecutionConsole createConsole() {
+              ConsoleView console = (ConsoleView)super.createConsole();
+              console.attachToProcess(serverProcessHandler);
+              return console;
+            }
+          };
+        }
+      };
+
+      return XDebuggerManager.getInstance(project).startSession(environment, processStarter);
+    }
+
+    @Nullable
+    @Override
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+      return new CommandLineState(environment) {
+        @NotNull
+        @Override
+        protected ProcessHandler startProcess() throws ExecutionException {
+          return getProcessHandler();
+        }
+      };
+    }
+
+    @Override
+    public String getName() {
+      return myCommandLine.getCommandLineString();
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return UNDEFINED_COMMAND_ICON;
+    }
+
+    private void applyDebugStarterToEnv(@NotNull RubyLocalRunner rubyRunner,
+                                        int debuggerPort,
+                                        int dispatcherPort,
+                                        @NotNull Sdk sdk,
+                                        @NotNull DebugGemHelper debugGemHelper) {
+      final Map<String, String> env = myCommandLine.getEnvironment();
+      final String gemsPath = RubyUtil.getScriptFullPath("rb/gems");
+      assert gemsPath != null;
+
+      final RubySdkAdditionalData data = RubySdkUtil.getRubySdkAdditionalData(sdk);
+      PathMappingSettings mappingSettings = rubyRunner.addDefaultMappings(null);
+
+      String rubyLib = OSUtil.prependToRUBYLIBEnvVariable(data.getSdkSystemAccessor(),
+                                                          env.get(RakeRunnerConstants.RUBYLIB_ENVIRONMENT_VARIABLE),
+                                                          mappingSettings.convertToRemote(gemsPath));
+
+      env.put("RUBYMINE_DEBUG_PORT", String.valueOf(debuggerPort));
+      env.put("DEBUGGER_CLI_DEBUG", String.valueOf(RubyDebuggerSettings.getInstance().getState().isVerboseOutput()));
+      env.put("IDE_PROCESS_DISPATCHER", String.valueOf(dispatcherPort));
+      env.put(
+        RakeRunnerConstants.RUBYLIB_ENVIRONMENT_VARIABLE,
+        debugGemHelper.updateRubyLib(rubyLib, data.getSdkSystemAccessor(), mappingSettings)
+      );
+
+      OSUtil.appendToEnvVariable(RubyUtil.RUBYOPT, "-rrubymine_debug_anything.rb", env, " ");
+    }
+
+    @NotNull
+    private ProcessHandler getProcessHandler() throws ExecutionException {
+      if (myProcessHandler != null) {
+        return myProcessHandler;
+      }
+      myProcessHandler = new KillableColoredProcessHandler(myCommandLine) {
+        @Override
+        protected void notifyProcessTerminated(int exitCode) {
+          RunContentDescriptor contentDescriptor
+            = ExecutionManager.getInstance(myProject).getContentManager()
+                              .findContentDescriptor(DefaultRunExecutor.getRunExecutorInstance(), this);
+
+          if (contentDescriptor != null && contentDescriptor.getExecutionConsole() instanceof ConsoleView) {
+            ((ConsoleView)contentDescriptor.getExecutionConsole())
+              .print(RBundle.message("run.anything.console.process.finished", exitCode), ConsoleViewContentType.SYSTEM_OUTPUT);
+          }
+          super.notifyProcessTerminated(exitCode);
+        }
+      };
+      ((KillableColoredProcessHandler)myProcessHandler).setHasPty(true);
+      return myProcessHandler;
+    }
   }
 }
