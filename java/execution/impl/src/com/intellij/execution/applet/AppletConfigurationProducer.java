@@ -20,15 +20,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class AppletConfigurationProducer extends JavaRuntimeConfigurationProducerBase {
-  private SmartPsiElementPointer<PsiClass> myPointer;
-
   protected AppletConfigurationProducer() {
     super(AppletConfigurationType.getInstance());
   }
 
   @Override
   public PsiElement getSourceElement() {
-    return myPointer == null ? null : myPointer.getElement();
+    return restoreSourceElement();
   }
 
   @Override
@@ -39,7 +37,7 @@ public class AppletConfigurationProducer extends JavaRuntimeConfigurationProduce
     final PsiElement element = location.getPsiElement();
     PsiClass psiClass = getAppletClass(element, PsiManager.getInstance(project));
     if (psiClass == null) return null;
-    myPointer = SmartPointerManager.createPointer(psiClass);
+    storeSourceElement(psiClass);
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final AppletConfiguration configuration = (AppletConfiguration)settings.getConfiguration();
     configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(psiClass));
