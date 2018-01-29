@@ -29,6 +29,11 @@ public class PyProtocolInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26628
+  public void testInstanceAndClassChecksOnProtocol() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doTest());

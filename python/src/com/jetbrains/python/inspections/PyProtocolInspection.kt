@@ -2,16 +2,19 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.InspectingProtocolSubclassCallback
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_RUNTIME
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
@@ -42,7 +45,20 @@ class PyProtocolInspection : PyInspection() {
     override fun visitPyCallExpression(node: PyCallExpression?) {
       super.visitPyCallExpression(node)
 
-      if (node != null) {
+      if (node == null) return
+
+      if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
+        val base = node.arguments.getOrNull(1)
+        if (base != null) {
+          val type = myTypeEvalContext.getType(base)
+          if (type is PyClassType &&
+              isProtocol(type, myTypeEvalContext) &&
+              !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).contains(TYPING_RUNTIME)) {
+            registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
+          }
+        }
+      }
+      else {
         val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
 
         node
