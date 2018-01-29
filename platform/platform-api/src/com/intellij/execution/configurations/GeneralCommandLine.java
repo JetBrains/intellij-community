@@ -369,7 +369,23 @@ public class GeneralCommandLine implements UserDataHolder {
       throw e;
     }
 
-    List<String> commands = prepareCommandLine(myExePath, myProgramParams.getList(), Platform.current());
+    String exePath = myExePath;
+    if (SystemInfo.isMac && myParentEnvironmentType == ParentEnvironmentType.CONSOLE && exePath.indexOf(File.pathSeparatorChar) == -1) {
+      String systemPath = System.getenv("PATH");
+      String shellPath = EnvironmentUtil.getValue("PATH");
+      if (!Objects.equals(systemPath, shellPath)) {
+        File exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, systemPath, null);
+        if (exeFile == null) {
+          exeFile = PathEnvironmentVariableUtil.findInPath(myExePath, shellPath, null);
+          if (exeFile != null) {
+            LOG.debug(exePath + " => " + exeFile);
+            exePath = exeFile.getPath();
+          }
+        }
+      }
+    }
+
+    List<String> commands = prepareCommandLine(exePath, myProgramParams.getList(), Platform.current());
 
     try {
       return startProcess(commands);
