@@ -37,7 +37,6 @@ public class JdkBundleTest {
   private static void doTestBootBundle(JdkBundle bundle, boolean boot) {
     assertNotNull(bundle);
     assertEquals(boot, bundle.isBoot());
-    assertFalse(bundle.isBundled());
     assertTrue(bundle.isJdk());
     assertTrue(bundle.isOperational());
 
