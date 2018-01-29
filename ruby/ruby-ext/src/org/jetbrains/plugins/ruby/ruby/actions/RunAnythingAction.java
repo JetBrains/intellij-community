@@ -870,10 +870,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         myRakeActions = Arrays.stream(RakeTaskModuleCache.getInstance(myModule).getRakeActions())
                               .filter(RakeAction.class::isInstance)
                               .map(RakeAction.class::cast)
-                              .filter(action -> {
-                                RakeTask task = action.getTask(myModule);
-                                return task != null && task.isDescriptionProvided();
-                              })
                               .peek(rakeAction -> rakeAction.updateAction(myDataContext, rakeAction.getTemplatePresentation()))
                               .toArray(AnAction[]::new);
       }
