@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CommandLineUtil;
@@ -365,14 +351,21 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     try {
-      checkWorkingDirectory();
+      if (myWorkDirectory != null) {
+        if (!myWorkDirectory.exists()) {
+          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
+        }
+        if (!myWorkDirectory.isDirectory()) {
+          throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
+        }
+      }
 
       if (StringUtil.isEmptyOrSpaces(myExePath)) {
         throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
       }
     }
     catch (ExecutionException e) {
-      LOG.info(e);
+      LOG.debug(e);
       throw e;
     }
 
@@ -382,11 +375,10 @@ public class GeneralCommandLine implements UserDataHolder {
       return startProcess(commands);
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.debug(e);
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
   }
-
 
   /**
    * @implNote for subclasses:
@@ -413,18 +405,6 @@ public class GeneralCommandLine implements UserDataHolder {
       builder.redirectInput(ProcessBuilder.Redirect.from(myInputFile));
     }
     return builder.start();
-  }
-
-  private void checkWorkingDirectory() throws ExecutionException {
-    if (myWorkDirectory == null) {
-      return;
-    }
-    if (!myWorkDirectory.exists()) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory));
-    }
-    if (!myWorkDirectory.isDirectory()) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory", myWorkDirectory));
-    }
   }
 
   protected void setupEnvironment(@NotNull Map<String, String> environment) {
