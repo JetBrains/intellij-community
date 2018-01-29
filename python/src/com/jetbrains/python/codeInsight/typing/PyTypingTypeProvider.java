@@ -79,6 +79,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String CHAIN_MAP = "typing.ChainMap";
   private static final String UNION = "typing.Union";
   private static final String OPTIONAL = "typing.Optional";
+  private static final String CLASSVAR = "typing.ClassVar";
+  public static final String NEW_TYPE = "typing.NewType";
 
   public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
   public static final String SUPPORTS_INT_SIMPLE = "SupportsInt";

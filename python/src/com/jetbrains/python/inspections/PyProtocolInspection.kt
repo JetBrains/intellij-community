@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
@@ -9,8 +10,10 @@ import com.jetbrains.python.codeInsight.typing.InspectingProtocolSubclassCallbac
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
@@ -33,6 +36,27 @@ class PyProtocolInspection : PyInspection() {
 
         checkCompatibility(type, superClassTypes)
         checkProtocolBases(type, superClassTypes)
+      }
+    }
+
+    override fun visitPyCallExpression(node: PyCallExpression?) {
+      super.visitPyCallExpression(node)
+
+      if (node != null) {
+        val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+
+        node
+          .multiResolveCalleeFunction(resolveContext)
+          .firstOrNull { it.qualifiedName == PyTypingTypeProvider.NEW_TYPE }
+          ?.let {
+            val base = node.arguments.getOrNull(1)
+            if (base != null) {
+              val type = myTypeEvalContext.getType(base)
+              if (type is PyClassLikeType && isProtocol(type, myTypeEvalContext)) {
+                registerProblem(base, "NewType cannot be used with protocol classes")
+              }
+            }
+          }
       }
     }
 
