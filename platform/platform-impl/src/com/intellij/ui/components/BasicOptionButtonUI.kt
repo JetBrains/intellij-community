@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapperButtonLayout.Companion.EXTRA_WIDTH_KEY
 import com.intellij.openapi.ui.OptionAction
@@ -226,7 +227,8 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     if (!isSimpleButton) {
       isPopupShowing = true
       popup = createPopup(toSelect, ensureSelection).apply {
-        setFinalRunnable { isPopupShowing = false }
+        // use invokeLater() to update flag "after" popup is auto-closed - to ensure correct togglePopup() behaviour on arrow button press
+        setFinalRunnable { getApplication().invokeLater { isPopupShowing = false } }
         addListener(object : JBPopupAdapter() {
           override fun beforeShown(event: LightweightWindowEvent) {
             val popup = event.asPopup()
