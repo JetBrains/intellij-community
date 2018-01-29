@@ -37,28 +37,38 @@ class WinExeInstallerBuilder {
     this.jreDirectoryPath = jreDirectoryPath
   }
 
-  private void generateInstallationConfigFileForSilentMode() {
-    String silentConfigTemplate = (customizer.silentInstallationConfig == null ?
-                          "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config" :
-                          customizer.silentInstallationConfig)
-    if (! new File(silentConfigTemplate).exists()) {
-      buildContext.messages.error(
-        "Silent config file for Windows installer won't be generated. The template doesn't exist: $silentConfigTemplate")
-    }
-    else {
-      if (! new File("${buildContext.paths.artifacts}/silent.config").exists()) {
-        buildContext.ant.copy(file: "$silentConfigTemplate", todir: "${buildContext.paths.artifacts}")
-        File silentConfigFile = new File("${buildContext.paths.artifacts}/silent.config")
-        def extensionsList = customizer.fileAssociations
-        String associations = "\n\n; List of associations. To create an association change value to 1.\n"
-        if (!extensionsList.isEmpty()) {
-          associations += extensionsList.collect { "$it=0\n" }.join("")
-        }
-        else {
-          associations = "\n\n; There are no associations for the product.\n"
-        }
-        silentConfigFile.append(associations)
+  private boolean validateCustomSilentConfig(String customConfig){
+    if (customConfig != null) {
+      if (!new File(customConfig).exists()) {
+        buildContext.messages.error(
+          "Silent config file for Windows installer won't be generated. The template doesn't exist: $customConfig")
+        customConfig = null
       }
+      else if (!customConfig.endsWith("silent.config")){
+        buildContext.messages.error(
+          "Silent config file for Windows installer won't be generated. The template doesn't point to silent.config: $customConfig")
+        customConfig = null
+      }
+    }
+    return customConfig != null
+  }
+
+  private void generateInstallationConfigFileForSilentMode() {
+    if (!new File("${buildContext.paths.artifacts}/silent.config").exists()) {
+      String silentConfigTemplate = validateCustomSilentConfig(customizer.silentInstallationConfig) ?
+                                    customizer.silentInstallationConfig :
+                                    "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config"
+      buildContext.ant.copy(file: "$silentConfigTemplate", todir: "${buildContext.paths.artifacts}")
+      File silentConfigFile = new File("${buildContext.paths.artifacts}/silent.config")
+      def extensionsList = customizer.fileAssociations
+      String associations = "\n\n; List of associations. To create an association change value to 1.\n"
+      if (!extensionsList.isEmpty()) {
+        associations += extensionsList.collect { "$it=0\n" }.join("")
+      }
+      else {
+        associations = "\n\n; There are no associations for the product.\n"
+      }
+      silentConfigFile.append(associations)
     }
   }
 
