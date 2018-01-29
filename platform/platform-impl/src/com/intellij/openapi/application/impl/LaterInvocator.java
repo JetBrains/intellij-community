@@ -24,10 +24,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -455,10 +453,10 @@ public class LaterInvocator {
   }
 
   @TestOnly
-  public static List<RunnableInfo> getLaterInvocatorQueue() {
-    synchronized (LOCK) {
-      return ContainerUtil.newArrayList(ourQueue);
-    }
+  public static Collection<RunnableInfo> getLaterInvocatorQueue() {
+    // used by leak hunter as root, so we must not copy it here to another list 
+    // to avoid walking over obsolete queue 
+    return ourQueue;
   }
 
   public static void purgeExpiredItems() {

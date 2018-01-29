@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.LineSeparator
 import com.intellij.util.SmartList
+import com.intellij.util.attribute
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -50,7 +51,8 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
       return null
     }
 
-    val state = Element(FileStorageCoreUtil.COMPONENT)
+    // FileStorageCoreUtil on load check both component and name attributes (critical important for external store case, where we have only in-project artifacts, but not external)
+    val state = Element(FileStorageCoreUtil.COMPONENT).attribute(FileStorageCoreUtil.NAME, componentName)
     if (splitter is StateSplitterEx) {
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null

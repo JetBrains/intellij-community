@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -286,11 +287,11 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
    *         settings of its own.
    */
   protected static CommonCodeStyleSettings getSettings(Language language) {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(language);
+    return CodeStyle.getSettings(getProject()).getCommonSettings(language);
   }
 
   protected CodeStyleSettings getSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   protected void doSanityTestForDirectory(File directory, final boolean formatWithPsi) throws IOException, IncorrectOperationException {

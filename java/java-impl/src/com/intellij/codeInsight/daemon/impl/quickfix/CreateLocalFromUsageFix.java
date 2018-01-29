@@ -177,7 +177,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
-    LOG.assertTrue(block != null && block.getStatements().length > 0, "block: " + block +"; parent: " + parent);
+    LOG.assertTrue(block != null && !block.isEmpty(), "block: " + block +"; parent: " + parent);
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
       if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];

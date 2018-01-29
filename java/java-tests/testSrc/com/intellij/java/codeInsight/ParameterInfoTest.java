@@ -361,4 +361,27 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
+  public void _testHighlightCurrentParameterAfterTypingFirstArgumentOfThree() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    CreateParameterInfoContext context = new MockCreateParameterInfoContext(getEditor(), getFile());
+    PsiExpressionList argList = handler.findElementForParameterInfo(context);
+    assertNotNull(argList);
+    Object[] items = context.getItemsToShow();
+    assertSize(2, items);
+
+    MockUpdateParameterInfoContext updateContext = updateParameterInfo(handler, argList, items);
+    assertTrue(updateContext.isUIComponentEnabled(0));
+    assertTrue(updateContext.isUIComponentEnabled(1));
+    assertEquals(0, updateContext.getCurrentParameter());
+
+    myFixture.type("1, ");
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    handler.updateParameterInfo(argList, updateContext);
+    assertFalse(updateContext.isUIComponentEnabled(0));
+    assertTrue(updateContext.isUIComponentEnabled(1));
+    assertEquals(1, updateContext.getCurrentParameter());
+  }
+
 }

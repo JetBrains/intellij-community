@@ -409,24 +409,24 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
     boolean addExtraSpace = 0 < visibleRows && visibleRows < modelRows && Registry.is("ide.preferred.scrollable.viewport.extra.space");
     Insets insets = list.getInsets();
+    size.height = insets != null ? insets.top + insets.bottom : 0;
     if (0 < fixedWidth && 0 < fixedHeight) {
       size.width = insets != null ? insets.left + insets.right + fixedWidth : fixedWidth;
-      size.height = fixedHeight * visibleRows;
+      size.height += fixedHeight * visibleRows;
       if (addExtraSpace) size.height += fixedHeight / 2;
     }
     else if (addExtraSpace) {
       Rectangle bounds = list.getCellBounds(visibleRows, visibleRows);
-      size.height = bounds != null ? bounds.y + bounds.height / 2 : 0;
+      if (bounds != null) size.height = bounds.y + bounds.height / 2;
     }
     else if (visibleRows > 0) {
       int lastRow = Math.min(visibleRows, modelRows) - 1;
       Rectangle bounds = list.getCellBounds(lastRow, lastRow);
-      size.height = bounds != null ? bounds.y + bounds.height : 0;
+      if (bounds != null) {
+        size.height = bounds.y + bounds.height;
+        if (insets != null) size.height += insets.bottom;
+      }
     }
-    else {
-      size.height = 0;
-    }
-    if (insets != null) size.height += insets.top + insets.bottom;
     return size;
   }
 }

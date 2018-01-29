@@ -45,7 +45,8 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
 
   @Override
   public int getParametersCount() {
-    return getParameters().length;
+    // All children of ClsParameterListImpl are actually parameters, so no need to filter additionally
+    return getStub().getChildrenStubs().size();
   }
 
   @Override

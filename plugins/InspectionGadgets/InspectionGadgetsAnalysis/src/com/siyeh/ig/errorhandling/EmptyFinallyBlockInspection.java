@@ -150,7 +150,7 @@ public class EmptyFinallyBlockInspection extends BaseInspection {
       if (finallyBlock == null) {
         return;
       }
-      if (finallyBlock.getStatements().length != 0) {
+      if (!finallyBlock.isEmpty()) {
         return;
       }
       final PsiElement[] children = statement.getChildren();

@@ -1,20 +1,21 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.customUsageCollectors.actions;
 
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.eventLog.FeatureUsageEventLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,7 +28,7 @@ import java.util.Set;
     @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
-public class ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
+public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   public void record(String actionId) {
     if (actionId == null) return;
 
@@ -35,6 +36,7 @@ public class ActionsCollector implements PersistentStateComponent<ActionsCollect
     if (state == null) return;
 
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
+    FeatureUsageEventLogger.INSTANCE.log("action-stats", key);
     final Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);
@@ -50,16 +52,6 @@ public class ActionsCollector implements PersistentStateComponent<ActionsCollect
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-  }
-
-  public static ActionsCollector getInstance() {
-    return ServiceManager.getService(ActionsCollector.class);
-  }
-
-  final static class State {
-    @Tag("counts")
-    @MapAnnotation(surroundWithTag = false, keyAttributeName = "action", valueAttributeName = "count")
-    public Map<String, Integer> myValues = new HashMap<>();
   }
 
   final static class ActionUsagesCollector extends UsagesCollector {
