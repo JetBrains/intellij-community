@@ -3,6 +3,7 @@
  */
 package com.intellij.ide.ui.laf.darcula
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.bw
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.lw
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
@@ -64,9 +65,9 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   override fun configureArrowButton() = super.configureArrowButton().also { arrowButton.isOpaque = false }
   override fun unconfigureArrowButton() = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
 
-  override val arrowButtonPreferredSize get() = Dimension(scale(28), optionButton.preferredSize.height)
+  override val arrowButtonPreferredSize get() = Dimension(scale(27), optionButton.preferredSize.height)
 
-  override val showPopupXOffset get() = JBUI.scale(5)
+  override val showPopupXOffset get() = JBUI.scale(3)
 
   override fun paint(g: Graphics, c: JComponent) {
     if (!isSimpleButton) paintSeparatorArea(g as Graphics2D, c)
@@ -81,12 +82,11 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   }
 
   protected open fun paintSeparator(g: Graphics2D, c: JComponent) {
-    val insets = mainButton.insets
-    val yOffset = (insets.top + insets.bottom) / 4 + lw(g)
+    val yOffset = bw() + lw(g)
     val x = mainButton.width.toFloat()
 
     g.color = (mainButton.border as DarculaButtonPainter).borderColor
-    g.draw(Line2D.Float(x, yOffset, x, mainButton.height - yOffset))
+    g.draw(Line2D.Float(x, yOffset, x, mainButton.height - yOffset - lw(g)))
   }
 
   override fun updateOptions() = super.updateOptions().also {
