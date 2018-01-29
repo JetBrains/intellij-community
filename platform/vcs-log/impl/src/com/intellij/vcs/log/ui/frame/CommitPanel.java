@@ -4,10 +4,14 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.HtmlPanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -15,9 +19,11 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.Collection;
@@ -32,6 +38,8 @@ public class CommitPanel extends JBPanel {
   public static final int SIDE_BORDER = 14;
   private static final int INTERNAL_BORDER = 10;
   private static final int EXTERNAL_BORDER = 14;
+  private static final int ROOT_ICON_SIZE = 13;
+  private static final int ROOT_GAP = 4;
 
   @NotNull private final VcsLogData myLogData;
 
@@ -39,6 +47,7 @@ public class CommitPanel extends JBPanel {
   @NotNull private final ReferencesPanel myTagsPanel;
   @NotNull private final MessagePanel myMessagePanel;
   @NotNull private final HashAndAuthorPanel myHashAndAuthorPanel;
+  @NotNull private final RootPanel myRootPanel;
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final Consumer<CommitId> myNavigate;
@@ -55,19 +64,26 @@ public class CommitPanel extends JBPanel {
     setOpaque(false);
 
     myMessagePanel = new MessagePanel();
+    JBPanel metadataPanel = new JBPanel(new BorderLayout(0, 0));
     myHashAndAuthorPanel = new HashAndAuthorPanel();
+    myRootPanel = new RootPanel(myHashAndAuthorPanel);
     myBranchesPanel = new ReferencesPanel();
     myTagsPanel = new ReferencesPanel();
     myContainingBranchesPanel = new BranchesPanel();
 
+    metadataPanel.setOpaque(false);
+    
     myMessagePanel.setBorder(JBUI.Borders.empty(EXTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, SIDE_BORDER));
-    myHashAndAuthorPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER));
+    myHashAndAuthorPanel.setBorder(JBUI.Borders.empty());
+    metadataPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER));
     myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
     myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
     myContainingBranchesPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, EXTERNAL_BORDER, SIDE_BORDER));
 
     add(myMessagePanel);
-    add(myHashAndAuthorPanel);
+    metadataPanel.add(myRootPanel, BorderLayout.WEST);
+    metadataPanel.add(myHashAndAuthorPanel, BorderLayout.CENTER);
+    add(metadataPanel);
     add(myBranchesPanel);
     add(myTagsPanel);
     add(myContainingBranchesPanel);
@@ -80,6 +96,8 @@ public class CommitPanel extends JBPanel {
 
       myMessagePanel.update();
       myHashAndAuthorPanel.update();
+
+      myRootPanel.setRoot(commit.getRoot());
     }
 
     List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
@@ -95,6 +113,7 @@ public class CommitPanel extends JBPanel {
   public void update() {
     myMessagePanel.update();
     myHashAndAuthorPanel.update();
+    myRootPanel.update();
     myBranchesPanel.update();
     myTagsPanel.update();
     myContainingBranchesPanel.update();
@@ -177,6 +196,12 @@ public class CommitPanel extends JBPanel {
     protected Font getBodyFont() {
       return FontUtil.getCommitMetadataFont();
     }
+
+    @Override
+    public void update() {
+      setVisible(myPresentation != null);
+      super.update();
+    }
   }
 
   private static class BranchesPanel extends HtmlPanel {
@@ -224,6 +249,61 @@ public class CommitPanel extends JBPanel {
     @Override
     protected Font getBodyFont() {
       return FontUtil.getCommitMetadataFont();
+    }
+  }
+
+  private class RootPanel extends Wrapper {
+    private final JComponent myReferent;
+    @Nullable private ColorIcon myIcon;
+    @Nullable private String myTooltipText;
+
+    public RootPanel(@NotNull JComponent component) {
+      myReferent = component;
+      setVerticalSizeReferent(myReferent);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      if (myIcon == null) return new Dimension(0, 0);
+      Dimension size = super.getPreferredSize();
+      return new Dimension(myIcon.getIconWidth() + JBUI.scale(ROOT_GAP), size.height);
+    }
+
+    public void setRoot(@NotNull VirtualFile root) {
+      if (myColorManager.isMultipleRoots()) {
+        JBColor color = VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
+        myIcon = JBUI.scale(new ColorIcon(ROOT_ICON_SIZE, color));
+        myTooltipText = root.getPath();
+      }
+      else {
+        myIcon = null;
+        myTooltipText = null;
+      }
+    }
+
+    public void update() {
+      setVisible(myIcon != null);
+      revalidate();
+      repaint();
+    }
+
+    @Override
+    public Color getBackground() {
+      return getCommitDetailsBackground();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+      if (myIcon != null) {
+        int h = FontUtil.getStandardAscent(myHashAndAuthorPanel.getBodyFont(), g);
+        FontMetrics metrics = getFontMetrics(myHashAndAuthorPanel.getBodyFont());
+        myIcon.paintIcon(this, g, 0, metrics.getMaxAscent() - h + (h - myIcon.getIconHeight() - 1) / 2);
+      }
+    }
+
+    @Override
+    public String getToolTipText() {
+      return myTooltipText;
     }
   }
 }
