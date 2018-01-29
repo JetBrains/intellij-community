@@ -18,6 +18,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -65,8 +66,10 @@ public class IdeaTestUtil extends PlatformTestUtil {
     Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
   }
 
-  public static Sdk getMockJdk17() {
-    return getMockJdk17("java 1.7");
+  public static Sdk getMockJdk(JavaVersion version) {
+    int mockJdk = version.feature >= 9 ? 9 : version.feature >= 7 ? version.feature : version.feature >= 5 ? 7 : 4;
+    String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk).getPath();
+    return createMockJdk("java " + version, path);
   }
 
   @NotNull
@@ -74,20 +77,24 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return ((JavaSdkImpl)JavaSdk.getInstance()).createMockJdk(name, path, false);
   }
 
+  public static Sdk getMockJdk14() {
+    return getMockJdk(JavaVersion.compose(4));
+  }
+
+  public static Sdk getMockJdk17() {
+    return getMockJdk(JavaVersion.compose(7));
+  }
+
   public static Sdk getMockJdk17(@NotNull String name) {
     return createMockJdk(name, getMockJdk17Path().getPath());
   }
 
   public static Sdk getMockJdk18() {
-    return createMockJdk("java 1.8", getMockJdk18Path().getPath());
+    return getMockJdk(JavaVersion.compose(8));
   }
 
   public static Sdk getMockJdk9() {
-    return createMockJdk("java 9", getMockJdk9Path().getPath());
-  }
-
-  public static Sdk getMockJdk14() {
-    return createMockJdk("java 1.4", getMockJdk14Path().getPath());
+    return getMockJdk(JavaVersion.compose(9));
   }
 
   public static File getMockJdk14Path() {
