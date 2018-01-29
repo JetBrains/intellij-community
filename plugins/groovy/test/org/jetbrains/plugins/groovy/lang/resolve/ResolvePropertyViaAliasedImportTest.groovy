@@ -54,4 +54,16 @@ class Bar {
   void 'test property with setter alias'() {
     doTest()
   }
+
+  void 'test setter with alias'() {
+    doTest()
+  }
+
+  void 'test setter with getter alias'() {
+    doTest()
+  }
+
+  void 'test setter with setter alias'() {
+    doTest()
+  }
 }
