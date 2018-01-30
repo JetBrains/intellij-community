@@ -343,7 +343,7 @@ public class PyTypeHintGenerationUtil {
       // In this order since PyCollectionTypeImpl implements PyClassType
     }
     else {
-      throw new Pep484IncompatibleTypeException(PyBundle.message("INTN.annotate.variable.type.PEP484.incompatible.type", type.getName()));
+      throw new Pep484IncompatibleTypeException(PyBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type.getName()));
     }
   }
 
