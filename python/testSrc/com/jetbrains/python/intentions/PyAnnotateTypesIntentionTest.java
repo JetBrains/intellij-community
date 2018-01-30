@@ -20,17 +20,17 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON30,
       () -> {
-        doIntentionTest(PyBundle.message("INTN.annotate.types"), getTestName(true) + ".py", "foo_decl.py");
+        doIntentionTest(PyBundle.message("INTN.add.type.hints.for.function.family"), getTestName(true) + ".py", "foo_decl.py");
         myFixture.checkResultByFile("foo_decl.py", "foo_decl_after.py", false);
       }
     );
   }
 
   public void testTypeComment() {
-    doTest(PyBundle.message("INTN.annotate.types"), LanguageLevel.PYTHON27);
+    doTest(PyBundle.message("INTN.add.type.hints.for.function.family"), LanguageLevel.PYTHON27);
   }
   
   private void doTest() {
-    doTest(PyBundle.message("INTN.annotate.types"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.add.type.hints.for.function.family"), LanguageLevel.PYTHON30);
   }
 }

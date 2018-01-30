@@ -227,6 +227,10 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testConflictWithAnnotationFunctionTypeIntention() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -236,12 +240,12 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doNegativeTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.annotate.types")));
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.add.type.hint.for.variable.family")));
   }
 
   public void doMultiFileAnnotationTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doMultiFileTest(PyBundle.message("INTN.annotate.types"));
+      doMultiFileTest(PyBundle.message("INTN.add.type.hint.for.variable.family"));
     });
   }
 
@@ -256,6 +260,6 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   private void doTest(@NotNull LanguageLevel languageLevel) {
-    doTest(PyBundle.message("INTN.annotate.types"), languageLevel);
+    doTest(PyBundle.message("INTN.add.type.hint.for.variable.family"), languageLevel);
   }
 }

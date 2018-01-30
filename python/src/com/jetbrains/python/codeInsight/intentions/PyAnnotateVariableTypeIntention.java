@@ -44,7 +44,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyBundle.message("INTN.annotate.types");
+    return PyBundle.message("INTN.add.type.hint.for.variable.family");
   }
 
   @Override
@@ -57,7 +57,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
       return false;
     }
 
-    setText(PyBundle.message("INTN.annotate.types"));
+    setText(PyBundle.message("INTN.add.type.hint.for.variable", resolved.get(0).getName()));
     return true;
   }
 
