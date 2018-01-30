@@ -10,16 +10,23 @@ import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
-import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.*;
 
 public class AddModuleWizard extends AbstractProjectWizard {
   private ProjectImportProvider[] myImportProviders;
@@ -96,9 +103,20 @@ public class AddModuleWizard extends AbstractProjectWizard {
   @Nullable
   public static Sdk getMostRecentSuitableSdk(final WizardContext context) {
     if (context.getProject() == null) {
+      List<Sdk> sdks = Arrays.asList(ProjectJdkTable.getInstance().getAllJdks());
+
       ProjectBuilder builder = context.getProjectBuilder();
-      return ProjectJdkTable.getInstance().findMostRecentSdk(sdk -> builder == null || builder.isSuitableSdkType(sdk.getSdkType()));
+      if (builder != null) {
+        sdks = ContainerUtil.filter(sdks, sdk -> builder.isSuitableSdkType(sdk.getSdkType()));
+      }
+
+      Map<SdkTypeId, List<Sdk>> sdksByType = sdks.stream().collect(groupingBy(Sdk::getSdkType, mapping(Function.identity(), toList())));
+      Map.Entry<SdkTypeId, List<Sdk>> pair = ContainerUtil.getFirstItem(sdksByType.entrySet());
+      if (pair != null) {
+        return pair.getValue().stream().max(pair.getKey().versionComparator()).orElse(null);
+      }
     }
+
     return null;
   }
 
@@ -119,7 +137,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
    *                to return {@code true} for the step to go to
    * @return        {@code true} if current wizard is navigated to the target step; {@code false} otherwise
    */
-  public boolean navigateToStep(@NotNull Function<Step, Boolean> filter) {
+  public boolean navigateToStep(@NotNull com.intellij.util.Function<Step, Boolean> filter) {
     for (int i = 0, myStepsSize = mySteps.size(); i < myStepsSize; i++) {
       ModuleWizardStep step = mySteps.get(i);
       if (filter.fun(step) != Boolean.TRUE) {
