@@ -46,7 +46,7 @@ class BaseLayoutSpec {
    * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
    * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", String localizableResourcesInJar = "resources_en.jar") {
+  void withModule(String moduleName, String relativeJarPath = "${BaseLayout.convertModuleNameToFileName(moduleName)}.jar", String localizableResourcesInJar = "resources_en.jar") {
     if (localizableResourcesInJar != null) {
       layout.modulesWithLocalizableResourcesInCommonJar.put(moduleName, localizableResourcesInJar)
     }

@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 /**
@@ -42,5 +43,9 @@ abstract class BaseLayout {
 
   String localizableResourcesJarName(String moduleName) {
     return modulesWithLocalizableResourcesInCommonJar.get(moduleName)
+  }
+
+  static String convertModuleNameToFileName(String moduleName) {
+    StringUtil.trimStart(moduleName, "intellij.").replace('.', '-')
   }
 }
