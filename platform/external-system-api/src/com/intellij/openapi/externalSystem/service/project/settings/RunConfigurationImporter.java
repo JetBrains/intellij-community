@@ -29,12 +29,10 @@ import java.util.Map;
 public interface RunConfigurationImporter {
   ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationImporter");
 
-  default void process(@NotNull Project project,
+  void process(@NotNull Project project,
                        @NotNull RunConfiguration runConfiguration,
                        @NotNull Map<String, Object> cfg,
-                       @NotNull IdeModifiableModelsProvider modelsProvider) {}
-  default boolean canImport(@NotNull String typeName) {
-    return false;
-  }
+                       @NotNull IdeModifiableModelsProvider modelsProvider);
+  boolean canImport(@NotNull String typeName);
   @NotNull ConfigurationFactory getConfigurationFactory();
 }

@@ -14,8 +14,8 @@ import java.util.Map;
 @ApiStatus.Experimental
 public interface CodeStyleConfigurationImporter<T extends CustomCodeStyleSettings> {
   ExtensionPointName<CodeStyleConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.codeStyleConfigurationImporter");
-  default void processSettings(@NotNull T settings, @NotNull Map config) {}
-  default boolean canImport(@NotNull String langName) { return false; }
+  void processSettings(@NotNull T settings, @NotNull Map config);
+  boolean canImport(@NotNull String langName);
 
   @NotNull Class<T> getCustomClass();
   @NotNull Language getLanguage();
