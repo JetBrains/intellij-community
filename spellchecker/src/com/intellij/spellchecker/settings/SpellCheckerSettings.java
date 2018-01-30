@@ -106,7 +106,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
-        myDisabledDictionariesPaths.isEmpty()) {
+        myDisabledDictionariesPaths.isEmpty() && 
+        myCorrectionsLimit == DEFAULT_MAX_VALUE) {
       return null;
     }
 
