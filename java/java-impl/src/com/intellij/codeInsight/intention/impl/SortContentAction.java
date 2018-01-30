@@ -375,7 +375,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         }
         for (int rowPosition = 0; rowPosition < entryCountOnRow; rowPosition++) {
           currentEntryIndex++;
-          boolean isLastInRow = rowPosition + 1 == entryCountOnRow && rowPosition + 1 != lines;
+          boolean isLastInRow = rowPosition + 1 == entryCountOnRow && rowIndex + 1 != lines;
           entries.get(entryIndex).generate(sb, isLastInRow, currentEntryIndex == entryCount);
           entryIndex++;
         }
