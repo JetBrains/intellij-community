@@ -34,14 +34,19 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
+import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.CSS;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -2620,7 +2625,9 @@ public class UIUtil {
   }
 
   public static class JBHtmlEditorKit extends HTMLEditorKit {
+    private static final Method MODEL_CHANGED = ReflectionUtil.getDeclaredMethod(BasicTextUI.class, "modelChanged");
     private final StyleSheet style;
+    private final HyperlinkListener myHyperlinkListener;
 
     public JBHtmlEditorKit() {
       this(true);
@@ -2629,6 +2636,42 @@ public class UIUtil {
     public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
       style = createStyleSheet();
       if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+      myHyperlinkListener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+            setUnderlined(e, true);
+          } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+            setUnderlined(e, false);
+          }
+          if (MODEL_CHANGED == null) {
+            LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
+            return;
+          }
+          try {
+            MODEL_CHANGED.invoke(((JEditorPane)e.getSource()).getUI());
+          }
+          catch (IllegalAccessException exception) {
+            LOG.error(exception);
+          }
+          catch (InvocationTargetException exception) {
+            LOG.error(exception);
+          }
+        }
+
+        private void setUnderlined(HyperlinkEvent e, boolean underlined) {
+          AttributeSet attributes = e.getSourceElement().getAttributes();
+          Object attribute = attributes.getAttribute(HTML.Tag.A);
+          if (attribute instanceof MutableAttributeSet) {
+            MutableAttributeSet a = (MutableAttributeSet)attribute;
+            if (underlined) {
+              a.addAttribute(CSS.Attribute.TEXT_DECORATION, "underline");
+            } else {
+              a.removeAttribute(CSS.Attribute.TEXT_DECORATION);
+            }
+          }
+        }
+      };
     }
 
     @Override
@@ -2641,6 +2684,8 @@ public class UIUtil {
       style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
       style.addRule("code { font-size: 100%; }"); // small by Swing's default
       style.addRule("small { font-size: small; }"); // x-small by Swing's default
+      style.addRule("a { text-decoration: none;}");
+
       return style;
     }
 
@@ -2666,7 +2711,14 @@ public class UIUtil {
             pane.removePropertyChangeListener(this);
           }
         });
+        pane.addHyperlinkListener(myHyperlinkListener);
       }
+    }
+
+    @Override
+    public void deinstall(JEditorPane c) {
+      c.removeHyperlinkListener(myHyperlinkListener);
+      super.deinstall(c);
     }
   }
 
