@@ -34,8 +34,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.config.GradleResourceCompilerConfigurationGenerator;
-import org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider;
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings;
@@ -58,22 +56,8 @@ public class GradleStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    configureBuildClasspath(project);
     showNotificationForUnlinkedGradleProject(project);
     ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> GradleExtensionsSettings.load(project));
-
-    final GradleResourceCompilerConfigurationGenerator buildConfigurationGenerator = new GradleResourceCompilerConfigurationGenerator(project);
-    CompilerManager.getInstance(project).addBeforeTask(new CompileTask() {
-      @Override
-      public boolean execute(CompileContext context) {
-        ApplicationManager.getApplication().runReadAction(() -> buildConfigurationGenerator.generateBuildConfiguration(context));
-        return true;
-      }
-    });
-  }
-
-  private static void configureBuildClasspath(@NotNull final Project project) {
-    GradleBuildClasspathManager.getInstance(project).reload();
   }
 
   private static void showNotificationForUnlinkedGradleProject(@NotNull final Project project) {

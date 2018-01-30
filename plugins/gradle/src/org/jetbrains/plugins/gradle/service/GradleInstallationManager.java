@@ -47,7 +47,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
-import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -71,6 +70,8 @@ public class GradleInstallationManager {
   public static final Pattern ANY_GRADLE_JAR_FILE_PATTERN;
   public static final Pattern ANT_JAR_PATTERN = Pattern.compile("ant(-(.*))?\\.jar");
   public static final Pattern IVY_JAR_PATTERN = Pattern.compile("ivy(-(.*))?\\.jar");
+  @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN =
+    Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
 
   private static final String[] GRADLE_START_FILE_NAMES;
   @NonNls private static final String GRADLE_ENV_PROPERTY_NAME;
@@ -522,7 +523,7 @@ public class GradleInstallationManager {
     return ANY_GRADLE_JAR_FILE_PATTERN.matcher(fileName).matches()
            || ANT_JAR_PATTERN.matcher(fileName).matches()
            || IVY_JAR_PATTERN.matcher(fileName).matches()
-           || GroovyConfigUtils.matchesGroovyAll(fileName);
+           || matchesGroovyAll(fileName);
   }
 
   private void addRoots(@NotNull List<File> result, @Nullable File... files) {
@@ -559,5 +560,9 @@ public class GradleInstallationManager {
       f -> f.isDirectory() && StringUtil.startsWith(f.getName(), "gradle-"));
 
     return distFiles == null || distFiles.length == 0 ? null : distFiles[0];
+  }
+
+  private static boolean matchesGroovyAll(@NotNull String name) {
+    return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
   }
 }

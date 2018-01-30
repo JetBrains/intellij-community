@@ -128,40 +128,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testCompilerConfigurationSettingsImport() throws Exception {
-
-    importProject(
-      withGradleIdeaExtPlugin(
-      "idea {\n" +
-      "  project.settings {\n" +
-      "    compiler {\n" +
-      "      resourcePatterns '!*.java;!*.class'\n" +
-      "      clearOutputDirectory false\n" +
-      "      addNotNullAssertions false\n" +
-      "      autoShowFirstErrorInEditor false\n" +
-      "      displayNotificationPopup false\n" +
-      "      enableAutomake false\n" +
-      "      parallelCompilation true\n" +
-      "      rebuildModuleOnDependencyChange false\n" +
-      "    }\n" +
-      "  }\n" +
-      "}")
-    );
-
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-    final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
-
-    assertSameElements(compilerConfiguration.getResourceFilePatterns(), "!*.class", "!*.java");
-    assertFalse(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
-    assertFalse(compilerConfiguration.isAddNotNullAssertions());
-    assertFalse(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    assertFalse(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
-    assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
-    assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
-  }
-
-  @Test
   public void testApplicationRunConfigurationSettingsImport() throws Exception {
     TestRunConfigurationImporter testExtension = new TestRunConfigurationImporter("application");
     ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
@@ -368,7 +334,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   }
 
   @NotNull
-  private String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
+  protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
     return "buildscript {\n" +
            "  repositories {\n" +
            "    mavenLocal()\n" +

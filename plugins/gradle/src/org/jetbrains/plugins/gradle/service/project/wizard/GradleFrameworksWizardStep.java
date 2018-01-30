@@ -19,9 +19,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider;
-import org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider;
 import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider;
-import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -91,13 +89,14 @@ public class GradleFrameworksWizardStep extends ModuleWizardStep implements Disp
     List<FrameworkSupportInModuleProvider> providers = ContainerUtil.newArrayList();
     Collections.addAll(providers, KotlinDslGradleFrameworkSupportProvider.EP_NAME.getExtensions());
     myFrameworksPanel.setProviders(providers, Collections.emptySet(), Collections.singleton(
-      KotlinDslGradleJavaFrameworkSupportProvider.ID));
+      "java"/*KotlinDslGradleJavaFrameworkSupportProvider.ID*/));
   }
 
   private void setGradleFrameworkSupportProviders() {
     List<FrameworkSupportInModuleProvider> providers = ContainerUtil.newArrayList();
     Collections.addAll(providers, GradleFrameworkSupportProvider.EP_NAME.getExtensions());
-    myFrameworksPanel.setProviders(providers, Collections.emptySet(), Collections.singleton(GradleJavaFrameworkSupportProvider.ID));
+    myFrameworksPanel
+      .setProviders(providers, Collections.emptySet(), Collections.singleton("java"/*GradleJavaFrameworkSupportProvider.ID*/));
   }
 
   @Override

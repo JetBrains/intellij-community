@@ -58,9 +58,9 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
       if (OpenGradleSettingsCallback.ID.equals(fix)) {
         notificationData.setListener(OpenGradleSettingsCallback.ID, new OpenGradleSettingsCallback(project));
       }
-      else if (ApplyGradlePluginCallback.ID.equals(fix)) {
-        notificationData.setListener(ApplyGradlePluginCallback.ID, new ApplyGradlePluginCallback(notificationData, project));
-      }
+      //else if (ApplyGradlePluginCallback.ID.equals(fix)) {
+      //  notificationData.setListener(ApplyGradlePluginCallback.ID, new ApplyGradlePluginCallback(notificationData, project));
+      //}
       else if (GotoSourceNotificationCallback.ID.equals(fix)) {
         notificationData.setListener(GotoSourceNotificationCallback.ID, new GotoSourceNotificationCallback(notificationData, project));
       }

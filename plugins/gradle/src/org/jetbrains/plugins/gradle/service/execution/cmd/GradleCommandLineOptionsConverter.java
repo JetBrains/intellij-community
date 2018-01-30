@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.service.execution.cmd;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import groovyjarjarcommonscli.Option;
 import org.gradle.cli.*;
+import org.gradle.internal.impldep.org.apache.commons.cli.Option;
 
 import java.util.Collection;
 import java.util.List;
