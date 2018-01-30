@@ -40,7 +40,7 @@ import java.beans.PropertyChangeListener;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor, PropertyChangeListener {
+final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileEditor {
   private static final String NAME = "ImageFileEditor";
 
   private final ImageEditor imageEditor;
@@ -58,7 +58,10 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
     imageEditor.setGridVisible(gridOptions.isShowDefault());
     imageEditor.setTransparencyChessboardVisible(transparencyChessboardOptions.isShowDefault());
 
-    ((ImageEditorImpl)imageEditor).getComponent().getImageComponent().addPropertyChangeListener(this);
+    imageEditor.getZoomModel().addStateChangeListener(event -> {
+      PropertyChangeEvent editorEvent = new PropertyChangeEvent(this, event.getPropertyName(), event.getOldValue(), event.getNewValue());
+      myDispatcher.getMulticaster().propertyChange(editorEvent);
+    });
   }
 
   @NotNull
@@ -114,12 +117,6 @@ final class ImageFileEditorImpl extends UserDataHolderBase implements ImageFileE
 
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
     myDispatcher.removeListener(listener);
-  }
-
-  @Override
-  public void propertyChange(@NotNull PropertyChangeEvent event) {
-    PropertyChangeEvent editorEvent = new PropertyChangeEvent(this, event.getPropertyName(), event.getOldValue(), event.getNewValue());
-    myDispatcher.getMulticaster().propertyChange(editorEvent);
   }
 
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
