@@ -46,7 +46,7 @@ public class ReRunSyncFilter extends GradleReRunBuildFilter {
       ImportSpec importSpec = new ImportSpecBuilder(myProject, myTask.getExternalSystemId())
         .withArguments(StringUtil.join(options, " "))
         .build();
-      ExternalSystemUtil.refreshProject(myTask.getExternalProjectPath(), importSpec, true);
+      ExternalSystemUtil.refreshProject(myTask.getExternalProjectPath(), importSpec);
     };
   }
 }
