@@ -224,6 +224,13 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "            return myElement;\n" +
            "        }\n" +
            "    }\n" +
+           "    <warning descr=\"Access can be private\">protected</warning> String myElement1;\n" +
+           "    class B1 {\n" +
+           "        @Override\n" +
+           "        public String toString() {\n" +
+           "            return myElement1;\n" +
+           "        }\n" +
+           "    }\n" +
            "}");
   }
 
