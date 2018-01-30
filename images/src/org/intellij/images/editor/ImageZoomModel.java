@@ -37,6 +37,8 @@ public interface ImageZoomModel {
 
     void zoomIn();
 
+    void setZoomLevelChanged(boolean value);
+
     boolean canZoomOut();
 
     boolean canZoomIn();
@@ -61,6 +63,10 @@ public interface ImageZoomModel {
 
         @Override
         public void zoomIn() {
+        }
+
+        @Override
+        public void setZoomLevelChanged(boolean value) {
         }
 
         @Override

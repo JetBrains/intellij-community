@@ -472,6 +472,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       return zoomFactor < MACRO_ZOOM_LIMIT;
     }
 
+    @Override
+    public void setZoomLevelChanged(boolean value) {
+      myZoomLevelChanged = value;
+    }
+
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
     }
