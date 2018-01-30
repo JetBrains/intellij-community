@@ -5,9 +5,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,15 +35,15 @@ public abstract class ProjectJdkTable {
 
   @Nullable
   public Sdk findMostRecentSdkOfType(@NotNull SdkTypeId type) {
-    return findMostRecentSdk(sdk -> sdk.getSdkType() == type);
+    return getSdksOfType(type).stream().max(type.versionComparator()).orElse(null);
   }
 
-  @Nullable
+  /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} (to be removed in IDEA 2019) */
   public Sdk findMostRecentSdk(@NotNull Condition<Sdk> condition) {
     Sdk found = null;
     for (Sdk each : getAllJdks()) {
       if (condition.value(each) &&
-          (found == null || StringUtil.compareVersionNumbers(each.getVersionString(), found.getVersionString()) > 0)) {
+          (found == null || Comparing.compare(each.getVersionString(), found.getVersionString()) > 0)) {
         found = each;
       }
     }
