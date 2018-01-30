@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -38,8 +22,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 
 public class AddModuleWizard extends AbstractProjectWizard {
-  private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
-  private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
   private ProjectImportProvider[] myImportProviders;
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
@@ -114,9 +96,8 @@ public class AddModuleWizard extends AbstractProjectWizard {
   @Nullable
   public static Sdk getMostRecentSuitableSdk(final WizardContext context) {
     if (context.getProject() == null) {
-      @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
-      return ProjectJdkTable.getInstance().findMostRecentSdk(
-        sdk -> projectBuilder == null || projectBuilder.isSuitableSdkType(sdk.getSdkType()));
+      ProjectBuilder builder = context.getProjectBuilder();
+      return ProjectJdkTable.getInstance().findMostRecentSdk(sdk -> builder == null || builder.isSuitableSdkType(sdk.getSdkType()));
     }
     return null;
   }
