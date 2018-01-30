@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionAssertions.WatchingInsertionContext;
 import com.intellij.codeInsight.completion.actions.BaseCodeCompletionAction;
@@ -51,7 +50,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -448,54 +446,21 @@ public class CodeCompletionHandlerBase {
     OffsetsInFile topLevelOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
-    PsiFile hostCopy = createFileCopy(topLevelOffsets.getFile());
-    Document copyDocument = hostCopy.getViewProvider().getDocument();
-    assert copyDocument != null : "no document";
-    OffsetsInFile copyOffsets = topLevelOffsets.toFileCopy(hostCopy);
-    OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument);
+    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
+    Document copyDocument = Objects.requireNonNull(hostCopy.getViewProvider().getDocument());
 
-    CompletionAssertions.checkEditorValid(initContext.getEditor());
     String dummyIdentifier = initContext.getDummyIdentifier();
-    if (!StringUtil.isEmpty(dummyIdentifier)) {
-      int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
-      int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
-      copyDocument.replaceString(startOffset, endOffset, dummyIdentifier);
+    int startOffset = hostMap.getOffset(CompletionInitializationContext.START_OFFSET);
+    int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
+
+    OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+
+    OffsetsInFile copyOffsets = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
+    if (!hostCopy.isValid()) {
+      Disposer.dispose(translator);
+      return;
     }
-    CompletionAssertions.checkEditorValid(initContext.getEditor());
-
-    Project project = initContext.getProject();
-
-    if (!synchronous) {
-      if (CompletionServiceImpl.isPhase(CompletionPhase.NoCompletion.getClass()) ||
-          !CompletionServiceImpl.assertPhase(CompletionPhase.CommittingDocuments.class)) {
-        Disposer.dispose(translator);
-        return;
-      }
-
-      final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
-
-      AutoPopupController.runTransactionWithEverythingCommitted(project, () -> {
-        if (phase.checkExpired() || isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
-          Disposer.dispose(translator);
-          return;
-        }
-        doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
-      });
-    }
-    else {
-      PsiDocumentManager.getInstance(project).commitDocument(copyDocument);
-      if (isAnythingInvalidatedAfterCommit(initContext, hostCopy)) {
-        Disposer.dispose(translator);
-        return;
-      }
-
-      doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
-    }
-  }
-
-  private static boolean isAnythingInvalidatedAfterCommit(CompletionInitializationContext initContext, PsiFile hostCopy) {
-    return !initContext.getFile().isValid() || !hostCopy.isValid() ||
-           !CompletionAssertions.isEditorValid(initContext.getEditor());
+    doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
   }
 
   private static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
@@ -696,7 +661,7 @@ public class CodeCompletionHandlerBase {
     return current != null && current.getViewProvider().getPsi(copyFile.getLanguage()) == copyFile;
   }
 
-  private static PsiFile createFileCopy(PsiFile file) {
+  private static PsiFile obtainFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
     boolean mayCacheCopy = file.isPhysical() &&
                            // we don't want to cache code fragment copies even if they appear to be physical
@@ -704,13 +669,8 @@ public class CodeCompletionHandlerBase {
     if (mayCacheCopy) {
       final Pair<PsiFile, Document> cached = SoftReference.dereference(file.getUserData(FILE_COPY_KEY));
       if (cached != null && isCopyUpToDate(cached.second, cached.first, file)) {
-        final PsiFile copy = cached.first;
-        final Document document = cached.second;
+        PsiFile copy = cached.first;
         CompletionAssertions.assertCorrectOriginalFile("Cached", file, copy);
-        Document originalDocument = file.getViewProvider().getDocument();
-        assert originalDocument != null;
-        assert originalDocument.getTextLength() == file.getTextLength() : originalDocument;
-        document.replaceString(0, document.getTextLength(), originalDocument.getImmutableCharSequence());
         return copy;
       }
     }
