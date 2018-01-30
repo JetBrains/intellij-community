@@ -215,7 +215,9 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
-    String junit5Name = junit4Rt.getName().replace("junit", "junit5");
+    String junit4Name = junit4Rt.getName();
+    String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5") 
+                                               : junit4Name.replace("junit", "junit5");
     return new File(junit4Rt.getParent(), junit5Name);
   }
 
