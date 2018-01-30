@@ -146,8 +146,8 @@ public class VfsDependentEnum<T> {
   // GuardedBy("myLock")
   private @Nullable IOException invalidate(@Nullable Throwable e) {
     if (!myMarkedForInvalidation) {
-      doInvalidation(e);
       myMarkedForInvalidation = true;
+      doInvalidation(e); // exception will be rethrown in this call
     }
     if (e instanceof IOException) return (IOException)e;
     return null;
