@@ -836,7 +836,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void registerSizeTracker() {
-    final Window window = myHint.getPopupWindow();
+    final AbstractPopup hint = myHint;
+    if (hint == null) return;
+    final Window window = hint.getPopupWindow();
     final ComponentAdapter listener = new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
@@ -844,11 +846,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           myResizing = false;
           return;
         }
-        myHint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+        hint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
       }
     };
     window.addComponentListener(listener);
-    Disposer.register(this, () -> myHint.getPopupWindow().removeComponentListener(listener));
+    Disposer.register(this, () -> hint.getPopupWindow().removeComponentListener(listener));
   }
 
   private int definitionPreferredWidth() {
