@@ -234,7 +234,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(list, PsiMethodCallExpression.class);
       if (call == null) return null;
       PsiExpression[] arguments = call.getArgumentList().getExpressions();
-      if (arguments.length < MIN_EXPRESSION_COUNT + 1) return null;
+      if (arguments.length < MIN_EXPRESSION_COUNT) return null;
       PsiMethod method = tryCast(call.getMethodExpression().resolve(), PsiMethod.class);
       if (method == null) return null;
       PsiParameterList parameterList = method.getParameterList();
