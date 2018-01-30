@@ -50,7 +50,7 @@
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
-    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
+    <enterBetweenBracesDelegate language="Python"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.jetbrains.python.console.PyConsoleCopyHandler"/>
 
     <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
