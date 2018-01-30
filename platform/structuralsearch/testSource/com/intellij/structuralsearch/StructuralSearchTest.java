@@ -2215,6 +2215,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String pattern2 = "System.out.println('_v);" +
                       "System.out.println('_v);";
     assertEquals(1, findMatchesCount(source, pattern2));
+
+    String source2 = "class B {{" +
+                     "  System.out.println((3 * 8) + 2 + (((2))));" +
+                     "}}";
+    String pattern3 = "3 * 8 + 2 + 2";
+    assertEquals(1, findMatchesCount(source2, pattern3));
   }
 
   public void testFindSelfAssignment() {

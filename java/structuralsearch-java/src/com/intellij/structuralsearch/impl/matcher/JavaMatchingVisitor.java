@@ -237,11 +237,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
-    final PsiArrayInitializerExpression expr2 = (PsiArrayInitializerExpression)myMatchingVisitor.getElement();
-
+    final PsiArrayInitializerExpression other = getExpression(PsiArrayInitializerExpression.class);
+    if (other == null) return;
     myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(
       new ArrayBackedNodeIterator(expression.getInitializers()),
-      new ArrayBackedNodeIterator(expr2.getInitializers())
+      new ArrayBackedNodeIterator(other.getInitializers())
     ));
   }
 
@@ -351,14 +351,13 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    if (!myMatchingVisitor.setResult(other instanceof PsiLambdaExpression)) return;
-    final PsiLambdaExpression expression2 = (PsiLambdaExpression)other;
+    final PsiLambdaExpression other = getExpression(PsiLambdaExpression.class);
+    if (other == null) return;
     final PsiParameterList parameterList1 = expression.getParameterList();
     if (!myMatchingVisitor.setResult(
-      parameterList1.isEmpty() || myMatchingVisitor.matchSons(parameterList1, expression2.getParameterList()))) return;
+      parameterList1.isEmpty() || myMatchingVisitor.matchSons(parameterList1, other.getParameterList()))) return;
     final PsiElement body1 = getElementToMatch(expression.getBody());
-    myMatchingVisitor.setResult(body1 == null || myMatchingVisitor.matchSequentially(body1, getElementToMatch(expression2.getBody())));
+    myMatchingVisitor.setResult(body1 == null || myMatchingVisitor.matchSequentially(body1, getElementToMatch(other.getBody())));
   }
 
   private static PsiElement getElementToMatch(PsiElement element) {
@@ -514,17 +513,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitArrayAccessExpression(final PsiArrayAccessExpression slice) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    if (myMatchingVisitor.setResult(other instanceof PsiArrayAccessExpression)) {
-      final PsiArrayAccessExpression slice2 = (PsiArrayAccessExpression)other;
-      myMatchingVisitor.setResult(myMatchingVisitor.match(slice.getArrayExpression(), slice2.getArrayExpression()) &&
-                                  myMatchingVisitor.match(slice.getIndexExpression(), slice2.getIndexExpression()));
+    final PsiArrayAccessExpression other = getExpression(PsiArrayAccessExpression.class);
+    if (other != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(slice.getArrayExpression(), other.getArrayExpression()) &&
+                                  myMatchingVisitor.match(slice.getIndexExpression(), other.getIndexExpression()));
     }
   }
 
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-    if (!myMatchingVisitor.setResult(myMatchingVisitor.getElement() instanceof PsiMethodReferenceExpression)) return;
+    if (getExpression(PsiMethodReferenceExpression.class) == null) return;
     super.visitMethodReferenceExpression(expression);
   }
 
@@ -539,10 +537,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       special = true;
     }
 
-    final PsiElement element = myMatchingVisitor.getElement();
-    PsiElement other = element instanceof PsiExpression && context.getOptions().isLooseMatching() ?
-                       PsiUtil.skipParenthesizedExprDown((PsiExpression)element) :
-                       element;
+    final PsiElement other = myMatchingVisitor.getElement();
     final PsiExpression qualifier = reference.getQualifierExpression();
     if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
@@ -550,7 +545,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(checkMatchWithinHierarchy(other, handler, reference));
       }
       else {
-        myMatchingVisitor.setResult(handler.handle(other, context));
+        final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
+                                           PsiUtil.skipParenthesizedExprDown((PsiExpression)other) : other;
+        myMatchingVisitor.setResult(handler.validate(deparenthesized, 0, -1, context));
+        if (myMatchingVisitor.getResult()) {
+          handler.addResult(other, 0, -1, context);
+        }
       }
       return;
     }
@@ -877,16 +877,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitConditionalExpression(final PsiConditionalExpression cond) {
-    final PsiConditionalExpression cond2 = (PsiConditionalExpression)myMatchingVisitor.getElement();
-
+    final PsiConditionalExpression cond2 = getExpression(PsiConditionalExpression.class);
+    if (cond2 == null) return;
     myMatchingVisitor.setResult(myMatchingVisitor.match(cond.getCondition(), cond2.getCondition()) &&
                                 myMatchingVisitor.matchSons(cond, cond2));
   }
 
   @Override
   public void visitPolyadicExpression(PsiPolyadicExpression expression) {
-    final PsiPolyadicExpression expr2 = (PsiPolyadicExpression)myMatchingVisitor.getElement();
-
+    final PsiPolyadicExpression expr2 = getExpression(PsiPolyadicExpression.class);
+    if (expr2 == null) return;
     if (myMatchingVisitor.setResult(expression.getOperationTokenType().equals(expr2.getOperationTokenType()))) {
       final PsiExpression[] operands1 = expression.getOperands();
       final PsiExpression[] operands2 = expr2.getOperands();
@@ -988,9 +988,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitMethodCallExpression(final PsiMethodCallExpression mcall) {
-    final PsiElement element = myMatchingVisitor.getElement();
-    if (!myMatchingVisitor.setResult(element instanceof PsiMethodCallExpression)) return;
-    final PsiMethodCallExpression mcall2 = (PsiMethodCallExpression)element;
+    final PsiMethodCallExpression mcall2 = getExpression(PsiMethodCallExpression.class);
+    if (mcall2 == null) return;
     final PsiReferenceExpression mcallRef1 = mcall.getMethodExpression();
     final PsiReferenceExpression mcallRef2 = mcall2.getMethodExpression();
 
@@ -1078,8 +1077,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitLiteralExpression(final PsiLiteralExpression const1) {
-    final PsiLiteralExpression const2 = (PsiLiteralExpression)myMatchingVisitor.getElement();
-
+    final PsiLiteralExpression const2 = getExpression(PsiLiteralExpression.class);
+    if (const2 == null) return;
     final MatchingHandler handler = (MatchingHandler)const1.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
       final PsiType type1 = const1.getType();
@@ -1119,13 +1118,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitAssignmentExpression(final PsiAssignmentExpression assign) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    if (myMatchingVisitor.setResult(other instanceof PsiAssignmentExpression)) {
-      final PsiAssignmentExpression assign2 = (PsiAssignmentExpression)other;
-
-      myMatchingVisitor.setResult(assign.getOperationTokenType().equals(assign2.getOperationTokenType()) &&
-                                  myMatchingVisitor.match(assign.getLExpression(), assign2.getLExpression()) &&
-                                  myMatchingVisitor.match(assign.getRExpression(), assign2.getRExpression()));
+    final PsiAssignmentExpression other = getExpression(PsiAssignmentExpression.class);
+    if (other != null) {
+      myMatchingVisitor.setResult(assign.getOperationTokenType().equals(other.getOperationTokenType()) &&
+                                  myMatchingVisitor.match(assign.getLExpression(), other.getLExpression()) &&
+                                  myMatchingVisitor.match(assign.getRExpression(), other.getRExpression()));
     }
   }
 
@@ -1210,18 +1207,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitPostfixExpression(final PsiPostfixExpression postfix) {
-    final PsiPostfixExpression postfix2 = (PsiPostfixExpression)myMatchingVisitor.getElement();
-
-    myMatchingVisitor.setResult(postfix.getOperationTokenType().equals(postfix2.getOperationTokenType())
-                                && myMatchingVisitor.match(postfix.getOperand(), postfix2.getOperand()));
+    final PsiPostfixExpression postfix2 = getExpression(PsiPostfixExpression.class);
+    if (postfix2 == null) return;
+    myMatchingVisitor.setResult(postfix.getOperationTokenType().equals(postfix2.getOperationTokenType()) &&
+                                myMatchingVisitor.match(postfix.getOperand(), postfix2.getOperand()));
   }
 
   @Override
   public void visitPrefixExpression(final PsiPrefixExpression prefix) {
-    final PsiPrefixExpression prefix2 = (PsiPrefixExpression)myMatchingVisitor.getElement();
-
-    myMatchingVisitor.setResult(prefix.getOperationTokenType().equals(prefix2.getOperationTokenType())
-                                && myMatchingVisitor.match(prefix.getOperand(), prefix2.getOperand()));
+    final PsiPrefixExpression prefix2 = getExpression(PsiPrefixExpression.class);
+    if (prefix2 == null) return;
+    myMatchingVisitor.setResult(prefix.getOperationTokenType().equals(prefix2.getOperationTokenType()) &&
+                                myMatchingVisitor.match(prefix.getOperand(), prefix2.getOperand()));
   }
 
   @Override
@@ -1248,12 +1245,12 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitSuperExpression(final PsiSuperExpression super1) {
-    myMatchingVisitor.setResult(myMatchingVisitor.getElement() instanceof PsiSuperExpression);
+    getExpression(PsiSuperExpression.class);
   }
 
   @Override
   public void visitThisExpression(final PsiThisExpression this1) {
-    myMatchingVisitor.setResult(myMatchingVisitor.getElement() instanceof PsiThisExpression);
+    getExpression(PsiThisExpression.class);
   }
 
   @Override
@@ -1355,16 +1352,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitInstanceOfExpression(final PsiInstanceOfExpression instanceOf) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    if (!myMatchingVisitor.setResult(other instanceof PsiInstanceOfExpression)) return;
-    final PsiInstanceOfExpression instanceOf2 = (PsiInstanceOfExpression)other;
-    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getOperand(), instanceOf2.getOperand()))) return;
-    myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getCheckType(), instanceOf2.getCheckType()));
+    final PsiInstanceOfExpression other = getExpression(PsiInstanceOfExpression.class);
+    if (other == null) return;
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getOperand(), other.getOperand()))) return;
+    myMatchingVisitor.setResult(myMatchingVisitor.match(instanceOf.getCheckType(), other.getCheckType()));
   }
 
   @Override
   public void visitNewExpression(final PsiNewExpression new1) {
-    final PsiElement other = myMatchingVisitor.getElement();
+    final PsiExpression other = getExpression();
     final PsiJavaCodeReferenceElement classReference = new1.getClassReference();
     if (other instanceof PsiArrayInitializerExpression &&
         other.getParent() instanceof PsiVariable &&
@@ -1378,7 +1374,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         myMatchingVisitor.setResult(false);
         return;
       }
-      final PsiType otherType = ((PsiArrayInitializerExpression)other).getType();
+      final PsiType otherType = other.getType();
       if (handler instanceof SubstitutionHandler && otherType != null) {
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(other.getProject());
         final PsiTypeElement otherTypeElement = factory.createTypeElement(otherType.getDeepComponentType());
@@ -1450,20 +1446,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitTypeCastExpression(final PsiTypeCastExpression cast) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    if (myMatchingVisitor.setResult(other instanceof PsiTypeCastExpression)) {
-      final PsiTypeCastExpression cast2 = (PsiTypeCastExpression)other;
-      myMatchingVisitor.setResult(myMatchingVisitor.match(cast.getCastType(), cast2.getCastType()) &&
-                                  myMatchingVisitor.match(cast.getOperand(), cast2.getOperand()));
+    final PsiTypeCastExpression other = getExpression(PsiTypeCastExpression.class);
+    if (other != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(cast.getCastType(), other.getCastType()) &&
+                                  myMatchingVisitor.match(cast.getOperand(), other.getOperand()));
     }
   }
 
   @Override
   public void visitClassObjectAccessExpression(final PsiClassObjectAccessExpression expr) {
-    final PsiElement other = myMatchingVisitor.getElement();
-    if (myMatchingVisitor.setResult(other instanceof PsiClassObjectAccessExpression)) {
-      final PsiClassObjectAccessExpression expr2 = (PsiClassObjectAccessExpression)other;
-      myMatchingVisitor.setResult(myMatchingVisitor.match(expr.getOperand(), expr2.getOperand()));
+    final PsiClassObjectAccessExpression other = getExpression(PsiClassObjectAccessExpression.class);
+    if (other != null) {
+      myMatchingVisitor.setResult(myMatchingVisitor.match(expr.getOperand(), other.getOperand()));
     }
   }
 
@@ -1590,5 +1584,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     finally {
       saveOrDropResult(methodNameNode, isTypedVar, method2.getNameIdentifier());
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T extends PsiExpression> T getExpression(Class<T> aClass) {
+    final PsiExpression other = getExpression();
+    return myMatchingVisitor.setResult(aClass.isInstance(other)) ? (T)other : null;
+  }
+
+  private PsiExpression getExpression() {
+    final PsiElement other = myMatchingVisitor.getElement();
+    return (other instanceof PsiExpression) ? PsiUtil.skipParenthesizedExprDown((PsiExpression)other) : null;
   }
 }
