@@ -15,8 +15,6 @@
  */
 package org.intellij.images.editor;
 
-import java.beans.PropertyChangeListener;
-
 /**
  * Location model presents bounds of image.
  * The zoom it calculated as y = exp(x/2).
@@ -44,8 +42,6 @@ public interface ImageZoomModel {
     boolean canZoomIn();
 
     boolean isZoomLevelChanged();
-
-    void addStateChangeListener(PropertyChangeListener listener);
 
     ImageZoomModel STUB = new ImageZoomModel() {
         @Override
@@ -86,10 +82,6 @@ public interface ImageZoomModel {
         @Override
         public boolean isZoomLevelChanged() {
             return false;
-        }
-
-        @Override
-        public void addStateChangeListener(PropertyChangeListener listener) {
         }
     };
 }

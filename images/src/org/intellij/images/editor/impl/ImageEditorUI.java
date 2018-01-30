@@ -33,7 +33,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
@@ -96,6 +95,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   ImageEditorUI(@Nullable ImageEditor editor) {
     this.editor = editor;
 
+    imageComponent.addPropertyChangeListener(ZOOM_FACTOR_PROP, e -> imageComponent.setZoomFactor(getZoomModel().getZoomFactor()));
     Options options = OptionsManager.getInstance().getOptions();
     EditorOptions editorOptions = options.getEditorOptions();
     options.addPropertyChangeListener(optionsChangeListener);
@@ -376,7 +376,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   private class ImageZoomModelImpl implements ImageZoomModel {
-    private final EventDispatcher<PropertyChangeListener> myDispatcher = EventDispatcher.create(PropertyChangeListener.class);
     private boolean myZoomLevelChanged = false;
 
     public double getZoomFactor() {
@@ -398,13 +397,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         imageComponent.setCanvasSize(size);
       }
 
-      myZoomLevelChanged = false;
-      imageComponent.setZoomFactor(zoomFactor);
-
-      fireStateChange(ZOOM_FACTOR_PROP, oldZoomFactor, zoomFactor);
-
       revalidate();
       repaint();
+      myZoomLevelChanged = false;
+
+      imageComponent.firePropertyChange(ZOOM_FACTOR_PROP, oldZoomFactor, zoomFactor);
     }
 
     private double getMinimumZoomFactor() {
@@ -479,17 +476,6 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
     public boolean isZoomLevelChanged() {
       return myZoomLevelChanged;
-    }
-
-    @Override
-    public void addStateChangeListener(PropertyChangeListener listener) {
-      myDispatcher.addListener(listener);
-    }
-
-    private void fireStateChange(String propertyName, Object oldValue, Object newValue) {
-      if (oldValue != newValue && (oldValue == null || newValue == null || !oldValue.equals(newValue))) {
-        myDispatcher.getMulticaster().propertyChange(new PropertyChangeEvent(this, propertyName, oldValue, newValue));
-      }
     }
   }
 
