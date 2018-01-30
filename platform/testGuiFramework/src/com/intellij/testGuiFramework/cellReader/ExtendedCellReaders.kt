@@ -32,6 +32,7 @@ import org.fest.swing.edt.GuiQuery
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
+import java.lang.Error
 import java.util.*
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
@@ -46,14 +47,8 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
 
   override fun valueAt(tree: JTree, modelValue: Any?): String? {
     if (modelValue == null) return null
-
-    val isLeaf = modelValue is DefaultMutableTreeNode && modelValue.leafCount == 1
-    val cellRendererComponent = if (isLeaf) {
-      tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, true, 0, false)
-    }
-    else {
-      tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, false, 0, false)
-    }
+    val isLeaf = try { modelValue is DefaultMutableTreeNode &&  modelValue.leafCount == 1 } catch (e: Error) { false }
+    val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, isLeaf, 0, false)
     return getValueWithCellRenderer(cellRendererComponent)
   }
 }
