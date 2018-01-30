@@ -1560,6 +1560,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myToolwindowCallback != null);
+    }
+
+    @Override
     public void actionPerformed(AnActionEvent e) {
       myToolwindowCallback.run();
     }
