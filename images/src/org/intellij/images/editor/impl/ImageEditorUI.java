@@ -417,6 +417,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       else {
         zoomModel.setZoomFactor(1.0d);
       }
+      myZoomLevelChanged = false;
     }
 
     public void zoomOut() {
