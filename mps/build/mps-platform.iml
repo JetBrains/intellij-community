@@ -9,8 +9,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
-    <orderEntry type="module" module-name="build" />
-    <orderEntry type="module" module-name="jps-standalone-builder" />
-    <orderEntry type="module" module-name="java-runtime" />
+    <orderEntry type="module" module-name="intellij.idea.community.build" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
   </component>
 </module>

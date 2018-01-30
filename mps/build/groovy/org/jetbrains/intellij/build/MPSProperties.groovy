@@ -12,33 +12,33 @@ class MPSProperties extends ProductProperties {
         baseFileName = "mps"
         productCode = "MPS"
         platformPrefix = "Idea"
-        applicationInfoModule = "community-resources"
+        applicationInfoModule = "intellij.idea.community.resources"
 //        brandingResourcePaths = ["$home/branding/MPS"]
         toolsJarRequired = true
 
         productLayout.mainJarName = "platform.jar"
-        productLayout.mainModules = ["community-main"]
+        productLayout.mainModules = ["intellij.idea.community.main"]
         productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES
         productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
-                ["platform-main",
-                 "testFramework",
-                 "tests_bootstrap",
-                 "execution-openapi",
-                 "execution-impl",
-                 "instrumentation-util",
-                 "external-system-impl"]
+                ["intellij.platform.main",
+                 "intellij.platform.testFramework",
+                 "intellij.tools.testsBootstrap",
+                 "intellij.java.execution",
+                 "intellij.java.execution.impl",
+                 "intellij.java.compiler.instrumentationUtil",
+                 "intellij.platform.externalSystem.impl"]
 
         productLayout.bundledPluginModules = [
-                "git4idea", "remote-servers-git", "remote-servers-git-java", "svn4idea", "cvs-plugin",
-                "terminal"
+                "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.cvs",
+                "intellij.terminal"
                 /*, "properties", "ant"*/
         ]
 
-        productLayout.additionalPlatformJars.put("forms_rt.jar", "forms-compiler")
-        productLayout.additionalPlatformJars.putAll("util.jar", ["util", "util-rt"])
-        productLayout.additionalPlatformJars.putAll("resources.jar", ["resources", "resources-en"])
+        productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
+        productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
+        productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
         productLayout.additionalPlatformJars.
-                putAll("javac2.jar", ["javac2", "forms-compiler", "forms_rt", "instrumentation-util", "instrumentation-util-8"])
+                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "forms-compiler", "intellij.java.guiForms.compiler", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
             layout.customize {
@@ -53,28 +53,28 @@ class MPSProperties extends ProductProperties {
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
                 withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")
-                excludeFromModule("resources", "META-INF/IdeaPlugin.xml")
-                excludeFromModule("resources", "componentSets/*")
-                excludeFromModule("resources", "ProductivityFeaturesRegistry.xml")
+                excludeFromModule("intellij.java.resources", "META-INF/IdeaPlugin.xml")
+                excludeFromModule("intellij.java.resources", "componentSets/*")
+                excludeFromModule("intellij.java.resources", "ProductivityFeaturesRegistry.xml")
 //                excludeFromModule("community-resources", "idea")
 //                excludeFromModule("community-resources", "lafs")
 //                excludeFromModule("community-resources", "lafs")
-                excludeFromModule("platform-resources", "META-INF/LangExtensions.xml")
-                excludeFromModule("platform-resources", "META-INF/PlatformLangPlugin.xml")
-                excludeFromModule("platform-resources", "META-INF/PlatformLangXmlPlugin.xml")
-                excludeFromModule("platform-resources", "META-INF/XmlPlugin.xml")
-                excludeFromModule("platform-resources", "META-INF/XmlActions.xml")
-                excludeFromModule("platform-resources", "idea/PlatformActions.xml")
-                excludeFromModule("platform-resources-en", "messages/FeatureStatisticsBundle.properties")
+                excludeFromModule("intellij.platform.resources", "META-INF/LangExtensions.xml")
+                excludeFromModule("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+                excludeFromModule("intellij.platform.resources", "META-INF/PlatformLangXmlPlugin.xml")
+                excludeFromModule("intellij.platform.resources", "META-INF/XmlPlugin.xml")
+                excludeFromModule("intellij.platform.resources", "META-INF/XmlActions.xml")
+                excludeFromModule("intellij.platform.resources", "idea/PlatformActions.xml")
+                excludeFromModule("intellij.platform.resources.en", "messages/FeatureStatisticsBundle.properties")
                 //Removing Idea Tips & Tricks
-                excludeFromModule("resources", "META-INF/IdeTipsAndTricks.xml")
-                excludeFromModule("resources-en", "tips/*")
-                excludeFromModule("platform-resources-en", "tips/*")
-                excludeFromModule("remote-servers-impl", "tips/*")
+                excludeFromModule("intellij.java.resources", "META-INF/IdeTipsAndTricks.xml")
+                excludeFromModule("intellij.java.resources.en", "tips/*")
+                excludeFromModule("intellij.platform.resources.en", "tips/*")
+                excludeFromModule("intellij.platform.remoteServers.impl", "tips/*")
             }
         } as Consumer<PlatformLayout>
 
-        modulesToCompileTests = ["jps-builders", "jps-model-tests", "jps-serialization-tests"]
+        modulesToCompileTests = ["intellij.platform.jps.build", "intellij.platform.jps.model.tests", "intellij.platform.jps.model.serialization.tests"]
 
         buildSourcesArchive = true
     }
