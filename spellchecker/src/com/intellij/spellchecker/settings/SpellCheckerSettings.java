@@ -43,8 +43,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
   private int myCorrectionsLimit = DEFAULT_MAX_VALUE;
-  private String myDictionaryToSave;
-  private boolean myUseSingleDictionaryToSave;
+  private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
+  private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
 
   public int getCorrectionsLimit() {
     return myCorrectionsLimit;
