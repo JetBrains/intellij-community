@@ -101,9 +101,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
   @NonNls private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
 
-  private static final int PREFERRED_WIDTH_EM = 37;
-  private static final int PREFERRED_HEIGHT_MIN_EM = 7;
-  private static final int PREFERRED_HEIGHT_MAX_EM = 20;
+  private static final int PREFERRED_HEIGHT_MAX_EM = 10;
   private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
@@ -480,6 +478,25 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           }
         }
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = myScrollPane.getPreferredSize();
+        if (myHint == null && myManager.myToolWindow == null) {
+          int em = myEditorPane.getFont().getSize();
+          int prefHeightMax = PREFERRED_HEIGHT_MAX_EM * em;
+          return new Dimension(size.width, Math.min(prefHeightMax, size.height));
+        }
+        return size;
+      }
+
+      @Override
+      public Dimension getMaximumSize() {
+        if (myHint == null && myManager.myToolWindow == null) {
+          return getPreferredSize();
+        }
+        return super.getMaximumSize();
+      }
     };
     layeredPane.add(myScrollPane);
     layeredPane.setLayer(myScrollPane, 0);
@@ -733,7 +750,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     myIsEmpty = false;
-    updateControlState();
     setDataInternal(element, text, new Rectangle(0, 0), ref);
 
     if (clearHistory) clearHistory();
@@ -741,6 +757,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, final String ref) {
     if (myManager == null) return;
+    updateControlState();
 
     setElement(element);
     
@@ -1022,7 +1039,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Context context = myBackStack.pop();
     myForwardStack.push(saveContext());
     restoreContext(context);
-    updateControlState();
   }
 
   private void goForward() {
@@ -1030,7 +1046,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     Context context = myForwardStack.pop();
     myBackStack.push(saveContext());
     restoreContext(context);
-    updateControlState();
   }
 
   private Context saveContext() {
