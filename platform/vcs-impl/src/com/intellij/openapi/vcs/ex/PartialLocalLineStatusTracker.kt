@@ -62,6 +62,7 @@ class PartialLocalLineStatusTracker(project: Project,
                                     mode: Mode
 ) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode), ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+  private val lstManager = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
   private val undoManager = UndoManager.getInstance(project)
 
   override val renderer = MyLineStatusMarkerRenderer(this)
@@ -283,6 +284,9 @@ class PartialLocalLineStatusTracker(project: Project,
         after.marker = affectedMarkers.single()
       }
       else {
+        if (!affectedMarkers.isEmpty()) {
+          lstManager.notifyInactiveRangesDamaged(virtualFile)
+        }
         after.marker = defaultMarker
       }
     }
