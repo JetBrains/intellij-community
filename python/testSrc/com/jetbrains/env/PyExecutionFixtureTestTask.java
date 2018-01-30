@@ -253,8 +253,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
     throws InvalidSdkException {
 
-    VirtualFileUtil.findFile(sdkHome);
-
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
     final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());
