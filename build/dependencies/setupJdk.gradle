@@ -9,7 +9,9 @@ apply from: 'archivesCleanup.gradle'
 
 def buildJdkVersion = System.getProperty('intellij.build.jdk.version', '8').toInteger()
 def setupJdkTasks = buildJdkVersion == 8 ? ["setupJbr11", "setupJbr8"] : ["setupJbr$buildJdkVersion"]
+task setupJdks(dependsOn: [])  /* Android Studio: do not download JDKs
 task setupJdks(dependsOn: setupJdkTasks)
+Android Studio: do not download JDKs */
 cleanSetupJdks.dependsOn('cleanSetupJbr8', 'cleanSetupJbr11', 'cleanDownloadJbr8', 'cleanDownloadJbr11', 'cleanSetupJdk16')
 project.ext.jbrRepo = 'https://cache-redirector.jetbrains.com/intellij-jbr'
 def jdkDir = System.getProperty('intellij.build.jdks.target.dir')?.with {
