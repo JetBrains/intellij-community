@@ -121,8 +121,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (results.isEmpty()) {
       PsiMethod method1 = GenerateMembersUtil.substituteGenericMethod(method, substitutor, aClass);
 
-      PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
-      PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
+      PsiMethod result = (PsiMethod)aClass.copy().add(method1);
       if (PsiUtil.isAnnotationMethod(result)) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
         if (defaultValue != null) {
