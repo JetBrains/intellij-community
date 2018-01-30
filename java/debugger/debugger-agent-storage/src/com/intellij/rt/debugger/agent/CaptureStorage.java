@@ -165,11 +165,6 @@ public class CaptureStorage {
     private CapturedStack(Throwable exception) {
       myException = exception;
     }
-
-    List<StackTraceElement> getStackTrace() {
-      StackTraceElement[] stackTrace = myException.getStackTrace();
-      return Arrays.asList(stackTrace).subList(1, stackTrace.length);
-    }
   }
 
   private static class DeepCapturedStack extends CapturedStack {
@@ -178,22 +173,6 @@ public class CaptureStorage {
     public DeepCapturedStack(Throwable exception, InsertMatch insertMatch) {
       super(exception);
       myInsertMatch = insertMatch;
-    }
-
-    List<StackTraceElement> getStackTrace() {
-      StackTraceElement[] stackTrace = myException.getStackTrace();
-      if (myInsertMatch == null || myInsertMatch == InsertMatch.EMPTY) {
-        return super.getStackTrace();
-      }
-      else {
-        List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
-        int insertPos = stackTrace.length - myInsertMatch.getDepth() + 2;
-        ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>(insertPos + insertStack.size() + 1);
-        res.addAll(Arrays.asList(stackTrace).subList(1, insertPos));
-        res.add(null);
-        res.addAll(insertStack);
-        return res;
-      }
     }
   }
 
@@ -220,12 +199,12 @@ public class CaptureStorage {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
-  public static Object[][] getRelatedStack(Object key) {
+  public static Object[][] getRelatedStack(Object key, int limit) {
     CapturedStack stack = STORAGE.get(new HardKey(key));
     if (stack == null) {
       return null;
     }
-    List<StackTraceElement> stackTrace = stack.getStackTrace();
+    List<StackTraceElement> stackTrace = getStackTrace(stack, limit);
     Object[][] res = new Object[stackTrace.size()][];
     for (int i = 0; i < stackTrace.size(); i++) {
       StackTraceElement elem = stackTrace.get(i);
@@ -234,6 +213,29 @@ public class CaptureStorage {
       }
       else {
         res[i] = new Object[]{elem.getClassName(), elem.getFileName(), elem.getMethodName(), String.valueOf(elem.getLineNumber())};
+      }
+    }
+    return res;
+  }
+
+  private static List<StackTraceElement> getStackTrace(CapturedStack stack, int limit) {
+    List<StackTraceElement> res = new ArrayList<StackTraceElement>();
+    while (stack != null && res.size() <= limit) {
+      StackTraceElement[] stackTrace = stack.myException.getStackTrace();
+      int depth = stackTrace.length;
+      if (stack instanceof DeepCapturedStack) {
+        InsertMatch match = ((DeepCapturedStack)stack).myInsertMatch;
+        if (match != null && match != InsertMatch.EMPTY) {
+          depth = stackTrace.length - match.getDepth() + 2;
+          stack = match.myStack;
+        }
+      }
+      else {
+        stack = null;
+      }
+      res.addAll(Arrays.asList(stackTrace).subList(1, depth));
+      if (stack != null) {
+        res.add(null);
       }
     }
     return res;
