@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
@@ -41,7 +42,10 @@ public class PyTypeHintGenerationUtil {
 
   private PyTypeHintGenerationUtil() {}
 
-  public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target, AnnotationInfo info, boolean startTemplate) {
+  public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
+                                                          @NotNull TypeEvalContext context,
+                                                          AnnotationInfo info,
+                                                          boolean startTemplate) {
 
     final PyClass pyClass = target.getContainingClass();
     if (pyClass == null) {
@@ -62,7 +66,7 @@ public class PyTypeHintGenerationUtil {
       PsiComment insertedComment = as(inserted.getLastChild(), PsiComment.class);
       if (insertedComment == null) return;
 
-      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
+      addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
 
       insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
       if (startTemplate && insertedComment != null) {
@@ -72,6 +76,7 @@ public class PyTypeHintGenerationUtil {
   }
 
   public static void insertStandaloneAttributeAnnotation(@NotNull PyTargetExpression target,
+                                                         @NotNull TypeEvalContext context,
                                                          @NotNull AnnotationInfo info,
                                                          boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
@@ -94,7 +99,7 @@ public class PyTypeHintGenerationUtil {
     WriteAction.run(() -> {
       PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
 
-      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
+      addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
 
       inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
       if (startTemplate && inserted != null) {
@@ -113,7 +118,10 @@ public class PyTypeHintGenerationUtil {
     return null;
   }
 
-  public static void insertVariableAnnotation(@NotNull PyTargetExpression target, @NotNull AnnotationInfo info, boolean startTemplate) {
+  public static void insertVariableAnnotation(@NotNull PyTargetExpression target,
+                                              @Nullable TypeEvalContext context,
+                                              @NotNull AnnotationInfo info,
+                                              boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
       throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);
@@ -147,7 +155,9 @@ public class PyTypeHintGenerationUtil {
       PyAnnotationOwner createdAnnotationOwner = addOrUpdateAnnotatedStatement.compute();
       if (createdAnnotationOwner == null) return;
 
-      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
+      if (context != null) {
+        addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
+      }
 
       createdAnnotationOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(createdAnnotationOwner);
       if (startTemplate && createdAnnotationOwner != null) {
@@ -182,7 +192,10 @@ public class PyTypeHintGenerationUtil {
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
 
-  public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull AnnotationInfo info, boolean startTemplate) {
+  public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
+                                               TypeEvalContext context,
+                                               @NotNull AnnotationInfo info,
+                                               boolean startTemplate) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
 
     final String typeCommentText = "  " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
@@ -231,7 +244,7 @@ public class PyTypeHintGenerationUtil {
       PsiComment insertedComment = target.getTypeComment();
       if (insertedComment == null) return;
 
-      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
+      addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
 
       insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
       if (startTemplate && insertedComment != null) {
@@ -264,12 +277,14 @@ public class PyTypeHintGenerationUtil {
     }
   }
 
-  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types, @NotNull PsiFile file) {
+  private static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
+                                                   @NotNull TypeEvalContext context,
+                                                   @NotNull PsiFile file) {
     final Set<PyClass> classes = new HashSet<>();
     final Set<String> namesFromTyping = new HashSet<>();
 
     for (PyType type : types) {
-      collectImportTargetsFromType(type, classes, namesFromTyping);
+      collectImportTargetsFromType(type, context, classes, namesFromTyping);
     }
 
     final boolean builtinTyping = LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON35);
@@ -283,7 +298,10 @@ public class PyTypeHintGenerationUtil {
     }
   }
 
-  private static void collectImportTargetsFromType(@Nullable PyType type, @NotNull Set<PyClass> classes, @NotNull Set<String> names) {
+  private static void collectImportTargetsFromType(@Nullable PyType type,
+                                                   @NotNull TypeEvalContext context,
+                                                   @NotNull Set<PyClass> classes,
+                                                   @NotNull Set<String> names) {
     if (type == null) {
       names.add("Any");
     }
@@ -292,7 +310,7 @@ public class PyTypeHintGenerationUtil {
       final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
       names.add(isOptional ? "Optional" : "Union");
       for (PyType pyType : members) {
-        collectImportTargetsFromType(pyType, classes, names);
+        collectImportTargetsFromType(pyType, context, classes, names);
       }
     }
     else if (type instanceof PyCollectionType) {
@@ -310,40 +328,54 @@ public class PyTypeHintGenerationUtil {
         names.add("Tuple");
       }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
-        collectImportTargetsFromType(pyType, classes, names);
+        collectImportTargetsFromType(pyType, context, classes, names);
       }
     }
     else if (type instanceof PyClassType) {
       classes.add(((PyClassType)type).getPyClass());
+    }
+    else if (type instanceof PyCallableType) {
+      names.add("Callable");
+      final PyCallableType callableType = (PyCallableType)type;
+      for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
+        collectImportTargetsFromType(parameter.getType(context), context, classes, names);
+      }
+      collectImportTargetsFromType(callableType.getReturnType(context), context, classes, names);
     }
     if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
       names.add("Type");
     }
   }
 
-  public static void checkPep484Compatibility(@Nullable PyType type) {
+  public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type == null ||
         type instanceof PyNoneType ||
-        type instanceof PyCallableTypeImpl ||
-        type instanceof PyGenericType ||
-        type instanceof PyFunctionType) {
+        type instanceof PyGenericType) {
       return;
     }
     else if (type instanceof PyUnionType) {
       for (PyType memberType : ((PyUnionType)type).getMembers()) {
-        checkPep484Compatibility(memberType);
+        checkPep484Compatibility(memberType, context);
       }
     }
     else if (type instanceof PyCollectionType) {
       for (PyType typeParam : ((PyCollectionType)type).getElementTypes()) {
-        checkPep484Compatibility(typeParam);
+        checkPep484Compatibility(typeParam, context);
       }
     }
     else if (type instanceof PyClassType) {
       // In this order since PyCollectionTypeImpl implements PyClassType
     }
+    else if (type instanceof PyCallableType) {
+      final PyCallableType callableType = (PyCallableType)type;
+      for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
+        checkPep484Compatibility(parameter.getType(context), context);
+      }
+      checkPep484Compatibility(callableType.getReturnType(context), context);
+    }
     else {
-      throw new Pep484IncompatibleTypeException(PyBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type.getName()));
+      throw new Pep484IncompatibleTypeException(
+        PyBundle.message("INTN.add.type.hint.for.variable.PEP484.incompatible.type", type.getName()));
     }
   }
 

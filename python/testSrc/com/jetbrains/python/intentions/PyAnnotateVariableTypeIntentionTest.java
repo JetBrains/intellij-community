@@ -223,6 +223,10 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationNotPossibleForStructuralTypeInCallable() {
+    doAnnotationTest();
+  }
+
   public void testAnnotationCallableType() {
     doAnnotationTest();
   }
