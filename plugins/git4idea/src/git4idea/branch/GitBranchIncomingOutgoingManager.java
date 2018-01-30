@@ -184,6 +184,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                                @NotNull GitRemote remote,
                                                @NotNull List<String> params) {
     GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE, singletonList("credential.helper="));
+    h.setIgnoreAuthenticationRequest(true);
     h.addParameters(params);
     h.setUrls(remote.getUrls());
     return h;
