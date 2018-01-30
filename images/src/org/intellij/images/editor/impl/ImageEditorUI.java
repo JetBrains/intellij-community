@@ -481,29 +481,27 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   @Nullable
   private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
-    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
-    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
-    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
-    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
-
     BufferedImage image = imageComponent.getDocument().getValue();
     if (image == null) return null;
-
-    if (canvasSize.width < image.getWidth() ||
-        canvasSize.height < image.getHeight()) {
-      return Math.min((double)canvasSize.height / image.getHeight(),
-                      (double)canvasSize.width / image.getWidth());
-    }
+    if (image.getWidth() == 0 || image.getHeight() == 0) return null;
 
     Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
-    preferredMinimumSize.width = Math.min(preferredMinimumSize.width, canvasSize.width);
-    preferredMinimumSize.height = Math.min(preferredMinimumSize.height, canvasSize.height);
-
     if (image.getWidth() < preferredMinimumSize.width &&
         image.getHeight() < preferredMinimumSize.height) {
       double factor = (preferredMinimumSize.getWidth() / (double)image.getWidth() +
                        preferredMinimumSize.getHeight() / (double)image.getHeight()) / 2.0d;
       return Math.ceil(factor);
+    }
+
+    Dimension canvasSize = myScrollPane.getViewport().getExtentSize();
+    canvasSize.height -= ImageComponent.IMAGE_INSETS * 2;
+    canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
+
+    if (canvasSize.width < image.getWidth() ||
+        canvasSize.height < image.getHeight()) {
+      return Math.min((double)canvasSize.height / image.getHeight(),
+                      (double)canvasSize.width / image.getWidth());
     }
 
     return 1.0d;
