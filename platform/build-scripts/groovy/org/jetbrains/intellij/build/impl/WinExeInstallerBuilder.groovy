@@ -39,15 +39,14 @@ class WinExeInstallerBuilder {
 
   private boolean validateCustomSilentConfig(String customConfig){
     if (customConfig != null) {
-      if (!new File(customConfig).exists()) {
+      File customConfigFile = new File(customConfig)
+      if (!customConfigFile.exists()) {
         buildContext.messages.error(
           "Silent config file for Windows installer won't be generated. The template doesn't exist: $customConfig")
-        customConfig = null
       }
-      else if (!customConfig.endsWith("silent.config")){
+      else if (!customConfigFile.getName().equals("silent.config")){
         buildContext.messages.error(
           "Silent config file for Windows installer won't be generated. The template doesn't point to silent.config: $customConfig")
-        customConfig = null
       }
     }
     return customConfig != null
