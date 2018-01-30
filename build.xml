@@ -9,6 +9,9 @@
  -->
 <project name="IntelliJ IDEA Community Edition" default="build">
   <property name="project.home" value="${basedir}"/>
+  <condition property="intellij.build.output.root" else="${project.home}/out/studio">
+    <isset property="intellij.build.output.root"/>
+  </condition>
 
   <target name="init">
     <propertyset id="intellij.build.properties">
@@ -66,11 +69,9 @@
      was a just a convenient updated version since there isn't a newer official version. -->
   <taskdef name="jarjar" classname="org.pantsbuild.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.5.jar"/>
   <target name="fullupdater" depends="build">
-    <condition property="out.dir" value="${intellij.build.output.root}" else="${project.home}/out">
-      <isset property="intellij.build.output.root"/>
-    </condition>
+    <property name="out.dir" value="${intellij.build.output.root}"/>
     <jarjar jarfile="${out.dir}/updater-full.jar">
-      <zipfileset src="${out.dir}/studio/artifacts/updater.jar" />
+      <zipfileset src="${out.dir}/artifacts/updater.jar" />
       <zipfileset src="lib/log4j.jar" />
       <zipfileset src="lib/jna.jar" />
       <zipfileset src="lib/jna-platform.jar" />
@@ -78,7 +79,7 @@
     <!-- The SDK updater also needs to have libraries added to it, and get zipped up with source.properties so it can be published as
         an SDK component -->
     <jarjar jarfile="${out.dir}/sdk-patcher/patcher.jar">
-      <zipfileset src="${out.dir}/studio/artifacts/patcher-partial.jar" />
+      <zipfileset src="${out.dir}/artifacts/patcher-partial.jar" />
       <zipfileset src="lib/log4j.jar" />
       <zipfileset src="lib/jna.jar" />
       <zipfileset src="lib/jna-platform.jar" />

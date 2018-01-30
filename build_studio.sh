@@ -47,7 +47,7 @@ done
 
 #if $OUT is not set, then none of the values are set.
 if [[ -z "$OUT" ]]; then
-  OUT="$PROG_DIR"/out
+  OUT="$PROG_DIR"/out/studio
   DIST="$OUT"/dist
   BNUM=SNAPSHOT
 else
@@ -58,6 +58,9 @@ fi
 cd "$PROG_DIR"
 mkdir -p "$OUT"
 mkdir -p "$DIST"
+# ensure OUT and DIST are absolute paths
+OUT="$(readlink -e "$OUT")"
+DIST="$(readlink -e "$DIST")"
 
 ANT="java -jar lib/ant/lib/ant-launcher.jar -f build.xml"
 
@@ -78,11 +81,11 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dout=$OUT" "-Dbuild.number=$BNUM" -Dbundle.gradle.release.plugin=true fullupdater
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" -Dbundle.gradle.release.plugin=true fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
-cp -Rfv "$OUT"/studio/artifacts/android-studio* "$DIST"/
+cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
 
 cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
 cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
@@ -95,7 +98,5 @@ cp -Rfv ../../out/dist/offline_repo.zip "$DIST"/offline_repo.zip
 echo $BNUM > ../adt/idea/native/installer/win/version
 (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
 
-ABS_OUT=`cd "$OUT"; pwd`
-ABS_DIST=`cd "$DIST"; pwd`
 # execute a bunch of sanity checks on the final artifacts
-../base/bazel/bazel test //tools/idea:test_studio --test_output=streamed --test_arg=--out=$ABS_OUT --test_arg=--dist=$ABS_DIST --test_arg=--build=$BNUM --test_strategy=standalone --spawn_strategy=standalone  --nocache_test_results
+../base/bazel/bazel test //tools/idea:test_studio --test_output=streamed --test_arg=--out="$OUT" --test_arg=--dist="$DIST" --test_arg=--build=$BNUM --test_strategy=standalone --spawn_strategy=standalone  --nocache_test_results
