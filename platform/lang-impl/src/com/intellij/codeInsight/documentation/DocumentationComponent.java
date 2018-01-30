@@ -230,27 +230,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myIsShown = false;
 
     myEditorPane = new JEditorPane(UIUtil.HTML_MIME, "") {
-      @Override
-      public Dimension getPreferredScrollableViewportSize() {
-        int em = myEditorPane.getFont().getSize();
-        int prefWidth = PREFERRED_WIDTH_EM * em;
-        int prefHeightMin = PREFERRED_HEIGHT_MIN_EM * em;
-        int prefHeightMax = PREFERRED_HEIGHT_MAX_EM * em;
-
-        if (getWidth() == 0 || getHeight() == 0) {
-          setSize(prefWidth, prefHeightMax);
-        }
-
-        Insets ins = myEditorPane.getInsets();
-        View rootView = myEditorPane.getUI().getRootView(myEditorPane);
-        rootView.setSize(prefWidth, prefHeightMax);  // Necessary! Without this line, the size won't increase when the content does
-
-        int prefHeight = (int)rootView.getPreferredSpan(View.Y_AXIS) + ins.bottom + ins.top +
-                         myScrollPane.getHorizontalScrollBar().getMaximumSize().height;
-        prefHeight = Math.max(prefHeightMin, Math.min(prefHeightMax, prefHeight));
-        return new Dimension(prefWidth, prefHeight);
-      }
-
+      private Point initialClick;
       {
         enableEvents(AWTEvent.KEY_EVENT_MASK);
       }
@@ -265,6 +245,49 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           return;
         }
         super.processKeyEvent(e);
+      }
+
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && myHint != null) {
+          initialClick = null;
+          StyledDocument document = (StyledDocument)getDocument();
+          int x = e.getX();
+          int y = e.getY();
+          if (!hasTextAt(document, x, y) &&
+              !hasTextAt(document, x + 3, y) &&
+              !hasTextAt(document, x - 3, y) &&
+              !hasTextAt(document, x, y + 3) &&
+              !hasTextAt(document, x, y - 3)) {
+            initialClick = e.getPoint();
+          }
+        }
+        super.processMouseEvent(e);
+      }
+
+      private boolean hasTextAt(StyledDocument document, int x, int y) {
+        Element element = document.getCharacterElement(viewToModel(new Point(x, y)));
+        try {
+          String text = document.getText(element.getStartOffset(), element.getEndOffset() - element.getStartOffset());
+          if (StringUtil.isEmpty(text.trim())) {
+            return false;
+          }
+        }
+        catch (BadLocationException ignored) {
+          return false;
+        }
+        return true;
+      }
+
+      @Override
+      protected void processMouseMotionEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_DRAGGED && myHint != null && initialClick != null) {
+          Point location = myHint.getLocationOnScreen();
+          myHint.setLocation(new Point(location.x + e.getX() - initialClick.x, location.y + e.getY() - initialClick.y));
+          e.consume();
+          return;
+        }
+        super.processMouseMotionEvent(e);
       }
 
       @Override
