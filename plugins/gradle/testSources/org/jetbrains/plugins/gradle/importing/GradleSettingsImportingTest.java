@@ -30,7 +30,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.execution.application.ApplicationRunConfigurationImporter;
+import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
@@ -200,7 +200,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testDefaultRCSettingsImport() throws Exception {
-    RunConfigurationImporter appcConfigImporter = new ApplicationRunConfigurationImporter();
+    RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
     ep.reset();
     ep.registerExtension(appcConfigImporter);
@@ -229,7 +229,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testDefaultsAreUsedDuringImport() throws Exception {
-    RunConfigurationImporter appcConfigImporter = new ApplicationRunConfigurationImporter();
+    RunConfigurationImporter appcConfigImporter = new JavaApplicationRunConfigurationImporter();
     ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
     ep.reset();
     ep.registerExtension(appcConfigImporter);

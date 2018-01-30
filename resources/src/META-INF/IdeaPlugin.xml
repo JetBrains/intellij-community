@@ -238,8 +238,8 @@
     <runConfigurationProducer implementation="com.intellij.execution.scratch.JavaScratchConfigurationProducer"/>
     <configurationType implementation="com.intellij.execution.remote.RemoteConfigurationType"/>
 
-    <runConfigurationImporter implementation="com.intellij.execution.application.ApplicationRunConfigurationImporter"/>
-    <runConfigurationImporter implementation="com.intellij.execution.remote.RemoteRunConfigurationImporter"/>
+    <runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
+    <runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
 
     <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
