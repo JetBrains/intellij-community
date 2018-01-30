@@ -305,10 +305,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     if (elementForUpdating != null) {
       myHandler.updateParameterInfo(elementForUpdating, context);
-      if (mySingleParameterInfo && myComponent.getCurrentParameterIndex() == -1 && myHint.isVisible()) {
+      boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
+                               myComponent.getCurrentParameterIndex() != -1;
+      if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
         myHint.hide();
       }
-      if (myKeepOnHintHidden && myComponent.getCurrentParameterIndex() != -1 && !myHint.isVisible()) {
+      if (myKeepOnHintHidden && knownParameter && !myHint.isVisible()) {
         AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
       }
       if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
@@ -663,11 +665,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
         }
       }
       return true;
-    }
-
-    @Override
-    public boolean isSingleParameterInfo() {
-      return mySingleParameterInfo;
     }
 
     @Override
