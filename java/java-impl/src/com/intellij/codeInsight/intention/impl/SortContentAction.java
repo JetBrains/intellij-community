@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -73,17 +72,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   @Contract("null -> null")
   @Nullable
   private static Comparator<PsiExpression> getComparator(@Nullable PsiType type) {
-    return getComparator(type, expression -> expression);
-  }
-
-  private static <T> Comparator<T> getComparator(@Nullable PsiType type, Function<T, PsiExpression> keySelector) {
     if (type == null) return null;
     if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-      return Comparator.comparing(o -> (String)ExpressionUtils.computeConstantExpression(keySelector.apply(o)));
+      return Comparator.comparing(o -> (String)ExpressionUtils.computeConstantExpression(o));
     }
     if (isNumericType(type)) {
-      return Comparator
-        .comparingLong(o -> ((Number)Objects.requireNonNull(ExpressionUtils.computeConstantExpression(keySelector.apply(o)))).longValue());
+      return Comparator.comparingLong(o -> ((Number)Objects.requireNonNull(ExpressionUtils.computeConstantExpression(o))).longValue());
     }
     if (InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ENUM)) {
       return Comparator.comparing(expr -> ((PsiReferenceExpression)expr).getReferenceName());
@@ -173,7 +167,10 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   private static boolean isSortableConstants(@NotNull StreamEx<PsiExpression> expressions, @NotNull PsiType expectedType) {
     return expressions
-      .allMatch(current -> expectedType.equals(current.getType()) && ExpressionUtils.computeConstantExpression(current) != null);
+      .allMatch(current -> expectedType.equals(current.getType())
+                           && ExpressionUtils.computeConstantExpression(current) != null
+                           && current instanceof PsiLiteralExpression
+      );
   }
 
   private static boolean isSortableExpressions(@NotNull PsiExpression[] expressions, @NotNull PsiType expectedType) {
@@ -335,8 +332,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
    */
   private static class LineLayout {
     private TIntArrayList myEntryCountOnLines;
-    private int myCurrentLine = 0;
-    private int myCurrentPosition = 0; // position of next element to place
 
     public LineLayout(TIntArrayList entryCountOnLines) {
       myEntryCountOnLines = entryCountOnLines;
@@ -504,7 +499,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       PsiType type = exampleExpression.getType();
       Comparator<PsiExpression> comparator = getComparator(type);
       if (comparator == null) return null;
-      return Comparator.comparing(entry -> (PsiExpression)entry.myExpression, comparator);
+      return Comparator.comparing(entry -> entry.myExpression, comparator);
     }
 
     void generate(StringBuilder sb, boolean isLastInRow, boolean isLast) {
