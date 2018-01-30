@@ -30,7 +30,7 @@ import java.util.Map;
  * date: 12.09.2017.
  */
 public interface FacetConfigurationImporter<F extends Facet> {
-  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.facetConfigurationImporter");
+  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.facetConfigurationImporter");
 
   @NotNull
   Collection<F> process(@NotNull Module module,

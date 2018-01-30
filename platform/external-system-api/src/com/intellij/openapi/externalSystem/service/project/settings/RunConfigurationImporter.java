@@ -27,7 +27,7 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public interface RunConfigurationImporter {
-  ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationImporter");
+  ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationImporter");
 
   void process(@NotNull Project project,
                        @NotNull RunConfiguration runConfiguration,

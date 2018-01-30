@@ -13,7 +13,7 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public interface CodeStyleConfigurationImporter<T extends CustomCodeStyleSettings> {
-  ExtensionPointName<CodeStyleConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.codeStyleConfigurationImporter");
+  ExtensionPointName<CodeStyleConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.codeStyleConfigurationImporter");
   void processSettings(@NotNull T settings, @NotNull Map config);
   boolean canImport(@NotNull String langName);
 
