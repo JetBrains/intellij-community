@@ -57,7 +57,7 @@ public class TransferableFileEditorStateSupport {
   private final boolean mySupported;
 
   private int myMasterIndex = 0;
-  private boolean myDuringUpdate = false;
+  private boolean myDuringUpdate = true;
 
   public TransferableFileEditorStateSupport(@NotNull DiffSettings settings,
                                             @NotNull List<BinaryEditorHolder> holders,
@@ -96,6 +96,7 @@ public class TransferableFileEditorStateSupport {
 
 
   public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
+    myDuringUpdate = false;
     if (!isEnabled()) return;
 
     MyState state = context.getUserData(TRANSFERABLE_FILE_EDITOR_STATE);
