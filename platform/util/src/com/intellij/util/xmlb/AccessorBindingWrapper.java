@@ -123,7 +123,7 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   @Override
   public boolean isBoundTo(@NotNull Element element) {
     if (myBinding instanceof MapBinding) {
-      return element.getName().equals(((MapBinding)myBinding).getEntryElementName());
+      return ((MapBinding)myBinding).isBoundToWithoutProperty(element);
     }
     else {
       return myBinding.isBoundTo(element);

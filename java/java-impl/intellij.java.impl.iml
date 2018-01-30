@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
     <orderEntry type="module" module-name="intellij.java.uast" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>

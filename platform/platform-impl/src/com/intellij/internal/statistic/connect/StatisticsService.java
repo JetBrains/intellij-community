@@ -18,13 +18,9 @@ package com.intellij.internal.statistic.connect;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-
-@Deprecated // to be removed in 2018.1. it will not be allowed to use own services
 public interface StatisticsService {
 
   @Deprecated  // to be removed in 2018.1

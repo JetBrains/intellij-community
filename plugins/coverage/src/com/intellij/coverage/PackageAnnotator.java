@@ -36,7 +36,6 @@ import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import java.util.HashMap;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -532,7 +531,7 @@ public class PackageAnnotator {
       PsiMethod[] constructors = aClass.getConstructors();
       if (privateEmpty && constructors.length == 1 && constructors[0].hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiCodeBlock body = constructors[0].getBody();
-        return body != null && body.getStatements().length == 0 &&
+        return body != null && body.isEmpty() &&
                Arrays.stream(aClass.getMethods()).allMatch(method -> method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC));
       }
       return implicitConstructor && constructors.length == 0;

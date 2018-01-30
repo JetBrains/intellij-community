@@ -178,7 +178,6 @@ class TestingTasksImpl extends TestingTasks {
     List<String> jvmArgs = [
       "-ea",
       "-server",
-      "-Xbootclasspath/a:${context.getModuleOutputPath(context.findRequiredModule("intellij.platform.boot"))}".toString(),
       "-XX:+HeapDumpOnOutOfMemoryError",
       "-XX:HeapDumpPath=$hprofSnapshotFilePath".toString(),
       "-XX:ReservedCodeCacheSize=300m",
@@ -315,7 +314,7 @@ class TestingTasksImpl extends TestingTasks {
             pathelement(location: it)
           }
         }
-        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter2", usefile: false)
+        formatter(classname: "jetbrains.buildServer.ant.junit.AntJUnitFormatter3", usefile: false)
         context.messages.info("Added TeamCity's formatter to JUnit task")
       }
       if (!underTeamCity) {

@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
 
 public class SetReadOnly implements ChangeListCommand {
   private final String myName;
@@ -27,7 +28,7 @@ public class SetReadOnly implements ChangeListCommand {
   private boolean myResult;
   private LocalChangeList myListCopy;
 
-  public SetReadOnly(String name, boolean value) {
+  public SetReadOnly(@NotNull String name, boolean value) {
     myName = name;
     myValue = value;
   }

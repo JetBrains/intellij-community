@@ -327,7 +327,7 @@ public class Mappings {
             final MethodRepr memberMethod = (MethodRepr)member;
             return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
           }
-          return member.name == m.name;
+          return false;
         }
       }, className);
     }
@@ -1482,11 +1482,17 @@ public class Mappings {
             }
           }
           else if ((d.base() & Difference.ACCESS) != 0) {
-            if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0 ||
-                (d.removedModifiers() & Opcodes.ACC_STATIC) != 0 ||
-                (d.addedModifiers() & Opcodes.ACC_PRIVATE) != 0) {
+            if ((d.addedModifiers() & (Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE)) != 0 ||
+                (d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
+
+              // When synthetic or bridge flags are added, this effectively means that explicitly written in the code
+              // method with the same signature and return type has been removed and a bridge method has been generated instead.
+              // In some cases (e.g. using raw types) the presence of such synthetic methods in the bytecode is ignored by the compiler
+              // so that the code that called such method via raw type reference might not compile anymore => to be on the safe side
+              // we should recompile all places where the method was used
+
               if (!affected) {
-                debug("Added static or private specifier or removed static specifier --- affecting method usages");
+                debug("Added {static | private | synthetic | bridge} specifier or removed static specifier --- affecting method usages");
                 myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
                 affected = true;

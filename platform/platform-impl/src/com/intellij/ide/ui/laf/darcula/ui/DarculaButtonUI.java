@@ -20,12 +20,12 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -132,14 +132,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
-    Color fg = button.getForeground();
-    if (fg instanceof UIResource && isDefaultButton(button)) {
-      final Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
-      if (selectedFg != null) {
-        fg = selectedFg;
-      }
-    }
-    g.setColor(fg);
+    g.setColor(getTextColor(button));
 
     //UISettings.setupAntialiasing(g);
 
@@ -156,12 +149,27 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
+  public static Color getTextColor(@NotNull AbstractButton button) {
+    Color fg = button.getForeground();
+    if (fg instanceof UIResource && isDefaultButton(button)) {
+      final Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      if (selectedFg != null) {
+        fg = selectedFg;
+      }
+    }
+    return fg;
+  }
+
+  public static Color getDisabledTextColor() {
+    return UIManager.getColor("Button.disabledText");
+  }
+
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
     g.setColor(UIManager.getColor("Button.darcula.disabledText.shadow"));
     SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
                                               textRect.x + getTextShiftOffset()+1,
                                               textRect.y + metrics.getAscent() + getTextShiftOffset()+1);
-    g.setColor(UIManager.getColor("Button.disabledText"));
+    g.setColor(getDisabledTextColor());
     SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
                                               textRect.x + getTextShiftOffset(),
                                               textRect.y + metrics.getAscent() + getTextShiftOffset());
@@ -251,8 +259,6 @@ public class DarculaButtonUI extends BasicButtonUI {
 
     if (isComboButton(b)) {
       rect.x += 6;
-    } else if (b instanceof JBOptionButton) {
-      rect.x -= 4;
     }
   }
 }

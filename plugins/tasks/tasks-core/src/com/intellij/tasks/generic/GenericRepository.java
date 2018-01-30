@@ -89,7 +89,7 @@ public class GenericRepository extends BaseRepositoryImpl {
    */
   @SuppressWarnings({"UnusedDeclaration"})
   public GenericRepository() {
-    // empty
+    resetToDefaults();
   }
 
   public GenericRepository(final TaskRepositoryType type) {

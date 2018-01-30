@@ -38,12 +38,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class TransferableFileEditorStateSupport {
-  @NotNull private static final Key<Map<String, Map<String, String>>> TRANSFERABLE_FILE_EDITOR_STATE =
+  @NotNull private static final Key<MyState> TRANSFERABLE_FILE_EDITOR_STATE =
     Key.create("Diff.TransferableFileEditorState");
 
   private static final Condition<BinaryEditorHolder> IS_SUPPORTED = holder -> {
@@ -52,17 +52,22 @@ public class TransferableFileEditorStateSupport {
 
   @NotNull private final DiffSettings mySettings;
   @NotNull private final List<BinaryEditorHolder> myHolders;
+  @NotNull private final List<? extends FileEditor> myEditors;
+
   private final boolean mySupported;
-  private final MySynchronizer mySynchronizer;
+
+  private int myMasterIndex = 0;
+  private boolean myDuringUpdate = true;
 
   public TransferableFileEditorStateSupport(@NotNull DiffSettings settings,
                                             @NotNull List<BinaryEditorHolder> holders,
                                             @NotNull Disposable disposable) {
     mySettings = settings;
     myHolders = holders;
-    mySupported = ContainerUtil.or(myHolders, IS_SUPPORTED);
-    mySynchronizer = new MySynchronizer(ContainerUtil.filter(myHolders, IS_SUPPORTED));
-    mySynchronizer.install(disposable);
+    myEditors = ContainerUtil.map(ContainerUtil.filter(holders, IS_SUPPORTED), holder -> holder.getEditor());
+    mySupported = myEditors.size() > 0;
+
+    new MySynchronizer().install(disposable);
   }
 
   public boolean isSupported() {
@@ -78,33 +83,10 @@ public class TransferableFileEditorStateSupport {
   }
 
   public void syncStatesNow() {
-    mySynchronizer.syncStatesNow();
-  }
+    if (myEditors.size() < 2) return;
 
-  public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
-    if (!isEnabled()) return;
-
-    for (BinaryEditorHolder holder : myHolders) {
-      FileEditor editor = holder.getEditor();
-      TransferableFileEditorState state = getEditorState(holder.getEditor());
-      if (state != null) {
-        readContextData(context, editor, state);
-      }
-    }
-  }
-
-  public void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
-    if (!isEnabled()) return;
-
-    Set<String> updated = ContainerUtil.newHashSet();
-
-    for (BinaryEditorHolder holder : myHolders) {
-      TransferableFileEditorState state = getEditorState(holder.getEditor());
-      if (state != null) {
-        boolean processed = !updated.add(state.getEditorId());
-        if (!processed) writeContextData(context, state);
-      }
-    }
+    FileEditor masterEditor = myHolders.get(myMasterIndex).getEditor();
+    syncStateFrom(masterEditor);
   }
 
   @NotNull
@@ -112,56 +94,46 @@ public class TransferableFileEditorStateSupport {
     return new ToggleSynchronousEditorStatesAction(this);
   }
 
-  private static void readContextData(@NotNull DiffContext context,
-                                      @NotNull FileEditor editor,
-                                      @NotNull TransferableFileEditorState state) {
-    Map<String, Map<String, String>> map = context.getUserData(TRANSFERABLE_FILE_EDITOR_STATE);
-    Map<String, String> options = map != null ? map.get(state.getEditorId()) : null;
-    if (options == null) return;
 
-    state.setTransferableOptions(options);
-    editor.setState(state);
-  }
+  public void processContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
+    myDuringUpdate = false;
+    if (!isEnabled()) return;
 
-  private static void writeContextData(@NotNull DiffContext context, @NotNull TransferableFileEditorState state) {
-    Map<String, Map<String, String>> map = context.getUserData(TRANSFERABLE_FILE_EDITOR_STATE);
-    if (map == null) {
-      map = ContainerUtil.newHashMap();
-      context.putUserData(TRANSFERABLE_FILE_EDITOR_STATE, map);
+    MyState state = context.getUserData(TRANSFERABLE_FILE_EDITOR_STATE);
+    if (state == null) return;
+
+    int newMasterIndex = state.getMasterIndex();
+    if (newMasterIndex < myHolders.size()) myMasterIndex = newMasterIndex;
+
+    try {
+      myDuringUpdate = true;
+      for (BinaryEditorHolder holder : myHolders) {
+        state.restoreContextData(holder.getEditor());
+      }
+
+      syncStatesNow();
     }
-
-    map.put(state.getEditorId(), state.getTransferableOptions());
+    finally {
+      myDuringUpdate = false;
+    }
   }
 
-  @Nullable
-  private static TransferableFileEditorState getEditorState(@NotNull FileEditor editor) {
-    FileEditorState state = editor.getState(FileEditorStateLevel.FULL);
-    return state instanceof TransferableFileEditorState ? (TransferableFileEditorState)state : null;
+  public void updateContextHints(@NotNull DiffRequest request, @NotNull DiffContext context) {
+    if (!isEnabled()) return;
+
+    MyState state = new MyState(myMasterIndex);
+    context.putUserData(TRANSFERABLE_FILE_EDITOR_STATE, state);
+
+    // master editor has priority
+    state.storeContextData(myHolders.get(myMasterIndex).getEditor());
+
+    for (BinaryEditorHolder holder : myHolders) {
+      state.storeContextData(holder.getEditor());
+    }
   }
+
 
   private class MySynchronizer implements PropertyChangeListener {
-    @NotNull private final List<? extends FileEditor> myEditors;
-
-    private boolean myDuringUpdate = false;
-
-    public MySynchronizer(@NotNull List<BinaryEditorHolder> editors) {
-      myEditors = ContainerUtil.map(editors, holder -> holder.getEditor());
-    }
-
-    public void syncStatesNow() {
-      if (myEditors.size() < 2) return;
-
-      TransferableFileEditorState sourceState = getEditorState(myEditors.get(0));
-      if (sourceState == null) return;
-
-      Map<String, String> options = sourceState.getTransferableOptions();
-      String id = sourceState.getEditorId();
-
-      for (int i = 1; i < myEditors.size(); i++) {
-        updateEditor(myEditors.get(i), id, options);
-      }
-    }
-
     public void install(@NotNull Disposable disposable) {
       if (myEditors.size() < 2) return;
 
@@ -184,33 +156,50 @@ public class TransferableFileEditorStateSupport {
       if (myDuringUpdate || !isEnabled()) return;
       if (!(evt.getSource() instanceof FileEditor)) return;
 
-      TransferableFileEditorState sourceState = getEditorState(((FileEditor)evt.getSource()));
-      if (sourceState == null) return;
+      FileEditor editor = (FileEditor)evt.getSource();
 
-      Map<String, String> options = sourceState.getTransferableOptions();
-      String id = sourceState.getEditorId();
+      int holderIndex = ContainerUtil.indexOf(myHolders, (Condition<BinaryEditorHolder>)holder -> editor.equals(holder.getEditor()));
+      if (holderIndex != -1) myMasterIndex = holderIndex;
 
-      for (FileEditor editor : myEditors) {
-        if (evt.getSource() != editor) {
-          updateEditor(editor, id, options);
-        }
-      }
+      syncStateFrom(editor);
     }
+  }
 
-    private void updateEditor(@NotNull FileEditor editor, @NotNull String id, @NotNull Map<String, String> options) {
-      try {
-        myDuringUpdate = true;
-        TransferableFileEditorState state = getEditorState(editor);
-        if (state != null && state.getEditorId().equals(id)) {
-          state.setTransferableOptions(options);
-          editor.setState(state);
-        }
-      }
-      finally {
-        myDuringUpdate = false;
+  private void syncStateFrom(@NotNull FileEditor sourceEditor) {
+    TransferableFileEditorState sourceState = getEditorState(sourceEditor);
+    if (sourceState == null) return;
+
+    Map<String, String> options = sourceState.getTransferableOptions();
+    String id = sourceState.getEditorId();
+
+    for (FileEditor editor : myEditors) {
+      if (sourceEditor != editor) {
+        updateEditor(editor, id, options);
       }
     }
   }
+
+  private void updateEditor(@NotNull FileEditor editor, @NotNull String id, @NotNull Map<String, String> options) {
+    try {
+      myDuringUpdate = true;
+      TransferableFileEditorState state = getEditorState(editor);
+      if (state != null && state.getEditorId().equals(id)) {
+        state.setTransferableOptions(options);
+        state.setCopiedFromMasterEditor();
+        editor.setState(state);
+      }
+    }
+    finally {
+      myDuringUpdate = false;
+    }
+  }
+
+  @Nullable
+  private static TransferableFileEditorState getEditorState(@NotNull FileEditor editor) {
+    FileEditorState state = editor.getState(FileEditorStateLevel.FULL);
+    return state instanceof TransferableFileEditorState ? (TransferableFileEditorState)state : null;
+  }
+
 
   private static class ToggleSynchronousEditorStatesAction extends ToggleActionButton implements DumbAware {
     @NotNull private final TransferableFileEditorStateSupport mySupport;
@@ -235,6 +224,39 @@ public class TransferableFileEditorStateSupport {
       mySupport.setEnabled(state);
       if (state) {
         mySupport.syncStatesNow();
+      }
+    }
+  }
+
+  private static class MyState {
+    private final Map<String, Map<String, String>> myMap = new HashMap<>();
+    private final int myMasterIndex;
+
+    public MyState(int masterIndex) {
+      myMasterIndex = masterIndex;
+    }
+
+    public int getMasterIndex() {
+      return myMasterIndex;
+    }
+
+    public void restoreContextData(@NotNull FileEditor editor) {
+      TransferableFileEditorState editorState = getEditorState(editor);
+      if (editorState == null) return;
+
+      Map<String, String> options = myMap.get(editorState.getEditorId());
+      if (options == null) return;
+
+      editorState.setTransferableOptions(options);
+      editor.setState(editorState);
+    }
+
+    public void storeContextData(@NotNull FileEditor editor) {
+      TransferableFileEditorState editorState = getEditorState(editor);
+      if (editorState == null) return;
+
+      if (!myMap.containsKey(editorState.getEditorId())) {
+        myMap.put(editorState.getEditorId(), editorState.getTransferableOptions());
       }
     }
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -659,7 +660,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        project.save();
+        StoreUtil.saveProject(project, true);
         if (saveApp) {
           app.saveSettings(true);
         }

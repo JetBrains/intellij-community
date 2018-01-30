@@ -26,6 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -246,7 +247,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             }
           }
 
-          Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
+          Icon icon = getArrowIcon(this);
           int x = JBUI.scale(5);
           int y = (getHeight() - icon.getIconHeight()) / 2;
           icon.paintIcon(this, g2, x, y);
@@ -274,6 +275,10 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     button.addMouseListener(buttonHoverListener);
     button.addMouseListener(buttonReleaseListener);
     return button;
+  }
+
+  public static Icon getArrowIcon(@NotNull JComponent c) {
+    return MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, c.isEnabled());
   }
 
   @Override public void unconfigureArrowButton() {

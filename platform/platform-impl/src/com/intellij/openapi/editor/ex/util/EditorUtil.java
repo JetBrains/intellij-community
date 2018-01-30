@@ -702,6 +702,12 @@ public final class EditorUtil {
     editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 
+  /**
+   * This returns a {@link java.awt.Font#PLAIN} font from family, used in editor, with size matching editor font size (except in
+   * presentation mode, when adjusted presentation mode font size is used). Returned font has fallback variants (i.e. if main font doesn't
+   * support certain Unicode characters, some other font may be used to display them), but fallback mechanism differs from the one used in
+   * editor.
+   */
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     int size = UISettings.getInstance().getPresentationMode()

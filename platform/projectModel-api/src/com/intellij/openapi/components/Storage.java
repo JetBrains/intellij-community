@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components;
 
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.annotation.Retention;
@@ -53,10 +54,9 @@ public @interface Storage {
   StorageScheme scheme() default StorageScheme.DEFAULT;
 
   /**
-   * @deprecated Not required and not used anymore.
+   * Whether to apply save threshold policy (defaults to true if roamingType is set to DISABLED)
    */
-  @Deprecated
-  String id() default "default";
+  ThreeState useSaveThreshold() default ThreeState.UNSURE;
 
   // internal use only
   boolean exclusive() default false;

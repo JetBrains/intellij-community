@@ -299,11 +299,7 @@ class CollectMigration extends BaseStreamApiMigration {
         AddingTerminal terminal = new AddingTerminal(variable, tb.getVariable(), call, tb.getStreamSourceStatement(), status);
         if (count == null) return terminal;
         // like "list.add(x); if(list.size() >= limit) break;"
-        if (!(count instanceof PsiMethodCallExpression)) return null;
-        PsiMethodCallExpression sizeCall = (PsiMethodCallExpression)count;
-        PsiExpression sizeQualifier = sizeCall.getMethodExpression().getQualifierExpression();
-        if (isCallOf(sizeCall, CommonClassNames.JAVA_UTIL_COLLECTION, "size") &&
-            EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(sizeQualifier, qualifierExpression) &&
+        if (CollectionUtils.isCollectionOrMapSize(count, qualifierExpression) &&
             InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(variable.getType()), CommonClassNames.JAVA_UTIL_LIST)) {
           return terminal;
         }
@@ -824,13 +820,13 @@ class CollectMigration extends BaseStreamApiMigration {
         return null;
       }
       PsiLocalVariable var = tryCast(PsiUtil.skipParenthesizedExprUp(toArrayCandidate.getParent()), PsiLocalVariable.class);
-      String supplier = extractSupplier(toArrayCandidate, terminal);
+      String supplier = extractSupplier(toArrayCandidate);
       if (supplier == null) return null;
       return new ToArrayTerminal(terminal, var, intermediateSteps, toArrayCandidate, supplier);
     }
 
     @Nullable
-    static String extractSupplier(PsiMethodCallExpression toArrayCandidate, CollectTerminal terminal) {
+    static String extractSupplier(PsiMethodCallExpression toArrayCandidate) {
       // collection.toArray() or collection.toArray(new Type[0]) or collection.toArray(new Type[collection.size()]);
       PsiExpression[] args = toArrayCandidate.getArgumentList().getExpressions();
       if (args.length == 0) return "";
@@ -841,13 +837,12 @@ class CollectMigration extends BaseStreamApiMigration {
       String name = arrayType.getCanonicalText();
       PsiExpression[] dimensions = newArray.getArrayDimensions();
       if (dimensions.length != 1) return null;
-      if (ExpressionUtils.isZero(dimensions[0])) return name+"::new";
-      if (!(dimensions[0] instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression maybeSizeCall = (PsiMethodCallExpression)dimensions[0];
-      if (!isCallOf(maybeSizeCall, CommonClassNames.JAVA_UTIL_COLLECTION, "size")) return null;
-      PsiExpression sizeQualifier = maybeSizeCall.getMethodExpression().getQualifierExpression();
-      if (!terminal.isTargetReference(sizeQualifier)) return null;
-      return name+"::new";
+      PsiExpression qualifier = toArrayCandidate.getMethodExpression().getQualifierExpression();
+      if (ExpressionUtils.isZero(dimensions[0]) ||
+          (qualifier != null && CollectionUtils.isCollectionOrMapSize(dimensions[0], qualifier))) {
+        return name + "::new";
+      }
+      return null;
     }
   }
 

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -69,14 +56,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DocumentCommitThread;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtilRt;
-import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.*;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
@@ -101,13 +84,18 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+
+import static com.intellij.testFramework.TemporaryDirectoryKt.generateTemporaryPath;
 
 /**
  * @author yole
  */
+@SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class PlatformTestCase extends UsefulTestCase implements DataProvider {
   private static IdeaTestApplication ourApplication;
   private static boolean ourReportedLeakedProjects;
@@ -183,7 +171,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   @Override
@@ -215,11 +203,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ourTestCase = this;
     if (myProject != null) {
       ProjectManagerEx.getInstanceEx().openTestProject(myProject);
-      CodeStyleSettingsManager.getInstance(myProject).setTemporarySettings(new CodeStyleSettings());
-      InjectedLanguageManagerImpl.pushInjectors(getProject());
+      CodeStyle.setTemporarySettings(myProject, new CodeStyleSettings());
+      InjectedLanguageManagerImpl.pushInjectors(myProject);
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
     }
 
-    DocumentCommitThread.getInstance().clearQueue();
     UIUtil.dispatchAllInvocationEvents();
     myVirtualFilePointerTracker = new VirtualFilePointerTracker();
   }
@@ -240,9 +228,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myProjectManager = ProjectManagerEx.getInstanceEx();
     assertNotNull("Cannot instantiate ProjectManager component", myProjectManager);
 
-    File projectFile = getIprFile();
-
-    myProject = doCreateProject(projectFile);
+    myProject = doCreateProject(getProjectDirOrFile());
     myProjectManager.openTestProject(myProject);
     LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
 
@@ -256,8 +242,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected Project doCreateProject(@NotNull File projectFile) throws Exception {
-    return createProject(projectFile, getClass().getName() + "." + getName());
+  protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
+    return createProject(projectFile.toFile(), getClass().getName() + "." + getName());
   }
 
   @NotNull
@@ -273,7 +259,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       String projectName = FileUtilRt.getNameWithoutExtension(fileName);
       Project project = ProjectManagerEx.getInstanceEx().newProject(projectName, path, false, false);
       assert project != null;
-
       project.putUserData(CREATION_PLACE, creationPlace);
       return project;
     }
@@ -303,8 +288,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       leakers.append("Too many projects leaked: \n");
       LeakHunter.processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked,backLink)->{
         int hashCode = System.identityHashCode(leaked);
-        leakers.append("Leaked project found:" + leaked + "; hash: " +
-                           hashCode + "; place: " + getCreationPlace(leaked)+"\n");
+        leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
+               .append(getCreationPlace(leaked)).append("\n");
         leakers.append(backLink+"\n");
         leakers.append(";-----\n");
 
@@ -339,9 +324,30 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     startupManager.runPostStartupActivities();
   }
 
-  protected File getIprFile() throws IOException {
-    File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
-    myFilesToDelete.add(tempFile);
+  @NotNull
+  protected Path getProjectDirOrFile() {
+    return getProjectDirOrFile(false);
+  }
+
+  protected boolean isCreateProjectFileExplicitly() {
+    return true;
+  }
+
+  @NotNull
+  protected final Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
+    if (!isDirectoryBasedProject && isCreateProjectFileExplicitly()) {
+      try {
+        File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
+        myFilesToDelete.add(tempFile);
+        return tempFile.toPath();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    Path tempFile = generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
+    myFilesToDelete.add(tempFile.toFile());
     return tempFile;
   }
 
@@ -370,25 +376,33 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  protected static Module doCreateRealModuleIn(String moduleName, final Project project, final ModuleType moduleType) {
-    final VirtualFile baseDir = project.getBaseDir();
-    assertNotNull(baseDir);
-    return createModuleAt(moduleName, project, moduleType, baseDir.getPath());
+  protected Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, final ModuleType moduleType) {
+    return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
   }
 
   @NotNull
-  protected static Module createModuleAt(String moduleName, Project project, ModuleType moduleType, String path) {
-    File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    FileUtil.createIfDoesntExist(moduleFile);
-    myFilesToDelete.add(moduleFile);
+  protected Module createModuleAt(@NotNull String moduleName, @NotNull Project project, ModuleType moduleType, @NotNull String path) {
+    if (isCreateProjectFileExplicitly()) {
+      File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      FileUtil.createIfDoesntExist(moduleFile);
+      myFilesToDelete.add(moduleFile);
+      return new WriteAction<Module>() {
+        @Override
+        protected void run(@NotNull Result<Module> result) {
+          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+          assertNotNull(virtualFile);
+          Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
+          module.getModuleFile();
+          result.setResult(module);
+        }
+      }.execute().getResultObject();
+    }
+
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
     return new WriteAction<Module>() {
       @Override
       protected void run(@NotNull Result<Module> result) {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-        assertNotNull(virtualFile);
-        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
-        module.getModuleFile();
-        result.setResult(module);
+        result.setResult(moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.getId()));
       }
     }.execute().getResultObject();
   }
@@ -906,5 +920,28 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         file.setBinaryContent(content,newModificationStamp, newTimeStamp,requestor);
       }
     }.execute().throwException();
+  }
+
+  @NotNull
+  protected VirtualFile getOrCreateProjectBaseDir() {
+    VirtualFile baseDir = myProject.getBaseDir();
+    if (baseDir == null) {
+      String basePath = myProject.getBasePath();
+      try {
+        FileUtil.ensureExists(new File(Objects.requireNonNull(basePath)));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
+    }
+    return baseDir;
+  }
+
+  @NotNull
+  protected static VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
+    File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
+    FileUtil.ensureExists(moduleDir);
+    return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
   }
 }

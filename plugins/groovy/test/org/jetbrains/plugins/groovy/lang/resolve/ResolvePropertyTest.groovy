@@ -593,7 +593,7 @@ set<caret>Foo(2)
   }
 
   void testUpperCaseFieldWithoutGetter() {
-    assertInstanceOf(resolve("A.groovy"), GrAccessorMethod)
+    assertInstanceOf(resolve("A.groovy"), GrField)
   }
 
   void testGetterWithUpperCaseFieldReference() {
@@ -1002,14 +1002,11 @@ class Const {
   static final int Field1 = 2
 }
 ''')
-
-    final ref = configureByText('''\
+    resolveByText '''\
 import static pack.Const.getField1
 
 print Fie<caret>ld1
-''')
-
-    assertNotNull(ref.resolve())
+''', null
   }
 
   void testImportedProperty2() {
@@ -1021,13 +1018,11 @@ class Const {
 }
 ''')
 
-    final ref = configureByText('''\
+    resolveByText '''\
 import static pack.Const.getField1
 
 print fie<caret>ld1
-''')
-
-    assertNotNull(ref.resolve())
+''', GrAccessorMethod
   }
 
   void testImportedProperty3() {
@@ -1039,13 +1034,11 @@ class Const {
 }
 ''')
 
-    final ref = configureByText('''\
+    resolveByText '''\
 import static pack.Const.getField1 as getBar
 
 print Ba<caret>r
-''')
-
-    assertNotNull(ref.resolve())
+''', null
   }
 
   void testImportedProperty4() {
@@ -1057,13 +1050,11 @@ class Const {
 }
 ''')
 
-    final ref = configureByText('''\
+    resolveByText '''\
 import static pack.Const.getField1 as getBar
 
 print ba<caret>r
-''')
-
-    assertNotNull(ref.resolve())
+''', GrAccessorMethod
   }
 
   void testImportedProperty5() {
@@ -1075,13 +1066,11 @@ class Const {
 }
 ''')
 
-    final ref = configureByText('''\
+    resolveByText '''\
 import static pack.Const.getField1
 
 print Fie<caret>ld1
-''')
-
-    assertNotNull(ref.resolve())
+''', null
   }
 
   void testLocalVarVsClassFieldInAnonymous() {

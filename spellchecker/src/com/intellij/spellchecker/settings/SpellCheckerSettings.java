@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SPFileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.parseBoolean;
 import static com.intellij.openapi.util.text.StringUtil.parseInt;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -40,6 +29,12 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   private static final String BUNDLED_DICTIONARIES_ATTR_NAME = "BundledDictionaries";
   private static final String BUNDLED_DICTIONARY_ATTR_NAME = "BundledDictionary";
+  private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
+  private static final int DEFAULT_MAX_VALUE = 5;
+  private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
+  private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
+  private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
+  private static final boolean DEFAULT_USE_SINGLE_DICT = true;
 
   // Paths
   private List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
@@ -47,6 +42,33 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myBundledDisabledDictionariesPaths = new HashSet<>();
+  private int myCorrectionsLimit = DEFAULT_MAX_VALUE;
+  private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
+  private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
+
+  public int getCorrectionsLimit() {
+    return myCorrectionsLimit;
+  }
+
+  public void setCorrectionsLimit(int correctionsLimit) {
+    myCorrectionsLimit = correctionsLimit;
+  }
+
+  public String getDictionaryToSave() {
+    return myDictionaryToSave;
+  }
+
+  public void setDictionaryToSave(String dictionaryToSave) {
+    myDictionaryToSave = dictionaryToSave;
+  }
+
+  public boolean isUseSingleDictionaryToSave() {
+    return myUseSingleDictionaryToSave;
+  }
+
+  public void setUseSingleDictionaryToSave(boolean useSingleDictionaryToSave) {
+    this.myUseSingleDictionaryToSave = useSingleDictionaryToSave;
+  }
 
   public static SpellCheckerSettings getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerSettings.class);
@@ -84,7 +106,10 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
-        myDisabledDictionariesPaths.isEmpty()) {
+        myDisabledDictionariesPaths.isEmpty() &&
+        myCorrectionsLimit == DEFAULT_MAX_VALUE &&
+        myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
+        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE)) {
       return null;
     }
 
@@ -115,7 +140,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       element.setAttribute(DICTIONARY_ATTR_NAME + i, iterator.next());
       i++;
     }
-
+    element.setAttribute(CORRECTIONS_MAX_LIMIT, String.valueOf(myCorrectionsLimit));
+    element.setAttribute(DICTIONARY_TO_SAVE_ATTR_NAME, myDictionaryToSave);
+    element.setAttribute(USE_SINGLE_DICT_ATTR_NAME, String.valueOf(myUseSingleDictionaryToSave));
     return element;
   }
 
@@ -152,6 +179,11 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       for (int i = 0; i < scriptsSize; i++) {
         myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
       }
+      myCorrectionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
+      myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
+      myUseSingleDictionaryToSave =
+        parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)),
+                     DEFAULT_USE_SINGLE_DICT);
     }
     catch (Exception ignored) {
     }

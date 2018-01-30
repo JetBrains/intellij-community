@@ -37,25 +37,37 @@ class WinExeInstallerBuilder {
     this.jreDirectoryPath = jreDirectoryPath
   }
 
-  private void generateInstallationConfigFileForSilentMode() {
-    File silentConfigFile = new File (customizer.silentInstallationConfig == null ?
-                          "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config" :
-                          customizer.silentInstallationConfig)
-    if (! silentConfigFile.exists()) {
-      buildContext.messages.error(
-        "Silent config file for Windows installer won't be generated. The template doesn't exist: '${silentConfig}'")
+  private boolean validateCustomSilentConfig(String customConfig){
+    if (customConfig != null) {
+      File customConfigFile = new File(customConfig)
+      if (!customConfigFile.exists()) {
+        buildContext.messages.error(
+          "Silent config file for Windows installer won't be generated. The template doesn't exist: $customConfig")
+      }
+      else if (!customConfigFile.getName().equals("silent.config")){
+        buildContext.messages.error(
+          "Silent config file for Windows installer won't be generated. The template doesn't point to silent.config: $customConfig")
+      }
     }
-    else {
+    return customConfig != null
+  }
+
+  private void generateInstallationConfigFileForSilentMode() {
+    if (!new File("${buildContext.paths.artifacts}/silent.config").exists()) {
+      String silentConfigTemplate = validateCustomSilentConfig(customizer.silentInstallationConfig) ?
+                                    customizer.silentInstallationConfig :
+                                    "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config"
+      buildContext.ant.copy(file: "$silentConfigTemplate", todir: "${buildContext.paths.artifacts}")
+      File silentConfigFile = new File("${buildContext.paths.artifacts}/silent.config")
       def extensionsList = customizer.fileAssociations
       String associations = "\n\n; List of associations. To create an association change value to 1.\n"
-      if (! extensionsList.isEmpty()) {
+      if (!extensionsList.isEmpty()) {
         associations += extensionsList.collect { "$it=0\n" }.join("")
       }
       else {
         associations = "\n\n; There are no associations for the product.\n"
       }
       silentConfigFile.append(associations)
-      buildContext.ant.copy(file: silentConfigFile, todir: "${buildContext.paths.artifacts}")
     }
   }
 

@@ -398,6 +398,8 @@ public class IdeEventQueue extends EventQueue {
 
     if (skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
 
+    if (isMetaKeyPressedOnLinux(e)) return;
+
     checkForTimeJump();
 
     if (!appIsLoaded()) {
@@ -464,6 +466,13 @@ public class IdeEventQueue extends EventQueue {
           }
         });
     }
+  }
+
+  private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
+    if (!Registry.is("keymap.skip.meta.press.on.linux")) return false;
+    boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
+    boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
+    return SystemInfo.isLinux && typedKeyEvent && metaIsPressed;
   }
 
   private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {

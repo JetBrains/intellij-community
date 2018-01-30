@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,13 +60,7 @@ public class ConstructionUtils {
     if (!(construction instanceof PsiNewExpression)) return null;
     final PsiNewExpression newExpression = (PsiNewExpression)construction;
     final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    if (classReference == null) return null;
-    final PsiElement target = classReference.resolve();
-    if (!(target instanceof PsiClass)) return null;
-    final PsiClass aClass = (PsiClass)target;
-    final String qualifiedName = aClass.getQualifiedName();
-    if (!CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(qualifiedName) &&
-        !CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(qualifiedName)) {
+    if (!isReferenceTo(classReference, CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER)) {
       return null;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -183,5 +178,22 @@ public class ConstructionUtils {
       if (!"0".equals(dimensionText)) return false;
     }
     return true;
+  }
+
+  public static boolean isReferenceTo(PsiJavaCodeReferenceElement ref, String... classNames) {
+    if(ref == null) return false;
+    String name = ref.getReferenceName();
+    if (name == null) return false;
+    String qualifiedName = null;
+    for (String className : classNames) {
+      if(StringUtil.getShortName(className).equals(name)) {
+        if (qualifiedName == null) {
+          // Defer resolution if possible
+          qualifiedName = ref.getQualifiedName();
+        }
+        if (className.equals(qualifiedName)) return true;
+      }
+    }
+    return false;
   }
 }

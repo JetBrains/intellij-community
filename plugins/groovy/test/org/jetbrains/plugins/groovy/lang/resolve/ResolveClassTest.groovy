@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
-import org.jetbrains.annotations.NotNull
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -506,10 +506,10 @@ class Foo {
     def Capitalized
 }
 ''')
-    resolveByText('''
+    resolveByText '''
 def bar = new bar.Foo()
 bar.Capital<caret>ized
-''', GrAccessorMethod)
+''', GrField
 
     myFixture.addFileToProject('bar/Capitalized.groovy', '''\
 package bar
@@ -554,11 +554,11 @@ class Foo {
     def Capitalized
 }
 ''')
-    resolveByText('''
+    resolveByText '''
 def bar = new bar.Foo()
 bar/*comment*/
     .Capital<caret>ized
-''', GrAccessorMethod)
+''', GrField
 
     myFixture.addFileToProject('bar/Capitalized.groovy', '''\
 package bar

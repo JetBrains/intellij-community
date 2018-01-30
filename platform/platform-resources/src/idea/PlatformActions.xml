@@ -733,7 +733,7 @@
 
     <group id="MaintenanceGroup">
       <action id="ShowRegistry" class="com.intellij.openapi.util.registry.ShowRegistryAction"/>
-      <action id="SwitchBootJdk" class="com.intellij.openapi.util.SwitchBootJdkAction"/>
+      <action id="SwitchBootJdk" class="com.intellij.ide.actions.SwitchBootJdkAction"/>
       <action id="UiDebugger" class="com.intellij.ui.debugger.ShowUiDebuggerAction"/>
       <action id="ShowExperiments" class="com.intellij.application.ShowExperimentsAction"/>
     </group>
@@ -827,6 +827,7 @@
 
       <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.actions.SendStatisticsAction" text="OLD: Collect And Send Statistics"/>
       <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="NEW: Collect And Send Statistics"/>
+      <action internal="true" id="PersistFUStatisticsSessionAction" class="com.intellij.internal.statistic.actions.PersistFUStatisticsSessionAction" text="Persist statistics session (for QA)"/>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>

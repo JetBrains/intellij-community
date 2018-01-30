@@ -4203,4 +4203,20 @@ public class UIUtil {
   public static boolean isHelpButton(JComponent button) {
     return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
   }
+
+  public static void typeAheadUntilFocused(InputEvent event, Component component) {
+    LOG.assertTrue(component.isFocusable());
+    Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
+    try {
+      if (enqueueKeyEventsMethod != null) {
+        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(), event.getWhen(), component);
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.debug(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.debug(e);
+    }
+  }
 }

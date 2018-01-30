@@ -16,9 +16,11 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
+import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -31,8 +33,6 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.BackgroundVfsOperationListener
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
@@ -50,6 +50,7 @@ import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -61,7 +62,6 @@ class PartialLocalLineStatusTracker(project: Project,
                                     mode: Mode
 ) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode), ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-  private val projectLevelVcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
   private val undoManager = UndoManager.getInstance(project)
 
   override val renderer = MyLineStatusMarkerRenderer(this)
@@ -71,7 +71,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private val affectedChangeLists = HashSet<String>()
 
-  private var isFreezedByBackgroundTask: Boolean = false
+  private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
   private var hasUndoInCommand: Boolean = false
   private var undoModificationStamp: Int = 0
 
@@ -83,8 +83,8 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.addListener(MyLineTrackerListener())
     assert(blocks.isEmpty())
 
-    val connection = project.messageBus.connect(disposable)
-    connection.subscribe(BackgroundVfsOperationListener.TOPIC, MyBackgroundVfsOperationListener())
+    val connection = application.messageBus.connect(disposable)
+    connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
     if (Registry.`is`("vcs.enable.partial.changelists.undo")) {
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
@@ -237,27 +237,24 @@ class PartialLocalLineStatusTracker(project: Project,
     undoManager.undoableActionPerformed(MyUndoableAction(project, document, undoModificationStamp, undoState, undo))
   }
 
-  private inner class MyBackgroundVfsOperationListener : BackgroundVfsOperationListener {
-    override fun backgroundVcsOperationStarted() {
-      application.invokeLater {
-        if (!isFreezedByBackgroundTask &&
-            projectLevelVcsManager.isBackgroundVcsOperationRunning) {
-          isFreezedByBackgroundTask = true
-          documentTracker.freeze(Side.LEFT)
-          documentTracker.freeze(Side.RIGHT)
-        }
+  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
+    override fun batchChangeStarted(eventProject: Project) {
+      if (eventProject != project) return
+      if (batchChangeTaskCounter.getAndIncrement() == 0) {
+        documentTracker.freeze(Side.LEFT)
+        documentTracker.freeze(Side.RIGHT)
       }
     }
 
-    override fun backgroundVcsOperationStopped() {
-      application.invokeLater {
-        if (isFreezedByBackgroundTask &&
-            !projectLevelVcsManager.isBackgroundVcsOperationRunning) {
-          isFreezedByBackgroundTask = false
-          documentTracker.unfreeze(Side.LEFT)
-          documentTracker.unfreeze(Side.RIGHT)
-        }
-      }
+    override fun batchChangeCompleted(eventProject: Project) {
+      if (eventProject != project) return
+      application.invokeLater(
+        {
+          if (batchChangeTaskCounter.decrementAndGet() == 0) {
+            documentTracker.unfreeze(Side.LEFT)
+            documentTracker.unfreeze(Side.RIGHT)
+          }
+        }, ModalityState.any())
     }
   }
 

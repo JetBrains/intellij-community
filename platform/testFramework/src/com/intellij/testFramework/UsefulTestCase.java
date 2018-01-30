@@ -3,6 +3,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -267,7 +268,7 @@ public abstract class UsefulTestCase extends TestCase {
 
     myOldCodeStyleSettings = null;
 
-    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings());
+    doCheckForSettingsDamage(oldCodeStyleSettings, CodeStyle.getDefaultSettings());
   }
 
   public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
@@ -310,14 +311,14 @@ public abstract class UsefulTestCase extends TestCase {
 
   void storeSettings() {
     if (!isStressTest() && ApplicationManager.getApplication() != null) {
-      myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
+      myOldCodeStyleSettings = CodeStyle.getDefaultSettings().clone();
       myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     }
   }
 
   @NotNull
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyleSettingsManager.getInstance().getCurrentSettings();
+    return CodeStyle.getDefaultSettings();
   }
 
   @NotNull

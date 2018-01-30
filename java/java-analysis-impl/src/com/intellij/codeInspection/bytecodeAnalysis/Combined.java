@@ -28,11 +28,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
@@ -586,7 +582,11 @@ final class CombinedInterpreter extends BasicInterpreter {
         return value;
       }
       case INVOKEDYNAMIC: {
-        LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
+        InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
+        if (ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
+          return new NotNullValue(Type.getReturnType(indy.desc));
+        }
+        LambdaIndy lambda = LambdaIndy.from(indy);
         if (lambda == null) break;
         int targetOpCode = lambda.getAssociatedOpcode();
         if (targetOpCode == -1) break;

@@ -290,7 +290,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Nullable
   private Runnable reparseFile(@NotNull final PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newText) {
-    TextRange changedPsiRange = DocumentCommitThread.getChangedPsiRange(file, treeElement, newText);
+    TextRange changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(file, treeElement, newText);
     if (changedPsiRange == null) return null;
 
     Runnable reparseLeaf = tryReparseOneLeaf(treeElement, newText, changedPsiRange);

@@ -247,7 +247,7 @@ public class XValueHint extends AbstractValueHint {
       }
     };
     if (myElement != null && myEvaluator instanceof XDebuggerPsiEvaluator) {
-      ((XDebuggerPsiEvaluator)myEvaluator).evaluate(myElement, callback, myExpressionPosition);
+      ((XDebuggerPsiEvaluator)myEvaluator).evaluate(myElement, callback);
     }
     else {
       myEvaluator.evaluate(myExpression, callback, myExpressionPosition);

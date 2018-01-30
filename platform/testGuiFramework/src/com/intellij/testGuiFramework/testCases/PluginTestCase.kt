@@ -107,7 +107,7 @@ open class PluginTestCase : GuiTestCase() {
       }
       try {
         message("IDE and Plugin Updates", timeout = 5L) {
-          button("Shutdown").click()
+          button("Postpone").click()
         }
       }
       catch (e: Exception) {

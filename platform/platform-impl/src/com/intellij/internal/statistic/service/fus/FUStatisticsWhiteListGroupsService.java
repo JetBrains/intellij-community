@@ -12,18 +12,21 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// StatisticsWhiteListGroups service returns actual "approved" UsagesCollectors(groups)
-// the result is gson file:
-// {
-//  "groups" : [{
-//    "id" : "statistics.Productivity",
-//    "builds" : [{ "from" : "173.4127.37" }]
-//  }, {
-//    "id" : "spring-example"
-//  }]
-//}
+// 1. Statistics service (FUStatisticsService) collects data ONLY from approved  usages collectors(FeatureUsagesCollector)
+// 2. Approved collectors could be requested online.
+// 3. This service (FUStatisticsWhiteListGroupsService) connects to online JB service  and requests  "approved" UsagesCollectors(groups)
+// 4. Online JB service  returns  result in json file format:
+//   {
+//    "groups" : [{
+//      "id" : "statistics.Productivity",
+//      "builds" : [{ "from" : "173.4127.37" }]
+//    }, {
+//      "id" : "spring-example"
+//    }]
+//  }
 public class FUStatisticsWhiteListGroupsService {
-  private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsWhiteListGroupsService");
+  private static final Logger LOG =
+    Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsWhiteListGroupsService");
 
   @NotNull
   public static Set<String> getApprovedGroups(@NotNull String serviceUrl) {
@@ -32,13 +35,22 @@ public class FUStatisticsWhiteListGroupsService {
       content = HttpRequests.request(serviceUrl)
                             .productNameAsUserAgent()
                             .readString(null);
-    }  catch (IOException e) {
-      LOG.error(e);
+    }
+    catch (IOException e) {
+      LOG.info(e);
     }
     if (content == null) return Collections.emptySet();
 
-    WLGroups groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
-    return groups.groups.stream().map(group -> group.id).collect(Collectors.toSet());
+    WLGroups groups = null;
+    try {
+      groups = new GsonBuilder().create().fromJson(content, WLGroups.class);
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+
+    return groups == null ? Collections.emptySet() :
+           groups.groups.stream().map(group -> group.id).collect(Collectors.toSet());
   }
 
   private static class WLGroups {

@@ -13,7 +13,10 @@ import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
@@ -22,10 +25,11 @@ import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.MapDataContext;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 
 public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   private static final String APPLICATION_CODE = "public class Application {" +
@@ -194,7 +198,12 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   private void initModule() {
     mySource.initModule();
     mySource.copyJdkFrom(myModule);
-    mySource.addLibrary(findFile(MOCK_JUNIT));
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    for (File file : junit4Library.getClasses()) {
+      VirtualFile libFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      assertNotNull(libFile);
+      mySource.addLibrary(JarFileSystem.getInstance().getJarRootForLocalFile(libFile));
+    }
   }
 
   private void move(final PsiElement psiElement, String packageName) {

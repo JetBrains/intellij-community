@@ -9,9 +9,10 @@ public class IfStatementWithIdenticalBranches {
     return 42;
   }
 
-  void work() {
-    if (true || false) {
-      int x = getX();
+  void work(int i, int j) {
+    if(i != 0) {
+    } else /*5*/ /*7*/ if (i/*1*/ < j || i >/*6*/ j/*2*/) {/*3*/
+      int x = /*4*/ getX();
     } else {
       int y = 12;
     }

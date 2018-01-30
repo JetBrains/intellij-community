@@ -920,7 +920,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
 
   @Override
-  public void removeChangeList(final String name) {
+  public void removeChangeList(@NotNull String name) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.removeChangeList(name);
@@ -930,7 +930,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void removeChangeList(LocalChangeList list) {
+  public void removeChangeList(@NotNull LocalChangeList list) {
     removeChangeList(list.getName());
   }
 
@@ -950,7 +950,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public boolean setReadOnly(final String name, final boolean value) {
+  public boolean setReadOnly(@NotNull String name, final boolean value) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final boolean result = myModifier.setReadOnly(name, value);
@@ -972,7 +972,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public String editComment(@NotNull final String fromName, final String newComment) {
+  public String editComment(@NotNull String fromName, String newComment) {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
         final String oldComment = myModifier.editComment(fromName, StringUtil.notNullize(newComment));
@@ -983,7 +983,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void moveChangesTo(@NotNull final LocalChangeList list, @NotNull final Change... changes) {
+  public void moveChangesTo(@NotNull LocalChangeList list, @NotNull Change... changes) {
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         myModifier.moveChangesTo(list.getName(), changes);

@@ -253,7 +253,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       // Delete empty initializer left after fix
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
-        if(body.getStatements().length == 0 && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
+        if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
           owner.delete();
         }
       }

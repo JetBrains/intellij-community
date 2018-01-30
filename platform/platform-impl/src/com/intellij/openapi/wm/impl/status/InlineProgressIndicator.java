@@ -67,9 +67,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     myComponent = new MyComponent(compact, myProcessName);
     myEastButtons = createEastButtons();
-    myEastButtons.forEach(b -> b.button.setOpaque(false));
     if (myCompact) {
-      myComponent.setOpaque(false);
       myComponent.setLayout(new BorderLayout(2, 0));
       JPanel textAndProgress = new NonOpaquePanel(new BorderLayout());
       textAndProgress.add(myText, BorderLayout.CENTER);
@@ -82,7 +80,8 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myComponent.add(textAndProgress, BorderLayout.CENTER);
       myComponent.add(createButtonPanel(myEastButtons.map(b -> b.button)), BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
-    } else {
+    } 
+    else {
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
@@ -100,6 +99,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       myComponent.setBorder(JBUI.Borders.empty(2));
     }
+    UIUtil.uiTraverser(myComponent).forEach(o -> ((JComponent)o).setOpaque(false));
 
     if (!myCompact) {
       myProcessName.recomputeSize();

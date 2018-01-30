@@ -29,6 +29,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
@@ -336,6 +337,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
+  }
+
+  @Override
   protected void paintComponent(Graphics g) {
     Rectangle r = getBounds();
     Graphics2D g2d = (Graphics2D)g;
@@ -369,7 +375,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private static BufferedImage drawToBuffer(Graphics2D g2d, boolean active, int height, boolean floating) {
     final int width = 150;
 
-    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB);
     Graphics2D g = image.createGraphics();
     UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true);
     g.dispose();

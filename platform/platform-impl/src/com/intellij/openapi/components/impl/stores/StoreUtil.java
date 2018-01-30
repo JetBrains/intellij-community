@@ -17,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -114,8 +115,17 @@ public final class StoreUtil {
       ((ProjectManagerEx)projectManager).flushChangedProjectFileAlarm();
     }
 
-    for (Project openProject : projectManager.getOpenProjects()) {
-      openProject.save();
+    for (Project project : projectManager.getOpenProjects()) {
+      saveProject(project, isForce);
+    }
+  }
+
+  public static void saveProject(@NotNull Project project, boolean isForce) {
+    if (isForce && project instanceof ProjectImpl) {
+      ((ProjectImpl)project).save(true);
+    }
+    else {
+      project.save();
     }
   }
 }

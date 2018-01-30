@@ -631,12 +631,23 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if (dimension == null) return null;
     PsiExpression bound = loop.myBound;
-    if (!PsiEquivalenceUtil.areElementsEquivalent(dimension, bound) &&
-        !ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) {
-      return null;
-    }
+    if (!isArrayLength(arrayVariable, dimension, bound)) return null;
     if (VariableAccessUtils.variableIsUsed(arrayVariable, assignment.getRExpression())) return null;
     return arrayVariable;
+  }
+
+  private static boolean isArrayLength(PsiLocalVariable arrayVariable, PsiExpression dimension, PsiExpression bound) {
+    if (ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) return true;
+    if (PsiEquivalenceUtil.areElementsEquivalent(dimension, bound)) return true;
+    if (bound instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)bound).getMethodExpression().getQualifierExpression();
+      if (qualifier != null && CollectionUtils.isCollectionOrMapSize(dimension, qualifier)) return true;
+    }
+    if (dimension instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)dimension).getMethodExpression().getQualifierExpression();
+      if (qualifier != null && CollectionUtils.isCollectionOrMapSize(bound, qualifier)) return true;
+    }
+    return false;
   }
 
   /**
