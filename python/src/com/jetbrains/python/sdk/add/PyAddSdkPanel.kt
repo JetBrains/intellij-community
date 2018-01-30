@@ -19,8 +19,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.sdk.add.wizard.WizardStep
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
+import java.awt.Component
 import java.io.File
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -29,18 +32,37 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-abstract class PyAddSdkPanel : JPanel() {
-  abstract val panelName: String
-  open val icon: Icon = PythonIcons.Python.Python
+abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
+  override abstract val panelName: String
+  override val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null
 
-  open fun getOrCreateSdk(): Sdk? = sdk
+  override fun getOrCreateSdk(): Sdk? = sdk
 
-  open fun validateAll(): List<ValidationInfo> = emptyList()
+  override fun validateAll(): List<ValidationInfo> = emptyList()
 
   open fun addChangeListener(listener: Runnable) {}
+
+  /**
+   * Returns the "wizard" with the single step.
+   */
+  override fun getFirstWizardStep(): WizardStep<Sdk?> = object : WizardStep<Sdk?> {
+    override fun finish(): Sdk? = getOrCreateSdk()
+
+    override val component: Component = this@PyAddSdkPanel
+
+    override fun hasNext(): Boolean = false
+
+    override fun next(): WizardStep<Sdk?> = throw IllegalStateException()
+
+    override fun hasPrevious(): Boolean = false
+
+    override fun previous(): WizardStep<Sdk?> = throw IllegalStateException()
+
+    override fun validateAll(): List<ValidationInfo> = this@PyAddSdkPanel.validateAll()
+  }
 
   companion object {
     @JvmStatic

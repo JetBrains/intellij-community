@@ -113,7 +113,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   private void createLocalSdk() {
     final Project project = myNewProjectPath != null ? null : myProject;
-    final PyAddSdkDialog dialog = new PyAddSdkDialog(project, Arrays.asList(myExistingSdks), myNewProjectPath);
+    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, Arrays.asList(myExistingSdks), myNewProjectPath);
     final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
     mySdkAddedCallback.consume(sdk);
   }
