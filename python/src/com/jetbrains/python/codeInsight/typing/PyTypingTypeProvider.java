@@ -155,13 +155,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     // Check for the exact name in advance for performance reasons
     if ("Generic".equals(referenceExpression.getName())) {
       if (resolveToQualifiedNames(referenceExpression, context).contains(GENERIC)) {
-        return createTypingGenericType();
+        return createTypingGenericType(referenceExpression);
       }
     }
     // Check for the exact name in advance for performance reasons
     if ("Protocol".equals(referenceExpression.getName())) {
       if (resolveToQualifiedNames(referenceExpression, context).contains(PROTOCOL)) {
-        return createTypingProtocolType();
+        return createTypingProtocolType(referenceExpression);
       }
     }
     // Check for the exact name in advance for performance reasons
@@ -345,13 +345,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static PyType createTypingGenericType() {
-    return new PyCustomType(GENERIC, null, false);
+  private static PyType createTypingGenericType(@NotNull PsiElement anchor) {
+    return new PyCustomType(GENERIC, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   @NotNull
-  private static PyType createTypingProtocolType() {
-    return new PyCustomType(PROTOCOL, null, false);
+  private static PyType createTypingProtocolType(@NotNull PsiElement anchor) {
+    return new PyCustomType(PROTOCOL, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   @NotNull
@@ -466,11 +466,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       // Depends on typing.Generic defined as a target expression
       if (GENERIC.equals(target.getQualifiedName())) {
-        return createTypingGenericType();
+        return createTypingGenericType(target);
       }
       // Depends on typing.Protocol defined as a target expression
       if (PROTOCOL.equals(target.getQualifiedName())) {
-        return createTypingProtocolType();
+        return createTypingProtocolType(target);
       }
       // Depends on typing.Callable defined as a target expression
       if (CALLABLE.equals(target.getQualifiedName())) {
