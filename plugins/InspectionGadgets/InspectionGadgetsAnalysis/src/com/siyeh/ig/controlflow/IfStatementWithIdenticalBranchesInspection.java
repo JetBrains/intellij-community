@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -106,13 +105,17 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       if (elseIf == null) return;
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return;
-      elseIf.myElseBranch.replace(elseIf.myElseIfElseStatement);
+      CommentTracker ct = new CommentTracker();
+      ct.markUnchanged(elseIf.myElseIfThen);
+      ct.markUnchanged(condition);
+      ct.markUnchanged(elseIf.myElseIfCondition);
+      ct.replace(elseIf.myElseBranch, elseIf.myElseIfElseStatement);
 
       String firstCondition = ParenthesesUtils.getText(condition, ParenthesesUtils.OR_PRECEDENCE);
       String secondCondition = ParenthesesUtils.getText(elseIf.myElseIfCondition, ParenthesesUtils.OR_PRECEDENCE);
 
       String newCondition = firstCondition + "||" + secondCondition;
-      PsiReplacementUtil.replaceExpression(condition, newCondition);
+      ct.replaceAndRestoreComments(condition, newCondition);
     }
   }
 
@@ -930,15 +933,17 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
   private static class ElseIf {
     final @NotNull PsiStatement myElseBranch;
     final @NotNull PsiStatement myElseIfElseStatement;
+    final @NotNull PsiElement myElseIfThen;
     final @NotNull PsiExpression myElseIfCondition;
     final @NotNull Map<PsiLocalVariable, String> mySubstitutionTable;
 
     private ElseIf(@NotNull PsiStatement elseBranch,
                    @NotNull PsiStatement elseIfElseStatement,
-                   @NotNull PsiExpression elseIfCondition,
+                   @NotNull PsiElement then, @NotNull PsiExpression elseIfCondition,
                    @NotNull Map<PsiLocalVariable, String> table) {
       myElseBranch = elseBranch;
       myElseIfElseStatement = elseIfElseStatement;
+      myElseIfThen = then;
       myElseIfCondition = elseIfCondition;
       mySubstitutionTable = table;
     }
@@ -951,7 +956,9 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       if (elseIf == null) return null;
       PsiExpression elseIfCondition = elseIf.getCondition();
       if (elseIfCondition == null) return null;
-      PsiStatement[] elseIfThen = ControlFlowUtils.unwrapBlock(elseIf.getThenBranch());
+      PsiStatement elseIfThenBranch = elseIf.getThenBranch();
+      if(elseIfThenBranch == null) return null;
+      PsiStatement[] elseIfThen = ControlFlowUtils.unwrapBlock(elseIfThenBranch);
       PsiStatement elseIfElseBranch = elseIf.getElseBranch();
       if (elseIfElseBranch == null) return null;
       if (elseIfThen.length != thenStatements.length) return null;
@@ -960,7 +967,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       addLocalVariables(variables, Arrays.asList(elseIfThen));
       LocalEquivalenceChecker equivalence = new LocalEquivalenceChecker(variables);
       if (!branchesAreEquivalent(thenStatements, Arrays.asList(elseIfThen), equivalence)) return null;
-      return new ElseIf(elseBranch, elseIfElseBranch, elseIfCondition, equivalence.mySubstitutionTable);
+      return new ElseIf(elseBranch, elseIfElseBranch, elseIfThenBranch, elseIfCondition, equivalence.mySubstitutionTable);
     }
   }
 
