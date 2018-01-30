@@ -136,7 +136,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   CompletionProgressIndicator(Editor editor, @NotNull Caret caret, int invocationCount,
                               CodeCompletionHandlerBase handler, OffsetMap offsetMap, OffsetsInFile hostOffsets,
-                              boolean hasModifiers, LookupImpl lookup, CompletionThreadingBase threading) {
+                              boolean hasModifiers, LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     myHandler = handler;
@@ -146,7 +146,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myHostOffsets = hostOffsets;
     myLookup = lookup;
     myStartCaret = myEditor.getCaretModel().getOffset();
-    myThreading = threading;
+    myThreading = ApplicationManager.getApplication().isWriteAccessAllowed() ? new SyncCompletion() : new AsyncCompletion();
 
     myAdvertiserChanges.offer(() -> myLookup.getAdvertiser().clearAdvertisements());
 
@@ -818,7 +818,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ProgressManager.checkCanceled();
   }
 
-  @Nullable
+  @NotNull
   CompletionThreadingBase getCompletionThreading() {
     return myThreading;
   }

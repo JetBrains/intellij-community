@@ -166,11 +166,8 @@ public class CodeCompletionHandlerBase {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
     }
 
-    final CompletionInitializationContext[] initializationContext = {null};
-
-
     Runnable initCmd = () -> {
-      Runnable runnable = () -> {
+      CompletionInitializationContext context = WriteAction.compute(() -> {
         EditorUtil.fillVirtualSpaceUntilCaret(editor);
         PsiDocumentManager.getInstance(project).commitAllDocuments();
         CompletionAssertions.checkEditorValid(editor);
@@ -180,22 +177,15 @@ public class CodeCompletionHandlerBase {
         psiFile.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
         CompletionAssertions.assertCommitSuccessful(editor, psiFile);
 
-        initializationContext[0] = runContributorsBeforeCompletion(editor, psiFile, invocationCount, caret);
-      };
-      ApplicationManager.getApplication().runWriteAction(runnable);
+        return runContributorsBeforeCompletion(editor, psiFile, invocationCount, caret);
+      });
+      doComplete(context, hasModifiers);
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
-      CompletionAssertions.checkEditorValid(editor);
-      if (!restarted && shouldSkipAutoPopup(editor, initializationContext[0].getFile())) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        return;
-      }
     } else {
       CommandProcessor.getInstance().executeCommand(project, initCmd, null, null);
     }
-
-    insertDummyIdentifier(initializationContext[0], hasModifiers, invocationCount);
   }
 
   private CompletionInitializationContext runContributorsBeforeCompletion(Editor editor, PsiFile psiFile, int invocationCount, @NotNull Caret caret) {
@@ -275,14 +265,11 @@ public class CodeCompletionHandlerBase {
     return lookup;
   }
 
-  private void doComplete(CompletionInitializationContext initContext,
-                          boolean hasModifiers,
-                          int invocationCount,
-                          OffsetTranslator translator, OffsetsInFile hostOffsets, OffsetsInFile hostCopyOffsets) {
+  private void doComplete(CompletionInitializationContext initContext, boolean hasModifiers) {
     final Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
-    OffsetsInFile finalOffsets = toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
+    OffsetsInFile hostOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     LookupImpl lookup = obtainLookup(editor, initContext.getProject());
 
     CompletionPhase phase = CompletionServiceImpl.getCompletionPhase();
@@ -295,19 +282,14 @@ public class CodeCompletionHandlerBase {
       CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.getClass());
     }
 
-    CompletionThreadingBase threading = ApplicationManager.getApplication().isWriteAccessAllowed() ? new SyncCompletion() : new AsyncCompletion();
     CompletionProgressIndicator indicator = new CompletionProgressIndicator(editor, initContext.getCaret(),
-                                                                            invocationCount, this,
-                                                                            initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup,
-                                                                            threading);
-    Disposer.register(indicator, hostCopyOffsets.getOffsets());
-    Disposer.register(indicator, finalOffsets.getOffsets());
-    Disposer.register(indicator, translator);
+                                                                            initContext.getInvocationCount(), this,
+                                                                            initContext.getOffsetMap(), hostOffsets, hasModifiers, lookup);
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
-    
-    threading.startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> 
-      indicator.runContributors(initContext, finalOffsets)));
+
+    indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () ->
+      performCompletionInBackground(initContext, indicator)));
 
     if (!synchronous) {
       return;
@@ -330,6 +312,23 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(new CompletionPhase.BgCalculation(indicator));
     indicator.showLookup();
+  }
+
+  private void performCompletionInBackground(CompletionInitializationContext initContext, CompletionProgressIndicator indicator) {
+    if (autopopup && shouldSkipAutoPopup(initContext.getEditor(), initContext.getFile())) {
+      return;
+    }
+
+    OffsetsInFile hostCopyOffsets = insertDummyIdentifier(initContext, indicator, indicator.getHostOffsets());
+    if (hostCopyOffsets == null) {
+      return;
+    }
+
+    Disposer.register(indicator, hostCopyOffsets.getOffsets());
+    OffsetsInFile finalOffsets = toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
+    Disposer.register(indicator, finalOffsets.getOffsets());
+
+    indicator.runContributors(initContext, finalOffsets);
   }
 
   private static void checkNotSync(CompletionProgressIndicator indicator, List<LookupElement> allItems) {
@@ -437,13 +436,12 @@ public class CodeCompletionHandlerBase {
     }
   }
 
-  private void insertDummyIdentifier(final CompletionInitializationContext initContext,
-                                     final boolean hasModifiers,
-                                     final int invocationCount) {
+  private static OffsetsInFile insertDummyIdentifier(CompletionInitializationContext initContext,
+                                                     CompletionProgressIndicator indicator, 
+                                                     OffsetsInFile topLevelOffsets) {
     CompletionAssertions.checkEditorValid(initContext.getEditor());
 
     Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
-    OffsetsInFile topLevelOffsets = new OffsetsInFile(initContext.getFile(), initContext.getOffsetMap()).toTopLevelFile();
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
     PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
@@ -454,13 +452,10 @@ public class CodeCompletionHandlerBase {
     int endOffset = hostMap.getOffset(CompletionInitializationContext.SELECTION_END_OFFSET);
 
     OffsetTranslator translator = new OffsetTranslator(hostEditor.getDocument(), initContext.getFile(), copyDocument, startOffset, endOffset, dummyIdentifier);
+    Disposer.register(indicator, translator);
 
     OffsetsInFile copyOffsets = topLevelOffsets.replaceInCopy(hostCopy, startOffset, endOffset, dummyIdentifier);
-    if (!hostCopy.isValid()) {
-      Disposer.dispose(translator);
-      return;
-    }
-    doComplete(initContext, hasModifiers, invocationCount, translator, topLevelOffsets, copyOffsets);
+    return hostCopy.isValid() ? copyOffsets : null;
   }
 
   private static OffsetsInFile toInjectedIfAny(PsiFile originalFile, OffsetsInFile hostCopyOffsets) {
