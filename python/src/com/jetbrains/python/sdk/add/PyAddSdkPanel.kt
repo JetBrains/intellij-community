@@ -19,8 +19,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.sdk.add.wizard.WizardControlAction
+import com.jetbrains.python.sdk.add.wizard.WizardControlAction.OK
+import com.jetbrains.python.sdk.add.wizard.WizardControlsListener
+import com.jetbrains.python.sdk.add.wizard.WizardStateListener
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
+import java.awt.Component
 import java.io.File
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -29,16 +35,39 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-abstract class PyAddSdkPanel : JPanel() {
-  abstract val panelName: String
-  open val icon: Icon = PythonIcons.Python.Python
+abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
+  override val actions: Map<WizardControlAction, Boolean>
+    get() = mapOf(OK.enabled())
+
+  override val component: Component
+    get() = this
+
+  /**
+   * [component] is permanent. [StateListener.onStateChanged] won't be called
+   * anyway.
+   */
+  override fun addStateListener(stateListener: WizardStateListener) = Unit
+
+  override fun addControlListener(listener: WizardControlsListener) = Unit
+
+  override fun previous() = throw UnsupportedOperationException()
+
+  override fun next() = throw UnsupportedOperationException()
+
+  // TODO could we return `null`?
+  override fun finish(): Sdk = getOrCreateSdk() ?: throw IllegalStateException()
+
+  override abstract val panelName: String
+  override val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null
 
-  open fun getOrCreateSdk(): Sdk? = sdk
+  override fun getOrCreateSdk(): Sdk? = sdk
 
-  open fun validateAll(): List<ValidationInfo> = emptyList()
+  override fun onSelected() = Unit
+
+  override fun validateAll(): List<ValidationInfo> = emptyList()
 
   open fun addChangeListener(listener: Runnable) {}
 
