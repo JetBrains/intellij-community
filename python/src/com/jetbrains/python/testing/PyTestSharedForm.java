@@ -221,7 +221,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     // We should always use system-independent path because only this type of path is processed correctly
     // when stored (folder changed to macros to prevent hard code)
     final String targetText = getActiveTextField().getText().trim();
-    return getTargetVariant() == PyRunTargetVariant.PATH ? FileUtil.toSystemIndependentName(targetText) : targetText;
+    return getTargetType() == PyRunTargetVariant.PATH ? FileUtil.toSystemIndependentName(targetText) : targetText;
   }
 
 
@@ -230,7 +230,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
   private void onTargetTypeChanged() {
-    final PyRunTargetVariant targetType = getTargetVariant();
+    final PyRunTargetVariant targetType = getTargetType();
 
     for (final OptionHolder optionHolder : myCustomOptions.values()) {
       optionHolder.setType(targetType);
@@ -251,17 +251,17 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
 
   @NotNull
   private TextAccessor getActiveTextField() {
-    return (getTargetVariant() == PyRunTargetVariant.PATH ? myPathTarget : myPythonTarget);
+    return (getTargetType() == PyRunTargetVariant.PATH ? myPathTarget : myPythonTarget);
   }
 
   @SuppressWarnings("WeakerAccess") // Accessor for property
   @NotNull
-  public PyRunTargetVariant getTargetVariant() {
+  public PyRunTargetVariant getTargetType() {
     return PyRunTargetVariant.valueOf(myButtonGroup.getSelection().getActionCommand());
   }
 
   @SuppressWarnings("unused") // Mutator for property
-  public void setTargetVariant(@NotNull final PyRunTargetVariant target) {
+  public void setTargetType(@NotNull final PyRunTargetVariant target) {
     final Enumeration<AbstractButton> elements = myButtonGroup.getElements();
     while (elements.hasMoreElements()) {
       final AbstractButton button = elements.nextElement();

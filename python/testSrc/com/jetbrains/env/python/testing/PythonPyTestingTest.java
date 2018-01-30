@@ -434,7 +434,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
             configuration.getTarget().setTarget(fullFilePath.getPath());
-            configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
+            configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
           }
         };
       }

@@ -263,15 +263,15 @@ private abstract class LegacyConfigurationManager<
         val virtualFile = getVirtualFileByPath(legacyConfig.scriptName) ?: return
         val pyFile = virtualFile.asPyFile(legacyConfig.project) ?: return
         val qualifiedName = getElementFromConfig(pyFile)?.qualifiedName ?: return
-        newConfig.target.targetVariant = PyRunTargetVariant.PYTHON
+        newConfig.target.targetType = PyRunTargetVariant.PYTHON
         newConfig.target.target = qualifiedName
       }
       TestType.TEST_FOLDER -> {
-        newConfig.target.targetVariant = PyRunTargetVariant.PATH
+        newConfig.target.targetType = PyRunTargetVariant.PATH
         newConfig.target.target = legacyConfig.folderName
       }
       TestType.TEST_SCRIPT -> {
-        newConfig.target.targetVariant = PyRunTargetVariant.PATH
+        newConfig.target.targetType = PyRunTargetVariant.PATH
         newConfig.target.target = legacyConfig.scriptName
       }
       else -> {
@@ -298,7 +298,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
     newConfig.additionalArguments = legacyConfig.params
 
     // Default is PATH
-    newConfig.target.targetVariant = PyRunTargetVariant.PATH
+    newConfig.target.targetType = PyRunTargetVariant.PATH
 
     val oldKeywords = legacyConfig.keywords
 
@@ -306,7 +306,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
     if (virtualFile.isDirectory) {
       // If target is directory, then it can't point to any symbol
       newConfig.target.target = virtualFile.path
-      newConfig.target.targetVariant = PyRunTargetVariant.PATH
+      newConfig.target.targetType = PyRunTargetVariant.PATH
       newConfig.keywords = oldKeywords
       return
     }
@@ -319,7 +319,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
       //Give up with interpreting
       newConfig.keywords = oldKeywords
       newConfig.target.target = script.virtualFile.path
-      newConfig.target.targetVariant = PyRunTargetVariant.PATH
+      newConfig.target.targetType = PyRunTargetVariant.PATH
       return
     }
     val classOrFunctionName = keywordsList[0]
@@ -330,13 +330,13 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
                                         script.findTopLevelFunction(classOrFunctionName),
                                         PyQualifiedNameOwner::class.java) ?: return
       newConfig.target.target = classOrFunction.qualifiedName ?: return
-      newConfig.target.targetVariant = PyRunTargetVariant.PYTHON
+      newConfig.target.targetType = PyRunTargetVariant.PYTHON
     }
     if (keywordsList.size == 2) { // Class and method
       clazz ?: return
       val method = clazz.findMethodByName(keywordsList[1], true, TypeEvalContext.userInitiated(newConfig.project, script)) ?: return
       newConfig.target.target = method.qualifiedName ?: return
-      newConfig.target.targetVariant = PyRunTargetVariant.PYTHON
+      newConfig.target.targetType = PyRunTargetVariant.PYTHON
 
     }
 
