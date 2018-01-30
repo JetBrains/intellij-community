@@ -20,6 +20,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
+import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
@@ -251,6 +252,9 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   @NotNull
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
     throws InvalidSdkException {
+
+    VirtualFileUtil.findFile(sdkHome);
+
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
     final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());

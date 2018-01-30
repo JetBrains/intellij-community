@@ -60,5 +60,5 @@ fun targetAsVirtualFile(targetType: PyRunTargetVariant, target: String): Virtual
  */
 interface TargetWithVariant {
   val target: String?
-  val targetVariant: PyRunTargetVariant
+  val targetType: PyRunTargetVariant
 }
