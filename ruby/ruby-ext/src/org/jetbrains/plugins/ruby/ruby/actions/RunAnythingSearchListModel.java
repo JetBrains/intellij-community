@@ -1,26 +1,25 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Vector;
 
 @SuppressWarnings("unchecked")
-class RunAnythingSearchListModel extends DefaultListModel {
+public class RunAnythingSearchListModel extends DefaultListModel {
   @SuppressWarnings("UseOfObsoleteCollectionType")
   Vector myDelegate;
-
-  volatile RunAnythingTitleIndex titleIndex = new RunAnythingTitleIndex();
-  volatile RunAnythingMoreIndex moreIndex = new RunAnythingMoreIndex();
 
   RunAnythingSearchListModel() {
     super();
     myDelegate = ReflectionUtil.getField(DefaultListModel.class, this, Vector.class, "delegate");
+    RunAnythingGroup.clearIndexes();
   }
 
   int next(int index) {
-    int[] all = getAll();
+    int[] all = RunAnythingGroup.getAllIndexes();
     Arrays.sort(all);
     for (int next : all) {
       if (next > index) return next;
@@ -28,24 +27,8 @@ class RunAnythingSearchListModel extends DefaultListModel {
     return 0;
   }
 
-  int[] getAll() {
-    return new int[]{
-      titleIndex.recentUndefined,
-      titleIndex.generators,
-      titleIndex.temporaryRunConfigurations,
-      titleIndex.permanentRunConfigurations,
-      titleIndex.rakeTasks,
-      titleIndex.bundler,
-      moreIndex.permanentRunConfigurations,
-      moreIndex.bundlerActions,
-      moreIndex.rakeTasks,
-      moreIndex.temporaryRunConfigurations,
-      moreIndex.generators
-    };
-  }
-
   int prev(int index) {
-    int[] all = getAll();
+    int[] all = RunAnythingGroup.getAllIndexes();
     Arrays.sort(all);
     for (int i = all.length - 1; i >= 0; i--) {
       if (all[i] != -1 && all[i] < index) return all[i];

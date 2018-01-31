@@ -262,7 +262,7 @@ public class RunAnythingUtil {
   }
 
   @NotNull
-  static String getPresentationText(AnAction it) {
+  public static String getPresentationText(AnAction it) {
     String text = it.getTemplatePresentation().getText();
     return text != null ? text : "undefined";
   }

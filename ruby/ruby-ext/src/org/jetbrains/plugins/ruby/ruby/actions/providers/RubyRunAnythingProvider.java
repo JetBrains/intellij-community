@@ -1,13 +1,11 @@
 package org.jetbrains.plugins.ruby.ruby.actions.providers;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.RubyRunConfigurationType;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.rubyScript.RubyRunConfiguration;
 
-import java.io.File;
 import java.util.List;
 
 public class RubyRunAnythingProvider extends RubyRunAnythingProviderBase<RubyRunConfiguration> {

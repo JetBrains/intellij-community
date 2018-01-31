@@ -5,9 +5,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.actions.ChooseRunConfigurationPopup;
-import com.intellij.execution.actions.ExecutorProvider;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
@@ -57,8 +54,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
@@ -66,8 +61,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -78,13 +71,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
-import org.jetbrains.plugins.ruby.gem.bundler.actions.AbstractBundlerAction;
-import org.jetbrains.plugins.ruby.rails.actions.generators.actions.GeneratorsActionGroup;
-import org.jetbrains.plugins.ruby.rails.facet.RailsFacetUtil;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
-import org.jetbrains.plugins.ruby.tasks.rake.RakeAction;
-import org.jetbrains.plugins.ruby.tasks.rake.RakeTaskModuleCache;
-import org.jetbrains.plugins.ruby.tasks.rake.task.RakeTask;
+import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 
 import javax.accessibility.Accessible;
 import javax.swing.*;
@@ -101,8 +89,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
@@ -118,13 +104,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
 
-  private static final int MAX_RAKE = 5;
-  private static final int MAX_RUN_CONFIGURATION = 6;
-  private static final int MAX_BUNDLER_ACTIONS = 2;
-  private static final int MAX_UNDEFINED_FILES = 5;
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
-  private static final int MAX_GENERATORS = 3;
-  private static final int DEFAULT_MORE_STEP_COUNT = 5;
   private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
@@ -133,8 +113,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(RubyIcons.RunAnything.Run_anything, 16, 16);
-  private RakeAction[] myRakeActions = new RakeAction[0];
-  private AnAction[] myGeneratorsActions = AnAction.EMPTY_ARRAY;
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private Component myFocusComponent;
@@ -156,7 +134,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   @Nullable
   private FileEditor myFileEditor;
   private RunAnythingHistoryItem myHistoryItem;
-  private AnAction[] myBundlerActions;
   private JLabel myAdComponent;
   private DataContext myDataContext;
   private static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
@@ -414,32 +391,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       final RunAnythingSearchListModel model = tryGetSearchingModel(myList);
       if (model != null) {
         if (isMoreItem(index)) {
-          WidgetID wid = null;
-          if (index == model.moreIndex.permanentRunConfigurations) {
-            wid = WidgetID.PERMANENT;
-          }
-          else if (index == model.moreIndex.rakeTasks) {
-            wid = WidgetID.RAKE;
-          }
-          else if (index == model.moreIndex.generators) {
-            wid = WidgetID.GENERATORS;
-          }
-          else if (index == model.moreIndex.bundlerActions) {
-            wid = WidgetID.BUNDLER;
-          }
-          else if (index == model.moreIndex.temporaryRunConfigurations) {
-            wid = WidgetID.TEMPORARY;
-          }
-          else if (index == model.moreIndex.undefined) {
-            wid = WidgetID.UNDEFINED;
-          }
+          RunAnythingGroup.WidgetID wid = RunAnythingGroup.findWidget(index);
 
           if (wid != null) {
-            final WidgetID widgetID = wid;
             myCurrentWorker.doWhenProcessed(() -> {
               myCalcThread = new CalcThread(project, pattern, true);
               myPopupActualWidth = 0;
-              myCurrentWorker = myCalcThread.insert(index, widgetID);
+              myCurrentWorker = myCalcThread.insert(index, wid);
             });
 
             return;
@@ -530,15 +488,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private boolean isMoreItem(int index) {
-    RunAnythingSearchListModel model = tryGetSearchingModel(myList);
-    if (model == null) return false;
-
-    return index == model.moreIndex.permanentRunConfigurations ||
-           index == model.moreIndex.rakeTasks ||
-           index == model.moreIndex.bundlerActions ||
-           index == model.moreIndex.generators ||
-           index == model.moreIndex.undefined ||
-           index == model.moreIndex.temporaryRunConfigurations;
+    return tryGetSearchingModel(myList) != null && RunAnythingGroup.isMoreIndex(index);
   }
 
   @Nullable
@@ -623,7 +573,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     Module module = RModuleUtil.getInstance().getModule(myActionEvent.getDataContext());
 
     myDataContext = SimpleDataContext.getSimpleContext(LangDataKeys.MODULE.getName(), module);
-    initActions();
 
     if (myPopupField != null) {
       Disposer.dispose(myPopupField);
@@ -827,26 +776,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     setAdText(text);
   }
 
-  private void initActions() {
-    myBundlerActions = Stream.of(((DefaultActionGroup)ActionManager.getInstance().getAction("BUNDLER_ACTIONS")).getChildren(myActionEvent))
-                             .filter(action -> action instanceof AbstractBundlerAction).toArray(AnAction[]::new);
-
-    //todo move to EP
-    Module myModule = getModule();
-    if (myModule != null && RailsFacetUtil.hasRailsSupport(myModule)) {
-      RakeTask rakeTasks = RakeTaskModuleCache.getInstance(myModule).getRakeTasks();
-      if (rakeTasks != null) {
-        myRakeActions = Arrays.stream(RakeTaskModuleCache.getInstance(myModule).getRakeActions())
-                              .filter(RakeAction.class::isInstance)
-                              .map(RakeAction.class::cast)
-                              .peek(rakeAction -> rakeAction.updateAction(myDataContext, rakeAction.getTemplatePresentation()))
-                              .toArray(RakeAction[]::new);
-      }
-
-      myGeneratorsActions = GeneratorsActionGroup.collectGeneratorsActions(myModule, false).toArray(AnAction.EMPTY_ARRAY);
-    }
-  }
-
   private void showSettings() {
     myPopupField.setText("");
     final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
@@ -946,9 +875,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
       model.remove(index);
 
-      RunAnythingMoreIndex moreIndex = model.moreIndex;
-      model.titleIndex.shift(index, shift);
-      moreIndex.shift(index, shift);
+      RunAnythingGroup.shiftIndexes(index, shift);
 
       if (model.size() > 0) ScrollingUtil.selectItem(myList, index < model.size() ? index : index - 1);
 
@@ -1042,7 +969,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myMainPanel.removeAll();
       RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
       if (model != null) {
-        String title = model.titleIndex.getTitle(index);
+        String title = RunAnythingGroup.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
           myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
@@ -1076,7 +1003,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myTitle.setFont(RunAnythingUtil.getTitleFont());
       int index = 0;
       while (index < model.getSize()) {
-        String title = model.titleIndex.getTitle(index);
+        String title = RunAnythingGroup.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
         }
@@ -1087,8 +1014,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myTitle.setAlignmentY(BOTTOM_ALIGNMENT);
     }
   }
-
-  enum WidgetID {PERMANENT, RAKE, BUNDLER, TEMPORARY, GENERATORS, UNDEFINED}
 
   @SuppressWarnings({"SSBasedInspection", "unchecked"})
   private class CalcThread implements Runnable {
@@ -1103,7 +1028,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myProject = project;
       myModule = getModule();
       myPattern = pattern;
-      RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
+      RunAnythingSearchListModel model = tryGetSearchingModel(myList);
       myListModel = reuseModel ? model != null ? model : new RunAnythingSearchListModel() : new RunAnythingSearchListModel();
     }
 
@@ -1133,27 +1058,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         });
 
         if (myPattern.trim().length() == 0) {
-          buildModelFromRecentFiles();
-          buildTemporaryConfigurations("");
-          //updatePopup();
+          buildGroups(true);
           return;
         }
 
         check();
-
-        buildRecentUndefined();
-
-        runReadAction(() -> buildTemporaryConfigurations(myPattern));
-        runReadAction(() -> buildPermanentConfigurations(myPattern));
-        check();
-        buildGenerators(myPattern);
-        updatePopup();
-        check();
-
-        buildRakeActions(myPattern);
-        buildBundlerActions(myPattern);
-
-        updatePopup();
+        buildGroups(false);
       }
       catch (ProcessCanceledException ignore) {
         myDone.setRejected();
@@ -1174,6 +1084,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
     }
 
+    private void buildGroups(boolean isRecent) {
+      buildAllGroups(myPattern, () -> check(), () -> isCanceled(), isRecent);
+      updatePopup();
+    }
+
     private void runReadAction(@NotNull Runnable action) {
       if (!DumbService.getInstance(myProject).isDumb()) {
         ApplicationManager.getApplication().runReadAction(action);
@@ -1188,177 +1103,21 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
     }
 
-    private synchronized void buildRakeActions(String pattern) {
-      SearchResult actions = getRakeTasks(pattern, MAX_RAKE);
-
-      check();
-      addActionsToModel(
-        actions,
-        () -> myListModel.titleIndex.rakeTasks = myListModel.size(),
-        () -> myListModel.moreIndex.rakeTasks = actions.size() >= MAX_RAKE ? myListModel.size() - 1 : -1);
-    }
-
-    private SearchResult getActions(final String pattern, final int max, AnAction[] actions, String prefix) {
-      return getActions(pattern, max, actions, prefix, null);
-    }
-
-    private <T extends AnAction> SearchResult getActions(@NotNull String pattern,
-                                                         int max,
-                                                         @NotNull T[] actions,
-                                                         @NotNull String prefix,
-                                                         @Nullable NotNullFunction<T, String> getActionText) {
-      final SearchResult result = new SearchResult();
-      final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-
-      for (T action : actions) {
-        RunAnythingActionItem actionItem = new RunAnythingActionItem(action, getActionText == null ? ObjectUtils
-          .notNull(action.getTemplatePresentation().getText(), "Undefined action") : getActionText.fun(action));
-
-        if (!myListModel.contains(actionItem) && matcher.matches(prefix + " " + RunAnythingUtil.getPresentationText(action))) {
-          if (result.size() == max) {
-            result.needMore = true;
-            break;
-          }
-          result.add(actionItem);
-        }
-        check();
-      }
-
-      return result;
-    }
-
-
-    private synchronized void buildBundlerActions(String pattern) {
-      SearchResult bundlerActions = getBundlerActions(pattern, MAX_BUNDLER_ACTIONS);
-
-      check();
-      addActionsToModel(
-        bundlerActions,
-        () -> myListModel.titleIndex.bundler = myListModel.size(),
-        () -> myListModel.moreIndex.bundlerActions = bundlerActions.size() >= MAX_BUNDLER_ACTIONS ? myListModel.size() - 1 : -1);
-    }
-
-    private void addActionsToModel(final SearchResult actions, Runnable updateTitleIndex, Runnable updateModeIndex) {
-      SwingUtilities.invokeLater(() -> {
-        if (isCanceled()) return;
-        if (actions.size() > 0) {
-          updateTitleIndex.run();
-          for (Object action : actions) {
-            myListModel.addElement(action);
-          }
-        }
-        updateModeIndex.run();
-      });
-    }
-
-    private synchronized void buildGenerators(final String pattern) {
-      SearchResult generators = getGenerators(pattern, MAX_GENERATORS);
-
-      check();
-      addActionsToModel(
-        generators,
-        () -> myListModel.titleIndex.generators = myListModel.size(),
-        () -> myListModel.moreIndex.generators = generators.size() >= MAX_GENERATORS ? myListModel.size() - 1 : -1);
-    }
-
-    private synchronized void buildPermanentConfigurations(@NotNull String pattern) {
-      SearchResult permanentRunConfigurations = getPermanentConfigurations(pattern, MAX_RUN_CONFIGURATION);
-
-      if (permanentRunConfigurations.size() > 0) {
-        SwingUtilities.invokeLater(() -> {
-          if (isCanceled()) return;
-          myListModel.titleIndex.permanentRunConfigurations = myListModel.size();
-          for (Object runConfiguration : permanentRunConfigurations) {
-            myListModel.addElement(runConfiguration);
-          }
-          myListModel.moreIndex.permanentRunConfigurations = permanentRunConfigurations.needMore ? myListModel.getSize() - 1 : -1;
-        });
-      }
-    }
-
-    private synchronized void buildTemporaryConfigurations(@NotNull String pattern) {
-      SearchResult runConfigurations = getTemporaryRunConfigurations(pattern, MAX_RUN_CONFIGURATION);
-
-      if (runConfigurations.size() > 0) {
-        SwingUtilities.invokeLater(() -> {
-          if (isCanceled()) return;
-          myListModel.titleIndex.temporaryRunConfigurations = myListModel.size();
-          for (Object runConfiguration : runConfigurations) {
-            myListModel.addElement(runConfiguration);
-          }
-          myListModel.moreIndex.temporaryRunConfigurations = runConfigurations.needMore ? myListModel.getSize() - 1 : -1;
-        });
-      }
-    }
-
-    private SearchResult getConfigurations(String pattern, int max, Predicate<ChooseRunConfigurationPopup.ItemWrapper> filter) {
-      SearchResult configurations = new SearchResult();
-
-      final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
-      final ChooseRunConfigurationPopup.ItemWrapper[] wrappers =
-        ChooseRunConfigurationPopup.createSettingsList(myProject, new ExecutorProvider() {
-          @Override
-          public Executor getExecutor() {
-            return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.RUN);
-          }
-        }, false);
-      check();
-
-      for (ChooseRunConfigurationPopup.ItemWrapper wrapper : wrappers) {
-        if (!filter.test(wrapper)) continue;
-
-        RunAnythingRunConfigurationItem runConfigurationItem = new RunAnythingRunConfigurationItem(wrapper);
-        if (matcher.matches(wrapper.getText()) && !myListModel.contains(runConfigurationItem)) {
-          if (configurations.size() == max) {
-            configurations.needMore = true;
-            break;
-          }
-          configurations.add(runConfigurationItem);
-        }
-        check();
-      }
-
-      return configurations;
-    }
-
-    private boolean isTemporary(ChooseRunConfigurationPopup.ItemWrapper wrapper) {
-      Object value = wrapper.getValue();
-      return value instanceof RunnerAndConfigurationSettings && ((RunnerAndConfigurationSettings)value).isTemporary();
-    }
-
-    private SearchResult getTemporaryRunConfigurations(String pattern, final int max) {
-      if (!Registry.is("run.anything.temporary.configurations")) return new SearchResult();
-
-      return getConfigurations(pattern, max, it -> isTemporary(it));
-    }
-
-    private SearchResult getPermanentConfigurations(String pattern, final int max) {
-      if (!Registry.is("run.anything.permanent.configurations")) return new SearchResult();
-
-      return getConfigurations(pattern, max, it -> !isTemporary(it));
-    }
-
-    private synchronized void buildRecentUndefined() {
-      SearchResult recentUndefined = getCommands(myPattern, MAX_UNDEFINED_FILES);
-
-      if (recentUndefined.size() > 0) {
-        SwingUtilities.invokeLater(() -> {
-          if (isCanceled()) return;
-          myListModel.titleIndex.recentUndefined = myListModel.size();
-          for (Object file : recentUndefined) {
-            myListModel.addElement(file);
-          }
-          myListModel.moreIndex.undefined = recentUndefined.needMore ? myListModel.getSize() - 1 : -1;
-        });
-      }
+    private void buildAllGroups(@NotNull String pattern,
+                                @NotNull Runnable check,
+                                @NotNull Computable<Boolean> isCanceled,
+                                boolean isRecent) {
+      Condition<RunAnythingGroup> recent = isRecent ? ((group) -> group.isRecent()) : Condition.TRUE;
+      Arrays.stream(RunAnythingGroup.EP_NAME.getExtensions())
+            .filter(group -> recent.value(group))
+            .forEach(runAnythingGroup -> {
+              runReadAction(() -> runAnythingGroup.buildToList(myProject, myModule, myListModel, pattern, check, isCanceled));
+              check.run();
+            });
     }
 
     private boolean isCanceled() {
       return myProgressIndicator.isCanceled() || myDone.isRejected();
-    }
-
-    private void buildModelFromRecentFiles() {
-      buildRecentUndefined();
     }
 
     @SuppressWarnings("SSBasedInspection")
@@ -1485,70 +1244,27 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return myDone;
     }
 
-    public ActionCallback insert(final int index, final WidgetID id) {
+    public ActionCallback insert(final int index, final RunAnythingGroup.WidgetID id) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
         try {
-          SearchResult result = new SearchResult();
-          switch (id) {
-            case PERMANENT:
-              result = getPermanentConfigurations(myPattern, DEFAULT_MORE_STEP_COUNT);
-              break;
-            case RAKE:
-              result = getRakeTasks(myPattern, DEFAULT_MORE_STEP_COUNT);
-              break;
-            case BUNDLER:
-              result = getBundlerActions(myPattern, DEFAULT_MORE_STEP_COUNT);
-              break;
-            case TEMPORARY:
-              result = getTemporaryRunConfigurations(myPattern, DEFAULT_MORE_STEP_COUNT);
-              break;
-            case GENERATORS:
-              result = getGenerators(myPattern, DEFAULT_MORE_STEP_COUNT);
-              break;
-            case UNDEFINED:
-              result = getCommands(myPattern, DEFAULT_MORE_STEP_COUNT);
-              break;
-          }
-
+          RunAnythingGroup group = RunAnythingGroup.findGroup(id);
+          SearchResult result =
+            group == null ? new SearchResult() : group.getAllItems(myProject, myModule, myListModel, myPattern, true, this::check);
 
           check();
-          SearchResult finalResult = result;
           SwingUtilities.invokeLater(() -> {
             try {
               int shift = 0;
               int i = index + 1;
-              for (Object o : finalResult) {
+              for (Object o : result) {
                 //noinspection unchecked
                 myListModel.insertElementAt(o, i);
                 shift++;
                 i++;
               }
-              RunAnythingMoreIndex moreIndex = myListModel.moreIndex;
-              myListModel.titleIndex.shift(index, shift);
-              moreIndex.shift(index, shift);
 
-              if (!finalResult.needMore) {
-                switch (id) {
-                  case PERMANENT:
-                    moreIndex.permanentRunConfigurations = -1;
-                    break;
-                  case RAKE:
-                    moreIndex.rakeTasks = -1;
-                    break;
-                  case BUNDLER:
-                    moreIndex.bundlerActions = -1;
-                    break;
-                  case TEMPORARY:
-                    moreIndex.temporaryRunConfigurations = -1;
-                    break;
-                  case GENERATORS:
-                    moreIndex.generators = -1;
-                    break;
-                  case UNDEFINED:
-                    moreIndex.undefined = -1;
-                    break;
-                }
-              }
+              RunAnythingGroup.shiftIndexes(index, shift);
+              if (!result.needMore) RunAnythingGroup.dropMoreIndex(id);
 
               clearSelection();
               ScrollingUtil.selectItem(myList, index);
@@ -1564,51 +1280,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         }
       }));
       return myDone;
-    }
-
-    @NotNull
-    private SearchResult getCommands(@NotNull String pattern, int max) {
-      SearchResult result = new SearchResult();
-      MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-
-      if (!Registry.is("run.anything.undefined.commands")) {
-        return result;
-      }
-
-      check();
-      for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(myProject).getState().undefinedCommands)) {
-        RunAnythingUndefinedItem undefinedItem = new RunAnythingUndefinedItem(myProject, myModule, command);
-
-        if (matcher.matches(command) && !myListModel.contains(undefinedItem)) {
-          if (result.size() == max) {
-            result.needMore = true;
-            break;
-          }
-          result.add(undefinedItem);
-        }
-        check();
-      }
-
-      return result;
-    }
-
-
-    private SearchResult getRakeTasks(String pattern, int count) {
-      if (!Registry.is("run.anything.rake.tasks")) return new SearchResult();
-
-      return getActions(pattern, count, myRakeActions, "rake", action -> action.getTaskFullCmd());
-    }
-
-    private SearchResult getGenerators(String pattern, int count) {
-      if (!Registry.is("run.anything.generators")) return new SearchResult();
-
-      return getActions(pattern, count, myGeneratorsActions, "generator");
-    }
-
-    private SearchResult getBundlerActions(String pattern, int count) {
-      if (!Registry.is("run.anything.bundler.actions")) return new SearchResult();
-
-      return getActions(pattern, count, myBundlerActions, "bundle");
     }
 
     public ActionCallback start() {
@@ -1701,8 +1372,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
   }
 
-  static class SearchResult extends ArrayList<RunAnythingItem> {
-    boolean needMore;
+  public static class SearchResult extends ArrayList<RunAnythingItem> {
+    public boolean needMore;
   }
 
   private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
