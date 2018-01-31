@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
+import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -732,7 +733,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitExpression(@NotNull GrExpression expression) {
     super.visitExpression(expression);
-    if (isImplicitReturnStatement(expression)) {
+    if (ControlFlowUtils.isImplicitReturnStatement(expression)) {
       processReturnValue(expression, expression, expression);
     }
   }

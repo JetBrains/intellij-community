@@ -274,12 +274,4 @@ public class GroovyTypeCheckVisitorHelper {
     }
     return args;
   }
-
-  static boolean isImplicitReturnStatement(@NotNull GrExpression expression) {
-    GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(expression);
-    return flowOwner != null &&
-        PsiUtil.isExpressionStatement(expression) &&
-        ControlFlowUtils.isReturnValue(expression, flowOwner) &&
-        !PsiUtil.isVoidMethodCall(expression);
-  }
 }
