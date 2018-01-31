@@ -16,6 +16,9 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -30,6 +33,7 @@ import com.intellij.util.containers.Convertor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -41,7 +45,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
   @NonNls private static final String ROOT_NODE_VALUE = "root";
 
   public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
@@ -73,6 +77,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
+  @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -114,6 +119,28 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       return (ChangesBrowserNode) userObject;
     }
     return new ChangesBrowserNode(userObject);
+  }
+
+  @Nullable
+  @Override
+  public <V> V getUserData(@NotNull Key<V> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <V> void putUserData(@NotNull Key<V> key, @Nullable V value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @NotNull
+  @Override
+  public <V> V putUserDataIfAbsent(@NotNull Key<V> key, @NotNull V value) {
+    return myUserDataHolder.putUserDataIfAbsent(key, value);
+  }
+
+  @Override
+  public <V> boolean replace(@NotNull Key<V> key, @Nullable V oldValue, @Nullable V newValue) {
+    return myUserDataHolder.replace(key, oldValue, newValue);
   }
 
   @Override
