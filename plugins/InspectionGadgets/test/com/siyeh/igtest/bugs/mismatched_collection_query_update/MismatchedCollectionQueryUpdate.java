@@ -174,6 +174,22 @@ public class MismatchedCollectionQueryUpdate {
       }
     }
 
+    void add(TestPrivateClass tpc) {
+      tpc.field.add("foo");
+    }
+
+    void add(TestPackageClass tpc) {
+      tpc.field.add("foo");
+    }
+
+    private class TestPrivateClass {
+      public List<String> <warning descr="Contents of collection 'field' are updated, but never queried">field</warning> = new ArrayList<>();
+    }
+
+    class TestPackageClass {
+      public List<String> field = new ArrayList<>();
+    }
+
     class Node{
         private SortedSet mChildren;
 

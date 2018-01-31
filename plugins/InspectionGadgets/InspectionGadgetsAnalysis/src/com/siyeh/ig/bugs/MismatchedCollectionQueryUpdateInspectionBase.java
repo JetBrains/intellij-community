@@ -167,7 +167,10 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     public void visitField(@NotNull PsiField field) {
       super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
-        return;
+        PsiClass aClass = field.getContainingClass();
+        if (aClass == null || !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+          return;
+        }
       }
       final PsiClass containingClass = PsiUtil.getTopLevelClass(field);
       if (!checkVariable(field, containingClass)) {
