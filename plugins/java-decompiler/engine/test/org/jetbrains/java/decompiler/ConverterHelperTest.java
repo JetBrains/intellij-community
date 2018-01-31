@@ -4,31 +4,16 @@ package org.jetbrains.java.decompiler;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.extern.IIdentifierRenamer.Type;
 import org.jetbrains.java.decompiler.modules.renamer.ConverterHelper;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-public class ConverterHelperTest {
+import static org.junit.Assert.assertTrue;
 
+public class ConverterHelperTest {
   private static final String VALID_CLASS_NAME = "ValidClassName";
   private static final String VALID_FIELD_NAME = "validFieldName";
   private static final String VALID_METHOD_NAME = "validMethodName";
-
   private static final String VALID_FIELD_DESCRIPTOR = "I";
   private static final String VALID_METHOD_DESCRIPTOR = "()V";
-
-  private ConverterHelper converterHelper;
-
-  @Before
-  public void setUp() {
-    this.converterHelper = new ConverterHelper();
-  }
-
-  @After
-  public void tearDown() {
-    this.converterHelper = null;
-  }
 
   @Test public void testValidClassName() { doTestClassName(VALID_CLASS_NAME, false); }
   @Test public void testValidFieldName() { doTestFieldName(VALID_FIELD_NAME, VALID_FIELD_DESCRIPTOR, false); }
@@ -82,25 +67,22 @@ public class ConverterHelperTest {
   @Test public void testLtClinitGtFieldName() { doTestFieldName(CodeConstants.CLINIT_NAME, VALID_FIELD_DESCRIPTOR, true); }
   @Test public void testLtClinitGtMethodName() { doTestMethodName(CodeConstants.CLINIT_NAME, VALID_METHOD_DESCRIPTOR, false); }
 
-
-
-  private void doTestClassName(String className, boolean shallBeRenamed) {
+  private static void doTestClassName(String className, boolean shallBeRenamed) {
     doTest(Type.ELEMENT_CLASS, className, null, null, shallBeRenamed);
   }
 
-  private void doTestFieldName(String element, String descriptor, boolean shallBeRenamed) {
+  private static void doTestFieldName(String element, String descriptor, boolean shallBeRenamed) {
     doTest(Type.ELEMENT_FIELD, VALID_CLASS_NAME, element, descriptor, shallBeRenamed);
   }
 
-  private void doTestMethodName(String element, String descriptor, boolean shallBeRenamed) {
+  private static void doTestMethodName(String element, String descriptor, boolean shallBeRenamed) {
     doTest(Type.ELEMENT_METHOD, VALID_CLASS_NAME, element, descriptor, shallBeRenamed);
   }
 
-  private void doTest(Type elementType, String className, String element, String descriptor, boolean shallBeRenamed) {
-    boolean result = converterHelper.toBeRenamed(elementType, className, element, descriptor);
+  private static void doTest(Type elementType, String className, String element, String descriptor, boolean shallBeRenamed) {
+    boolean result = new ConverterHelper().toBeRenamed(elementType, className, element, descriptor);
     String assertionMessage = shallBeRenamed ? "Identifier { %s, %s, %s, %s } shall be renamed" : "Identifier { %s, %s, %s, %s } shall not be renamed";
 
-    Assert.assertTrue(String.format(assertionMessage, elementType.toString(), className, element, descriptor), result == shallBeRenamed);
+    assertTrue(String.format(assertionMessage, elementType.toString(), className, element, descriptor), result == shallBeRenamed);
   }
-
 }
