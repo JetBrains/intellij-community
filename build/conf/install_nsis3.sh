@@ -3,7 +3,7 @@
 
 communityHome="$1"
 nsis="$communityHome/build/tools/nsis"
-nsisVersion=3.01
+nsisVersion=3.02.1
 scons="$communityHome/build/tools/scons"
 sconsVersion=2.5.0
 
@@ -26,7 +26,7 @@ buildNSIS() {
   cd share
   ln -s "$nsis/nsis-$nsisVersion" nsis
   cd "$nsis/nsis-$nsisVersion-src"
-  "$scons/scons-$sconsVersion/bin/scons" SKIPSTUBS=all SKIPPLUGINS=all SKIPUTILS=all SKIPMISC=all NSIS_CONFIG_CONST_DATA=no PREFIX="$nsis/nsis-$nsisVersion" install-compiler
+  "$scons/scons-$sconsVersion/bin/scons" SKIPSTUBS=all SKIPPLUGINS=all SKIPUTILS=all SKIPMISC=all NSIS_CONFIG_CONST_DATA=no NSIS_CONFIG_LOG=yes PREFIX="$nsis/nsis-$nsisVersion" install-compiler
 }
 
 
