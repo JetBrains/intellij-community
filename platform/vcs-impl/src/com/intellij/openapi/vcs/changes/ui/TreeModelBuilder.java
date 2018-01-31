@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -42,6 +41,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
@@ -55,12 +55,12 @@ public class TreeModelBuilder {
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> newHashMap());
+  public static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
 
   @NotNull protected final Project myProject;
-  protected final boolean myShowFlatten;
   @NotNull protected final DefaultTreeModel myModel;
   @NotNull protected final ChangesBrowserNode myRoot;
-  @NotNull private final Map<ChangesBrowserNode, ChangesGroupingPolicy> myGroupingPoliciesCache;
+  @NotNull private final ChangesGroupingPolicyFactory myGroupingPolicyFactory;
 
   @SuppressWarnings("unchecked")
   private static final Comparator<ChangesBrowserNode> BROWSER_NODE_COMPARATOR = (node1, node2) -> {
@@ -78,13 +78,9 @@ public class TreeModelBuilder {
 
   public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
     myProject = project;
-    myShowFlatten = showFlatten;
     myRoot = ChangesBrowserNode.createRoot(myProject);
     myModel = new DefaultTreeModel(myRoot);
-    myGroupingPoliciesCache = FactoryMap.create(key -> {
-      ChangesGroupingPolicyFactory factory = ChangesGroupingPolicyFactory.getInstance(myProject);
-      return factory != null ? factory.createGroupingPolicy(myModel) : null;
-    });
+    myGroupingPolicyFactory = showFlatten ? new NoneChangesGroupingPolicy.Factory() : new DirectoryChangesGroupingPolicy.Factory(myProject);
   }
 
   @NotNull
@@ -338,8 +334,11 @@ public class TreeModelBuilder {
 
     if (DIRECTORY_CACHE.getValue(subtreeRoot).get(pathKey.getKey()) == null) {
       PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
+      if (!GROUPING_POLICY.isIn(subtreeRoot)) {
+        GROUPING_POLICY.set(subtreeRoot, myGroupingPolicyFactory.createGroupingPolicy(myModel));
+      }
 
-      ChangesBrowserNode parentNode = getParentNodeFor(pathKey, subtreeRoot);
+      ChangesBrowserNode parentNode = notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot);
       myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
 
       if (pathKey.isDirectory()) {
@@ -478,42 +477,6 @@ public class TreeModelBuilder {
     }
 
     throw new IllegalArgumentException("Unknown type - " + o.getClass());
-  }
-
-  @NotNull
-  protected ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath, @NotNull ChangesBrowserNode<?> subtreeRoot) {
-    if (myShowFlatten) {
-      return subtreeRoot;
-    }
-
-    ChangesGroupingPolicy policy = myGroupingPoliciesCache.get(subtreeRoot);
-    if (policy != null) {
-      ChangesBrowserNode nodeFromPolicy = policy.getParentNodeFor(nodePath, subtreeRoot);
-      if (nodeFromPolicy != null) {
-        nodeFromPolicy.markAsHelperNode();
-        return nodeFromPolicy;
-      }
-    }
-
-    StaticFilePath parentPath = nodePath.getParent();
-    while (parentPath != null) {
-      ChangesBrowserNode oldParentNode = DIRECTORY_CACHE.getValue(subtreeRoot).get(parentPath.getKey());
-      if (oldParentNode != null) return oldParentNode;
-
-      ChangesBrowserNode parentNode = PATH_NODE_BUILDER.getRequired(subtreeRoot).apply(parentPath);
-      if (parentNode != null) {
-        parentNode.markAsHelperNode();
-
-        ChangesBrowserNode grandPa = getParentNodeFor(parentPath, subtreeRoot);
-        myModel.insertNodeInto(parentNode, grandPa, grandPa.getChildCount());
-        DIRECTORY_CACHE.getValue(subtreeRoot).put(parentPath.getKey(), parentNode);
-        return parentNode;
-      }
-
-      parentPath = parentPath.getParent();
-    }
-
-    return subtreeRoot;
   }
 
   @NotNull
