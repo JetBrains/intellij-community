@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.executeOnEdt;
 
@@ -163,7 +164,7 @@ public class GradleProjectOpenProcessorTest extends GradleImportingTestCase {
                            "</project>");
       edt(() -> UIUtil.dispatchAllInvocationEvents());
       edt(() -> PlatformTestUtil.saveProject(fooProject));
-      assert semaphore.waitFor(100000);
+      assert semaphore.waitFor(TimeUnit.SECONDS.toMillis(10));
       assertTrue("The module has not been linked",
                  ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, getModule(fooProject, "foo")));
     }
