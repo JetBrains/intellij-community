@@ -65,7 +65,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String PROTOCOL = "typing.Protocol";
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
-  private static final String CALLABLE = "typing.Callable";
+  public static final String CALLABLE = "typing.Callable";
   private static final String LIST = "typing.List";
   private static final String DICT = "typing.Dict";
   private static final String DEFAULT_DICT = "typing.DefaultDict";
@@ -169,7 +169,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     // Check for the exact name in advance for performance reasons
     if ("Callable".equals(referenceExpression.getName())) {
       if (resolveToQualifiedNames(referenceExpression, context).contains(CALLABLE)) {
-        return createTypingCallableType();
+        return createTypingCallableType(referenceExpression);
       }
     }
     return null;
@@ -357,8 +357,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static PyType createTypingCallableType() {
-    return new PyCallableTypeImpl(null, null);
+  public static PyType createTypingCallableType(@NotNull PsiElement anchor) {
+    return new PyCustomType(CALLABLE, null, false, PyBuiltinCache.getInstance(anchor).getObjectType());
   }
 
   private static boolean omitFirstParamInTypeComment(@NotNull PyFunction func, @NotNull PyFunctionTypeAnnotation annotation) {
@@ -476,7 +476,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
       // Depends on typing.Callable defined as a target expression
       if (CALLABLE.equals(target.getQualifiedName())) {
-        return createTypingCallableType();
+        return createTypingCallableType(referenceTarget);
       }
 
       final PyType collection = getCollection(target, context);

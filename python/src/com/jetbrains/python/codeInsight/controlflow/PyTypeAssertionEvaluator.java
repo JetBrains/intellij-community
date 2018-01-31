@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import com.jetbrains.python.psi.types.*;
@@ -65,7 +66,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
 
-        pushAssertion(target, myPositive, false, context -> new PyCallableTypeImpl(null, null));
+        pushAssertion(target, myPositive, false, context -> PyTypingTypeProvider.createTypingCallableType(node));
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {

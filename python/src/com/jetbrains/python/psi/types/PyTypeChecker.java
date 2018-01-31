@@ -216,16 +216,7 @@ public class PyTypeChecker {
       else if (matchClasses(superClass, subClass, context)) {
         return true;
       }
-      else if (actualClassType.isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
-        return true;
-      }
       if (expected.equals(actual)) {
-        return true;
-      }
-    }
-    if (actual instanceof PyFunctionTypeImpl && expectedClassType != null) {
-      final PyClass superClass = expectedClassType.getPyClass();
-      if (PyNames.CALLABLE.equals(superClass.getName())) {
         return true;
       }
     }
