@@ -231,6 +231,26 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doAnnotationTest();
   }
 
+  public void testAnnotationTypingNamedTupleInOtherFile() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationTypingNamedTupleClassInOtherFile() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationTypingNamedTupleDirectInheritorInOtherFile() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationCollectionsNamedTupleInOtherFile() {
+    doMultiFileAnnotationTest();
+  }
+
+  public void testAnnotationCollectionsNamedTupleClassInOtherFile() {
+    doMultiFileAnnotationTest();
+  }
+
   public void testConflictWithAnnotationFunctionTypeIntention() {
     doTest(LanguageLevel.PYTHON36);
   }
