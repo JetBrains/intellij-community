@@ -54,12 +54,24 @@ import com.jetbrains.python.sdk.PythonSdkType
  */
 
 /**
- * Resolves a qualified [name] a list of modules / top-level elements according to the [context].
+ * Resolves a qualified [name] to the list of packages and modules according to the [context].
+ *
+ * @see resolveTopLevelMember
  */
 fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveContext): List<PsiElement> {
   checkAccess()
   if (!context.isValid) {
     return emptyList()
+  }
+
+  val qualifier = name.removeLastComponent()
+  val nameWithoutQualifier = name.removeHead(name.componentCount - 1)
+  val resultsFromRoots = if (qualifier.componentCount != 0) {
+    findFirstResults(resolveQualifiedName(qualifier, context), context.module)
+      .map { it as? PsiDirectory }
+      .flatMap { resolveModuleAt(nameWithoutQualifier, it, context) }
+  } else {
+    resultsFromRoots(name, context)
   }
 
   val relativeDirectory = context.containingDirectory
@@ -80,7 +92,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
 
   val foreignResults = foreignResults(name, context)
   val pythonResults = listOf(relativeResults,
-                             resultsFromRoots(name, context),
+                             resultsFromRoots,
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
   val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
