@@ -3,10 +3,12 @@
  */
 package git4idea.config;
 
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +26,7 @@ abstract class CachingFileTester<T> {
     long currentLastModificationDate = 0L;
 
     try {
-      currentLastModificationDate = Files.getLastModifiedTime(Paths.get(filePath)).toMillis();
+      currentLastModificationDate = Files.getLastModifiedTime(Paths.get(resolveAgainstEnvPath(filePath))).toMillis();
       if (result == null || result.getFileLastModifiedTimestamp() != currentLastModificationDate) {
         result = new TestResult(testFile(filePath), currentLastModificationDate);
       }
@@ -38,6 +40,17 @@ abstract class CachingFileTester<T> {
 
     myFileTestMap.put(filePath, result);
     return result;
+  }
+
+  @NotNull
+  private static String resolveAgainstEnvPath(@NotNull String filePath) {
+    if (!filePath.contains(File.separator)) {
+      File exeFile = PathEnvironmentVariableUtil.findInPath(filePath);
+      if (exeFile != null) {
+        return exeFile.getPath();
+      }
+    }
+    return filePath;
   }
 
   @Nullable
