@@ -59,6 +59,94 @@ public class MismatchedCollectionQueryUpdate {
         return barzoom;
     }
 
+    void testGetOrDefault(Map<String, Map<String, String>> otherMap, String otherKey, String key, String value) {
+      // IDEA-185729
+      final Map<String, String> map = otherMap.getOrDefault(otherKey, <warning descr="Contents of collection 'new HashMap<>()' are updated, but never queried">new HashMap<>()</warning>);
+      map.put(key, value);
+    }
+
+    void testTernary(boolean b, List<String> orig) {
+      List<String> list = b ? <warning descr="Contents of collection 'new ArrayList<>()' are updated, but never queried">new ArrayList<>()</warning> : orig;
+      list.add("foo");
+    }
+
+    void testTernaryBothEmpty(boolean preserveOrder) {
+      Set<String> <warning descr="Contents of collection 'set' are updated, but never queried">set</warning> = preserveOrder ? new LinkedHashSet<>() : new HashSet<>();
+      set.add("foo");
+      set.add("bar");
+    }
+
+    Object[] testAddToAnotherCollection(List<List<String>> list) {
+      List<String> l = new ArrayList<>();
+      // adding list to another collection could cause that list modification
+      list.add(l);
+      process(list);
+      return l.toArray();
+    }
+
+    native void process(List<List<String>> list);
+
+    void testPureMethod() {
+      List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning> = new ArrayList<>();
+      if(hasNull(list)) {
+        System.out.println("has nulls!");
+      }
+    }
+
+    // Purity is inferred
+    static boolean hasNull(Collection<?> c) {
+      for(Object o : c) {
+        if(o == null) return true;
+      }
+      return false;
+    }
+
+    void testSomeList() {
+      SomeList x = new SomeList();
+      SomeList <warning descr="Contents of collection 'y' are updated, but never queried">y</warning> = new SomeList();
+      x.add(1);
+      y.add(2);
+      // Calling unknown method should suppress the warning
+      x.print();
+    }
+
+    void testForEach() {
+      List<String> list = new ArrayList<>();
+      list.add("foo");
+      list.add("bar");
+      list.forEach(System.out::println);
+    }
+
+    boolean testDoubleBrace(String key) {
+      Map<String, String> map = new HashMap<>() {{
+        put("foo", "bar");
+        put("baz", "qux");
+      }};
+      return map.containsKey(key);
+    }
+
+    boolean testSeparateInitialization() {
+      List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning>;
+      list = new ArrayList<>();
+      return list.isEmpty();
+    }
+
+    void testKeySet() {
+      Map<String, String> <warning descr="Contents of collection 'map' are queried, but never updated">map</warning> = new HashMap<>();
+      for(String s : map.keySet()) {
+        System.out.println(s);
+      }
+    }
+
+    private List<String> <warning descr="Contents of collection 'nonInitialized' are updated, but never queried">nonInitialized</warning>;
+
+    void testNullCheck(String key) {
+      if(nonInitialized == null) {
+        nonInitialized = new ArrayList<>();
+      }
+      nonInitialized.add(key);
+    }
+
     class Node{
         private SortedSet mChildren;
 
@@ -233,7 +321,7 @@ class MethReference<E> {
 
     private void forEach(I<E> ei) {}
     interface I<E> {
-        boolean _(E e);
+        boolean __(E e);
     }
     interface J<E> {
       void m(E e);
@@ -388,4 +476,23 @@ class ConstList<T> extends BaseConstList<T> {
 }
 class ChildConstList<T> extends ConstList<T> {
   ChildConstList(int size, T value) {super(size, value);}
+}
+
+class SomeList extends ArrayList<Integer> {
+  void print() {
+    System.out.println(this);
+  }
+}
+
+class UnmodifiableTernaryTest {
+  private final List<String> myList = new ArrayList<>();
+  private final List<String> <warning descr="Contents of collection 'myList2' are queried, but never updated">myList2</warning> = new ArrayList<>();
+
+  void add() {
+    myList.add("foo");
+  }
+
+  List<String> get(boolean b) {
+    return Collections.unmodifiableList(b ? myList : myList2);
+  }
 }

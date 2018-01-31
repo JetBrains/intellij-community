@@ -14,8 +14,12 @@ import java.util.Collections;
 public enum Mutability {
   UNKNOWN, MUTABLE, UNMODIFIABLE, UNMODIFIABLE_VIEW;
 
+  public boolean isUnmodifiable() {
+    return this == UNMODIFIABLE || this == UNMODIFIABLE_VIEW;
+  }
+
   @NotNull
-  static Mutability getMutability(PsiModifierListOwner owner) {
+  public static Mutability getMutability(@NotNull PsiModifierListOwner owner) {
     if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList) {
       PsiParameterList list = (PsiParameterList)owner.getParent();
       PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
