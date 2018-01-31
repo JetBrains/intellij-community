@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -716,8 +717,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static Ref<PyType> getType(@NotNull PyExpression expression, @NotNull Context context) {
     final List<PyType> members = Lists.newArrayList();
     boolean foundAny = false;
-    for (PsiElement resolved : tryResolving(expression, context.getTypeContext())) {
-      final Ref<PyType> typeRef = getTypeForResolvedElement(resolved, context);
+    for (Pair<PyTargetExpression, PsiElement> pair : tryResolvingWithAliases(expression, context.getTypeContext())) {
+      final Ref<PyType> typeRef = getTypeForResolvedElement(pair.getFirst(), pair.getSecond(), context);
       if (typeRef != null) {
         final PyType type = typeRef.get();
         if (type == null) {
@@ -731,7 +732,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static Ref<PyType> getTypeForResolvedElement(@NotNull PsiElement resolved, @NotNull Context context) {
+  private static Ref<PyType> getTypeForResolvedElement(@Nullable PyTargetExpression alias,
+                                                       @NotNull PsiElement resolved,
+                                                       @NotNull Context context) {
     if (context.getExpressionCache().contains(resolved)) {
       // Recursive types are not yet supported
       return null;
@@ -753,7 +756,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
       final Ref<PyType> classObjType = getClassObjectType(resolved, context);
       if (classObjType != null) {
-        return classObjType;
+        return Ref.create(addTypeVarAlias(classObjType.get(), alias));
       }
       final PyType parameterizedType = getParameterizedType(resolved, context);
       if (parameterizedType != null) {
@@ -765,7 +768,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
       final PyType genericType = getGenericTypeFromTypeVar(resolved, context);
       if (genericType != null) {
-        return Ref.create(genericType);
+        return Ref.create(addTypeVarAlias(genericType, alias));
       }
       final PyType stringBasedType = getStringLiteralType(resolved, context);
       if (stringBasedType != null) {
@@ -784,6 +787,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     finally {
       context.getExpressionCache().remove(resolved);
     }
+  }
+
+  @Nullable
+  private static PyType addTypeVarAlias(@Nullable PyType type, @Nullable PyTargetExpression alias) {
+    final PyGenericType typeVar = as(type, PyGenericType.class);
+    if (typeVar != null) {
+      return new PyGenericType(typeVar.getName(), typeVar.getBound(), typeVar.isDefinition(), alias);
+    }
+    return type;
   }
 
   @Nullable
@@ -1069,7 +1081,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static List<PsiElement> tryResolving(@NotNull PyExpression expression, @NotNull TypeEvalContext context) {
-    final List<PsiElement> elements = Lists.newArrayList();
+    return ContainerUtil.map(tryResolvingWithAliases(expression, context), x -> x.getSecond());
+  }
+
+  @NotNull
+  private static List<Pair<PyTargetExpression, PsiElement>> tryResolvingWithAliases(@NotNull PyExpression expression,
+                                                                                    @NotNull TypeEvalContext context) {
+    final List<Pair<PyTargetExpression, PsiElement>> elements = Lists.newArrayList();
     if (expression instanceof PyReferenceExpression) {
       final List<PsiElement> results;
       if (context.maySwitchToAST(expression)) {
@@ -1085,14 +1103,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           if (PyUtil.isInit(function)) {
             final PyClass cls = function.getContainingClass();
             if (cls != null) {
-              elements.add(cls);
+              elements.add(Pair.create(null, cls));
               continue;
             }
           }
         }
         final String name = element != null ? getQualifiedName(element) : null;
         if (name != null && OPAQUE_NAMES.contains(name)) {
-          elements.add(element);
+          elements.add(Pair.create(null, element));
           continue;
         }
         // Presumably, a TypeVar definition or a type alias
@@ -1106,7 +1124,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
             assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(targetExpr);
           }
           if (assignedValue != null) {
-            elements.add(assignedValue);
+            elements.add(Pair.create(targetExpr, assignedValue));
             continue;
           }
         }
@@ -1116,16 +1134,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           final QualifiedName osPathLikeQName = QualifiedName.fromComponents("os", PyNames.PATH_LIKE);
           final PsiElement osPathLike = PyResolveImportUtil.resolveTopLevelMember(osPathLikeQName, PyResolveImportUtil.fromFoothold(element));
           if (osPathLike != null) {
-            elements.add(osPathLike);
+            elements.add(Pair.create(null, osPathLike));
             continue;
           }
         }
         if (element != null) {
-          elements.add(element);
+          elements.add(Pair.create(null, element));
         }
       }
     }
-    return !elements.isEmpty() ? elements : Collections.singletonList(expression);
+    return !elements.isEmpty() ? elements : Collections.singletonList(Pair.create(null, expression));
   }
 
   @NotNull
