@@ -294,7 +294,7 @@ public class MadTestingUtil {
         }
 
         List<File> toChoose = preferDirs(data, children);
-        Collections.sort(toChoose);
+        Collections.sort(toChoose, Comparator.comparing(File::getName));
         int index = data.drawInt(IntDistribution.uniform(0, toChoose.size() - 1));
         File generated = generateRandomFile(data, toChoose.get(index), exhausted);
         if (generated != null) {
