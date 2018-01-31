@@ -38,7 +38,7 @@ class MPSProperties extends ProductProperties {
         productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
         productLayout.additionalPlatformJars.putAll("resources.jar", ["intellij.java.resources", "intellij.java.resources.en"])
         productLayout.additionalPlatformJars.
-                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "forms-compiler", "intellij.java.guiForms.compiler", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
+                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
 
         productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
             layout.customize {
