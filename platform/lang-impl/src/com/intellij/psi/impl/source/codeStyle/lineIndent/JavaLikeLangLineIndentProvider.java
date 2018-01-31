@@ -125,7 +125,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         int statementStart = getStatementStartOffset(beforeSemicolon, dropIndentAfterReturnLike(beforeSemicolon));
         SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
         if (atStatementStart.isAt(BlockOpeningBrace)) {
-          return myFactory.createIndentCalculator(getIndentBlock(project, language, atStatementStart), this::getDeepBlockStatementStartOffset);
+          return myFactory.createIndentCalculator(getIndentInBlock(project, language, atStatementStart), this::getDeepBlockStatementStartOffset);
         }
         if (!isInsideForLikeConstruction(atStatementStart)) {
           return myFactory.createIndentCalculator(NONE, position -> statementStart);
@@ -147,7 +147,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         }
       )) {
         SemanticEditorPosition position = getPosition(editor, offset).before();
-        return myFactory.createIndentCalculator(getIndentBlock(project, language, position), this::getBlockStatementStartOffset);
+        return myFactory.createIndentCalculator(getIndentInBlock(project, language, position), this::getBlockStatementStartOffset);
       }
       else if (getPosition(editor, offset).before().matchesRule(
         position -> isColonAfterLabelOrCase(position) || position.isAtAnyOf(ElseKeyword, DoKeyword))) {
@@ -308,9 +308,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   
   
   @Nullable
-  protected Indent getIndentBlock(@NotNull Project project,
-                                  @Nullable Language language,
-                                  @NotNull SemanticEditorPosition blockStartPosition) {
+  protected Indent getIndentInBlock(@NotNull Project project,
+                                    @Nullable Language language,
+                                    @NotNull SemanticEditorPosition blockStartPosition) {
     if (language != null) {
       CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
