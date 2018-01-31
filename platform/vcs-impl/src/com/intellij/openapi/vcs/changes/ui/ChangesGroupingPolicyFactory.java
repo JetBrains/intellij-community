@@ -16,12 +16,16 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 
 public abstract class ChangesGroupingPolicyFactory {
+  public static final ExtensionPointName<KeyedFactoryEPBean> EP_NAME = ExtensionPointName.create("com.intellij.changesGroupingPolicy");
+
   public static ChangesGroupingPolicyFactory getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ChangesGroupingPolicyFactory.class);
   }
