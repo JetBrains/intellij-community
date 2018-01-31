@@ -149,12 +149,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   protected CompilationLog make(final Artifact... artifacts) {
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
-    return make(scope, CompilerFilter.ALL);
+    return make(scope);
   }
 
   protected CompilationLog recompile(final Artifact... artifacts) {
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts), true);
-    return make(scope, CompilerFilter.ALL);
+    return make(scope);
   }
 
   protected CompilationLog make(Module... modules) {
@@ -166,11 +166,11 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   private CompilationLog make(boolean includeDependentModules, final boolean includeRuntimeDependencies, Module... modules) {
-    return make(getCompilerManager().createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies), CompilerFilter.ALL);
+    return make(getCompilerManager().createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies));
   }
 
   protected CompilationLog recompile(Module... modules) {
-    return compile(getCompilerManager().createModulesCompileScope(modules, false), CompilerFilter.ALL, true);
+    return compile(getCompilerManager().createModulesCompileScope(modules, false), true);
   }
 
   protected CompilerManager getCompilerManager() {
@@ -183,27 +183,26 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog compile(boolean force, VirtualFile... files) {
-    return compile(getCompilerManager().createFilesCompileScope(files), CompilerFilter.ALL, force);
+    return compile(getCompilerManager().createFilesCompileScope(files), force);
   }
 
-  protected CompilationLog make(final CompileScope scope, final CompilerFilter filter) {
-    return compile(scope, filter, false);
+  protected CompilationLog make(final CompileScope scope) {
+    return compile(scope, false);
   }
 
-  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile) {
-    return compile(scope, filter, forceCompile, false);
+  protected CompilationLog compile(final CompileScope scope, final boolean forceCompile) {
+    return compile(scope, forceCompile, false);
   }
 
-  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile,
+  protected CompilationLog compile(final CompileScope scope, final boolean forceCompile,
                                    final boolean errorsExpected) {
     return compile(errorsExpected, callback -> {
       final CompilerManager compilerManager = getCompilerManager();
       if (forceCompile) {
-        Assert.assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
         compilerManager.compile(scope, callback);
       }
       else {
-        compilerManager.make(scope, filter, callback);
+        compilerManager.make(scope, callback);
       }
     });
   }
@@ -330,7 +329,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog buildAllModules() {
-    return make(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL);
+    return make(getCompilerManager().createProjectCompileScope(myProject));
   }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
