@@ -215,6 +215,38 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                ") {}");
   }
 
+  public void testEnter_AfterStatementWithLabel() throws IOException {
+    // as prev
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:\n" +
+               "        while (true) break lb;<caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:\n" +
+               "        while (true) break lb;\n" +
+               "        <caret>\n" +
+               "    }\n" +
+               "}\n");
+
+    // as block
+    doTextTest("java",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:  while (true) break lb;<caret>\n" +
+               "    }\n" +
+               "}\n",
+               "class T {\n" +
+               "    void test() {\n" +
+               "lb:  while (true) break lb;\n" +
+               "        <caret>\n" +
+               "    }\n" +
+               "}\n");
+  }
+
   public void testEnter_NewArgumentWithTabsNoAlign() throws IOException {
     CodeStyleSettings settings = getCodeStyleSettings();
     CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);

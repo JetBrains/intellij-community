@@ -125,14 +125,14 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         int statementStart = getStatementStartOffset(beforeSemicolon, dropIndentAfterReturnLike(beforeSemicolon));
         SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
         if (atStatementStart.isAt(BlockOpeningBrace)) {
-          return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language, atStatementStart), this::getDeepBlockStatementStartOffset);
+          return myFactory.createIndentCalculator(getIndentBlock(project, language, atStatementStart), this::getDeepBlockStatementStartOffset);
         }
         if (!isInsideForLikeConstruction(atStatementStart)) {
           return myFactory.createIndentCalculator(NONE, position -> statementStart);
         }
       }
       else if (getPosition(editor, offset).before().isAt(ArrayOpeningBracket)) {
-        return myFactory.createIndentCalculator(getIndentTypeInBrackets(), IndentCalculator.LINE_BEFORE);
+        return myFactory.createIndentCalculator(getIndentInBrackets(), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).before().isAt(LeftParenthesis)) {
         return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
@@ -147,7 +147,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         }
       )) {
         SemanticEditorPosition position = getPosition(editor, offset).before();
-        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language, position), this::getBlockStatementStartOffset);
+        return myFactory.createIndentCalculator(getIndentBlock(project, language, position), this::getBlockStatementStartOffset);
       }
       else if (getPosition(editor, offset).before().matchesRule(
         position -> isColonAfterLabelOrCase(position) || position.isAtAnyOf(ElseKeyword, DoKeyword))) {
@@ -190,7 +190,14 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return null;
   }
 
-  protected boolean dropIndentAfterReturnLike(@NotNull SemanticEditorPosition position) {
+  /**
+   * Checking the document context in position for return-like token (i.e. {@code return}, {@code break}, {@code continue}),
+   * after that we need to reduce the indent (for example after {@code break;} in {@code switch} statement).
+   *
+   * @param statementBeforeSemicolon position in the document context
+   * @return true, if need to reduce the indent
+   */
+  protected boolean dropIndentAfterReturnLike(@NotNull SemanticEditorPosition statementBeforeSemicolon) {
     return false;
   }
 
@@ -254,21 +261,10 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         if (!isIndentProvider(statementStart, ignoreLabels)) {
           final SemanticEditorPosition maybeColon = statementStart.afterOptionalMix(Whitespace, BlockComment).after();
           final SemanticEditorPosition afterColonStatement = maybeColon.after().after();
-          if (maybeColon.isAt(Colon) && maybeColon.after().isAtMultiline() && !afterColonStatement.isAtEnd()) {
-            // indent-as-statement-after-: (same thing with code-after label)
-            //    [class A | int main()] {
-            //        |<-- block indent
-            //     [public|label]: <--statementStart
-            //          int a; <--afterColonStatement
-            //          |<-- as-prev-statement
+          if (atColonWithNewLineAfterColonStatement(maybeColon, afterColonStatement)) {
             return afterColonStatement.getStartOffset();
           }
-          if (position.isAt(BlockOpeningBrace)) {
-            // indent-as-block:
-            //    [class A | int main()] {
-            //        |<-- block indent
-            //     [public|label]: int a; <--statementStart
-            //        |<-- as-after-{
+          if (atBlockStartAndNeedBlockIndent(position)) {
             return position.getStartOffset();
           }
         }
@@ -281,7 +277,25 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return 0;
   }
 
-  protected boolean isIndentProvider(@NotNull SemanticEditorPosition start, boolean ignoreLabels) {
+  private static boolean atBlockStartAndNeedBlockIndent(@NotNull SemanticEditorPosition position) {
+    return position.isAt(BlockOpeningBrace);
+  }
+
+  private static boolean atColonWithNewLineAfterColonStatement(@NotNull SemanticEditorPosition maybeColon,
+                                                               @NotNull SemanticEditorPosition afterColonStatement) {
+    return maybeColon.isAt(Colon)
+           && maybeColon.after().isAtMultiline(Whitespace)
+           && !afterColonStatement.isAtEnd();
+  }
+
+  /**
+   * Checking the document context in position as indent-provider.
+   *
+   * @param statementStartPosition position is the document
+   * @param ignoreLabels {@code true}, if labels cannot be used as indent-providers in the context.
+   * @return {@code true}, if statement is indent-provider (by default)
+   */
+  protected boolean isIndentProvider(@NotNull SemanticEditorPosition statementStartPosition, boolean ignoreLabels) {
     return true;
   }
 
@@ -294,16 +308,16 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   
   
   @Nullable
-  protected Indent getIndentTypeInBlock(@NotNull Project project,
-                                        @Nullable Language language,
-                                        @NotNull SemanticEditorPosition blockStartPosition) {
+  protected Indent getIndentBlock(@NotNull Project project,
+                                  @Nullable Language language,
+                                  @NotNull SemanticEditorPosition blockStartPosition) {
     if (language != null) {
       CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
-        return getIndentFromType(settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null);
+        return getDefaultIndentFromType(settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null);
       }
     }
-    return getIndentFromType(NORMAL);
+    return getDefaultIndentFromType(NORMAL);
   }
   
   @Contract("_, null -> null")
@@ -317,19 +331,11 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return null;
   }
 
-  @Nullable
-  public static Indent getIndentFromType(@Nullable Type type) {
-    if (type == NONE)
-      return Indent.getNoneIndent();
-    if (type == NORMAL)
-      return Indent.getNormalIndent();
-    if (type == CONTINUATION)
-      return Indent.getContinuationIndent();
-    if (type == CONTINUATION_WITHOUT_FIRST)
-      return Indent.getContinuationWithoutFirstIndent();
-    if (type == LABEL)
-      return Indent.getLabelIndent();
-    return null;
+  @Contract("null -> null")
+  protected static Indent getDefaultIndentFromType(@Nullable Type type) {
+    return type == null
+           ? null
+           : Indent.getIndent(type, 0, false, false);
   }
   
   public static class IndentCalculatorFactory {
@@ -343,7 +349,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
 
     @Nullable
     public IndentCalculator createIndentCalculator(@Nullable Type indentType, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
-      return createIndentCalculator(getIndentFromType(indentType), baseLineOffsetCalculator);
+      return createIndentCalculator(getDefaultIndentFromType(indentType), baseLineOffsetCalculator);
     }
 
     @Nullable
@@ -367,7 +373,11 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   
   public abstract boolean isSuitableForLanguage(@NotNull Language language);
 
-  protected Indent getIndentTypeInBrackets() {
-    return getIndentFromType(CONTINUATION);
+  protected Type getIndentTypeInBrackets() {
+    return CONTINUATION;
+  }
+
+  protected Indent getIndentInBrackets() {
+    return getDefaultIndentFromType(getIndentTypeInBrackets());
   }
 }
