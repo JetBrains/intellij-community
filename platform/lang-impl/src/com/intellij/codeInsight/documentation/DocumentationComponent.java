@@ -490,7 +490,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         if (myHint == null && myManager.myToolWindow == null) {
           int em = myEditorPane.getFont().getSize();
           int prefHeightMax = PREFERRED_HEIGHT_MAX_EM * em;
-          return new Dimension(size.width, Math.min(prefHeightMax, size.height));
+          return new Dimension(size.width, Math.min(prefHeightMax,
+                                                    size.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0)));
         }
         return size;
       }
@@ -1128,7 +1129,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private boolean needsToolbar() {
-    return myHint != null && Registry.is("documentation.show.toolbar");
+    return myManager.myToolWindow == null && Registry.is("documentation.show.toolbar");
   }
 
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
