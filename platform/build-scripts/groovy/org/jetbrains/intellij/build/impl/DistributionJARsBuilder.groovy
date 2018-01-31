@@ -329,7 +329,7 @@ class DistributionJARsBuilder {
    * directory name return the old module name to temporary keep layout of plugins unchanged.
    */
   static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
-    if (plugin.directoryName == plugin.mainModule && context.getOldModuleName(plugin.mainModule) != null) {
+    if (plugin.directoryName == BaseLayout.convertModuleNameToFileName(plugin.mainModule) && context.getOldModuleName(plugin.mainModule) != null) {
       context.getOldModuleName(plugin.mainModule)
     }
     else {
@@ -385,7 +385,7 @@ class DistributionJARsBuilder {
    */
   private String getActualModuleJarPath(String relativeJarPath, Collection<String> moduleNames) {
     for (String moduleName : moduleNames) {
-      if (relativeJarPath == "${moduleName}.jar" && buildContext.getOldModuleName(moduleName) != null) {
+      if (relativeJarPath == "${BaseLayout.convertModuleNameToFileName(moduleName)}.jar" && buildContext.getOldModuleName(moduleName) != null) {
         return "${buildContext.getOldModuleName(moduleName)}.jar"
       }
     }

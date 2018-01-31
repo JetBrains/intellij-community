@@ -33,7 +33,11 @@ public class CollectionUtils {
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0),
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "size").parameterCount(0));
-  private static final CallMatcher DERIVED_COLLECTION =
+
+  /**
+   * Matches a call which creates collection of the same size as the qualifier collection
+   */
+  public static final CallMatcher DERIVED_COLLECTION =
     CallMatcher.anyOf(
       CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet", "values", "entrySet").parameterCount(0),
       CallMatcher.instanceCall("java.util.NavigableMap", "descendingKeySet", "descendingMap", "navigableKeySet").parameterCount(0),

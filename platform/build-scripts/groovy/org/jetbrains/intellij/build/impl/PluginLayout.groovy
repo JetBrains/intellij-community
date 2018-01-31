@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.util.function.Function
-
 /**
  * Describes layout of a plugin in the product distribution
  *
@@ -79,15 +78,19 @@ class PluginLayout extends BaseLayout {
     return result
   }
 
+
   static class PluginLayoutSpec extends BaseLayoutSpec {
     private final PluginLayout layout
     /**
-     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used.
+     * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used
+     * (with stripped {@code intellij} prefix and dots replaced by dashes).
      * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String directoryName
+
     /**
-     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used.
+     * Custom name of the main plugin JAR file. By default the main module name with 'jar' extension is used (with stripped {@code intellij}
+     * prefix and dots replaced by dashes).
      * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String mainJarName
@@ -100,8 +103,8 @@ class PluginLayout extends BaseLayout {
     PluginLayoutSpec(PluginLayout layout) {
       super(layout)
       this.layout = layout
-      directoryName = layout.mainModule
-      mainJarName = "${layout.mainModule}.jar"
+      directoryName = convertModuleNameToFileName(layout.mainModule)
+      mainJarName = "${convertModuleNameToFileName(layout.mainModule)}.jar"
     }
 
     /**

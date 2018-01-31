@@ -1,2 +1,3 @@
 skip: diff_frame*
 deprecated: diff/Diff.png
+deprecated: css/*; use 'icons.CssIcons' from 'intellij.css' module instead

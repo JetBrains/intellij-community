@@ -30,6 +30,10 @@ interface UClass : UDeclaration, PsiClass {
 
   override fun getQualifiedName(): String?
 
+  override fun isInterface(): Boolean
+
+  override fun isAnnotationType(): Boolean
+
   /**
    * Returns a [UClass] wrapper of the superclass of this class, or null if this class is [java.lang.Object].
    */

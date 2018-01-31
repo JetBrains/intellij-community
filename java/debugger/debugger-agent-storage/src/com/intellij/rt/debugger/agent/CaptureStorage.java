@@ -154,25 +154,72 @@ public class CaptureStorage {
 
   private static CapturedStack createCapturedStack(Throwable exception, InsertMatch insertMatch) {
     if (insertMatch != null && insertMatch != InsertMatch.EMPTY) {
-      return new DeepCapturedStack(exception, insertMatch);
+      CapturedStack stack = new DeepCapturedStack(exception, insertMatch);
+      if (stack.getRecursionDepth() > 100) {
+        ArrayList<StackTraceElement> trace = getStackTrace(stack, 500);
+        trace.trimToSize();
+        stack = new UnwindCapturedStack(trace);
+      }
+      return stack;
     }
-    return new CapturedStack(exception);
+    return new ExceptionCapturedStack(exception);
   }
 
-  private static class CapturedStack {
+  private interface CapturedStack {
+    List<StackTraceElement> getStackTrace();
+    int getRecursionDepth();
+  }
+
+  private static class UnwindCapturedStack implements CapturedStack {
+    final List<StackTraceElement> myStackTraceElements;
+
+    public UnwindCapturedStack(List<StackTraceElement> elements) {
+      myStackTraceElements = elements;
+    }
+
+    @Override
+    public List<StackTraceElement> getStackTrace() {
+      return myStackTraceElements;
+    }
+
+    @Override
+    public int getRecursionDepth() {
+      return 0;
+    }
+  }
+
+  private static class ExceptionCapturedStack implements CapturedStack {
     final Throwable myException;
 
-    private CapturedStack(Throwable exception) {
+    private ExceptionCapturedStack(Throwable exception) {
       myException = exception;
+    }
+
+    @Override
+    public List<StackTraceElement> getStackTrace() {
+      StackTraceElement[] stackTrace = myException.getStackTrace();
+      return Arrays.asList(stackTrace).subList(1, stackTrace.length);
+    }
+
+    @Override
+    public int getRecursionDepth() {
+      return 0;
     }
   }
 
-  private static class DeepCapturedStack extends CapturedStack {
+  private static class DeepCapturedStack extends ExceptionCapturedStack {
     final InsertMatch myInsertMatch;
+    final int myRecursionDepth;
 
     public DeepCapturedStack(Throwable exception, InsertMatch insertMatch) {
       super(exception);
       myInsertMatch = insertMatch;
+      myRecursionDepth = insertMatch.myStack.getRecursionDepth() + 1;
+    }
+
+    @Override
+    public int getRecursionDepth() {
+      return myRecursionDepth;
     }
   }
 
@@ -218,22 +265,21 @@ public class CaptureStorage {
     return res;
   }
 
-  private static List<StackTraceElement> getStackTrace(CapturedStack stack, int limit) {
-    List<StackTraceElement> res = new ArrayList<StackTraceElement>();
+  private static ArrayList<StackTraceElement> getStackTrace(CapturedStack stack, int limit) {
+    ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>();
     while (stack != null && res.size() <= limit) {
-      StackTraceElement[] stackTrace = stack.myException.getStackTrace();
-      int depth = stackTrace.length;
+      List<StackTraceElement> stackTrace = stack.getStackTrace();
       if (stack instanceof DeepCapturedStack) {
         InsertMatch match = ((DeepCapturedStack)stack).myInsertMatch;
         if (match != null && match != InsertMatch.EMPTY) {
-          depth = stackTrace.length - match.getDepth() + 2;
+          stackTrace = stackTrace.subList(0, stackTrace.size() - match.getDepth() + 2);
           stack = match.myStack;
         }
       }
       else {
         stack = null;
       }
-      res.addAll(Arrays.asList(stackTrace).subList(1, depth));
+      res.addAll(stackTrace);
       if (stack != null) {
         res.add(null);
       }

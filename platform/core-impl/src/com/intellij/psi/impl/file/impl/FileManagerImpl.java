@@ -233,6 +233,19 @@ public class FileManagerImpl implements FileManager {
     return viewProvider == null ? new SingleRootFileViewProvider(myManager, file, eventSystemEnabled, fileType) : viewProvider;
   }
 
+  /** Left for plugin compatibility */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public void markInitialized() {
+  }
+
+  /** Left for plugin compatibility */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public boolean isInitialized() {
+    return true;
+  }
+
   private boolean myProcessingFileTypesChange;
 
   void processFileTypesChanged() {
