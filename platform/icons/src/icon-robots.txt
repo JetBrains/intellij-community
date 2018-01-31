@@ -1,2 +1,5 @@
 skip: diff_frame*
 deprecated: diff/Diff.png
+deprecated: css/atrule.png
+deprecated: css/import.png
+deprecated: css/property.png

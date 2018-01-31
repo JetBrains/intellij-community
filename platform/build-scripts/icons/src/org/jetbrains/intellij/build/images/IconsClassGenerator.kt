@@ -257,7 +257,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
 
   private fun className(name: String): String {
     val answer = StringBuilder()
-    name.split("-", "_").forEach {
+    name.removePrefix("intellij.").split("-", "_", ".").forEach {
       answer.append(capitalize(it))
     }
     return toJavaIdentifier(answer.toString())
