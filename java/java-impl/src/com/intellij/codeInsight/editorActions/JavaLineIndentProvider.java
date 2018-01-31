@@ -74,22 +74,28 @@ public class JavaLineIndentProvider extends JavaLikeLangLineIndentProvider {
 
   @Nullable
   @Override
-  protected Indent getIndentTypeInBlock(@NotNull Project project,
-                                        @Nullable Language language,
-                                        @NotNull SemanticEditorPosition blockStartPosition) {
+  protected Indent getIndentBlock(@NotNull Project project,
+                                  @Nullable Language language,
+                                  @NotNull SemanticEditorPosition blockStartPosition) {
     SemanticEditorPosition beforeStart = blockStartPosition.before().beforeOptional(Whitespace);
     if (beforeStart.isAt(JavaTokenType.EQ) ||
         beforeStart.isAt(JavaTokenType.RBRACKET) ||
         beforeStart.isAt(JavaTokenType.LPARENTH)
       ) {
       // For arrays like int x = {<caret>0, 1, 2}
-      return getIndentFromType(CONTINUATION);
+      return getDefaultIndentFromType(CONTINUATION);
     }
-    return super.getIndentTypeInBlock(project, language, blockStartPosition);
+    return super.getIndentBlock(project, language, blockStartPosition);
   }
 
   @Override
   protected boolean isInsideForLikeConstruction(SemanticEditorPosition position) {
     return position.isAfterOnSameLine(ForKeyword, TryKeyword);
+  }
+
+  @Override
+  protected boolean isIndentProvider(@NotNull SemanticEditorPosition position, boolean ignoreLabels) {
+    return !(position.afterOptionalMix(Whitespace, BlockComment).after().isAt(Colon)
+             && position.isAt(JavaTokenType.IDENTIFIER));
   }
 }

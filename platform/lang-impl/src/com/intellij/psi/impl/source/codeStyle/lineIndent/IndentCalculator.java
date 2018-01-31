@@ -31,9 +31,12 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.formatting.Indent.Type.NORMAL;
 import static com.intellij.formatting.Indent.Type.SPACES;
+import static com.intellij.psi.impl.source.codeStyle.lineIndent.JavaLikeLangLineIndentProvider.getDefaultIndentFromType;
 
 public class IndentCalculator {
   
@@ -41,6 +44,16 @@ public class IndentCalculator {
   private @NotNull final Editor myEditor;
   private @NotNull BaseLineOffsetCalculator myBaseLineOffsetCalculator;
   private @NotNull final Indent myIndent;
+
+  /**
+   * @deprecated Please, use IndentCalculator(Project, Editor, BaseLineOffsetCalculator, Indent) instead.
+   */
+  public IndentCalculator(@NotNull Project project,
+                          @NotNull Editor editor,
+                          @NotNull BaseLineOffsetCalculator baseLineOffsetCalculator,
+                          @NotNull Indent.Type type) {
+    this(project, editor, baseLineOffsetCalculator, Objects.requireNonNull(getDefaultIndentFromType(type)));
+  }
 
   public IndentCalculator(@NotNull Project project,
                           @NotNull Editor editor,
@@ -78,7 +91,7 @@ public class IndentCalculator {
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
       return
-        baseIndent + new IndentInfo(0, indentTypeToSize(myIndent, options), 0, false).generateNewWhiteSpace(options);
+        baseIndent + new IndentInfo(0, indentToSize(myIndent, options), 0, false).generateNewWhiteSpace(options);
     }
     return null;
   }
@@ -103,7 +116,7 @@ public class IndentCalculator {
     return "";
   }
 
-  private static int indentTypeToSize(@NotNull Indent indent, @NotNull CommonCodeStyleSettings.IndentOptions options) {
+  private static int indentToSize(@NotNull Indent indent, @NotNull CommonCodeStyleSettings.IndentOptions options) {
     if (indent.getType() == NORMAL) {
       return options.INDENT_SIZE;
     }
