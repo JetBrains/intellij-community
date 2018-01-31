@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyedExtensionFactory;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -80,7 +81,15 @@ public class TreeModelBuilder {
     myProject = project;
     myRoot = ChangesBrowserNode.createRoot(myProject);
     myModel = new DefaultTreeModel(myRoot);
-    myGroupingPolicyFactory = showFlatten ? new NoneChangesGroupingPolicy.Factory() : new DirectoryChangesGroupingPolicy.Factory(myProject);
+    KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> groupingFactories =
+      new KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
+        ChangesGroupingPolicyFactory.class, ChangesGroupingPolicyFactory.EP_NAME, myProject.getPicoContainer()) {
+        @Override
+        public String getKey(@NotNull String key) {
+          return key;
+        }
+      };
+    myGroupingPolicyFactory = groupingFactories.getByKey(showFlatten ? "none" : "directory");
   }
 
   @NotNull
