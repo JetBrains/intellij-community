@@ -184,6 +184,7 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
 
     override fun onUnfreeze(side: Side) {
+      calcInnerRanges()
       installMissingHighlighters()
     }
 
@@ -194,7 +195,8 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
 
     private fun calcInnerRanges() {
-      if (isDetectWhitespaceChangedLines()) {
+      if (isDetectWhitespaceChangedLines() &&
+          !documentTracker.isFrozen()) {
         for (block in blocks) {
           if (block.ourData.innerRanges == null) {
             block.ourData.innerRanges = calcInnerRanges(block)
