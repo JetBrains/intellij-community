@@ -277,6 +277,7 @@ abstract class GitImplBase implements Git {
     "cannot rebase:",
     "conflict",
     "unable",
+    "The file will have its original",
     "runnerw:"
   };
 
