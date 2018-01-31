@@ -57,8 +57,8 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
 
   private static final CallMatcher COLLECTION_SAFE_ARGUMENT_METHODS =
     CallMatcher.anyOf(
-      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll", "removeAll", "containsAll"),
-      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll")
+      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll", "removeAll", "containsAll", "remove"),
+      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll", "remove")
     );
 
   private static final Set<String> COLLECTIONS_QUERIES =
@@ -72,8 +72,8 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet queryNames =
     new ExternalizableStringSet(
-      "contains", "copyInto", "equals", "forEach", "get", "hashCode", "parallelStream", "propertyNames", "replaceAll", "save",
-      "size", "store", "stream", "toArray", "toString", "write");
+      "contains", "copyInto", "equals", "forEach", "get", "hashCode", "iterator", "parallelStream", "propertyNames",
+      "replaceAll", "save", "size", "store", "stream", "toArray", "toString", "write");
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "insert", "load", "merge", "offer", "poll", "pop", "push", "put", "remove", "replace",

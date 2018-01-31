@@ -84,6 +84,13 @@ public class MismatchedCollectionQueryUpdate {
       return l.toArray();
     }
 
+    Object[] testRemoveFromAnotherCollection(List<List<String>> list) {
+      List<String> <warning descr="Contents of collection 'l' are queried, but never updated">l</warning> = new ArrayList<>();
+      list.remove(l);
+      process(list);
+      return l.toArray();
+    }
+
     native void process(List<List<String>> list);
 
     void testPureMethod() {
@@ -145,6 +152,26 @@ public class MismatchedCollectionQueryUpdate {
         nonInitialized = new ArrayList<>();
       }
       nonInitialized.add(key);
+    }
+
+    void testListIterator() {
+      // IDEA-128168
+      List<String> test = new ArrayList<String>();
+      ListIterator<String> i = test.listIterator(0);
+      i.add("hello!");
+      System.out.println(i.next());
+    }
+
+    void testIterator() {
+      List<String> <warning descr="Contents of collection 'test' are queried, but never updated">test</warning> = new ArrayList<String>();
+      Iterator<String> i = test.iterator();
+      while(i.hasNext()) {
+        if(i.next() == null) {
+          // Normally iterator cannot add, remove only. If collection is always empty (not updated in any other way),
+          // this is useless anyways
+          i.remove();
+        }
+      }
     }
 
     class Node{
