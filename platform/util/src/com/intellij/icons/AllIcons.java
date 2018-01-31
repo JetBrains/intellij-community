@@ -201,14 +201,17 @@ public class AllIcons {
   
   public static class Css {
     
+    /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Atrule = IconLoader.getIcon("/css/atrule.png"); // 16x16
     
+    /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Import = IconLoader.getIcon("/css/import.png"); // 16x16
     
+    /** @deprecated use 'icons.CssIcons' from 'intellij.css' module instead */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Property = IconLoader.getIcon("/css/property.png"); // 16x16

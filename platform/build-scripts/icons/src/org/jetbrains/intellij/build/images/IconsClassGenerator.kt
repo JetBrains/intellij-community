@@ -185,12 +185,16 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
           val name = file.name
           val used = image.used
           val deprecated = image.deprecated
+          val deprecationComment = image.deprecationComment
 
           if (isIcon(file)) {
             processedIcons++
 
             if (used || deprecated) {
               append(answer, "", level)
+              if (deprecationComment != null) {
+                append(answer, "/** @deprecated $deprecationComment */", level)
+              }
               append(answer, "@SuppressWarnings(\"unused\")", level)
             }
             if (deprecated) {

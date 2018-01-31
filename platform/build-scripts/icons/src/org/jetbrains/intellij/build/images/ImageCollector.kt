@@ -26,7 +26,8 @@ import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, val used: Boolean, val deprecated: Boolean) {
+internal class ImagePaths(val id: String, val sourceRoot: JpsModuleSourceRoot, val used: Boolean, val deprecated: Boolean,
+                          val deprecationComment: String?) {
   var files: MutableMap<ImageType, File> = HashMap()
   var ambiguous: Boolean = false
 
@@ -89,11 +90,13 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     val id = type.getBasicName((prefix + nameWithoutExtension).joinToString("/"))
 
     val skipped = robotData.isSkipped(file)
-    val used = robotData.isUsed(file)
-    val deprecated = robotData.isDeprecated(file)
     if (skipped) return
 
-    val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot, used, deprecated) })
+    val used = robotData.isUsed(file)
+    val deprecated = robotData.isDeprecated(file)
+    val deprecationComment = if (deprecated) robotData.getDeprecationComment(file) else null
+
+    val iconPaths = result.computeIfAbsent(id, { ImagePaths(id, sourceRoot, used, deprecated, deprecationComment) })
     if (type !in iconPaths.files) {
       iconPaths.files[type] = file
     }
@@ -134,14 +137,17 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
     }
   }
 
+  private class DeprecatedData(val matcher: Matcher, val comment: String?)
+
   private inner class IconRobotsData(private val parent: IconRobotsData? = null) {
     private val skip: MutableSet<Matcher> = HashSet()
     private val used: MutableSet<Matcher> = HashSet()
-    private val deprecated: MutableSet<Matcher> = HashSet()
+    private val deprecated: MutableList<DeprecatedData> = ArrayList()
 
     fun isSkipped(file: File): Boolean = !ignoreSkipTag && (matches(file, skip) || parent?.isSkipped(file) ?: false)
     fun isUsed(file: File): Boolean = matches(file, used) || parent?.isUsed(file) ?: false
-    fun isDeprecated(file: File): Boolean = matches(file, deprecated) || parent?.isDeprecated(file) ?: false
+    fun isDeprecated(file: File): Boolean = findDeprecatedData(file) != null || parent?.isDeprecated(file) ?: false
+    fun getDeprecationComment(file: File): String? = findDeprecatedData(file)?.comment
 
     fun fork(dir: File, root: File): IconRobotsData {
       val robots = File(dir, "icon-robots.txt")
@@ -151,9 +157,12 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
       val answer = IconRobotsData(this)
       parse(robots,
-            Pair("skip:", { value -> compilePattern(answer.skip, dir, root, value) }),
-            Pair("used:", { value -> compilePattern(answer.used, dir, root, value) }),
-            Pair("deprecated:", { value -> compilePattern(answer.deprecated, dir, root, value) }),
+            Pair("skip:", { value -> answer.skip += compilePattern(dir, root, value) }),
+            Pair("used:", { value -> answer.used += compilePattern(dir, root, value) }),
+            Pair("deprecated:", { value ->
+              val comment = if (";" in value) value.substringAfter(";").trim() else null
+              answer.deprecated += DeprecatedData(compilePattern(dir, root, value.substringBefore(";")), comment)
+            }),
             Pair("name:", { value -> }), // ignore
             Pair("#", { value -> }) // comment
       )
@@ -173,7 +182,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
       }
     }
 
-    private fun compilePattern(set: MutableSet<Matcher>, dir: File, root: File, value: String) {
+    private fun compilePattern(dir: File, root: File, value: String): Matcher {
       var pattern = value.trim()
 
       if (pattern.startsWith("/")) {
@@ -185,14 +194,24 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
       val regExp = FileUtil.convertAntToRegexp(pattern, false)
       try {
-        set.add(Pattern.compile(regExp).matcher(""))
+        return Pattern.compile(regExp).matcher("")
       }
       catch (e: Exception) {
         throw Exception("Cannot compile pattern: $pattern. Built on based in $dir/icon-robots.txt")
       }
     }
 
+    private fun findDeprecatedData(file: File): DeprecatedData? {
+      val basicPath = getBasicPath(file)
+      return deprecated.find { it.matcher.reset(basicPath).matches() }
+    }
+
     private fun matches(file: File, matcher: Set<Matcher>): Boolean {
+      val basicPath = getBasicPath(file)
+      return matcher.any { it.reset(basicPath).matches() }
+    }
+
+    private fun getBasicPath(file: File): String {
       val path = file.absolutePath.replace('\\', '/')
 
       val pathWithoutExtension = FileUtilRt.getNameWithoutExtension(path)
@@ -200,8 +219,7 @@ internal class ImageCollector(val projectHome: File, val iconsOnly: Boolean = tr
 
       val basicPathWithoutExtension = ImageType.stripSuffix(pathWithoutExtension)
       val basicPath = basicPathWithoutExtension + if (extension.isNotEmpty()) "." + extension else ""
-
-      return matcher.any { it.reset(basicPath).matches() }
+      return basicPath
     }
   }
 }
