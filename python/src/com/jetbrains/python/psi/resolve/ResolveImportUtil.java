@@ -241,13 +241,14 @@ public class ResolveImportUtil {
   /**
    * Tries to find referencedName under the parent element.
    *
-   * @param parent          element under which to look for referenced name; if null, null is returned.
+   * @param parent          element under which to look for referenced name; if null empty list is returned
    * @param referencedName  which name to look for.
    * @param containingFile  where we're in.
    * @param fileOnly        if true, considers only a PsiFile child as a valid result; non-file hits are ignored.
    * @param checkForPackage if true, directories are returned only if they contain __init__.py
    * @param withoutStubs
-   * @return the element the referencedName resolves to, or null.
+   * @param withoutForeign  if {@code true} do not use {@link PyReferenceResolveProvider} instances for resolving
+   * @return the element the referencedName resolves to
    */
   @NotNull
   public static List<RatedResolveResult> resolveChildren(@Nullable PsiElement parent,
