@@ -35,7 +35,7 @@ import java.util.List;
 public interface GradleMethodContextContributor {
 
   ExtensionPointName<GradleMethodContextContributor> EP_NAME =
-    ExtensionPointName.create("org.jetbrains.plugins.gradle.java.resolve.contributor");
+    ExtensionPointName.create("org.jetbrains.plugins.gradle.resolve.contributor");
 
   /**
    * Tries to resolve target element.

@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public interface GradlePluginDescriptionsExtension {
   ExtensionPointName<GradlePluginDescriptionsExtension> EP_NAME =
-    ExtensionPointName.create("org.jetbrains.plugins.gradle.java.pluginDescriptions");
+    ExtensionPointName.create("org.jetbrains.plugins.gradle.pluginDescriptions");
 
   /**
    * @return A map from Gradle plugin names to their descriptions.

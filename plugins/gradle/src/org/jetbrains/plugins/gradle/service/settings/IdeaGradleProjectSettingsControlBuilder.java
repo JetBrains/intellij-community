@@ -13,10 +13,8 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.MessageType;
@@ -92,9 +90,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JLabel myGradleJdkLabel;
   @Nullable
-  private ExternalSystemJdkComboBox myGradleJdkComboBox;
-  @Nullable
-  private FixedSizeButton myGradleJdkSetUpButton;
+  protected ExternalSystemJdkComboBox myGradleJdkComboBox;
+  @Nullable protected FixedSizeButton myGradleJdkSetUpButton;
   private boolean dropGradleJdkComponents;
 
   @Nullable
@@ -534,7 +531,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  private void resetGradleJdkComboBox(@Nullable final Project project,
+  protected void resetGradleJdkComboBox(@Nullable final Project project,
                                       GradleProjectSettings settings,
                                       @Nullable WizardContext wizardContext) {
     if (myGradleJdkComboBox == null) return;
@@ -548,8 +545,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     myGradleJdkComboBox.refreshData(sdkItem, projectJdk);
     if (myGradleJdkSetUpButton != null) {
-      ProjectSdksModel sdksModel = ProjectStructureConfigurable.getInstance(
-        project == null || project.isDisposed() ? ProjectManager.getInstance().getDefaultProject() : project).getProjectJdksModel();
+      ProjectSdksModel sdksModel = new ProjectSdksModel();
       myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id instanceof JavaSdk);
     }
   }

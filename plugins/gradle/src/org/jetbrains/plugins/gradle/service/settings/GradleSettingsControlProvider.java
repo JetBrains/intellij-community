@@ -41,13 +41,11 @@ public abstract class GradleSettingsControlProvider {
   @NotNull
   public static GradleSettingsControlProvider get() {
     GradleSettingsControlProvider result = null;
-    if (!PlatformUtils.isIntelliJ()) {
-      final String platformPrefix = PlatformUtils.getPlatformPrefix();
-      for (GradleSettingsControlProvider provider : EP_NAME.getExtensions()) {
-        if (StringUtil.equals(platformPrefix, provider.getPlatformPrefix())) {
-          assert result == null : "Multiple GradleSettingsControlProvider extensions found";
-          result = provider;
-        }
+    final String platformPrefix = PlatformUtils.getPlatformPrefix();
+    for (GradleSettingsControlProvider provider : EP_NAME.getExtensions()) {
+      if (StringUtil.equals(platformPrefix, provider.getPlatformPrefix())) {
+        assert result == null : "Multiple GradleSettingsControlProvider extensions found";
+        result = provider;
       }
     }
     return ObjectUtils.notNull(result, new GradleSettingsControlProvider() {
