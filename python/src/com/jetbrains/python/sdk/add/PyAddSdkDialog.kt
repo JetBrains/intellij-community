@@ -62,7 +62,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private var panels: List<PyAddSdkView> = emptyList()
 
   init {
-    title = "Add Local Python Interpreter"
+    title = "Add Python Interpreter"
   }
 
   override fun createCenterPanel(): JComponent {
