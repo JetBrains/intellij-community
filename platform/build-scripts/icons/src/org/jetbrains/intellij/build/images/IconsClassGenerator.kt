@@ -241,7 +241,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     val rootDir = File(JpsPathUtil.urlToPath(rootUrl))
     if (!rootDir.isDirectory) return null
 
-    val file = File(rootDir, "icon-robots.txt")
+    val file = File(rootDir, ImageCollector.ROBOTS_FILE_NAME)
     if (!file.exists()) return null
 
     val prefix = "name:"
