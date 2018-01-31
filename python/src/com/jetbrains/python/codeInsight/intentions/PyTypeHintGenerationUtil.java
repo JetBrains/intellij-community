@@ -349,6 +349,12 @@ public class PyTypeHintGenerationUtil {
       }
       collectImportTargetsFromType(callableType.getReturnType(context), context, symbols, typingTypes);
     }
+    else if (type instanceof PyGenericType) {
+      final PyTargetExpression target = as(type.getDeclarationElement(), PyTargetExpression.class);
+      if (target != null) {
+        symbols.add(target);
+      }
+    }
     if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
       typingTypes.add("Type");
     }
