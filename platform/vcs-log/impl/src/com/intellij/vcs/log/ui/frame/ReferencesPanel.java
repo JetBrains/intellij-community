@@ -41,7 +41,6 @@ import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackgrou
 public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;
   protected static final int V_GAP = 0;
-  public static final int PADDING = 3;
 
   private final int myRefsLimit;
   @NotNull private List<VcsRef> myReferences;
@@ -106,7 +105,7 @@ public class ReferencesPanel extends JPanel {
   }
 
   protected int getIconHeight() {
-    return getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
+    return getFontMetrics(getLabelsFont()).getHeight();
   }
 
   @NotNull
