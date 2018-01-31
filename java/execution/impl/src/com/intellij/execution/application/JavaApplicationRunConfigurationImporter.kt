@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
+import com.intellij.util.ObjectUtils.consumeIfCast
 
 class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
   override fun process(project: Project, runConfiguration: RunConfiguration, cfg: Map<String, *>, modelsProvider: IdeModifiableModelsProvider) {
@@ -16,14 +17,17 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
 
-    (cfg["moduleName"] as? String)
-      ?.let { modelsProvider.modifiableModuleModel.findModuleByName(it) }
-      ?.let { runConfiguration.setModule(it) }
+    consumeIfCast(cfg["moduleName"], String::class.java) {
+        val module = modelsProvider.modifiableModuleModel.findModuleByName(it)
+        if (module != null) {
+          runConfiguration.setModule(module)
+        }
+      }
 
-    (cfg["mainClass"] as? String)?.let { runConfiguration.mainClassName = it }
-    (cfg["jvmArgs"]   as? String)?.let { runConfiguration.vmParameters = it  }
-    (cfg["programParameters"] as? String)?.let { runConfiguration.programParameters = it }
-    (cfg["envs"] as? Map<*,*>)?.let { runConfiguration.envs = it as MutableMap<String, String> }
+    consumeIfCast(cfg["mainClass"], String::class.java) { runConfiguration.mainClassName = it }
+    consumeIfCast(cfg["jvmArgs"], String::class.java) { runConfiguration.vmParameters = it  }
+    consumeIfCast(cfg["programParameters"], String::class.java) { runConfiguration.programParameters = it }
+    consumeIfCast(cfg["envs"], Map::class.java) { runConfiguration.envs = it as MutableMap<String, String> }
   }
 
   override fun canImport(typeName: String): Boolean = typeName == "application"

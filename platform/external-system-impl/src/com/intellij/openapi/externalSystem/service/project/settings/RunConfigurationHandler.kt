@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationD
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.util.ObjectUtils.consumeIfCast
 
 /**
  * Created by Nikita.Skvortsov
@@ -76,7 +77,7 @@ class RunConfigurationHandler: ConfigurationHandler {
           runManagerEx.addConfiguration(runnerAndConfigurationSettings)
         }
 
-        (cfg["beforeRun"] as? List<*>)?.let {
+        consumeIfCast(cfg["beforeRun"], List::class.java) {
           // TODO add extension point
           it.filterIsInstance(Map::class.java)
             .firstOrNull { it["id"] == "Make" }

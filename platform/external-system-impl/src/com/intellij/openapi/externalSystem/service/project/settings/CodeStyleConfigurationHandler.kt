@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
+import com.intellij.util.ObjectUtils.consumeIfCast
 
 /**
  * Created by Nikita.Skvortsov
@@ -45,9 +46,9 @@ class CodeStyleConfigurationHandler: ConfigurationHandler {
     val styleSettings = importedScheme.codeStyleSettings
     // GLOBAL
     styleSettings.apply {
-      (codeStyleSettings["USE_SAME_INDENTS"] as? Boolean)?.let { USE_SAME_INDENTS = it }
-      (codeStyleSettings["RIGHT_MARGIN"] as? Number)?.toInt()?.let { defaultRightMargin = it }
-      (codeStyleSettings["KEEP_CONTROL_STATEMENT_IN_ONE_LINE"] as? Boolean)?.let { KEEP_CONTROL_STATEMENT_IN_ONE_LINE = it }
+      consumeIfCast(codeStyleSettings["USE_SAME_INDENTS"], Boolean::class.java) { USE_SAME_INDENTS = it }
+      consumeIfCast(codeStyleSettings["RIGHT_MARGIN"], Number::class.java) { defaultRightMargin = it.toInt() }
+      consumeIfCast(codeStyleSettings["KEEP_CONTROL_STATEMENT_IN_ONE_LINE"], Boolean::class.java) { KEEP_CONTROL_STATEMENT_IN_ONE_LINE = it }
     }
 
 
@@ -55,10 +56,12 @@ class CodeStyleConfigurationHandler: ConfigurationHandler {
     val importedLangs: Map<String,*> = (codeStyleSettings["languages"] as? Map<String,*>) ?: mapOf<String, Any?>()
 
     languages.forEach { langName ->
-      (importedLangs[langName] as? Map<*, *>)?.let { langCfg ->
-        val importer = CodeStyleImporterExtensionManager.importerForLang(langName) ?: return@let
-        importCommonSettings(styleSettings.getCommonSettings(importer.language), langCfg)
-        importer.processSettings(styleSettings.getCustomSettings(importer.customClass), langCfg)
+      consumeIfCast(importedLangs[langName], Map::class.java) { langCfg ->
+        val importer = CodeStyleImporterExtensionManager.importerForLang(langName)
+        if (importer != null) {
+          importCommonSettings(styleSettings.getCommonSettings(importer.language), langCfg)
+          importer.processSettings(styleSettings.getCustomSettings(importer.customClass), langCfg)
+        }
       }
     }
 
@@ -68,13 +71,13 @@ class CodeStyleConfigurationHandler: ConfigurationHandler {
 
   private fun importCommonSettings(commonSettings: CommonCodeStyleSettings, langCfg: Map<*, *>) {
     commonSettings.apply {
-      (langCfg["RIGHT_MARGIN"] as? Number)?.toInt()?.let { RIGHT_MARGIN = it }
-      (langCfg["WRAP_COMMENTS"] as? Boolean)?.let { WRAP_COMMENTS = it }
-      (langCfg["IF_BRACE_FORCE"] as? String)?.let { IF_BRACE_FORCE = ForceEnum.valueOf(it).index }
-      (langCfg["DOWHILE_BRACE_FORCE"] as? String)?.let { DOWHILE_BRACE_FORCE = ForceEnum.valueOf(it).index }
-      (langCfg["WHILE_BRACE_FORCE"] as? String)?.let { WHILE_BRACE_FORCE = ForceEnum.valueOf(it).index }
-      (langCfg["FOR_BRACE_FORCE"] as? String)?.let { FOR_BRACE_FORCE = ForceEnum.valueOf(it).index }
-      (langCfg["KEEP_CONTROL_STATEMENT_IN_ONE_LINE"] as? Boolean)?.let { KEEP_CONTROL_STATEMENT_IN_ONE_LINE = it }
+      consumeIfCast(langCfg["RIGHT_MARGIN"], Number::class.java) { RIGHT_MARGIN = it.toInt() }
+      consumeIfCast(langCfg["WRAP_COMMENTS"], Boolean::class.java) { WRAP_COMMENTS = it }
+      consumeIfCast(langCfg["IF_BRACE_FORCE"], String::class.java) { IF_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      consumeIfCast(langCfg["DOWHILE_BRACE_FORCE"], String::class.java) { DOWHILE_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      consumeIfCast(langCfg["WHILE_BRACE_FORCE"], String::class.java) { WHILE_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      consumeIfCast(langCfg["FOR_BRACE_FORCE"], String::class.java) { FOR_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      consumeIfCast(langCfg["KEEP_CONTROL_STATEMENT_IN_ONE_LINE"], Boolean::class.java) { KEEP_CONTROL_STATEMENT_IN_ONE_LINE = it }
     }
   }
 

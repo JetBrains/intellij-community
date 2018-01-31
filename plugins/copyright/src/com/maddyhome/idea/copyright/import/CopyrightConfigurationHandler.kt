@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationD
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.ConfigurationHandler
 import com.intellij.openapi.project.Project
+import com.intellij.util.ObjectUtils.consumeIfCast
 import com.maddyhome.idea.copyright.CopyrightProfile
 
 class CopyrightConfigurationHandler: ConfigurationHandler {
@@ -21,13 +22,13 @@ class CopyrightConfigurationHandler: ConfigurationHandler {
       val profileConfig = value as? Map<*, *> ?: return@forEach
 
       val profile = CopyrightProfile(name)
-      (profileConfig["notice"] as? String)?.let {  profile.notice = it }
-      (profileConfig["keyword"] as? String)?.let {  profile.keyword = it }
-      (profileConfig["allowReplaceRegexp"] as? String)?.let { profile.allowReplaceRegexp = it }
+      consumeIfCast(profileConfig["notice"], String::class.java) {  profile.notice = it }
+      consumeIfCast(profileConfig["keyword"], String::class.java) {  profile.keyword = it }
+      consumeIfCast(profileConfig["allowReplaceRegexp"], String::class.java) { profile.allowReplaceRegexp = it }
       copyrightManager.replaceCopyright(name, profile)
     }
 
-    (cfgMap["useDefault"] as? String)?.let { defaultName ->
+    consumeIfCast(cfgMap["useDefault"], String::class.java) { defaultName ->
       copyrightManager.getCopyrights()
         .find { cp -> cp.name == defaultName }
         ?.let { defaultProfile -> copyrightManager.defaultCopyright = defaultProfile }

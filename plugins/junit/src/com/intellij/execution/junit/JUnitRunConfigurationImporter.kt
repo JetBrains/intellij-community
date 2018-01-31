@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
 import com.intellij.rt.execution.junit.RepeatCount
+import com.intellij.util.ObjectUtils.consumeIfCast
 import java.util.*
 
 /**
@@ -39,7 +40,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
     val data = runConfig.persistentData
     val testKind = cfg.keys.firstOrNull { it in listOf("packageName", "directory", "pattern", "className", "method", "category") && cfg[it] != null }
     if (testKind != null) {
-      (cfg[testKind] as? String)?.let { testKindValue ->
+      consumeIfCast(cfg[testKind], String::class.java) { testKindValue ->
         data.TEST_OBJECT = when (testKind) {
           "package" -> JUnitConfiguration.TEST_PACKAGE.also { data.PACKAGE_NAME = testKindValue }
           "directory" -> JUnitConfiguration.TEST_DIRECTORY.also { data.dirName = testKindValue }
@@ -65,14 +66,17 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
       else           -> runConfig.repeatMode
     }
 
-    (cfg["vmParameters"] as? String)?.let { runConfig.vmParameters = it }
-    (cfg["workingDirectory"] as? String)?.let { runConfig.workingDirectory = it }
-    (cfg["passParentEnvs"] as? Boolean)?.let { runConfig.isPassParentEnvs = it }
-    (cfg["envs"] as? Map<*,*>)?.let { runConfig.envs = it as Map<String, String> }
+    consumeIfCast(cfg["vmParameters"], String::class.java) { runConfig.vmParameters = it }
+    consumeIfCast(cfg["workingDirectory"], String::class.java) { runConfig.workingDirectory = it }
+    consumeIfCast(cfg["passParentEnvs"], Boolean::class.java) { runConfig.isPassParentEnvs = it }
+    consumeIfCast(cfg["envs"], Map::class.java) { runConfig.envs = it as Map<String, String> }
 
-    (cfg["moduleName"] as? String)
-      ?.let { modelsProvider.modifiableModuleModel.findModuleByName(it) }
-      ?.let { runConfig.setModule(it) }
+    consumeIfCast(cfg["moduleName"], String::class.java) {
+      val module = modelsProvider.modifiableModuleModel.findModuleByName(it)
+      if (module != null) {
+        runConfig.setModule(module)
+      }
+    }
   }
 
   override fun getConfigurationFactory(): ConfigurationFactory =

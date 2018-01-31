@@ -11,16 +11,31 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+import static com.intellij.util.ObjectUtils.consumeIfCast;
+
 public class JavaCodeStyleImporter implements CodeStyleConfigurationImporter<JavaCodeStyleSettings> {
   @Override
   public void processSettings(@NotNull JavaCodeStyleSettings settings, @NotNull Map config) {
-    asInt(config.get("CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND"), (it) -> settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = it);
-    asBoolean(config.get("JD_ALIGN_PARAM_COMMENTS"), (it) -> settings.JD_ALIGN_PARAM_COMMENTS = it);
-    asBoolean(config.get("JD_ALIGN_EXCEPTION_COMMENTS"), (it) -> settings.JD_ALIGN_EXCEPTION_COMMENTS = it);
-    asBoolean(config.get("JD_P_AT_EMPTY_LINES"), (it) -> settings.JD_P_AT_EMPTY_LINES = it);
-    asBoolean(config.get("JD_KEEP_EMPTY_PARAMETER"), (it) -> settings.JD_KEEP_EMPTY_PARAMETER = it);
-    asBoolean(config.get("JD_KEEP_EMPTY_EXCEPTION"), (it) -> settings.JD_KEEP_EMPTY_EXCEPTION = it);
-    asBoolean(config.get("JD_KEEP_EMPTY_RETURN"), (it) -> settings.JD_KEEP_EMPTY_RETURN = it);
+    consumeIfCast(config.get("CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND"), Number.class,
+                  (it) -> settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = it.intValue());
+
+    consumeIfCast(config.get("JD_ALIGN_PARAM_COMMENTS"), Boolean.class,
+                  (it) -> settings.JD_ALIGN_PARAM_COMMENTS = it);
+
+    consumeIfCast(config.get("JD_ALIGN_EXCEPTION_COMMENTS"), Boolean.class,
+                  (it) -> settings.JD_ALIGN_EXCEPTION_COMMENTS = it);
+
+    consumeIfCast(config.get("JD_P_AT_EMPTY_LINES"), Boolean.class,
+                  (it) -> settings.JD_P_AT_EMPTY_LINES = it);
+
+    consumeIfCast(config.get("JD_KEEP_EMPTY_PARAMETER"), Boolean.class,
+                  (it) -> settings.JD_KEEP_EMPTY_PARAMETER = it);
+
+    consumeIfCast(config.get("JD_KEEP_EMPTY_EXCEPTION"), Boolean.class,
+                  (it) -> settings.JD_KEEP_EMPTY_EXCEPTION = it);
+
+    consumeIfCast(config.get("JD_KEEP_EMPTY_RETURN"), Boolean.class,
+                  (it) -> settings.JD_KEEP_EMPTY_RETURN = it);
   }
 
   @Override
@@ -38,17 +53,5 @@ public class JavaCodeStyleImporter implements CodeStyleConfigurationImporter<Jav
   @Override
   public Language getLanguage() {
     return JavaLanguage.INSTANCE;
-  }
-
-  private void asInt(Object value, Consumer<Integer> consumer) {
-    if (value instanceof Number) {
-      consumer.consume(((Number)value).intValue());
-    }
-  }
-
-  private void asBoolean(Object value, Consumer<Boolean> consumer) {
-    if (value instanceof Boolean) {
-      consumer.consume((Boolean)value);
-    }
   }
 }
