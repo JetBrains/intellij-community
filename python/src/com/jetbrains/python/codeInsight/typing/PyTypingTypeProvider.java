@@ -16,8 +16,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
-import java.util.HashSet;
 import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -36,8 +34,8 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
@@ -76,7 +74,11 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static final String COUNTER = "typing.Counter";
   private static final String DEQUE = "typing.Deque";
   private static final String TUPLE = "typing.Tuple";
-  private static final String CLASSVAR = "typing.ClassVar";
+  private static final String CLASS_VAR = "typing.ClassVar";
+  private static final String TYPE_VAR = "typing.TypeVar";
+  private static final String CHAIN_MAP = "typing.ChainMap";
+  private static final String UNION = "typing.Union";
+  private static final String OPTIONAL = "typing.Optional";
 
   public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
   public static final String SUPPORTS_INT_SIMPLE = "SupportsInt";
@@ -101,9 +103,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .build();
 
   private static final ImmutableMap<String, String> COLLECTIONS_CLASSES = ImmutableMap.<String, String>builder()
-    .put(DEFAULT_DICT, "collections.DefaultDict")
+    .put(DEFAULT_DICT, "collections.defaultdict")
     .put(COUNTER, "collections.Counter")
-    .put(DEQUE, "collections.Deque")
+    .put(DEQUE, "collections.deque")
+    .put(CHAIN_MAP, "collections.ChainMap")
     .build();
 
   public static final ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
@@ -114,9 +117,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .build();
 
   public static final ImmutableSet<String> GENERIC_CLASSES = ImmutableSet.<String>builder()
-    .add(GENERIC)
-    .add("typing.AbstractGeneric")
-    .add(PROTOCOL)
+    // special forms
+    .add(TUPLE, GENERIC, PROTOCOL, CALLABLE, TYPE, CLASS_VAR)
+    // type aliases
+    .add(UNION, OPTIONAL, LIST, DICT, DEFAULT_DICT, SET, FROZEN_SET, COUNTER, DEQUE, CHAIN_MAP)
     .build();
 
   /**
@@ -126,24 +130,25 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
    */
   private static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
     .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
-    .add("typing.Any")
-    .add("typing.TypeVar")
+    .add(ANY)
+    .add(TYPE_VAR)
     .add(GENERIC)
     .add(TUPLE)
     .add(CALLABLE)
-    .add("typing.Type")
+    .add(TYPE)
     .add("typing.no_type_check")
-    .add("typing.Union")
-    .add("typing.Optional")
+    .add(UNION)
+    .add(OPTIONAL)
     .add(LIST)
     .add(DICT)
     .add(DEFAULT_DICT)
     .add(SET)
     .add(FROZEN_SET)
     .add(PROTOCOL)
-    .add(CLASSVAR)
+    .add(CLASS_VAR)
     .add(COUNTER)
     .add(DEQUE)
+    .add(CHAIN_MAP)
     .build();
 
   @Nullable
@@ -856,7 +861,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
       final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (operandNames.contains("typing.Optional")) {
+      if (operandNames.contains(OPTIONAL)) {
         final PyExpression indexExpr = subscriptionExpr.getIndexExpression();
         if (indexExpr != null) {
           final PyType type = Ref.deref(getType(indexExpr, context));
@@ -975,7 +980,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PySubscriptionExpression subscriptionExpr = (PySubscriptionExpression)element;
       final PyExpression operand = subscriptionExpr.getOperand();
       final Collection<String> operandNames = resolveToQualifiedNames(operand, context.getTypeContext());
-      if (operandNames.contains("typing.Union")) {
+      if (operandNames.contains(UNION)) {
         return PyUnionType.union(getIndexTypes(subscriptionExpr, context));
       }
     }
@@ -989,7 +994,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
         final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-        if (calleeQNames.contains("typing.TypeVar")) {
+        if (calleeQNames.contains(TYPE_VAR)) {
           final PyExpression[] arguments = assignedCall.getArguments();
           if (arguments.length > 0) {
             final PyExpression firstArgument = arguments[0];
@@ -1249,10 +1254,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
     if (annotationValue instanceof PySubscriptionExpression) {
       final PyExpression operand = ((PySubscriptionExpression)annotationValue).getOperand();
-      return operand instanceof PyReferenceExpression && resolveToQualifiedNames(operand, context).contains(CLASSVAR);
+      return operand instanceof PyReferenceExpression && resolveToQualifiedNames(operand, context).contains(CLASS_VAR);
     }
     else if (annotationValue instanceof PyReferenceExpression) {
-      return resolveToQualifiedNames(annotationValue, context).contains(CLASSVAR);
+      return resolveToQualifiedNames(annotationValue, context).contains(CLASS_VAR);
     }
 
     return false;
