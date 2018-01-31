@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.Key
@@ -29,16 +30,20 @@ class GoToClassFocusTest: GuiTestCase() {
     CommunityProjectCreator.createCommandLineProject()
     Pause.pause(1000)
     ideFrame {
-      for(i in 0..30) {
-        focusOnEditor()
-        startIntensiveCalcOnEdt()
+      for(i in 0..10) {
+        startIntensiveCalcOnParallel()
         openGoToClassSearchAndType(this@GoToClassFocusTest)
+        focusOnEditor()
       }
     }
   }
 
   private fun startIntensiveCalcOnEdt() {
     for (i in 0..1000)  ApplicationManager.getApplication().invokeLater{ println(intensiveCpuCalc().toString()) }
+  }
+
+  private fun startIntensiveCalcOnParallel() {
+    ApplicationManager.getApplication().executeOnPooledThread{ for (i in 0..100) ApplicationManager.getApplication().executeOnPooledThread { for(k in 0..1000) println (intensiveCpuCalc().toString()) } }
   }
 
   private fun intensiveCpuCalc(): Double {
@@ -61,7 +66,7 @@ class GoToClassFocusTest: GuiTestCase() {
 
   private fun openGoToClassSearchAndType(guiTestCase: GuiTestCase) {
     invokeAction("GotoClass")
-    typeText(typedString)
+    GuiTestUtil.typeText(typedString, guiTestRule.robot(),0)
     checkSearchWindow(guiTestCase)
     shortcut(Key.ESCAPE)
   }
