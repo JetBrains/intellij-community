@@ -20,6 +20,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -34,15 +35,27 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
   @NotNull private final String myName;
   @Nullable private final PyType myBound;
   private boolean myIsDefinition = false;
+  private PyTargetExpression myTargetExpression;
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound) {
     this(name, bound, false);
   }
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition) {
+    this(name, bound, isDefinition, null);
+  }
+
+  public PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition, @Nullable PyTargetExpression target) {
     myName = name;
     myBound = bound;
     myIsDefinition = isDefinition;
+    myTargetExpression = target;
+  }
+
+  @Nullable
+  @Override
+  public PyTargetExpression getDeclarationElement() {
+    return myTargetExpression;
   }
 
   @Nullable

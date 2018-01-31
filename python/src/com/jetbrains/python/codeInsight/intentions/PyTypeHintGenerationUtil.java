@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -280,11 +281,11 @@ public class PyTypeHintGenerationUtil {
   private static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
                                                    @NotNull TypeEvalContext context,
                                                    @NotNull PsiFile file) {
-    final Set<PyClass> classes = new HashSet<>();
+    final Set<PsiNamedElement> symbols = new HashSet<>();
     final Set<String> namesFromTyping = new HashSet<>();
 
     for (PyType type : types) {
-      collectImportTargetsFromType(type, context, classes, namesFromTyping);
+      collectImportTargetsFromType(type, context, symbols, namesFromTyping);
     }
 
     final boolean builtinTyping = LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON35);
@@ -293,24 +294,30 @@ public class PyTypeHintGenerationUtil {
       AddImportHelper.addOrUpdateFromImportStatement(file, "typing", name, null, priority, null);
     }
 
-    for (PyClass pyClass : classes) {
-      PyClassRefactoringUtil.insertImport(file, pyClass, null, true);
+    for (PsiNamedElement symbol : symbols) {
+      PyClassRefactoringUtil.insertImport(file, symbol, null, true);
     }
   }
 
   private static void collectImportTargetsFromType(@Nullable PyType type,
                                                    @NotNull TypeEvalContext context,
-                                                   @NotNull Set<PyClass> classes,
-                                                   @NotNull Set<String> names) {
+                                                   @NotNull Set<PsiNamedElement> symbols,
+                                                   @NotNull Set<String> typingTypes) {
     if (type == null) {
-      names.add("Any");
+      typingTypes.add("Any");
     }
     else if (type instanceof PyUnionType) {
       final Collection<PyType> members = ((PyUnionType)type).getMembers();
       final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
-      names.add(isOptional ? "Optional" : "Union");
+      typingTypes.add(isOptional ? "Optional" : "Union");
       for (PyType pyType : members) {
-        collectImportTargetsFromType(pyType, context, classes, names);
+        collectImportTargetsFromType(pyType, context, symbols, typingTypes);
+      }
+    }
+    else if (type instanceof PyNamedTupleType) {
+      final PyQualifiedNameOwner element = type.getDeclarationElement();
+      if (element instanceof PsiNamedElement) {
+        symbols.add((PsiNamedElement)element);
       }
     }
     else if (type instanceof PyCollectionType) {
@@ -318,32 +325,32 @@ public class PyTypeHintGenerationUtil {
         final PyClass pyClass = ((PyCollectionTypeImpl)type).getPyClass();
         final String typingCollectionName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(pyClass.getQualifiedName());
         if (typingCollectionName != null && type.isBuiltin()) {
-          names.add(typingCollectionName);
+          typingTypes.add(typingCollectionName);
         }
         else {
-          classes.add(pyClass);
+          symbols.add(pyClass);
         }
       }
       else if (type instanceof PyTupleType) {
-        names.add("Tuple");
+        typingTypes.add("Tuple");
       }
       for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
-        collectImportTargetsFromType(pyType, context, classes, names);
+        collectImportTargetsFromType(pyType, context, symbols, typingTypes);
       }
     }
     else if (type instanceof PyClassType) {
-      classes.add(((PyClassType)type).getPyClass());
+      symbols.add(((PyClassType)type).getPyClass());
     }
     else if (type instanceof PyCallableType) {
-      names.add("Callable");
+      typingTypes.add("Callable");
       final PyCallableType callableType = (PyCallableType)type;
       for (PyCallableParameter parameter : ContainerUtil.notNullize(callableType.getParameters(context))) {
-        collectImportTargetsFromType(parameter.getType(context), context, classes, names);
+        collectImportTargetsFromType(parameter.getType(context), context, symbols, typingTypes);
       }
-      collectImportTargetsFromType(callableType.getReturnType(context), context, classes, names);
+      collectImportTargetsFromType(callableType.getReturnType(context), context, symbols, typingTypes);
     }
     if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      names.add("Type");
+      typingTypes.add("Type");
     }
   }
 

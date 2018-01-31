@@ -227,7 +227,17 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyNamedTupleType) {
+    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+      // Special case: render Type[type] as just type
+      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
+        result = NamedType.nameOrAny(type);
+      }
+      else {
+        result = new ClassObjectType(build(instanceType, allowUnions));
+      }
+    }
+    else if (type instanceof PyNamedTupleType) {
       result = NamedType.nameOrAny(type);
     }
     else if (type instanceof PyTupleType) {
@@ -280,16 +290,6 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = buildCallable((PyCallableType)type);
-    }
-    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
-      // Special case: render Type[type] as just type
-      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
-        result = NamedType.nameOrAny(type);
-      }
-      else {
-        result = new ClassObjectType(build(instanceType, allowUnions));
-      }
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());

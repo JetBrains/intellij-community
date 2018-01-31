@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,11 @@ import java.util.Set;
  * @author yole
  */
 public interface PyType {
+
+  @Nullable
+  default PyQualifiedNameOwner getDeclarationElement() {
+    return null;
+  }
 
   /**
    * Resolves an attribute of type.

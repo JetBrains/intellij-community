@@ -85,6 +85,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return myClass;
   }
 
+
+  @NotNull
+  @Override
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return getPyClass();
+  }
+
   /**
    * @return whether this type refers to an instance or a definition of the class.
    */

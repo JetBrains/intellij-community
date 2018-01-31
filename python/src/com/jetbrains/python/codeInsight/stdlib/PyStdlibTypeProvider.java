@@ -539,7 +539,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                 stub.getName(),
                                 parseNamedTupleFields(referenceTarget, fields, context),
                                 definitionLevel,
-                                ContainerUtil.find(fields.values(), Optional::isPresent) != null);
+                                ContainerUtil.find(fields.values(), Optional::isPresent) != null,
+                                as(referenceTarget, PyTargetExpression.class));
   }
 
   @Nullable
