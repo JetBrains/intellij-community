@@ -17,21 +17,20 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 
-/**
- * @author yole
- */
 public class ChangesModuleGroupingPolicyFactory extends ChangesGroupingPolicyFactory {
-  private final Project myProject;
+  @NotNull private final Project myProject;
 
-  public ChangesModuleGroupingPolicyFactory(final Project project) {
+  public ChangesModuleGroupingPolicyFactory(@NotNull Project project) {
     myProject = project;
   }
 
+  @NotNull
   @Override
-  public ChangesGroupingPolicy createGroupingPolicy(final DefaultTreeModel model) {
+  public ChangesGroupingPolicy createGroupingPolicy(@NotNull DefaultTreeModel model) {
     return new ChangesModuleGroupingPolicy(myProject, model);
   }
 }

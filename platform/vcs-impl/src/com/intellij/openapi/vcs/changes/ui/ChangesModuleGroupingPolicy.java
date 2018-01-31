@@ -24,37 +24,35 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
 import java.util.HashMap;
 
-/**
- * @author yole
- */
 public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
-  private final Project myProject;
-  private final DefaultTreeModel myModel;
-  private final HashMap<Module, ChangesBrowserNode> myModuleCache = new HashMap<>();
+  @NotNull private final Project myProject;
+  @NotNull private final DefaultTreeModel myModel;
+  @NotNull private final HashMap<Module, ChangesBrowserNode> myModuleCache = new HashMap<>();
 
   public static final String PROJECT_ROOT_TAG = "<Project Root>";
 
-  public ChangesModuleGroupingPolicy(final Project project, final DefaultTreeModel model) {
+  public ChangesModuleGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model) {
     myProject = project;
     myModel = model;
   }
 
   @Override
   @Nullable
-  public ChangesBrowserNode getParentNodeFor(final StaticFilePath node, final ChangesBrowserNode subtreeRoot) {
+  public ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath, @NotNull ChangesBrowserNode subtreeRoot) {
     if (myProject.isDefault()) return null;
 
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
 
-    VirtualFile vFile = node.getVf();
+    VirtualFile vFile = nodePath.getVf();
     if (vFile == null) {
-      vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(node.getPath()));
+      vFile = LocalFileSystem.getInstance().findFileByIoFile(new File(nodePath.getPath()));
     }
     boolean hideExcludedFiles = Registry.is("ide.hide.excluded.files");
     if (vFile != null && Comparing.equal(vFile, index.getContentRootForFile(vFile, hideExcludedFiles))) {
@@ -64,15 +62,11 @@ public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
     return null;
   }
 
-  private ChangesBrowserNode getNodeForModule(Module module, ChangesBrowserNode subtreeRoot) {
+  @NotNull
+  private ChangesBrowserNode getNodeForModule(@Nullable Module module, @NotNull ChangesBrowserNode subtreeRoot) {
     ChangesBrowserNode node = myModuleCache.get(module);
     if (node == null) {
-      if (module == null) {
-        node = ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG);
-      }
-      else {
-        node = new ChangesBrowserModuleNode(module);
-      }
+      node = module == null ? ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG) : new ChangesBrowserModuleNode(module);
       myModel.insertNodeInto(node, subtreeRoot, subtreeRoot.getChildCount());
       myModuleCache.put(module, node);
     }
