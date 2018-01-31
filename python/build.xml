@@ -34,7 +34,7 @@
   </target>
 
   <target name="plugin" depends="init">
-    <call_gant script="${python.home}/build/python_plugin_build.gant"/>
+    <call_gant script="${python.home}/build/python_community_plugin_build.gant"/>
   </target>
   <!--
   <target name="test" depends="init">
