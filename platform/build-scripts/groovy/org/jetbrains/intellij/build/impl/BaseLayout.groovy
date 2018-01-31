@@ -40,6 +40,8 @@ abstract class BaseLayout {
   protected final Map<String, String>  modulesWithLocalizableResourcesInCommonJar = new LinkedHashMap<>()
   final List<String> modulesWithExcludedModuleLibraries = []
   final List<Pair<ResourcesGenerator, String>> resourceGenerators = []
+  /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
+  final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
 
   String localizableResourcesJarName(String moduleName) {
     return modulesWithLocalizableResourcesInCommonJar.get(moduleName)
