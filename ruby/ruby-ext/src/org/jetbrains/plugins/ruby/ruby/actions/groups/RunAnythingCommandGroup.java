@@ -19,7 +19,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
   @NotNull
   @Override
   protected String getKey() {
-    return "run.anything.undefined.commands";
+    return "run.anything.settings.commands";
   }
 
   @Override
@@ -37,7 +37,7 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
 
     check.run();
     for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(project).getState().undefinedCommands)) {
-      if (addToList(listModel, result, pattern, new RunAnythingUndefinedItem(project, module, command), command, isMore)) break;
+      if (addToList(listModel, result, pattern, new RunAnythingCommandItem(project, module, command), command, isMore)) break;
       check.run();
     }
     return result;

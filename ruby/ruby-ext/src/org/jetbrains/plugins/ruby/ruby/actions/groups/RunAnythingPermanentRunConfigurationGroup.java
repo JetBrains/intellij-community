@@ -14,7 +14,7 @@ public class RunAnythingPermanentRunConfigurationGroup extends RunAnythingRunCon
   @NotNull
   @Override
   protected String getKey() {
-    return "run.anything.permanent.configurations";
+    return "run.anything.settings.permanent.configurations";
   }
 
   @NotNull

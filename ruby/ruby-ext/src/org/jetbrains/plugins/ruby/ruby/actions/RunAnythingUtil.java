@@ -313,7 +313,7 @@ public class RunAnythingUtil {
     return panel;
   }
 
-  static Component getUndefinedCommandCellRendererComponent(RunAnythingUndefinedItem value, boolean isSelected) {
+  static Component getUndefinedCommandCellRendererComponent(@NotNull RunAnythingCommandItem value, boolean isSelected) {
     boolean showIcon = UISettings.getInstance().getShowIconsInMenus();
     //boolean showIcon = true;
     JPanel panel = new JPanel(new BorderLayout());
@@ -355,7 +355,7 @@ public class RunAnythingUtil {
       return;
     }
 
-    RunAnythingUndefinedItem.runCommand(workDirectory, project, StringUtil.trim(pattern), module, RunAnythingAction.getExecutor());
+    RunAnythingCommandItem.runCommand(workDirectory, project, StringUtil.trim(pattern), module, RunAnythingAction.getExecutor());
   }
 
 

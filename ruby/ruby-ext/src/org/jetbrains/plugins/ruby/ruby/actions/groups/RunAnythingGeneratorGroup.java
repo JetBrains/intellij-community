@@ -11,7 +11,7 @@ public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> 
   @NotNull
   @Override
   protected String getKey() {
-    return "run.anything.generators";
+    return "run.anything.settings.generators";
   }
 
   @NotNull

@@ -19,7 +19,7 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
   @NotNull
   @Override
   protected String getKey() {
-    return "run.anything.rake.tasks";
+    return "run.anything.settings.rake.tasks";
   }
 
   @NotNull

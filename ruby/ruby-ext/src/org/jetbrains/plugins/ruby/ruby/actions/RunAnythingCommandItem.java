@@ -42,13 +42,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class RunAnythingUndefinedItem extends RunAnythingItem<String> {
+public class RunAnythingCommandItem extends RunAnythingItem<String> {
   @Nullable private final Module myModule;
   @NotNull private final String myCommandLine;
   @NotNull private final Project myProject;
   static final Icon UNDEFINED_COMMAND_ICON = RubyIcons.RunAnything.Run_anything;
 
-  public RunAnythingUndefinedItem(@NotNull Project project, @Nullable Module module, @NotNull String commandLine) {
+  public RunAnythingCommandItem(@NotNull Project project, @Nullable Module module, @NotNull String commandLine) {
     myProject = project;
     myModule = module;
     myCommandLine = commandLine;
@@ -190,7 +190,7 @@ public class RunAnythingUndefinedItem extends RunAnythingItem<String> {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    RunAnythingUndefinedItem item = (RunAnythingUndefinedItem)o;
+    RunAnythingCommandItem item = (RunAnythingCommandItem)o;
     return Objects.equals(myModule, item.myModule) &&
            Objects.equals(myCommandLine, item.myCommandLine) &&
            Objects.equals(myProject, item.myProject);

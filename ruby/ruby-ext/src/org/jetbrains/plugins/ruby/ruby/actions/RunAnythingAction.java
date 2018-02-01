@@ -92,7 +92,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
-import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingUndefinedItem.UNDEFINED_COMMAND_ICON;
+import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCommandItem.UNDEFINED_COMMAND_ICON;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
@@ -435,8 +435,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         return;
       }
       VirtualFile directory = getWorkDirectory(module);
-      if (value instanceof RunAnythingUndefinedItem) {
-        onDone = () -> ((RunAnythingUndefinedItem)value).run(getExecutor(), directory, null, project, null);
+      if (value instanceof RunAnythingCommandItem) {
+        onDone = () -> ((RunAnythingCommandItem)value).run(getExecutor(), directory, null, project, null);
       }
       else if (value == null) {
         onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(project, pattern, module, directory);
@@ -787,12 +787,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private void showSettings() {
     myPopupField.setText("");
     final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
-    model.addElement(new RunAnythingSEOption("Show generators", "run.anything.generators"));
-    model.addElement(new RunAnythingSEOption("Show rake tasks", "run.anything.rake.tasks"));
-    model.addElement(new RunAnythingSEOption("Show bundler actions", "run.anything.bundler.actions"));
-    model.addElement(new RunAnythingSEOption("Show permanent run configurations", "run.anything.permanent.configurations"));
-    model.addElement(new RunAnythingSEOption("Show temporary run configurations", "run.anything.temporary.configurations"));
-    model.addElement(new RunAnythingSEOption("Show undefined command ", "run.anything.undefined.commands"));
+    model.addElement(new RunAnythingSEOption("Show generators", "run.anything.settings.generators"));
+    model.addElement(new RunAnythingSEOption("Show rake tasks", "run.anything.settings.rake.tasks"));
+    model.addElement(new RunAnythingSEOption("Show bundler actions", "run.anything.settings.bundler.actions"));
+    model.addElement(new RunAnythingSEOption("Show permanent run configurations", "run.anything.settings.permanent.configurations"));
+    model.addElement(new RunAnythingSEOption("Show temporary run configurations", "run.anything.settings.temporary.configurations"));
+    model.addElement(new RunAnythingSEOption("Show recent commands", "run.anything.settings.commands"));
 
     if (myCalcThread != null && !myCurrentWorker.isProcessed()) {
       myCurrentWorker = myCalcThread.cancel();
@@ -874,9 +874,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       if (model == null) return;
 
       Object selectedValue = myList.getSelectedValue();
-      if (!(selectedValue instanceof RunAnythingUndefinedItem)) return;
+      if (!(selectedValue instanceof RunAnythingCommandItem)) return;
 
-      RunAnythingCache.getInstance(getProject()).getState().undefinedCommands.remove(((RunAnythingUndefinedItem)selectedValue).getText());
+      RunAnythingCache.getInstance(getProject()).getState().undefinedCommands.remove(((RunAnythingCommandItem)selectedValue).getText());
 
       int shift = -1;
       int index = myList.getSelectedIndex();

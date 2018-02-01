@@ -15,7 +15,7 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
   @NotNull
   @Override
   protected String getKey() {
-    return "run.anything.bundler.actions";
+    return "run.anything.settings.bundler.actions";
   }
 
   @NotNull

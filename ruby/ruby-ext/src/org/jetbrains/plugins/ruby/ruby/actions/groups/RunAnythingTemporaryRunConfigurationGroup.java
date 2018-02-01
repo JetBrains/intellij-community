@@ -14,7 +14,7 @@ public class RunAnythingTemporaryRunConfigurationGroup extends RunAnythingRunCon
   @NotNull
   @Override
   protected String getKey() {
-    return "run.anything.temporary.configurations";
+    return "run.anything.settings.temporary.configurations";
   }
 
   @NotNull
