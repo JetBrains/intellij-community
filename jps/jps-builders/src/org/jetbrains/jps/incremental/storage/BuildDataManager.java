@@ -46,9 +46,11 @@ public class BuildDataManager implements StorageOwner {
   private static final int VERSION = 36 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
+  private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
+  private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
 
   private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<SourceToOutputMappingImpl>> mySourceToOutputs =
     new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
@@ -102,7 +104,7 @@ public class BuildDataManager implements StorageOwner {
         @Override
         protected SourceToOutputMappingImpl compute() {
           try {
-            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), "data"));
+            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME));
           }
           catch (IOException e) {
             throw new BuildDataCorruptedException(e);
@@ -149,7 +151,7 @@ public class BuildDataManager implements StorageOwner {
   }
 
   public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
-    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), "data"));
+    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME));
   }
 
   @NotNull
@@ -332,11 +334,11 @@ public class BuildDataManager implements StorageOwner {
   }
   
   private File getSourceToOutputMapRoot(BuildTarget<?> target) {
-    return new File(myDataPaths.getTargetDataRoot(target), "src-out");
+    return new File(myDataPaths.getTargetDataRoot(target), SRC_TO_OUTPUT_STORAGE);
   }
 
   private File getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
-    return new File(myDataPaths.getTargetDataRoot(targetType, targetId), "src-out");
+    return new File(myDataPaths.getTargetDataRoot(targetType, targetId), SRC_TO_OUTPUT_STORAGE);
   }
 
   private File getSourceToFormsRoot() {
