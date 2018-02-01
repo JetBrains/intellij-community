@@ -370,7 +370,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       );
     }
 
-    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+    if (LanguageLevel.forElement(myClass).isPython2() && !newStyleClass) {
       return classMembers;
     }
 

@@ -315,30 +315,13 @@ public class MinusculeMatcher implements Matcher {
                                               int nameIndex,
                                               boolean allowSpecialChars,
                                               boolean isAsciiName) {
-    boolean star = isPatternChar(patternIndex - 1, '*');
-    final char p = myPattern[patternIndex];
+    boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex];
     while (true) {
-      int nextOccurrence = star || isWordSeparator[patternIndex] ?
-                           indexOfIgnoreCase(name, nameIndex + 1, p, patternIndex, isAsciiName) :
-                           indexOfWordStart(name, patternIndex, nameIndex);
+      int nextOccurrence = findNextPatternCharOccurrence(name, nameIndex, patternIndex, isAsciiName, allowSpecialChars, wordStartsOnly);
       if (nextOccurrence < 0) {
         return null;
       }
-      // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-      if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, nameIndex, nextOccurrence)) {
-        return null;
-      }
-      // if the user has typed a dot, don't skip other dots between humps
-      // but one pattern dot may match several name dots
-      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, nameIndex, nextOccurrence, '.')) {
-        return null;
-      }
-      // uppercase should match either uppercase or a word start
-      if (!isUpperCase[patternIndex] ||
-          Character.isUpperCase(name.charAt(nextOccurrence)) ||
-          NameUtil.isWordStart(name, nextOccurrence) ||
-          // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
-          !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
+      if (seemsLikeFragmentStart(name, patternIndex, nextOccurrence)) {
         FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, isAsciiName);
         if (ranges != null) {
           return ranges;
@@ -346,6 +329,37 @@ public class MinusculeMatcher implements Matcher {
       }
       nameIndex = nextOccurrence;
     }
+  }
+
+  private int findNextPatternCharOccurrence(@NotNull String name,
+                                            int startAt,
+                                            int patternIndex,
+                                            boolean isAsciiName,
+                                            boolean allowSpecialChars, boolean wordStartsOnly) {
+    int next = wordStartsOnly
+               ? indexOfWordStart(name, patternIndex, startAt)
+               : indexOfIgnoreCase(name, startAt + 1, myPattern[patternIndex], patternIndex, isAsciiName);
+
+    // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
+    if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, myHardSeparators, startAt, next)) {
+      return -1;
+    }
+    // if the user has typed a dot, don't skip other dots between humps
+    // but one pattern dot may match several name dots
+    if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(name, startAt, next, '.')) {
+      return -1;
+    }
+
+    return next;
+  }
+
+  private boolean seemsLikeFragmentStart(@NotNull String name, int patternIndex, int nextOccurrence) {
+    // uppercase should match either uppercase or a word start
+    return !isUpperCase[patternIndex] ||
+           Character.isUpperCase(name.charAt(nextOccurrence)) ||
+           NameUtil.isWordStart(name, nextOccurrence) ||
+           // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
+           !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL;
   }
 
   private boolean charEquals(char patternChar, int patternIndex, char c, boolean isIgnoreCase) {

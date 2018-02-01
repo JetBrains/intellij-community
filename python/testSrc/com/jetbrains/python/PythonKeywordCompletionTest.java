@@ -10,7 +10,7 @@ import java.util.List;
 public class PythonKeywordCompletionTest extends PyTestCase {
 
   private void doTest3K() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   private void doTest() {

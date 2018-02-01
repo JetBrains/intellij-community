@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -499,13 +497,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   private void createUIComponents() {
     myTree = new Tree() {
-      @Override
-      public Dimension getPreferredScrollableViewportSize() {
-        Dimension size = super.getPreferredScrollableViewportSize();
-        size = new Dimension(size.width + 20, size.height);
-        return size;
-      }
-
       @Override
       @SuppressWarnings("NonStaticInitializer")
       public JToolTip createToolTip() {

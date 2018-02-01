@@ -24,7 +24,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) {
-    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON30);
+    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON34);
   }
 
   private void doTestWithLanguageLevel(String testName,
@@ -92,12 +92,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   // PY-9795
   public void testGoogleDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   public void testPySimplifyBooleanCheckInspection() {
@@ -177,7 +177,7 @@ public class PythonInspectionsTest extends PyTestCase {
 
   // PY-11426
   public void testPyPropertyDefinitionInspection33() {
-    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON33);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON34);
   }
 
   public void testInconsistentIndentation() {

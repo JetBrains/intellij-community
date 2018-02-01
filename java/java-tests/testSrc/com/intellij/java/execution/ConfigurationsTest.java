@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -492,17 +493,22 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       assertNotNull(task);
       Project project = configuration.getProject();
       try {
-        CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
-        try {
-          List<CompilerMessage> messages = tester.make();
-          assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
-                              .map(message -> message.getMessage())
-                              .findFirst().orElse("Compiles fine"),
-                      messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+        if (Registry.is("junit4.search.4.tests.all.in.scope")) {
           task.startSearch();
         }
-        finally {
-          tester.tearDown();
+        else {
+          CompilerTester tester = new CompilerTester(project, Arrays.asList(ModuleManager.getInstance(project).getModules()));
+          try {
+            List<CompilerMessage> messages = tester.make();
+            assertFalse(messages.stream().filter(message -> message.getCategory() == CompilerMessageCategory.ERROR)
+                                .map(message -> message.getMessage())
+                                .findFirst().orElse("Compiles fine"),
+                        messages.stream().anyMatch(message -> message.getCategory() == CompilerMessageCategory.ERROR));
+            task.startSearch();
+          }
+          finally {
+            tester.tearDown();
+          }
         }
       }
       catch (Exception e) {

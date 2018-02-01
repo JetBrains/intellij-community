@@ -476,7 +476,7 @@ public class PyNames {
     else if (level.isAtLeast(LanguageLevel.PYTHON35)) {
       return PY35_BUILTIN_METHODS;
     }
-    else if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+    else if (!level.isPython2()) {
       return PY3_BUILTIN_METHODS;
     }
     else {

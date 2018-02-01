@@ -29,5 +29,5 @@ public abstract class ApplicationUsagesCollector extends FeatureUsagesCollector 
   }
 
   @NotNull
-  public abstract Set<UsageDescriptor> getUsages() throws CollectUsagesException;
+  public abstract Set<UsageDescriptor> getUsages();
 }

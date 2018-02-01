@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.FontEditorPreview;
@@ -23,11 +9,13 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -47,6 +35,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable, EditorCustomization {
+  private static final String STRING_TO_FOLD = "Folded text with highlighting";
+
   private static final String ADDITIONAL_DEMO_TEXT =
     "\n" +
     "<todo>//TODO: Visit JB Web resources:</todo>\n"+
@@ -60,6 +50,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "  return <identifier>i;</identifier>\n" +
     "\n" +
     "<folded_text>Folded text</folded_text>\n" +
+    "<folded_text_with_highlighting>" + STRING_TO_FOLD + "</folded_text_with_highlighting>\n" +
     "<deleted_text>Deleted text</deleted_text>\n" +
     "Template <template_var>VARIABLE</template_var>\n" +
     "Injected language: <injected_lang>\\.(gif|jpg|png)$</injected_lang>\n" +
@@ -140,7 +131,9 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.tooltip"), IdeTooltipManager.TOOLTIP_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
 
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND)
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.visual.guides"), EditorColors.VISUAL_INDENT_GUIDE_COLOR, ColorDescriptor.Kind.FOREGROUND),
+    
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.highlighted.folding.border"), EditorColors.FOLDED_TEXT_BORDER_COLOR, ColorDescriptor.Kind.BACKGROUND)
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
@@ -148,6 +141,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
 
   static{
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text", EditorColors.FOLDED_TEXT_ATTRIBUTES);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("folded_text_with_highlighting", CodeInsightColors.WARNINGS_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("deleted_text", EditorColors.DELETED_TEXT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_result", EditorColors.SEARCH_RESULT_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("search_result_wr", EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES);
@@ -228,6 +222,16 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   public void customize(@NotNull EditorEx editor) {
     editor.getSettings().setSoftMargins(Arrays.asList(50,70));
+    int foldPos = editor.getDocument().getText().indexOf(STRING_TO_FOLD);
+    if (foldPos >= 0) {
+      FoldingModelEx foldingModel = editor.getFoldingModel();
+      foldingModel.runBatchFoldingOperation(() -> {
+        FoldRegion region = foldingModel.createFoldRegion(foldPos, foldPos + STRING_TO_FOLD.length(), STRING_TO_FOLD, null, true);
+        if (region != null) {
+          region.setExpanded(false);
+        }
+      });
+    }
   }
 
   private static String getCustomSeveritiesDemoText() {

@@ -55,7 +55,7 @@ public class PyMissingConstructorTest extends PyTestCase {
 
   // PY-20038
   public void testImplicitDunderClass() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7176
@@ -69,7 +69,7 @@ public class PyMissingConstructorTest extends PyTestCase {
   }
 
   public void testPy3k() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   private void doTest() {

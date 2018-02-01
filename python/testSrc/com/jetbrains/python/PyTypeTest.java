@@ -182,7 +182,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testTypeAnno() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("str",
                    "def foo(x: str) -> list:\n" +
                    "    expr = x")
@@ -191,7 +191,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testReturnTypeAnno() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("list",
                    "def foo(x) -> list:\n" +
                    "    return x\n" +
@@ -2318,7 +2318,7 @@ public class PyTypeTest extends PyTestCase {
   // PY-24240
   public void testImplicitSuper() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> {
         final PyExpression expression = parseExpr("class A:\n" +
                                                   "    pass\n" +
@@ -2350,7 +2350,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testNoneLiteral() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("None",
                    "expr = None")
     );
@@ -2358,7 +2358,7 @@ public class PyTypeTest extends PyTestCase {
 
   public void testEllipsis() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> doTest("Any",
                    "expr = ...")
     );
@@ -2428,7 +2428,7 @@ public class PyTypeTest extends PyTestCase {
   // PY-26643
   public void testReplaceSelfInGenerator() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON33,
+      LanguageLevel.PYTHON34,
       () -> doTest("Generator[B, Any, B]",
                    "class A:\n" +
                    "    def foo(self):\n" +

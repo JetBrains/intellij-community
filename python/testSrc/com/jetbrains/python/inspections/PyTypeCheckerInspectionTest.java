@@ -449,7 +449,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-21408
   public void testClassMetaAttrsAgainstStructural() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testCallableInstanceAgainstCallable() {

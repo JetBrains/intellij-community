@@ -186,7 +186,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
 
 
     protected void validateConfiguration() {
-      getConfiguration().getTarget().setTargetVariant(PyRunTargetVariant.PATH);
+      getConfiguration().getTarget().setTargetType(PyRunTargetVariant.PATH);
       getConfiguration().getTarget().setTarget("");
 
       getConfiguration().checkConfiguration();

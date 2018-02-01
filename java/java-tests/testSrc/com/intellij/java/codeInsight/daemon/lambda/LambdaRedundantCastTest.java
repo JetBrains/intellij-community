@@ -36,6 +36,7 @@ public class LambdaRedundantCastTest extends LightDaemonAnalyzerTestCase {
   public void testSer() { doTest(); }
   public void testLambdaReturnExpressions() { doTest(); }
   public void testLambdaReturnExpressions1() { doTest(); }
+  public void testPreserveThisContext() { doTest(); }
   public void testPreventBadReturnTypeInReturnExpression() { doTest(); }
   public void testExpectedTypeByNestedArrayInitializer() { doTest(); }
   public void testCastToPrimitive() {

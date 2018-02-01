@@ -40,6 +40,7 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMappingImpl;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.JavacMain;
@@ -449,6 +450,11 @@ public class IncProjectBuilder {
           }
         }
       }
+      for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
+        if (context.getScope().isAllTargetsOfTypeAffected(type)) {
+          cleanOutputOfStaleTargets(type, context);
+        }
+      }
     }
     catch (ProjectBuildException e) {
       ex = e;
@@ -489,22 +495,61 @@ public class IncProjectBuilder {
     }
   }
 
+  private void cleanOutputOfStaleTargets(BuildTargetType<?> type, CompileContext context) {
+    List<Pair<String, Integer>> targetIds = myProjectDescriptor.dataManager.getTargetsState().getStaleTargetIds(type);
+    if (targetIds.isEmpty()) return;
+
+    context.processMessage(new ProgressMessage("Cleaning old output directories..."));
+    for (Pair<String, Integer> ids : targetIds) {
+      String stringId = ids.first;
+      try {
+        SourceToOutputMappingImpl mapping = null;
+        try {
+          mapping = myProjectDescriptor.dataManager.createSourceToOutputMapForStaleTarget(type, stringId);
+          clearOutputFiles(context, mapping, type, ids.second);
+        }
+        finally {
+          if (mapping != null) {
+            mapping.close();
+          }
+        }
+        FileUtil.delete(myProjectDescriptor.dataManager.getDataPaths().getTargetDataRoot(type, stringId));
+        myProjectDescriptor.dataManager.getTargetsState().cleanStaleTarget(type, stringId);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Failed to delete output files from obsolete '" + stringId + "' target: " + e.toString()));
+      }
+    }
+  }
+
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-    final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
-    for (String srcPath : map.getSources()) {
-      final Collection<String> outs = map.getOutputs(srcPath);
+    BuildTargetType<?> targetType = target.getTargetType();
+    clearOutputFiles(context, map, targetType, context.getProjectDescriptor().dataManager.getTargetsState().getBuildTargetId(target));
+    registerTargetsWithClearedOutput(context, Collections.singletonList(target));
+  }
+
+  private static void clearOutputFiles(CompileContext context,
+                                       SourceToOutputMapping mapping,
+                                       BuildTargetType<?> targetType,
+                                       int targetId) throws IOException {
+    final THashSet<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?>
+                                        ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
+    OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
+    for (String srcPath : mapping.getSources()) {
+      final Collection<String> outs = mapping.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         List<String> deletedPaths = new ArrayList<>();
         for (String out : outs) {
           BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
+        outputToTargetRegistry.removeMapping(outs, targetId);
         if (!deletedPaths.isEmpty()) {
           context.processMessage(new FileDeletedEvent(deletedPaths));
         }
       }
     }
-    registerTargetsWithClearedOutput(context, Collections.singletonList(target));
     if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }

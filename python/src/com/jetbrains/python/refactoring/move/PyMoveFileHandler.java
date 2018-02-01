@@ -194,7 +194,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   }
 
   private static boolean probablyNamespacePackage(@NotNull PsiFile anchor, @NotNull PsiDirectory destination, @NotNull PsiDirectory root) {
-    if (!LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON33)) {
+    if (LanguageLevel.forElement(anchor).isPython2()) {
       return false;
     }
     while (destination != null && destination != root) {
@@ -310,7 +310,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
    * @param importStatement import statement to update
    * @param qualifiedName   qualified name of new import source
    * @return updated import statement
-   * @see #replaceWithQualifiedExpression(com.intellij.psi.PsiElement, com.intellij.psi.util.QualifiedName)
+   * @see #replaceWithQualifiedExpression(PsiElement, QualifiedName)
    */
   @NotNull
   private static PsiElement replaceRelativeImportSourceWithQualifiedExpression(@NotNull PyFromImportStatement importStatement,

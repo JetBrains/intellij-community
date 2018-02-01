@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -12,6 +12,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -191,6 +192,17 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (!matches) {
       MatchingHandler handler = myCompilingVisitor.processPatternStringWithFragments(text, GlobalCompilingVisitor.OccurenceKind.COMMENT);
       if (handler != null) comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
+    }
+  }
+
+  @Override
+  public void visitExpression(PsiExpression expression) {
+    super.visitExpression(expression);
+    if (!(expression.getParent() instanceof PsiExpressionStatement) && !(expression instanceof PsiParenthesizedExpression)) {
+      final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(expression);
+      if (handler.getFilter() == null) {
+        handler.setFilter(e -> DefaultFilter.accepts((e instanceof PsiExpression) ? PsiUtil.skipParenthesizedExprDown((PsiExpression)e) : e, expression));
+      }
     }
   }
 

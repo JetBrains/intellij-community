@@ -231,7 +231,7 @@ private fun findFirstResults(results: List<PsiElement>, module: Module?) =
 private fun isNamespacePackage(element: PsiElement): Boolean {
   if (element is PsiDirectory) {
     val level = PyUtil.getLanguageLevelForVirtualFile(element.project, element.virtualFile)
-    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+    if (!level.isPython2) {
       return PyUtil.turnDirIntoInit(element) == null
     }
   }
@@ -337,7 +337,7 @@ private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory,
     return true
   }
   else {
-    val py2 = LanguageLevel.forElement(directory).isOlderThan(LanguageLevel.PYTHON30)
+    val py2 = LanguageLevel.forElement(directory).isPython2
     return context.relativeLevel == 0 && py2 && PyUtil.isPackage(directory, false, null) &&
         result is PsiFileSystemItem && name != QualifiedNameFinder.findShortestImportableQName(result)
   }

@@ -115,7 +115,7 @@ public class PyFindUsagesTest extends PyTestCase {
   // PY-7348
   public void testNamespacePackageUsages() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON33,
+      LanguageLevel.PYTHON34,
       () -> {
         final Collection<UsageInfo> usages = findMultiFileUsages("a.py");
         assertEquals(3, usages.size());
@@ -141,7 +141,7 @@ public class PyFindUsagesTest extends PyTestCase {
 
   // PY-8604
   public void testOuterVariableInGeneratorPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInGenerator.py").size()));
   }
 
@@ -153,7 +153,7 @@ public class PyFindUsagesTest extends PyTestCase {
 
   // PY-18808
   public void testOuterVariableInListComprehensionPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> assertEquals(4, myFixture.testFindUsages("findUsages/OuterVariableInListComprehension.py").size()));
   }
 
@@ -165,7 +165,7 @@ public class PyFindUsagesTest extends PyTestCase {
   }
 
   public void testOverrideVariableByTupleInComprehensionPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension1.py").size());
       assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableByTupleInComprehension2.py").size());
     });
@@ -179,7 +179,7 @@ public class PyFindUsagesTest extends PyTestCase {
   }
 
   public void testOverrideVariableInComprehensionPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       assertEquals(1, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension1.py").size());
       assertEquals(2, myFixture.testFindUsages("findUsages/OverrideVariableInComprehension2.py").size());
     });

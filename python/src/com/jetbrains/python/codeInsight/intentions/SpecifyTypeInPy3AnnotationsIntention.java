@@ -49,11 +49,13 @@ import org.jetbrains.annotations.NotNull;
 public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   private String myText = PyBundle.message("INTN.specify.type.in.annotation");
 
+  @Override
   @NotNull
   public String getText() {
     return myText;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.specify.type.in.annotation");
@@ -211,7 +213,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   private static boolean isDefinedInAnnotation(PyParameter parameter) {
-    if (LanguageLevel.forElement(parameter).isOlderThan(LanguageLevel.PYTHON30)) {
+    if (LanguageLevel.forElement(parameter).isPython2()) {
       return false;
     }
     if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;

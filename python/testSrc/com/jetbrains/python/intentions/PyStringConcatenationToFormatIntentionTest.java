@@ -57,7 +57,7 @@ public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestC
 
   // PY-8366
   public void testEscapingPy3() {
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
   }
 
   // PY-8588
@@ -66,10 +66,10 @@ public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestC
   }
 
   public void testPy3() {   //PY-4706
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
   }
 
   public void testPy3Unicode() {
-    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
+    doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON34);
   }
 }

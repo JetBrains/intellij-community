@@ -21,13 +21,22 @@ public interface CleanupInspectionUtil {
                                             @Nullable Class quickfixClass,
                                             boolean startInWriteAction);
 
+  default AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
+                                                    @NotNull String presentationText,
+                                                    @NotNull List<ProblemDescriptor> descriptions,
+                                                    @Nullable Class quickfixClass,
+                                                    boolean startInWriteAction,
+                                                    boolean markGlobal) {
+    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
+  }
+
   default AbstractPerformFixesTask applyFixes(@NotNull Project project,
                                               @NotNull String presentationText,
                                               @NotNull List<ProblemDescriptor> descriptions,
                                               @Nullable Class quickfixClass,
                                               boolean startInWriteAction) {
     sortDescriptions(descriptions);
-    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
+    return applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction, true);
   }
 
   default void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {

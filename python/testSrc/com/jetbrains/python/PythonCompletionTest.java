@@ -733,7 +733,7 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-9342
   public void testUnboundMethodSpecialAttributes() {
     runWithLanguageLevel(LanguageLevel.PYTHON27, this::assertUnderscoredMethodSpecialAttributesSuggested);
-    runWithLanguageLevel(LanguageLevel.PYTHON32, this::assertUnderscoredFunctionAttributesSuggested);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertUnderscoredFunctionAttributesSuggested);
   }
 
   // PY-9342

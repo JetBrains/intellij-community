@@ -30,5 +30,5 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   }
 
   @NotNull
-  public abstract Set<UsageDescriptor> getUsages(@NotNull Project project) throws CollectUsagesException;
+  public abstract Set<UsageDescriptor> getUsages(@NotNull Project project);
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
@@ -82,7 +68,7 @@ class CollectMigration extends BaseStreamApiMigration {
     CollectTerminal terminal = extractCollectTerminal(tb, null);
     if (terminal == null) return null;
     CommentTracker ct = new CommentTracker();
-    String stream = tb.generate(ct) + terminal.generateIntermediate(ct) + terminal.generateTerminal(ct);
+    String stream = tb.generate(ct) + terminal.generateIntermediate(ct) + terminal.generateTerminal(ct, false);
     PsiElement toReplace = terminal.getElementToReplace();
     PsiElement result;
     if (toReplace != null) {
@@ -214,7 +200,13 @@ class CollectMigration extends BaseStreamApiMigration {
       return INTERMEDIATE_STEPS.get(aClass.getQualifiedName());
     }
 
-    abstract String generateTerminal(CommentTracker ct);
+    /**
+     * Generate terminal stream call starting with '.' (e.g. {@code ".collect(java.util.stream.Collectors.toList())"}
+     * @param ct comment tracker to use
+     * @param strictMode if true, toList/toSet collectors will not be used to replace ArrayList/HashSet
+     * @return generated call
+     */
+    abstract String generateTerminal(CommentTracker ct, boolean strictMode);
 
     StreamEx<PsiElement> usedElements() {
       return StreamEx.ofNullable(myLoop);
@@ -278,13 +270,13 @@ class CollectMigration extends BaseStreamApiMigration {
       return StreamRefactoringUtil.generateMapOperation(myElement, addedType, ct.markUnchanged(mapping));
     }
 
-    public String generateCollector(CommentTracker ct) {
-      return getCollectionCollector(ct, myInitializer, myTargetType);
+    public String generateCollector(CommentTracker ct, boolean strictMode) {
+      return getCollectionCollector(ct, myInitializer, myTargetType, strictMode);
     }
 
     @Override
-    public String generateTerminal(CommentTracker ct) {
-      return ".collect(" + generateCollector(ct) + ")";
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return ".collect(" + generateCollector(ct, strictMode) + ")";
     }
 
     @Nullable
@@ -309,18 +301,18 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   @NotNull
-  private static String getCollectionCollector(CommentTracker ct, PsiExpression initializer, PsiType type) {
+  private static String getCollectionCollector(CommentTracker ct, PsiExpression initializer, PsiType type, boolean strictMode) {
     String collector;
     PsiType initializerType = initializer.getType();
     PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
     PsiClassType rawVarType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
-    if (rawType != null && rawVarType != null &&
+    if (!strictMode && rawType != null && rawVarType != null &&
         rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
         (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
         !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toList()";
     }
-    else if (rawType != null && rawVarType != null &&
+    else if (!strictMode && rawType != null && rawVarType != null &&
              rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
              (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
              !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
@@ -416,8 +408,8 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal(CommentTracker ct) {
-      String downstreamCollector = myDownstream.generateCollector(ct);
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      String downstreamCollector = myDownstream.generateCollector(ct, strictMode);
       PsiVariable elementVariable = myDownstream.getElementVariable();
       if (!ExpressionUtils.isReferenceTo(myDownstream.getMapping(), myDownstream.getElementVariable())) {
         downstreamCollector = CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".mapping(" +
@@ -592,7 +584,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal(CommentTracker ct) {
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
       PsiExpression[] args = myMapUpdateCall.getArgumentList().getExpressions();
       LOG.assertTrue(args.length >= 2);
       String methodName = myMapUpdateCall.getMethodExpression().getReferenceName();
@@ -666,8 +658,8 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal(CommentTracker ct) {
-      return myDownstream.generateTerminal(ct);
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return myDownstream.generateTerminal(ct, strictMode);
     }
 
     @Override
@@ -787,7 +779,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal(CommentTracker ct) {
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
       return ".toArray(" + mySupplier + ")";
     }
 
@@ -859,8 +851,8 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal(CommentTracker ct) {
-      return ".collect(" + getCollectionCollector(ct, ct.markUnchanged(myCreateExpression), myResultType) + ")";
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return ".collect(" + getCollectionCollector(ct, ct.markUnchanged(myCreateExpression), myResultType, strictMode) + ")";
     }
 
     @Override

@@ -14,6 +14,4 @@ public class PythonPsiApiIcons {
   }
 
   public static final Icon PythonFile = load("/icons/com/jetbrains/python/pythonFile.png"); // 16x16
-  public static final Icon CythonFile = load("/icons/com/jetbrains/cython/cythonFile.png"); // 16x16
-
 }

@@ -137,6 +137,8 @@ public class ReferencesPanel extends JPanel {
     label.setFont(getLabelsFont());
     label.setIconTextGap(0);
     label.setHorizontalAlignment(SwingConstants.LEFT);
+    label.setVerticalTextPosition(SwingConstants.CENTER);
+    label.setCopyable(true);
     return label;
   }
 

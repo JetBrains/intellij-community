@@ -29,6 +29,11 @@ public class PythonIcons {
   }
 
   
+  public static class Cython {
+    public static final Icon CythonFile = load("/icons/com/jetbrains/cython/cythonFile.png"); // 16x16
+
+  }
+  
   public static class Pyqt {
     public static final Icon TsFile = load("/icons/com/jetbrains/pyqt/tsFile.png"); // 16x16
     public static final Icon UiForm = load("/icons/com/jetbrains/pyqt/uiForm.png"); // 16x16

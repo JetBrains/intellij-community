@@ -48,6 +48,8 @@ public class DarculaButtonUI extends BasicButtonUI {
   private Rectangle textRect = new Rectangle();
   private Rectangle iconRect = new Rectangle();
 
+  static int HELP_BUTTON_DIAMETER = 22;
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaButtonUI();
@@ -57,7 +59,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof JButton && "square".equals(((JButton)c).getClientProperty("JButton.buttonType"));
   }
 
-  public static boolean isDefaultButton(JComponent c) {
+  public static boolean isDefaultButton(Component c) {
     return c instanceof JButton && ((JButton)c).isDefaultButton();
   }
 
@@ -73,17 +75,17 @@ public class DarculaButtonUI extends BasicButtonUI {
    *         {@code false} if painting should be stopped
    */
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
-    int w = c.getWidth();
-    int h = c.getHeight();
+    Rectangle r = new Rectangle(c.getSize());
+    JBInsets.removeFrom(r, JBUI.insets(1));
+
     if (UIUtil.isHelpButton(c)) {
-      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
-      int diam = JBUI.scale(22);
-      int x = (w - diam) / 2;
-      int y = (h - diam) / 2;
+      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, r.height, getButtonColor2()));
+      int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
+      int x = r.x + (r.width - diam) / 2;
+      int y = r.x + (r.height - diam) / 2;
 
       g.fill(new Ellipse2D.Float(x, y, diam, diam));
       AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
-
       return false;
     } else {
       Graphics2D g2 = (Graphics2D)g.create();
@@ -92,23 +94,23 @@ public class DarculaButtonUI extends BasicButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
+        g2.translate(r.x, r.y);
+
         float arc = isSquare(c) ? JBUI.scale(2.0f) : DarculaUIUtil.arc();
         float bw = DarculaUIUtil.bw();
+
         if (c.isEnabled()) {
           if (isSquare(c)) {
-
-            Rectangle r = new Rectangle(w, h);
-            g2.translate(r.x, r.y);
             g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColor1(), r.x + r.width,
                                                 r.y + r.height, getButtonColor2()));
             g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
           else {
             g2.setPaint(isDefaultButton(c) ?
-                        UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()) :
-                        UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+                        UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, r.height, getSelectedButtonColor2()) :
+                        UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, r.height, getButtonColor2()));
 
-            g2.fill(new RoundRectangle2D.Float(bw, bw, w - bw * 2, h - bw * 2, arc, arc));
+            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
         }
       } finally {
@@ -165,11 +167,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
-    g.setColor(UIManager.getColor("Button.darcula.disabledText.shadow"));
-    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
-                                              textRect.x + getTextShiftOffset()+1,
-                                              textRect.y + metrics.getAscent() + getTextShiftOffset()+1);
-    g.setColor(getDisabledTextColor());
+    g.setColor(UIManager.getColor("Button.disabledText"));
     SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
                                               textRect.x + getTextShiftOffset(),
                                               textRect.y + metrics.getAscent() + getTextShiftOffset());
@@ -205,6 +203,20 @@ public class DarculaButtonUI extends BasicButtonUI {
         }
       }
     }
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    float bw = DarculaUIUtil.bw();
+
+    Insets i = c.getInsets();
+    int helpDiam = JBUI.scale(HELP_BUTTON_DIAMETER);
+    return UIUtil.isHelpButton(c) ?
+      new Dimension(Math.max(size.width, helpDiam + i.left + i.right),
+                    Math.max(size.height, helpDiam + i.top + i.bottom)):
+      new Dimension(Math.max(size.width, (int)(JBUI.scale(74) + bw * 2)),
+                    Math.max(size.height, (int)(JBUI.scale(26) + bw * 2)));
   }
 
   @Override

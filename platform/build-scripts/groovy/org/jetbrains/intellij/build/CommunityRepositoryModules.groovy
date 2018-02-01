@@ -202,6 +202,16 @@ class CommunityRepositoryModules {
     plugin("intellij.errorProne") {
       withModule("intellij.errorProne.jps", "jps/error-prone-jps-plugin.jar")
     },
+    plugin("intellij.cucumber.java") {
+      withModule("intellij.cucumber.jvmFormatter")
+      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")
+      withResource("../../community/lib/gherkin-2.12.2.jar", "lib")
+      doNotCreateSeparateJarForLocalizableResources()
+    },
+    plugin("intellij.cucumber.groovy") {
+      withResource("../../community/lib/cucumber-core-1.2.4.jar", "lib")//todo[nik] fix dependencies instead
+      doNotCreateSeparateJarForLocalizableResources()
+    },
     plugin("intellij.java.decompiler") {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"

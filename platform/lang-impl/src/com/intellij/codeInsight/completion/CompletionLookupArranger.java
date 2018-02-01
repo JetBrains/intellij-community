@@ -340,6 +340,8 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
+    if (inputBySorter.isEmpty()) return Collections.emptyList();
+    
     final List<Iterable<LookupElement>> byClassifier = ContainerUtil.newArrayList();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext();
