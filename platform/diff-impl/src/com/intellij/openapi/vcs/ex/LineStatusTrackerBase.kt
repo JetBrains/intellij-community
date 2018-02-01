@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider.ABSENT_LINE_NUMBER
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
@@ -262,6 +263,8 @@ abstract class LineStatusTrackerBase<R : Range> {
     if (!isValid() || block.range.isEmpty) return
     try {
       block.ourData.rangeHighlighter = renderer.createHighlighter(block.toRange())
+    }
+    catch (ignore: ProcessCanceledException) {
     }
     catch (e: Exception) {
       LOG.error(e)
