@@ -281,10 +281,6 @@ public class GradleManager
       ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
   }
 
-  @Override
-  public void enhanceLocalProcessing(@NotNull List<URL> urls) {
-  }
-
   @NotNull
   @Override
   public Class<? extends ExternalSystemProjectResolver<GradleExecutionSettings>> getProjectResolverClass() {

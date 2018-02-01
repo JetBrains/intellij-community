@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -319,10 +318,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // import project data
     ProjectData projectData = projectResolverChain.createProject();
     DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
-
-    // import java project data
-    JavaProjectData javaProjectData = projectResolverChain.createJavaProjectData();
-    projectDataNode.createChild(JavaProjectData.KEY, javaProjectData);
 
     IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
 

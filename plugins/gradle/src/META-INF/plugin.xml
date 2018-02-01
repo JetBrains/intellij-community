@@ -61,7 +61,6 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
-    <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

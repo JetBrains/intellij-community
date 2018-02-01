@@ -35,6 +35,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
+
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleConfigurationsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleBuildScriptContributor"/>
