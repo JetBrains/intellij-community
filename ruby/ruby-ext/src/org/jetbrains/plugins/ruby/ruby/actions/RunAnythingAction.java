@@ -113,6 +113,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(RubyIcons.RunAnything.Run_anything, 16, 16);
+  static final String RUN_ANYTHING = "RunAnything";
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private Component myFocusComponent;
@@ -397,6 +398,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
             myCurrentWorker.doWhenProcessed(() -> {
               myCalcThread = new CalcThread(project, pattern, true);
               myPopupActualWidth = 0;
+              RunAnythingUtil.triggerMoreStatistics(wid);
               myCurrentWorker = myCalcThread.insert(index, wid);
             });
 
@@ -418,19 +420,18 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return;
     }
 
+    RunAnythingUtil.triggerExecCategoryStatistics(index);
+
     Runnable onDone = null;
     AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      if (value instanceof RunAnythingActionItem || value instanceof RunAnythingRunConfigurationItem) {
-        focusManager.requestDefaultFocus(true);
-        final Component comp = myContextComponent;
-        final AnActionEvent event = myActionEvent;
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
-          Component c = comp;
-          if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-
-          ((RunAnythingItem)value).run(getExecutor(), null, c, project, event);
-        });
+      if (value instanceof RunAnythingRunConfigurationItem) {
+        RunAnythingUtil.triggerDebuggerStatistics();
+        runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
+        return;
+      }
+      else if (value instanceof RunAnythingActionItem) {
+        runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
         return;
       }
       VirtualFile directory = getWorkDirectory(module);
@@ -446,10 +447,23 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       token.finish();
       final ActionCallback callback = onPopupFocusLost();
       if (onDone != null) {
+        RunAnythingUtil.triggerDebuggerStatistics();
         callback.doWhenDone(onDone);
       }
     }
     focusManager.requestDefaultFocus(true);
+  }
+
+  private void runOnFocusSettlesDown(@NotNull Project project, @NotNull RunAnythingItem value, @NotNull IdeFocusManager focusManager) {
+    focusManager.requestDefaultFocus(true);
+    final Component comp = myContextComponent;
+    final AnActionEvent event = myActionEvent;
+    IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
+      Component c = comp;
+      if (c == null) c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+
+      value.run(getExecutor(), null, c, project, event);
+    });
   }
 
   @NotNull
@@ -732,7 +746,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(RunAnythingUtil.RUN_ANYTHING);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(RUN_ANYTHING);
   }
 
   private void setHandleMatchedConfiguration(JBTextField textField) {

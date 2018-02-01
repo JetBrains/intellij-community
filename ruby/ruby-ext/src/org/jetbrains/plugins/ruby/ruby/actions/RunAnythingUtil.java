@@ -3,12 +3,14 @@ package org.jetbrains.plugins.ruby.ruby.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ChooseRunConfigurationPopup;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -34,6 +36,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.ruby.ruby.actions.groups.RunAnythingGroup;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
 
 import javax.swing.*;
@@ -49,7 +52,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class RunAnythingUtil {
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
-  public static final String RUN_ANYTHING = "RunAnything";
+  private static final String DEBUGGER_FEATURE_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "DEBUGGER";
 
   static Font getTitleFont() {
     return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
@@ -387,5 +390,23 @@ public class RunAnythingUtil {
       return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.CONTROL : " Ctrl");
     }
     return KeymapUtil.getShortcutsText(shortcuts);
+  }
+
+  static void triggerExecCategoryStatistics(int index) {
+    for (int i = index; i >= 0; i--) {
+      String title = RunAnythingGroup.getTitle(i);
+      if (title != null) {
+        UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - execution - " + title);
+        break;
+      }
+    }
+  }
+
+  static void triggerDebuggerStatistics() {
+    if (RunAnythingAction.getExecutor() instanceof DefaultDebugExecutor) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
+  }
+
+  static void triggerMoreStatistics(@NotNull RunAnythingGroup.WidgetID wid) {
+    UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + wid.name());
   }
 }
