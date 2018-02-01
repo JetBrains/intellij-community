@@ -473,7 +473,7 @@ class DistributionJARsBuilder {
         }
         layout.includedProjectLibraries.each { libraryData ->
           dir(libraryData.relativeOutputPath) {
-            projectLibrary(libraryData.libraryName, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
+            projectLibrary(libraryData.libraryName, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName))
           }
         }
         layout.includedArtifacts.entrySet().each {
