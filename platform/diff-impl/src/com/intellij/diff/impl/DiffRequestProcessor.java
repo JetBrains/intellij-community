@@ -90,6 +90,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final DiffSettings mySettings;
   @NotNull private final List<DiffTool> myAvailableTools;
   @NotNull private final List<DiffTool> myToolOrder;
+  @Nullable private final DiffTool myForcedDiffTool;
 
   @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @NotNull private final DefaultActionGroup myToolbarGroup;
@@ -121,6 +122,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myActiveRequest = new LoadingDiffRequest();
 
     mySettings = DiffSettings.getSettings(myContext.getUserData(DiffUserDataKeys.PLACE));
+    myForcedDiffTool = myContext.getUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL);
 
     myAvailableTools = DiffManagerEx.getInstance().getDiffTools();
     myToolOrder = new ArrayList<>(getToolOrderFromSettings(myAvailableTools));
@@ -185,9 +187,22 @@ public abstract class DiffRequestProcessor implements Disposable {
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
   @NotNull
-  private FrameDiffTool getFittedTool() {
+  private FrameDiffTool getFittedTool(boolean applySubstitutor) {
+    if (myForcedDiffTool instanceof FrameDiffTool) {
+      return myForcedDiffTool.canShow(myContext, myActiveRequest)
+             ? (FrameDiffTool)myForcedDiffTool
+             : ErrorDiffTool.INSTANCE;
+    }
+
     List<FrameDiffTool> tools = filterFittedTools(myToolOrder);
-    return tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
+    FrameDiffTool tool = tools.isEmpty() ? ErrorDiffTool.INSTANCE : tools.get(0);
+
+    if (applySubstitutor) {
+      DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
+      if (substitutor instanceof FrameDiffTool) return (FrameDiffTool)substitutor;
+    }
+
+    return tool;
   }
 
   @NotNull
@@ -220,17 +235,10 @@ public abstract class DiffRequestProcessor implements Disposable {
     return DiffUtil.filterSuppressedTools(result);
   }
 
-  @NotNull
-  private FrameDiffTool findToolSubstitutor(@NotNull FrameDiffTool tool) {
-    DiffTool substitutor = DiffUtil.findToolSubstitutor(tool, myContext, myActiveRequest);
-    if (substitutor instanceof FrameDiffTool) return (FrameDiffTool)substitutor;
-    return tool;
-  }
-
   private void moveToolOnTop(@NotNull DiffTool tool) {
     myToolOrder.remove(tool);
 
-    FrameDiffTool toolToReplace = getFittedTool();
+    FrameDiffTool toolToReplace = getFittedTool(false);
 
     int index;
     for (index = 0; index < myToolOrder.size(); index++) {
@@ -243,7 +251,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private ViewerState createState() {
-    FrameDiffTool frameTool = findToolSubstitutor(getFittedTool());
+    FrameDiffTool frameTool = getFittedTool(true);
 
     DiffViewer viewer = frameTool.createComponent(myContext, myActiveRequest);
 
@@ -311,7 +319,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       catch (Throwable e) {
         LOG.error(e);
-        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool());
+        myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message")), getFittedTool(true));
         myState.init();
       }
     });
@@ -544,8 +552,9 @@ public abstract class DiffRequestProcessor implements Disposable {
       DiffTool activeTool = myState.getActiveTool();
       presentation.setText(activeTool.getName());
 
-      if (activeTool == ErrorDiffTool.INSTANCE) {
+      if (myForcedDiffTool != null) {
         presentation.setEnabledAndVisible(false);
+        return;
       }
 
       for (DiffTool tool : getAvailableFittedTools()) {
@@ -576,6 +585,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     private DiffToolToggleAction(@NotNull DiffTool tool) {
       super(tool.getName());
       myDiffTool = tool;
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myForcedDiffTool == null);
     }
 
     @Override
