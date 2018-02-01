@@ -132,8 +132,10 @@ public class BuildTargetTypeState {
     BuildTargetConfiguration configuration = myConfigurations.get(target);
     if (configuration == null) {
       configuration = new BuildTargetConfiguration(target, myTargetsState);
-      myConfigurations.putIfAbsent(target, configuration);
-      configuration = myConfigurations.get(target);
+      final BuildTargetConfiguration existing = myConfigurations.putIfAbsent(target, configuration);
+      if (existing != null) {
+        configuration = existing;
+      }
     }
     return configuration;
   }
