@@ -20,7 +20,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
-import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.extensions.ModuleExtKt;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
@@ -245,7 +244,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   /**
    * Creates SDK by its path
    *
-   * @param sdkHome         path to sdk (probably obtained by {@link #runTestOn(String)})
+   * @param sdkHome         path to sdk (probably obtained by {@link PyTestTask#runTestOn(String, Sdk)})
    * @param sdkCreationType SDK creation strategy (see {@link sdkTools.SdkCreationType} doc)
    * @return sdk
    */

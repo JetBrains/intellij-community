@@ -24,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -147,7 +148,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws Exception {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());

@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
@@ -67,7 +68,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
   /**
    * @param expectedSkeletonFile          if you want test to compare generated result with some file, provide its name.
    *                                      Pass null if you do not want to compare result with anything
-   *                                      (you may do it yourself by overwriting {@link #runTestOn(String)}) but <strong>call super</strong>
+   *                                      (you may do it yourself by overwriting {@link PyTestTask#runTestOn(String, Sdk)}) but <strong>call super</strong>
    * @param moduleNameToBeGenerated       name of module you think we should generate in dotted notation (like "System.Web" or "com.myModule").
    *                                      System will wait for skeleton file for this module to be generated
    * @param sourceFileToRunGenerationOn   Source file where we should run "generate stubs" on. Be sure to place "caret" on appropriate place!
@@ -87,7 +88,7 @@ class SkeletonTestTask extends PyExecutionFixtureTestTask {
 
 
   @Override
-  public void runTestOn(@NotNull final String sdkHome) throws IOException, InvalidSdkException {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable Sdk existingSdk) throws IOException, InvalidSdkException {
     final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.SDK_PACKAGES_ONLY);
     final File skeletonsPath = new File(PythonSdkType.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath()));
     File skeletonFileOrDirectory = new File(skeletonsPath, myModuleNameToBeGenerated); // File with module skeleton
