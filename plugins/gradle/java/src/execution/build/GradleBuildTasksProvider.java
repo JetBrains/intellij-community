@@ -11,13 +11,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 7/11/2016
  */
-public interface GradleArtifactBuildTasksProvider {
-  ExtensionPointName<GradleArtifactBuildTasksProvider> EP_NAME =
-    ExtensionPointName.create("org.jetbrains.plugins.gradle.artifactBuildTasksProvider");
+public interface GradleBuildTasksProvider {
+  ExtensionPointName<GradleBuildTasksProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.buildTasksProvider");
 
   boolean isApplicable(@NotNull ProjectModelBuildTask buildTask);
 
-  void addArtifactsTargetsBuildTasks(@NotNull ProjectModelBuildTask buildTask,
-                                     @NotNull Consumer<ExternalTaskPojo> cleanTasksConsumer,
-                                     @NotNull Consumer<ExternalTaskPojo> buildTasksConsumer);
+  void addBuildTasks(@NotNull ProjectModelBuildTask buildTask,
+                     @NotNull Consumer<ExternalTaskPojo> cleanTasksConsumer,
+                     @NotNull Consumer<ExternalTaskPojo> buildTasksConsumer);
 }

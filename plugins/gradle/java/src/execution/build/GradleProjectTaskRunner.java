@@ -181,7 +181,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     if (projectTask instanceof ProjectModelBuildTask) {
       ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;
       if (buildTask.getBuildableElement() instanceof Artifact) {
-        for (GradleArtifactBuildTasksProvider buildTasksProvider : GradleArtifactBuildTasksProvider.EP_NAME.getExtensions()) {
+        for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
           if (buildTasksProvider.isApplicable(buildTask)) return true;
         }
       }
@@ -289,11 +289,11 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     for (ProjectTask projectTask : tasks) {
       if (!(projectTask instanceof ProjectModelBuildTask)) continue;
 
-      ProjectModelBuildTask artifactBuildTask = (ProjectModelBuildTask)projectTask;
-        for (GradleArtifactBuildTasksProvider buildTasksProvider : GradleArtifactBuildTasksProvider.EP_NAME.getExtensions()) {
-          if (buildTasksProvider.isApplicable(artifactBuildTask)) {
-            buildTasksProvider.addArtifactsTargetsBuildTasks(
-              artifactBuildTask,
+      ProjectModelBuildTask projectModelBuildTask = (ProjectModelBuildTask)projectTask;
+      for (GradleBuildTasksProvider buildTasksProvider : GradleBuildTasksProvider.EP_NAME.getExtensions()) {
+        if (buildTasksProvider.isApplicable(projectModelBuildTask)) {
+          buildTasksProvider.addBuildTasks(
+            projectModelBuildTask,
               task -> cleanTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName()),
               task -> buildTasksMap.putValue(task.getLinkedExternalProjectPath(), task.getName())
             );
