@@ -467,7 +467,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @NotNull
   @Override
-  public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+  public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
     return myClass.getAncestorTypes(context);
   }
 

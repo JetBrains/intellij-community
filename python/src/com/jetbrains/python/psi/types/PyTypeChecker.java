@@ -259,6 +259,9 @@ public class PyTypeChecker {
                matchGenerics((PyCollectionType)expected, actual, context, substitutions, recursive, matching);
       }
       else if (matchClasses(superClass, subClass, context)) {
+        if (expectedClassType instanceof PyTypingNewType && !expectedClassType.equals(actualClassType) && superClass.equals(subClass)) {
+          return actualClassType.getAncestorTypes(context).contains(expectedClassType);
+        }
         return true;
       }
       if (expected.equals(actual)) {
