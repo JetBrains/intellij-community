@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.jsonRpc.socket;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +10,6 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.ide.BinaryRequestHandler;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.io.MessageDecoder;
@@ -41,9 +41,16 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
 
   private JsonRpcServer rpcServer;
 
+  /**
+   * For dynamic domain registration
+   * @return
+   */
+  public static JsonRpcServer getRpcServerInstance() {
+    return BinaryRequestHandler.EP_NAME.findExtension(RpcBinaryRequestHandler.class).getServer();
+  }
+
   @NotNull
-  @TestOnly
-  public JsonRpcServer getRpcServer() {
+  private JsonRpcServer getServer() {
     clientManager.getValue();
     return rpcServer;
   }
@@ -91,7 +98,7 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
     }
 
     @Override
-    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) throws Exception {
+    protected void messageReceived(@NotNull ChannelHandlerContext context, @NotNull ByteBuf input) {
       while (true) {
         switch (state) {
           case LENGTH: {
@@ -126,7 +133,7 @@ public class RpcBinaryRequestHandler extends BinaryRequestHandler implements Exc
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext context) throws Exception {
+    public void channelInactive(ChannelHandlerContext context) {
       Client client = context.channel().attr(ClientManagerKt.getCLIENT()).get();
       // if null, so, has already been explicitly removed
       if (client != null) {
