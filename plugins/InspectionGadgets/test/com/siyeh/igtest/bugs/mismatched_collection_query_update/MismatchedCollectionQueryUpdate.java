@@ -15,6 +15,7 @@
  */
 package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 
+import java.util.*;
 import java.io.FileInputStream;
 import java.util.concurrent.BlockingQueue;
 
