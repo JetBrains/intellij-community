@@ -36,6 +36,13 @@ import java.util.Set;
  */
 public interface PyType {
 
+  /**
+   * Returns the declaration element that can be used to refer to this type inside type hints. Normally, it's a symbol
+   * that can be imported to mentioned the type in type annotations and comments anywhere else.
+   * <p>
+   * Typical examples are target expressions in LHS of assignments in {@code TypeVar} and named tuple definitions, as well as
+   * class definitions themselves for plain class and generic types.
+   */
   @Nullable
   default PyQualifiedNameOwner getDeclarationElement() {
     return null;
