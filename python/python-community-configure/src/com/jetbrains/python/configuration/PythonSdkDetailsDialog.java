@@ -78,7 +78,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 
-  private boolean myShowOtherProjectVirtualenvs = true;
+  private boolean myHideOtherProjectVirtualenvs = false;
   private final Module myModule;
   private Runnable mySdkSettingsWereModified;
   private NullableConsumer<Sdk> myShowMoreCallback;
@@ -245,7 +245,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       .filter(sdk -> !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
       .toList();
 
-    final List<Sdk> pythonSdks = myShowOtherProjectVirtualenvs ? allPythonSdks : notAssociatedWithOtherProjects;
+    final List<Sdk> pythonSdks = myHideOtherProjectVirtualenvs ? notAssociatedWithOtherProjects : allPythonSdks;
     mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
     mySdkListChanged = false;
@@ -421,17 +421,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
     public ToggleVirtualEnvFilterButton() {
-      super(PyBundle.message("sdk.details.dialog.show.all.virtual.envs"), AllIcons.General.Filter);
+      super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myShowOtherProjectVirtualenvs;
+      return myHideOtherProjectVirtualenvs;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myShowOtherProjectVirtualenvs = state;
+      myHideOtherProjectVirtualenvs = state;
       refreshSdkList();
       updateOkButton();
     }
