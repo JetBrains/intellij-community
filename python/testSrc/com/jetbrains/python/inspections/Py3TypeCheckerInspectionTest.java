@@ -246,6 +246,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-21302
+  public void testInitializingNewType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeAsParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeInheritance() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-24287
   public void testPromotingBytearrayToBytes() {
     doTest();

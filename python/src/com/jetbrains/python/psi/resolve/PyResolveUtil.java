@@ -177,4 +177,48 @@ public class PyResolveUtil {
         }));
     return PyUtil.filterTopPriorityResults(result.toArray(RatedResolveResult[]::new));
   }
+
+  @Nullable
+  public static String resolveFirstStrArgument(@NotNull PyCallExpression callExpression) {
+    // SUPPORTED CASES:
+
+    // name = "Point"
+    // Point = namedtuple(name, ...)
+
+    // Point = namedtuple("Point", ...)
+
+    // Point = namedtuple(("Point"), ...)
+
+    // name = "Point"
+    // Point = NamedTuple(name, ...)
+
+    // Point = NamedTuple("Point", ...)
+
+    // Point = NamedTuple(("Point"), ...)
+
+    final PyExpression nameExpression = PyPsiUtils.flattenParens(callExpression.getArgument(0, PyExpression.class));
+
+    if (nameExpression instanceof PyReferenceExpression) {
+      return PyPsiUtils.strValue(fullResolveLocally((PyReferenceExpression)nameExpression));
+    }
+
+    return PyPsiUtils.strValue(nameExpression);
+  }
+
+  @Nullable
+  public static PyExpression fullResolveLocally(@NotNull PyReferenceExpression referenceExpression) {
+    for (PsiElement element : resolveLocally(referenceExpression)) {
+      if (element instanceof PyTargetExpression) {
+        final PyExpression assignedValue = ((PyTargetExpression)element).findAssignedValue();
+
+        if (assignedValue instanceof PyReferenceExpression) {
+          return fullResolveLocally((PyReferenceExpression)assignedValue);
+        }
+
+        return assignedValue;
+      }
+    }
+
+    return null;
+  }
 }
