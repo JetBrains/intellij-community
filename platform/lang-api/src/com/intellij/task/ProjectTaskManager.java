@@ -18,8 +18,8 @@ package com.intellij.task;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,16 +115,16 @@ public abstract class ProjectTaskManager {
     compile(files, null);
   }
 
-  public abstract void build(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback);
+  public abstract void build(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback);
 
-  public void build(@NotNull Artifact[] artifacts) {
-    build(artifacts, null);
+  public void build(@NotNull ProjectModelBuildableElement... buildableElements) {
+    build(buildableElements, null);
   }
 
-  public abstract void rebuild(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback);
+  public abstract void rebuild(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback);
 
-  public void rebuild(@NotNull Artifact... artifacts) {
-    rebuild(artifacts, null);
+  public void rebuild(@NotNull ProjectModelBuildableElement... buildableElements) {
+    rebuild(buildableElements, null);
   }
 
   public abstract ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project);
@@ -139,6 +139,12 @@ public abstract class ProjectTaskManager {
                                                      boolean includeDependentModules,
                                                      boolean includeRuntimeDependencies);
 
-  public abstract ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, Artifact... artifacts);
+  public abstract ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts);
 
+  /**
+   * @deprecated use {@link #createBuildTask(boolean, ProjectModelBuildableElement...)}
+   */
+  public ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts) {
+    return createBuildTask(isIncrementalBuild, artifacts);
+  }
 }

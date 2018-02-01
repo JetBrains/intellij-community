@@ -109,6 +109,8 @@
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
 
+    <projectTaskRunner implementation="com.intellij.task.impl.JpsProjectTaskRunner" id="jps" order="last"/>
+
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"

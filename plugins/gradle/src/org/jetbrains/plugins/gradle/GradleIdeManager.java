@@ -13,9 +13,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GradleIdeManager {
 
-  private static final @NotNull NotNullLazyValue<GradleIdeManager> myDefaultLazyValue =
-    NotNullLazyValue.createValue(GradleIdeManager::new);
-
+  private static final @NotNull NotNullLazyValue<GradleIdeManager> myDefaultLazyValue = NotNullLazyValue.createValue(GradleIdeManager::new);
 
   public static GradleIdeManager getInstance() {
     GradleIdeManager ideManager = ServiceManager.getService(GradleIdeManager.class);

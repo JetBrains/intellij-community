@@ -36,8 +36,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
-import com.intellij.task.impl.InternalProjectTaskRunner;
+import com.intellij.task.impl.JpsProjectTaskRunner;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -85,12 +86,12 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     MultiMap<String, String> cleanTasksMap = MultiMap.createLinkedSet();
     MultiMap<String, String> initScripts = MultiMap.createLinkedSet();
 
-    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = InternalProjectTaskRunner.groupBy(tasks);
+    Map<Class<? extends ProjectTask>, List<ProjectTask>> taskMap = JpsProjectTaskRunner.groupBy(tasks);
 
     List<Module> modules = addModulesBuildTasks(taskMap.get(ModuleBuildTask.class), buildTasksMap, initScripts);
     // TODO there should be 'gradle' way to build files instead of related modules entirely
     List<Module> modulesOfFiles = addModulesBuildTasks(taskMap.get(ModuleFilesBuildTask.class), buildTasksMap, initScripts);
-    addArtifactsBuildTasks(taskMap.get(ArtifactBuildTask.class), cleanTasksMap, buildTasksMap);
+    addArtifactsBuildTasks(taskMap.get(ProjectModelBuildTask.class), cleanTasksMap, buildTasksMap);
 
     // TODO send a message if nothing to build
     Set<String> rootPaths = buildTasksMap.keySet();
@@ -177,10 +178,12 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     if (projectTask instanceof ModuleBuildTask) {
       return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, ((ModuleBuildTask)projectTask).getModule());
     }
-    if (projectTask instanceof ArtifactBuildTask) {
-      ArtifactBuildTask artifactBuildTask = (ArtifactBuildTask)projectTask;
-      for (GradleArtifactBuildTasksProvider buildTasksProvider : GradleArtifactBuildTasksProvider.EP_NAME.getExtensions()) {
-        if (buildTasksProvider.isApplicable(artifactBuildTask)) return true;
+    if (projectTask instanceof ProjectModelBuildTask) {
+      ProjectModelBuildTask buildTask = (ProjectModelBuildTask)projectTask;
+      if (buildTask.getBuildableElement() instanceof Artifact) {
+        for (GradleArtifactBuildTasksProvider buildTasksProvider : GradleArtifactBuildTasksProvider.EP_NAME.getExtensions()) {
+          if (buildTasksProvider.isApplicable(buildTask)) return true;
+        }
       }
     }
 
@@ -284,9 +287,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
     if (ContainerUtil.isEmpty(tasks)) return;
 
     for (ProjectTask projectTask : tasks) {
-      if (!(projectTask instanceof ArtifactBuildTask)) continue;
+      if (!(projectTask instanceof ProjectModelBuildTask)) continue;
 
-      ArtifactBuildTask artifactBuildTask = (ArtifactBuildTask)projectTask;
+      ProjectModelBuildTask artifactBuildTask = (ProjectModelBuildTask)projectTask;
         for (GradleArtifactBuildTasksProvider buildTasksProvider : GradleArtifactBuildTasksProvider.EP_NAME.getExtensions()) {
           if (buildTasksProvider.isApplicable(artifactBuildTask)) {
             buildTasksProvider.addArtifactsTargetsBuildTasks(

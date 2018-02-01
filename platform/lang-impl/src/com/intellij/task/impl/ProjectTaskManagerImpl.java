@@ -19,9 +19,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -29,13 +29,18 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.list;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * @author Vladislav.Soroka
@@ -43,7 +48,7 @@ import static com.intellij.util.containers.ContainerUtil.map;
  */
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
-  private final ProjectTaskRunner myDefaultProjectTaskRunner = new InternalProjectTaskRunner();
+  private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
 
   public ProjectTaskManagerImpl(@NotNull Project project) {
     super(project);
@@ -61,8 +66,9 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback) {
-    List<ModuleFilesBuildTask> buildTasks = Arrays.stream(files)
-      .collect(Collectors.groupingBy(file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
+    List<ModuleFilesBuildTask> buildTasks = stream(files)
+      .collect(groupingBy(
+        file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
       .entrySet().stream()
       .map(entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue()))
       .collect(Collectors.toList());
@@ -71,13 +77,13 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public void build(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback) {
-    doBuild(artifacts, callback, true);
+  public void build(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback) {
+    doBuild(buildableElements, callback, true);
   }
 
   @Override
-  public void rebuild(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback) {
-    doBuild(artifacts, callback, false);
+  public void rebuild(@NotNull ProjectModelBuildableElement[] buildableElements, @Nullable ProjectTaskNotification callback) {
+    doBuild(buildableElements, callback, false);
   }
 
   @Override
@@ -115,10 +121,11 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   @Override
-  public ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, Artifact... artifacts) {
-    return artifacts.length == 1
-           ? new ArtifactBuildTaskImpl(artifacts[0], isIncrementalBuild)
-           : new ProjectTaskList(map(list(artifacts), artifact -> new ArtifactBuildTaskImpl(artifact, isIncrementalBuild)));
+  public ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... buildableElements) {
+    return buildableElements.length == 1
+           ? new ProjectModelBuildTaskImpl<>(buildableElements[0], isIncrementalBuild)
+           : new ProjectTaskList(map(list(buildableElements),
+                                     buildableElement -> new ProjectModelBuildTaskImpl<>(buildableElement, isIncrementalBuild)));
   }
 
   @Override
@@ -131,13 +138,12 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
 
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
-      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild =
-        tasks.stream().collect(Collectors.groupingBy(aTask -> {
-          for (ProjectTaskRunner runner : getTaskRunners()) {
-            if (runner.canRun(aTask)) return runner;
-          }
-          return myDefaultProjectTaskRunner;
-        }));
+      Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
+        groupingBy(aTask -> stream(getTaskRunners())
+          .filter(runner -> runner.canRun(aTask))
+          .findFirst()
+          .orElse(myDummyTaskRunner))
+      );
       for (Map.Entry<ProjectTaskRunner, ? extends List<? extends ProjectTask>> entry : toBuild.entrySet()) {
         toRun.add(Pair.create(entry.getKey(), entry.getValue()));
       }
@@ -208,7 +214,24 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     return ProjectTaskRunner.EP_NAME.getExtensions();
   }
 
-  private void doBuild(@NotNull Artifact[] artifacts, @Nullable ProjectTaskNotification callback, boolean isIncrementalBuild) {
-    run(createArtifactsBuildTask(isIncrementalBuild, artifacts), callback);
+  private void doBuild(@NotNull ProjectModelBuildableElement[] buildableElements,
+                       @Nullable ProjectTaskNotification callback,
+                       boolean isIncrementalBuild) {
+    run(createBuildTask(isIncrementalBuild, buildableElements), callback);
+  }
+
+  private static class DummyTaskRunner extends ProjectTaskRunner {
+    @Override
+    public void run(@NotNull Project project,
+                    @NotNull ProjectTaskContext context,
+                    @Nullable ProjectTaskNotification callback,
+                    @NotNull Collection<? extends ProjectTask> tasks) {
+
+    }
+
+    @Override
+    public boolean canRun(@NotNull ProjectTask projectTask) {
+      return false;
+    }
   }
 }

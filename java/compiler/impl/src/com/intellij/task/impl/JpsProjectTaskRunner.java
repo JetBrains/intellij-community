@@ -23,6 +23,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,8 +46,8 @@ import java.util.stream.Stream;
  * @author Vladislav.Soroka
  * @since 5/11/2016
  */
-public class InternalProjectTaskRunner extends ProjectTaskRunner {
-  private static final Logger LOG = Logger.getInstance(InternalProjectTaskRunner.class);
+public class JpsProjectTaskRunner extends ProjectTaskRunner {
+  private static final Logger LOG = Logger.getInstance(JpsProjectTaskRunner.class);
   public static final Key<Object> EXECUTION_SESSION_ID_KEY = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY;
 
   @Override
@@ -73,7 +74,7 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
     return tasks.stream().collect(Collectors.groupingBy(o -> {
       if (o instanceof ModuleFilesBuildTask) return ModuleFilesBuildTask.class;
       if (o instanceof ModuleBuildTask) return ModuleBuildTask.class;
-      if (o instanceof ArtifactBuildTask) return ArtifactBuildTask.class;
+      if (o instanceof ProjectModelBuildTask) return ProjectModelBuildTask.class;
       return o.getClass();
     }));
   }
@@ -191,18 +192,20 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
                                              @Nullable CompileStatusNotification compileNotification,
                                              @NotNull Map<Class<? extends ProjectTask>, List<ProjectTask>> tasksMap) {
 
-    Collection<? extends ProjectTask> buildTasks = tasksMap.get(ArtifactBuildTask.class);
+    Collection<? extends ProjectTask> buildTasks = tasksMap.get(ProjectModelBuildTask.class);
     if (!ContainerUtil.isEmpty(buildTasks)) {
       List<Artifact> toMake = new SmartList<>();
       List<Artifact> toCompile = new SmartList<>();
       for (ProjectTask buildProjectTask : buildTasks) {
-        ArtifactBuildTask artifactBuildTask = (ArtifactBuildTask)buildProjectTask;
-
-        if (artifactBuildTask.isIncrementalBuild()) {
-          toMake.add(artifactBuildTask.getArtifact());
-        }
-        else {
-          toCompile.add(artifactBuildTask.getArtifact());
+        ProjectModelBuildTask buildTask = (ProjectModelBuildTask)buildProjectTask;
+        ProjectModelBuildableElement buildableElement = buildTask.getBuildableElement();
+        if (buildableElement instanceof Artifact) {
+          if (buildTask.isIncrementalBuild()) {
+            toMake.add((Artifact)buildableElement);
+          }
+          else {
+            toCompile.add((Artifact)buildableElement);
+          }
         }
       }
 

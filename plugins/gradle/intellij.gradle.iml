@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="module" module-name="intellij.gradle.jps" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
