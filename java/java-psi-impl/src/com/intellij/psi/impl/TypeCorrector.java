@@ -35,11 +35,6 @@ class TypeCorrector extends PsiTypeMapper {
   @SuppressWarnings("unchecked")
   @Nullable
   public <T extends PsiType> T correctType(@NotNull T type) {
-    if (type instanceof PsiCorrectedClassType) {
-      return myResolveScope.equals(type.getResolveScope()) ? type 
-                                                           : correctType((T)((PsiCorrectedClassType)type).myDelegate);
-    }
-    
     if (type instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType)type;
       if (classType.getParameterCount() == 0) {
@@ -56,7 +51,12 @@ class TypeCorrector extends PsiTypeMapper {
   }
 
   @Override
-  public PsiType visitClassType(final PsiClassType classType) {
+  public PsiType visitClassType(PsiClassType classType) {
+    if (classType instanceof PsiCorrectedClassType) {
+      return myResolveScope.equals(classType.getResolveScope()) ? classType :
+             visitClassType(((PsiCorrectedClassType)classType).myDelegate);
+    }
+    
     PsiClassType alreadyComputed = myResultMap.get(classType);
     if (alreadyComputed != null) {
       return alreadyComputed;
@@ -132,14 +132,10 @@ class TypeCorrector extends PsiTypeMapper {
     private PsiCorrectedClassType(LanguageLevel languageLevel,
                                   PsiClassType delegate,
                                   CorrectedResolveResult resolveResult) {
-      this(languageLevel, delegate, resolveResult, delegate.getAnnotationProvider());
-    }
-
-    private PsiCorrectedClassType(LanguageLevel languageLevel,
-                                  PsiClassType delegate,
-                                  CorrectedResolveResult resolveResult,
-                                  TypeAnnotationProvider delegateAnnotationProvider) {
-      super(languageLevel, delegateAnnotationProvider);
+      super(languageLevel, delegate.getAnnotationProvider());
+      if (delegate instanceof PsiCorrectedClassType) {
+        throw new IllegalArgumentException();
+      }
       myDelegate = delegate;
       myResolveResult = resolveResult;
     }
@@ -224,16 +220,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     @Override
     public boolean isValid() {
-      if (myDelegate.isValid() && myResolveResult.myMappedClass.isValid()) {
-        if (myDelegate instanceof PsiCorrectedClassType && ((PsiCorrectedClassType)myDelegate).myResolveResult.mySubstitutor == myResolveResult.mySubstitutor) {
-          // substitutor was already checked for delegate: no need to recheck it
-          return true;
-        }
-        if (myResolveResult.mySubstitutor.isValid()) {
-          return true;
-        }
-      }
-      return false;
+      return myDelegate.isValid() && myResolveResult.myMappedClass.isValid() && myResolveResult.mySubstitutor.isValid();
     }
 
     @Override
