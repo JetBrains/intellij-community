@@ -129,6 +129,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Staging
   @Test
   public void testChangeVariable() {
     runPythonTest(new PyConsoleTask() {
