@@ -135,16 +135,24 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
-      String installScriptPath = "$box/install_nsis3.sh"
+      String installerToolsDir = "$box/installer"
+      String installScriptPath = "$installerToolsDir/install_nsis3.sh"
       buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
+      buildContext.ant.copy(todir: "$installerToolsDir") {
+        fileset(dir: "${buildContext.paths.communityHome}/build/tools") {
+          include(name: "nsis*.*")
+          include(name: "scons*.*")
+        }
+      }
+
       buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
       ant.exec(executable: "chmod") {
         arg(line: " u+x \"$installScriptPath\"")
       }
       ant.exec(command: "\"$installScriptPath\"" +
-                        " \"${buildContext.paths.communityHome}\"")
+                        " \"${installerToolsDir}\"")
 
-      ant.exec(command: "\"${buildContext.paths.communityHome}/build/tools/nsis/nsis-3.02.1/bin/makensis\"" +
+      ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
       " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
       " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
                  " -DNSIS_DIR=\"${box}/NSIS\"" +
