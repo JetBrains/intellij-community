@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -30,6 +31,7 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
 import java.awt.geom.Point2D;
 import java.text.Bidi;
 
@@ -484,7 +486,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private void initMetricsIfNeeded() {
     if (myPlainSpaceWidth >= 0) return;
 
-    FontMetrics fm = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN), myFontRenderContext);
+    Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+    FontMetrics fm = FontInfo.getFontMetrics(font, myFontRenderContext);
 
     float width = FontLayoutService.getInstance().charWidth2D(fm, ' ');
     myPlainSpaceWidth = width > 0 ? width : 1;
@@ -494,8 +497,24 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     float verticalScalingFactor = getVerticalScalingFactor();
 
     int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
-    myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+    if (Registry.is("editor.text.xcode.vertical.spacing")) {
+      //Here we approximate line calculation to the variant used in Xcode 9 editor
+      LineMetrics metrics = font.getLineMetrics("", myFontRenderContext);
 
+      double height = Math.ceil(metrics.getHeight()) + metrics.getLeading();
+      double delta = verticalScalingFactor - 1;
+      int spacing;
+      if (Math.round((height * delta) / 2) <= 1) {
+        spacing = delta > 0 ? 2 : 0;
+      }
+      else {
+        spacing = ((int)Math.ceil((height * delta) / 2)) * 2;
+      }
+      myLineHeight = (int)Math.ceil(height) + spacing;
+    }
+    else {
+      myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+    }
     int descent = FontLayoutService.getInstance().getDescent(fm);
     myDescent = descent + (myLineHeight - fontMetricsHeight) / 2;
     myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;
