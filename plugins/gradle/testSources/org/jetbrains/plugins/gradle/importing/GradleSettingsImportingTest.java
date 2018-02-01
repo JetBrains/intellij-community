@@ -24,6 +24,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownConfigurationType;
@@ -34,7 +35,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.execution.application.JavaApplicationRunConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
@@ -47,8 +47,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.execution.GradleBeforeRunTaskProvider;
-import org.jetbrains.plugins.gradle.service.project.GradleBeforeRunTaskImporter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -114,8 +112,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       "idea {\n" +
       "  project.settings {\n" +
       "    codeStyle {\n" +
-      "      indent 'tabs'\n" +
-      "      indentSize 3\n" +
+      "      hardWrapAt = 200\n" +
       "    }\n" +
       "  }\n" +
       "}")
@@ -127,8 +124,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("Gradle Imported", scheme.getName());
     assertFalse(scheme.isDefault());
 
-    assertTrue(settings.getIndentOptions().USE_TAB_CHARACTER);
-    assertEquals(3, settings.getIndentOptions().INDENT_SIZE);
+    assertEquals(200, settings.getDefaultRightMargin());
   }
 
   @Test
