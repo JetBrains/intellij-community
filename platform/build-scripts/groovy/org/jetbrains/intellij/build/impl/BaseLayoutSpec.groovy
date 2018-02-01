@@ -63,10 +63,11 @@ class BaseLayoutSpec {
   }
 
   /**
-   * Include the project library to 'lib' directory of the plugin distribution
+   * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
+   * @relativeOutputPath path relative to 'lib' plugin directory
    */
-  void withProjectLibrary(String libraryName) {
-    layout.includedProjectLibraries << libraryName
+  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
+    layout.includedProjectLibraries << new ProjectLibraryData(libraryName, relativeOutputPath)
   }
 
   /**

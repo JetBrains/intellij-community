@@ -68,8 +68,10 @@ class DistributionJARsBuilder {
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       plugin.getActualModules(enabledPluginModules).values().collectMany {
         def module = buildContext.findRequiredModule(it)
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
-          !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
+        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
+          !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
+            it.libraryName == library.name && it.relativeOutputPath == ""
+          }
         }
       }
     }
@@ -469,8 +471,10 @@ class DistributionJARsBuilder {
             }
           }
         }
-        layout.includedProjectLibraries.each {
-          projectLibrary(it, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
+        layout.includedProjectLibraries.each { libraryData ->
+          dir(libraryData.relativeOutputPath) {
+            projectLibrary(libraryData.libraryName, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
+          }
         }
         layout.includedArtifacts.entrySet().each {
           def artifactName = it.key
