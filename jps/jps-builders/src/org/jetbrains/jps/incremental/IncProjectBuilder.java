@@ -506,7 +506,7 @@ public class IncProjectBuilder {
         SourceToOutputMappingImpl mapping = null;
         try {
           mapping = myProjectDescriptor.dataManager.createSourceToOutputMapForStaleTarget(type, stringId);
-          clearOutputFiles(context, mapping, type);
+          clearOutputFiles(context, mapping, type, ids.second);
         }
         finally {
           if (mapping != null) {
@@ -526,13 +526,17 @@ public class IncProjectBuilder {
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     BuildTargetType<?> targetType = target.getTargetType();
-    clearOutputFiles(context, map, targetType);
+    clearOutputFiles(context, map, targetType, context.getProjectDescriptor().dataManager.getTargetsState().getBuildTargetId(target));
     registerTargetsWithClearedOutput(context, Collections.singletonList(target));
   }
 
-  private static void clearOutputFiles(CompileContext context, SourceToOutputMapping mapping, BuildTargetType<?> targetType) throws IOException {
+  private static void clearOutputFiles(CompileContext context,
+                                       SourceToOutputMapping mapping,
+                                       BuildTargetType<?> targetType,
+                                       int targetId) throws IOException {
     final THashSet<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?>
                                         ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
+    OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
     for (String srcPath : mapping.getSources()) {
       final Collection<String> outs = mapping.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
@@ -540,6 +544,7 @@ public class IncProjectBuilder {
         for (String out : outs) {
           BuildOperations.deleteRecursively(out, deletedPaths, dirsToDelete);
         }
+        outputToTargetRegistry.removeMapping(outs, targetId);
         if (!deletedPaths.isEmpty()) {
           context.processMessage(new FileDeletedEvent(deletedPaths));
         }

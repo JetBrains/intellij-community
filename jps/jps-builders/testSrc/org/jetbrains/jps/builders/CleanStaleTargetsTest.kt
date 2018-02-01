@@ -9,7 +9,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 class CleanStaleTargetsTest : JpsBuildTestCase() {
   fun `test delete old output when module is deleted`() {
-    doTestDeleteOldOutput {
+    //todo[nik, jeka] currently references to classes from deleted module aren't removed ClassToSubclasses, ClassToClassDependency, SourceFileToClasses mappings
+    doTestDeleteOldOutput(false) {
       myProject.removeModule(it)
     }
   }
@@ -28,7 +29,7 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
     }
   }
 
-  private fun doTestDeleteOldOutput(action: (JpsModule) -> Unit) {
+  private fun doTestDeleteOldOutput(checkMappings: Boolean = true, action: (JpsModule) -> Unit) {
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out"))
     val aRoot = PathUtil.getParentPath(createFile("a/src/A.java", "class A {}"))
     val aModule = addModule("a", arrayOf(aRoot), null, null, jdk)
@@ -44,10 +45,14 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
     //do not clean output when just one other target is built to avoid unexpectedly long builds
     assertOutput(aOutput.absolutePath, directoryContent { file("A.class") })
 
-    buildAllModules()
+    val buildResult = buildAllModules()
     //clean output of stale targets when all targets of this type are built
     if (aOutput.exists()) {
       assertOutput(aOutput.absolutePath, directoryContent { })
+    }
+
+    if (checkMappings) {
+      checkMappingsAreSameAfterRebuild(buildResult)
     }
   }
 }
