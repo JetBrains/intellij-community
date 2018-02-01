@@ -878,6 +878,7 @@ public class AbstractPopup implements JBPopup {
             glass.setCursor(cursor, this);
             myCursor = cursor;
           }
+          super.setCursor(content, cursor);
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
@@ -1015,7 +1016,6 @@ public class AbstractPopup implements JBPopup {
       window.setAutoRequestFocus(myRequestFocus);
 
       SwingUtilities.invokeLater(afterShow);
-      delayKeyEventsUntilFocusSettlesDown();
     } else {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -1029,12 +1029,6 @@ public class AbstractPopup implements JBPopup {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
-  }
-
-  private void delayKeyEventsUntilFocusSettlesDown() {
-    ActionCallback typeAhead = new ActionCallback();
-    getFocusManager().typeAheadUntil(typeAhead, "AbstractPopup");
-    getFocusManager().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
 
   public void focusPreferredComponent() {

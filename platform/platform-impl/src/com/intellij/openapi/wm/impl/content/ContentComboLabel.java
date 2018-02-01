@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.JBUI;
@@ -85,24 +84,23 @@ public class ContentComboLabel extends BaseLabel {
   }
 
   @Override
+  public Dimension getMinimumSize() {
+    Dimension size = super.getMinimumSize();
+    if (!isMinimumSizeSet()) {
+      size.width = isToDrawCombo() ? myComboIcon.getIconWidth() : 0;
+      Icon icon = getIcon();
+      if (icon != null) size.width += icon.getIconWidth() + getIconTextGap();
+      Insets insets = getInsets();
+      if (insets != null) size.width += insets.left + insets.right;
+    }
+    return size;
+  }
+
+  @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (!isPreferredSizeSet() && isToDrawCombo()) {
-      int gap = getIconTextGap();
-      Content content = getContent();
-      if (content != null) {
-        Font font = getFont();
-        String text = content.getDisplayName();
-        size.width = font == null || text == null || text.isEmpty() ? 0 : getFontMetrics(font).stringWidth(text);
-        if (Boolean.TRUE.equals(content.getUserData(ToolWindow.SHOW_CONTENT_ICON))) {
-          Icon icon = content.getIcon();
-          if (icon != null) size.width += gap + icon.getIconWidth();
-        }
-      }
-      if (size.width > 0) size.width += gap;
       size.width += myComboIcon.getIconWidth();
-      Insets insets = getInsets();
-      if (insets != null) size.width += insets.left + insets.right;
     }
     return size;
   }

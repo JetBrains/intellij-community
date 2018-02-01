@@ -2,7 +2,6 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.ModuleCompileScope;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -37,7 +36,7 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
     List<String> unloadedList = Collections.singletonList(unloaded.getName());
     ModuleManager.getInstance(myProject).setUnloadedModules(unloadedList);
 
-    make(createScopeWithUnloaded(Collections.emptyList(), unloadedList), CompilerFilter.ALL);
+    make(createScopeWithUnloaded(Collections.emptyList(), unloadedList));
     fs().file("A.class").build().assertDirectoryEqual(outputDir);
   }
 
@@ -52,7 +51,7 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
 
     changeFile(utilFile, VfsUtilCore.loadText(utilFile).replace("foo", "foo2"));
 
-    make(createScopeWithUnloaded(Collections.emptyList(), unloadedList), CompilerFilter.ALL).assertGenerated("A.class", "Util.class");
+    make(createScopeWithUnloaded(Collections.emptyList(), unloadedList)).assertGenerated("A.class", "Util.class");
   }
 
   public void testCompileUsagesOfConstantFromNormalModuleInInUnloadedModules() throws IOException {
@@ -68,7 +67,7 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
 
     changeFile(utilFile, VfsUtilCore.loadText(utilFile).replace("foo", "foo2"));
 
-    make(createScopeWithUnloaded(Collections.singletonList(util), unloadedList), CompilerFilter.ALL).assertGenerated("A.class", "Util.class");
+    make(createScopeWithUnloaded(Collections.singletonList(util), unloadedList)).assertGenerated("A.class", "Util.class");
   }
 
   public void testCompileUnloadedModuleAfterBuildingAllLoadedModules() {
@@ -85,7 +84,7 @@ public class UnloadedModulesCompilationTest extends BaseCompilerTestCase {
     changeFile(utilFile, "class Util { Util(int i) {} }");
     buildAllModules().assertGenerated("Util.class");
 
-    compile(createScopeWithUnloaded(Collections.singletonList(util), unloadedList), CompilerFilter.ALL, false, true);
+    compile(createScopeWithUnloaded(Collections.singletonList(util), unloadedList), false, true);
   }
 
   @NotNull

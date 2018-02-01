@@ -210,4 +210,8 @@ public class MemberChangeTest extends IncrementalTestCase {
   public void testAddVarargMethod() {
     doTest();
   }
+
+  public void testReplaceMethodWithBridge() {
+    doTest();
+  }
 }

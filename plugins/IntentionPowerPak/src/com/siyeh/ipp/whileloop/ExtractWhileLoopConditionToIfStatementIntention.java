@@ -15,11 +15,12 @@
  */
 package com.siyeh.ipp.whileloop;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,9 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
   @Override
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
-    return new WhileLoopPredicate();
+    WhileLoopPredicate predicate = new WhileLoopPredicate();
+    return e -> predicate.satisfiedBy(e) &&
+                !(ExpressionUtils.computeConstantExpression(((PsiWhileStatement)e.getParent()).getCondition()) instanceof Boolean);
   }
 
   @Override

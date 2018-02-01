@@ -17,7 +17,10 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
@@ -81,6 +84,25 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   protected DiffRequest loadRequest(@NotNull DiffRequestProducer producer, @NotNull ProgressIndicator indicator)
     throws ProcessCanceledException, DiffRequestProducerException {
     return producer.process(getContext(), indicator);
+  }
+
+  @Nullable
+  @Override
+  protected DiffRequest loadRequestFast(@NotNull DiffRequestProducer provider) {
+    DiffRequest request = super.loadRequestFast(provider);
+    return isRequestValid(request) ? request : null;
+  }
+
+  private static boolean isRequestValid(@Nullable DiffRequest request) {
+    if (request instanceof ErrorDiffRequest) return false;
+    if (request instanceof ContentDiffRequest) {
+      for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
+        // We compare CurrentContentRevision by their FilePath in cache map
+        // If file was removed and then created again - we should not reuse request with old invalidated VirtualFile
+        if (content instanceof FileContent && !((FileContent)content).getFile().isValid()) return false;
+      }
+    }
+    return true;
   }
 
   //

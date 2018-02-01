@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -42,7 +40,15 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
       val targetFile = target.containingFile
       if (targetFile is PsiClassOwner) {
-        return checkAccess(targetFile, useFile, targetFile.packageName, quick)
+        if (targetFile.isPhysical) {
+          return checkAccess(targetFile, useFile, targetFile.packageName, quick)
+        }
+        else {
+          val pkg = JavaPsiFacade.getInstance(targetFile.project).findPackage(targetFile.packageName)
+          if (pkg != null) {
+            return checkAccess(pkg, place, quick)
+          }
+        }
       }
     }
 

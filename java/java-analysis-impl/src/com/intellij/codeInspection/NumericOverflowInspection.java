@@ -61,25 +61,27 @@ public class NumericOverflowInspection extends AbstractBaseJavaLocalInspectionTo
       return false;
     }
 
-    boolean overflow = false;
+    boolean result = false;
+    boolean toStoreInParent = false;
     try {
       if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null) {
         JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(expr, true);
       }
       else {
-        overflow = true;
+        toStoreInParent = true;
+        expr.putUserData(HAS_OVERFLOW_IN_CHILD, null);
       }
     }
     catch (ConstantEvaluationOverflowException e) {
-      overflow = true;
+      result = toStoreInParent = true;
     }
     finally {
       PsiElement parent = expr.getParent();
-      if (overflow && parent instanceof PsiExpression) {
+      if (toStoreInParent && parent instanceof PsiExpression) {
         parent.putUserData(HAS_OVERFLOW_IN_CHILD, "");
       }
     }
 
-    return overflow;
+    return result;
   }
 }

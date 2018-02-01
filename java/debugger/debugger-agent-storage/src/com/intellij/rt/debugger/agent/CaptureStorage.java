@@ -4,18 +4,19 @@ package com.intellij.rt.debugger.agent;
 import sun.misc.JavaLangAccess;
 import sun.misc.SharedSecrets;
 
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author egor
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
-  private static final int MAX_STORED_STACKS = 1000;
-  private static final Map<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
-  private static final Deque<WeakReference> HISTORY = new ArrayDeque<WeakReference>(MAX_STORED_STACKS);
+  private static final ReferenceQueue KEY_REFERENCE_QUEUE = new ReferenceQueue();
+  private static final ConcurrentMap<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = new ThreadLocal<Deque<InsertMatch>>() {
@@ -41,19 +42,9 @@ public class CaptureStorage {
         System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
       }
       CapturedStack stack = createCapturedStack(exception, CURRENT_STACKS.get().peekLast());
-      WeakKey keyRef = new WeakKey(key);
-      synchronized (HISTORY) {
-        CapturedStack old = STORAGE.put(keyRef, stack);
-        if (old == null) {
-          if (HISTORY.size() >= MAX_STORED_STACKS) {
-            STORAGE.remove(HISTORY.removeFirst());
-          }
-        }
-        else {
-          HISTORY.removeFirstOccurrence(keyRef); // must not happen often
-        }
-        HISTORY.addLast(keyRef);
-      }
+      processQueue();
+      WeakKey keyRef = new WeakKey(key, stack, KEY_REFERENCE_QUEUE);
+      STORAGE.put(keyRef, stack);
     }
     catch (Exception e) {
       handleException(e);
@@ -66,7 +57,8 @@ public class CaptureStorage {
       return;
     }
     try {
-      CapturedStack stack = STORAGE.get(new WeakKey(key));
+      //noinspection SuspiciousMethodCalls
+      CapturedStack stack = STORAGE.get(new HardKey(key));
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       if (stack != null) {
         Throwable exception = new Throwable();
@@ -108,67 +100,128 @@ public class CaptureStorage {
 
   //// END - METHODS CALLED FROM THE USER PROCESS
 
-  private static class WeakKey extends WeakReference {
-    private final int myHashCode;
+  private static void processQueue() {
+    WeakKey key;
+    while ((key = (WeakKey)KEY_REFERENCE_QUEUE.poll()) != null) {
+      STORAGE.remove(key, key.myValue);
+    }
+  }
 
-    public WeakKey(Object referent) {
-      super(referent);
-      myHashCode = System.identityHashCode(referent);
+  // only for map queries
+  private static class HardKey {
+    private final Object myKey;
+    private final int myHash;
+
+    public HardKey(Object key) {
+      myKey = key;
+      myHash = System.identityHashCode(key);
     }
 
     @Override
     public boolean equals(Object o) {
-      return this == o || (o instanceof WeakKey && ((WeakKey)o).get() == get());
+      return this == o || (o instanceof WeakKey && ((WeakKey)o).get() == myKey);
+    }
+
+    public int hashCode() {
+      return myHash;
+    }
+  }
+
+  private static class WeakKey extends WeakReference {
+    private final int myHash;
+    private final CapturedStack myValue;
+
+    public WeakKey(Object key, CapturedStack value, ReferenceQueue q) {
+      //noinspection unchecked
+      super(key, q);
+      myHash = System.identityHashCode(key);
+      myValue = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof WeakKey)) return false;
+      Object t = get();
+      Object u = ((WeakKey)o).get();
+      if (t == null || u == null) return false;
+      return t == u;
     }
 
     @Override
     public int hashCode() {
-      return myHashCode;
+      return myHash;
     }
   }
 
   private static CapturedStack createCapturedStack(Throwable exception, InsertMatch insertMatch) {
     if (insertMatch != null && insertMatch != InsertMatch.EMPTY) {
-      return new DeepCapturedStack(exception, insertMatch);
+      CapturedStack stack = new DeepCapturedStack(exception, insertMatch);
+      if (stack.getRecursionDepth() > 100) {
+        ArrayList<StackTraceElement> trace = getStackTrace(stack, 500);
+        trace.trimToSize();
+        stack = new UnwindCapturedStack(trace);
+      }
+      return stack;
     }
-    return new CapturedStack(exception);
+    return new ExceptionCapturedStack(exception);
   }
 
-  private static class CapturedStack {
+  private interface CapturedStack {
+    List<StackTraceElement> getStackTrace();
+    int getRecursionDepth();
+  }
+
+  private static class UnwindCapturedStack implements CapturedStack {
+    final List<StackTraceElement> myStackTraceElements;
+
+    public UnwindCapturedStack(List<StackTraceElement> elements) {
+      myStackTraceElements = elements;
+    }
+
+    @Override
+    public List<StackTraceElement> getStackTrace() {
+      return myStackTraceElements;
+    }
+
+    @Override
+    public int getRecursionDepth() {
+      return 0;
+    }
+  }
+
+  private static class ExceptionCapturedStack implements CapturedStack {
     final Throwable myException;
 
-    private CapturedStack(Throwable exception) {
+    private ExceptionCapturedStack(Throwable exception) {
       myException = exception;
     }
 
-    List<StackTraceElement> getStackTrace() {
+    @Override
+    public List<StackTraceElement> getStackTrace() {
       StackTraceElement[] stackTrace = myException.getStackTrace();
       return Arrays.asList(stackTrace).subList(1, stackTrace.length);
     }
+
+    @Override
+    public int getRecursionDepth() {
+      return 0;
+    }
   }
 
-  private static class DeepCapturedStack extends CapturedStack {
+  private static class DeepCapturedStack extends ExceptionCapturedStack {
     final InsertMatch myInsertMatch;
+    final int myRecursionDepth;
 
     public DeepCapturedStack(Throwable exception, InsertMatch insertMatch) {
       super(exception);
       myInsertMatch = insertMatch;
+      myRecursionDepth = insertMatch.myStack.getRecursionDepth() + 1;
     }
 
-    List<StackTraceElement> getStackTrace() {
-      StackTraceElement[] stackTrace = myException.getStackTrace();
-      if (myInsertMatch == null || myInsertMatch == InsertMatch.EMPTY) {
-        return super.getStackTrace();
-      }
-      else {
-        List<StackTraceElement> insertStack = myInsertMatch.myStack.getStackTrace();
-        int insertPos = stackTrace.length - myInsertMatch.getDepth() + 2;
-        ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>(insertPos + insertStack.size() + 1);
-        res.addAll(Arrays.asList(stackTrace).subList(1, insertPos));
-        res.add(null);
-        res.addAll(insertStack);
-        return res;
-      }
+    @Override
+    public int getRecursionDepth() {
+      return myRecursionDepth;
     }
   }
 
@@ -195,12 +248,13 @@ public class CaptureStorage {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
-  public static Object[][] getRelatedStack(Object key) {
-    CapturedStack stack = STORAGE.get(new WeakKey(key));
+  public static Object[][] getRelatedStack(Object key, int limit) {
+    //noinspection SuspiciousMethodCalls
+    CapturedStack stack = STORAGE.get(new HardKey(key));
     if (stack == null) {
       return null;
     }
-    List<StackTraceElement> stackTrace = stack.getStackTrace();
+    List<StackTraceElement> stackTrace = getStackTrace(stack, limit);
     Object[][] res = new Object[stackTrace.size()][];
     for (int i = 0; i < stackTrace.size(); i++) {
       StackTraceElement elem = stackTrace.get(i);
@@ -209,6 +263,28 @@ public class CaptureStorage {
       }
       else {
         res[i] = new Object[]{elem.getClassName(), elem.getFileName(), elem.getMethodName(), String.valueOf(elem.getLineNumber())};
+      }
+    }
+    return res;
+  }
+
+  private static ArrayList<StackTraceElement> getStackTrace(CapturedStack stack, int limit) {
+    ArrayList<StackTraceElement> res = new ArrayList<StackTraceElement>();
+    while (stack != null && res.size() <= limit) {
+      List<StackTraceElement> stackTrace = stack.getStackTrace();
+      if (stack instanceof DeepCapturedStack) {
+        InsertMatch match = ((DeepCapturedStack)stack).myInsertMatch;
+        if (match != null && match != InsertMatch.EMPTY) {
+          stackTrace = stackTrace.subList(0, stackTrace.size() - match.getDepth() + 2);
+          stack = match.myStack;
+        }
+      }
+      else {
+        stack = null;
+      }
+      res.addAll(stackTrace);
+      if (stack != null) {
+        res.add(null);
       }
     }
     return res;

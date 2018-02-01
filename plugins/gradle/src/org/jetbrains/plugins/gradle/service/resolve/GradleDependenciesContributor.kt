@@ -87,7 +87,7 @@ class GradleDependenciesContributor : GradleMethodContextContributor {
         }
 
         val returnClass = groovyPsiManager.createTypeByFQClassName(GRADLE_API_ARTIFACTS_DEPENDENCY, resolveScope) ?: return true
-        val wrappedBase = GrLightMethodBuilder(place.manager, "add").apply {
+        val wrappedBase = GrLightMethodBuilder(place.manager, methodName).apply {
           returnType = returnClass
           containingClass = psiClass
         }

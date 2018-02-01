@@ -14,7 +14,7 @@ public abstract class ConfigurableStatisticsService<T extends StatisticsConnecti
   public final StatisticsResult send() {
     final String serviceUrl = getConnectionService().getServiceUrl();
     if (serviceUrl == null) {
-      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR");
+      return new StatisticsResult(StatisticsResult.ResultCode.ERROR_IN_CONFIG, "ERROR: unknown Statistics Service URL.");
     }
 
     if (!getConnectionService().isTransmissionPermitted()) {
@@ -36,7 +36,7 @@ public abstract class ConfigurableStatisticsService<T extends StatisticsConnecti
     return new StatisticsNotification(groupDisplayId, listener);
   }
 
-  @Nullable
+  @NotNull
   // result: the content was sent.
   protected abstract String sendData();
 

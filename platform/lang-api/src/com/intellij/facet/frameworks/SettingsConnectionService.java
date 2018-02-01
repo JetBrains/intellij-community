@@ -79,7 +79,7 @@ public abstract class SettingsConnectionService {
           }
         }
         catch (JDOMException e) {
-          LOG.error(e);
+          LOG.info(e);
         }
         return settings;
       }, Collections.<String, String>emptyMap(), LOG);
@@ -93,7 +93,7 @@ public abstract class SettingsConnectionService {
 
   @Nullable
   protected String getSettingValue(@NotNull String attributeValue) {
-    if (myAttributesMap == null) {
+    if (myAttributesMap == null || myAttributesMap.isEmpty()) {
       myAttributesMap = readSettings(getAttributeNames());
     }
     return myAttributesMap != null ? myAttributesMap.get(attributeValue) : null;

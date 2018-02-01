@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
@@ -39,6 +40,7 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
+  @SuppressWarnings("unused")
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.codeStyle.autodetect.IndentOptionsDetectorImpl");
   private final PsiFile myFile;
   private final Project myProject;
@@ -77,7 +79,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   @NotNull
   public IndentOptions getIndentOptions() {
     IndentOptions indentOptions =
-      (IndentOptions)CodeStyleSettingsManager.getSettings(myProject).getIndentOptions(myFile.getFileType()).clone();
+      (IndentOptions)CodeStyle.getSettings(myFile).getIndentOptions(myFile.getFileType()).clone();
 
     IndentOptionsAdjuster adjuster = getIndentOptionsAdjuster();
     if (adjuster != null) {
@@ -93,7 +95,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
       return null;
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    CodeStyleSettings settings = CodeStyle.getSettings(myFile);
     FormattingModelBuilder modelBuilder = LanguageFormatting.INSTANCE.forContext(myFile);
     if (modelBuilder == null) return null;
 

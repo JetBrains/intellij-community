@@ -164,11 +164,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-16098
-  public void testWarningAboutAsyncAndAwaitInPy35() {
-    doTest(LanguageLevel.PYTHON35);
-  }
-
-  // PY-16098
   public void testWarningAboutAsyncAndAwaitInPy36() {
     doTest(LanguageLevel.PYTHON36);
   }

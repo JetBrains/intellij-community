@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.idea.Bombed;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Calendar;
 import java.util.Map;
 
 public class NewProjectSettingsTest extends CodeStyleTestCase {
@@ -66,6 +68,7 @@ public class NewProjectSettingsTest extends CodeStyleTestCase {
     manager.setMainProjectCodeStyle(null);
   }
 
+  @Bombed(month = Calendar.MARCH, day = 1, user = "Rustam Vishnyakov")
   public void testNonDefaultSettings() {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     CodeStyleSettings appSettings = CodeStyleSettingsManager.getInstance().getMainProjectCodeStyle();

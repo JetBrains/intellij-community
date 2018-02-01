@@ -324,28 +324,29 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyTargetExpression(PyTargetExpression node) {
       super.visitPyTargetExpression(node);
-      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+      warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
     @Override
     public void visitPyClass(PyClass node) {
       super.visitPyClass(node);
-      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+      warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
     @Override
     public void visitPyFunction(PyFunction node) {
       super.visitPyFunction(node);
-      warnAboutAsyncAndAwaitInPy35AndPy36(node);
+      warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
-    private void warnAboutAsyncAndAwaitInPy35AndPy36(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
+    private void warnAsyncAndAwaitAreBecomingKeywordsInPy37(@NotNull PsiNameIdentifierOwner nameIdentifierOwner) {
       final PsiElement nameIdentifier = nameIdentifierOwner.getNameIdentifier();
 
-      if (nameIdentifier != null && ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC)) {
-        registerOnFirstMatchingVersion(level -> LanguageLevel.PYTHON35.equals(level) || LanguageLevel.PYTHON36.equals(level),
-                                       "'async' and 'await' are not recommended to be used as variable, class, function or module names. " +
-                                       "They will become proper keywords in Python 3.7.",
+      if (nameIdentifier != null &&
+          ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC) &&
+          LanguageLevel.forElement(nameIdentifierOwner).isOlderThan(LanguageLevel.PYTHON37)) {
+        registerOnFirstMatchingVersion(level -> level.isAtLeast(LanguageLevel.PYTHON37),
+                                       "'async' and 'await' are keywords in Python 3.7 and newer",
                                        nameIdentifier,
                                        new PyRenameElementQuickFix());
       }

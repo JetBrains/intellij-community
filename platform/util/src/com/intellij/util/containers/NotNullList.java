@@ -37,13 +37,11 @@ public class NotNullList<E> extends ArrayList<E> {
     super(c);
   }
 
-  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public boolean add(@NotNull E e) {
     return super.add(e);
   }
 
-  @SuppressWarnings("RedundantMethodOverride")
   @Override
   public void add(int index, @NotNull E element) {
     super.add(index, element);

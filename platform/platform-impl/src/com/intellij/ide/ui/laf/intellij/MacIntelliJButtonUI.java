@@ -62,7 +62,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        float lw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
+        float lw = getLineWidth(g2);
         Insets i = c.getBorder().getBorderInsets(c); // ComboButton adds arrow width to the insets, so take the bare border.
 
         // Draw background
@@ -90,16 +90,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
                                                    h - lw*2 - (i.top + i.bottom),
                                                    ARC_SIZE - lw, ARC_SIZE - lw), false);
 
-        if (!b.isEnabled()) {
-          p = new GradientPaint(w/2, i.top, Gray.xD2, w/2, h - (i.top + i.bottom), Gray.xC3);
-        } else if (isDefaultButton(c)) {
-          p = IntelliJLaf.isGraphite() ?
-              new GradientPaint(w/2, i.top, new Color(0xa5a5ab), w/2, h - (i.top + i.bottom), new Color(0x7d7d83)) :
-              new GradientPaint(w/2, i.top, new Color(0x4ba0f8), w/2, h - (i.top + i.bottom), new Color(0x095eff));
-        } else {
-          p = new GradientPaint(w/2, i.top, Gray.xC9, w/2, h - (i.top + i.bottom), Gray.xAC);
-        }
-
+        p = getBorderPaint(c);
         g2.setPaint(p);
         g2.fill(outline);
 
@@ -108,6 +99,30 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.dispose();
       }
     }
+  }
+
+  public static float getLineWidth(Graphics2D g) {
+    return UIUtil.isRetina(g) ? 0.5f : 1.0f;
+  }
+
+  @SuppressWarnings("UseJBColor")
+  public static Paint getBorderPaint(JComponent c) {
+    int w = c.getWidth();
+    int h = c.getHeight();
+    Insets i = c.getBorder().getBorderInsets(c);
+    Paint p;
+    if (!c.isEnabled()) {
+      p = new GradientPaint(w / 2, i.top, Gray.xD2, w / 2, h - (i.top + i.bottom), Gray.xC3);
+    }
+    else if (isDefaultButton(c)) {
+      p = IntelliJLaf.isGraphite() ?
+          new GradientPaint(w / 2, i.top, new Color(0xa5a5ab), w / 2, h - (i.top + i.bottom), new Color(0x7d7d83)) :
+          new GradientPaint(w / 2, i.top, new Color(0x4ba0f8), w / 2, h - (i.top + i.bottom), new Color(0x095eff));
+    }
+    else {
+      p = new GradientPaint(w / 2, i.top, Gray.xC9, w / 2, h - (i.top + i.bottom), Gray.xAC);
+    }
+    return p;
   }
 
   @Override

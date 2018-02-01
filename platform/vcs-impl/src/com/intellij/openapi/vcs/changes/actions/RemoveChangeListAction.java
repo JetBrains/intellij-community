@@ -109,6 +109,11 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(lists);
 
+    // Can't remove last changelist
+    if (remainingLists.isEmpty()) {
+      return false;
+    }
+
     // don't ask "Which changelist to make active" if there is only one option anyway
     // unless there are some changes to be moved - give user a chance to cancel deletion
     if (remainingLists.size() == 1 && empty) {

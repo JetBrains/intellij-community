@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.ui.ColorPanel;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 
@@ -40,7 +41,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     if (c instanceof JTextField && c.getParent() instanceof ColorPanel) {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
-    Insets insets = JBUI.insets(4, 8).asUIResource();
+    Insets insets = JBUI.insets(5, 9).asUIResource();
     TextFieldWithPopupHandlerUI.updateBorderInsets(c, insets);
     return insets;
   }
@@ -66,7 +67,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        //JBInsets.removeFrom(r, JBUI.insets(1, 0));
+        JBInsets.removeFrom(r, JBUI.insets(1));
         g2.translate(r.x, r.y);
 
         Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
@@ -111,7 +112,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      //JBInsets.removeFrom(r, JBUI.insets(1, 0));
+      JBInsets.removeFrom(r, JBUI.insets(1));
       g2.translate(r.x, r.y);
 
       float arc = JBUI.scale(6f);

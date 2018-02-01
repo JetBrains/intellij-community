@@ -5,6 +5,10 @@ import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageEventLogger;
+import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsDifferenceSender;
+import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -33,6 +37,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
   private State myState = new State();
 
   public static void trigger(@NotNull @NonNls String feature) {
+    FeatureUsageEventLogger.INSTANCE.log("feature-usage-stats", feature);
     getInstance().doTrigger(feature);
   }
 
@@ -78,6 +83,20 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     @NotNull
     public GroupDescriptor getGroupId() {
       return GROUP;
+    }
+  }
+
+  final static class FUSCollector extends ApplicationUsagesCollector implements FUStatisticsDifferenceSender {
+     @NotNull
+    public Set<UsageDescriptor> getUsages() {
+      State state = getInstance().getState();
+      assert state != null;
+      return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
+    }
+
+    @NotNull
+    public String getGroupId() {
+      return "statistics.featureTrigger";
     }
   }
 }

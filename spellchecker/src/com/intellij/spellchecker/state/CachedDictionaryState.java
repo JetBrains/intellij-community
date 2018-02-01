@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import org.jetbrains.annotations.NotNull;
+import com.intellij.util.EventDispatcher;
 
 @State(
   name = "CachedDictionaryState",
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 )
 public class CachedDictionaryState extends DictionaryState implements PersistentStateComponent<DictionaryState> {
   public static final String DEFAULT_NAME = "cached";
+  private final EventDispatcher<DictionaryStateListener> myDictListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener.class);
 
   public CachedDictionaryState() {
     name = DEFAULT_NAME;
@@ -30,5 +32,10 @@ public class CachedDictionaryState extends DictionaryState implements Persistent
       state.name = DEFAULT_NAME;
     }
     super.loadState(state);
+    myDictListenerEventDispatcher.getMulticaster().dictChanged(getDictionary());
+  }
+
+  public void addCachedDictListener(DictionaryStateListener listener) {
+    myDictListenerEventDispatcher.addListener(listener);
   }
 }

@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
@@ -521,7 +520,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         try {
           final DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                               oldFileNode.getText());
-          DocumentCommitThread.doActualPsiChange(oldFile, diffLog);
+          diffLog.doActualPsiChange(oldFile);
         }
         finally {
           DebugUtil.finishPsiModification();
@@ -549,7 +548,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
    *   (see call to {@link #parseFile(Language, Language, DocumentWindowImpl, VirtualFile, DocumentEx, PsiFile, Project, CharSequence, List, StringBuilder, String)} )
    * - feed two injections, the old and the new created fake to the standard tree diff
    *   (see call to {@link BlockSupportImpl#mergeTrees(PsiFileImpl, ASTNode, ASTNode, ProgressIndicator, CharSequence)} )
-   * - return continuation which performs actual PSI replace, just like {@link DocumentCommitThread#doCommit(DocumentCommitThread.CommitTask, PsiFile, FileASTNode, ProperTextRange, List)} does
+   * - return continuation which performs actual PSI replace, just like {@link com.intellij.psi.impl.DocumentCommitThread#doCommit(com.intellij.psi.impl.DocumentCommitThread.CommitTask, PsiFile, FileASTNode, ProperTextRange, List)} does
    *   {@code null} means we failed to reparse and will have to kill the injection.
    * </pre>
    */
@@ -626,7 +625,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         oldInjectedPsiViewProvider.performNonPhysically(() -> {
           DebugUtil.startPsiModification("injected tree diff");
           try {
-            DocumentCommitThread.doActualPsiChange(oldInjectedPsi, diffLog);
+            diffLog.doActualPsiChange(oldInjectedPsi);
 
             // create new shreds after commit is complete because otherwise the range markers will be changed in MarkerCache.updateMarkers
             Place newPlace = new Place();

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.extractor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
@@ -86,7 +87,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       return;
     }
 
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings settings = CodeStyle.getSettings(file);
 
     final CodeStyleDeriveProcessor genProcessor = new GenProcessor(extractor);
     final PsiFile finalFile = file;

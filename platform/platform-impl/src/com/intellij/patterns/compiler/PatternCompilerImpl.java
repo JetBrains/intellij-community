@@ -16,6 +16,8 @@
 
 package com.intellij.patterns.compiler;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringHash;
@@ -58,9 +60,20 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
       return compileElementPattern(text);
     }
     catch (Exception ex) {
-      final Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-      LOG.warn("error processing place: " + displayName + " [" + text + "]", cause);
+      onCompilationFailed(displayName, text, ex);
       return new LazyPresentablePattern<>(new Node(ERROR_NODE, text, null), Collections.emptySet());
+    }
+  }
+
+  static void onCompilationFailed(String displayName, String text, @NotNull Throwable ex) {
+    Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+    String message = displayName == null ? text : displayName + ": " + text;
+    Application app = ApplicationManager.getApplication();
+    if (app != null && app.isUnitTestMode()) {
+      LOG.error(message, cause);
+    }
+    else {
+      LOG.warn(message, cause);
     }
   }
 
@@ -605,7 +618,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
           result = compile();
         }
         catch (Throwable throwable) {
-          LOG.warn(toString(), throwable);
+          onCompilationFailed(null, toString(), throwable);
           result = ALWAYS_FALSE;
         }
         //noinspection unchecked

@@ -84,7 +84,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return YAMLBundle.message("YamlMissingKeysInspectionBase.add.missing.keys.quickfix.name", new Object[]{});
+      return YAMLBundle.message("YamlMissingKeysInspectionBase.add.missing.keys.quickfix.name");
     }
 
     @Override

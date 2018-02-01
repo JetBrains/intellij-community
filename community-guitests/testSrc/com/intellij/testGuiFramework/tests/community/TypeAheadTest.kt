@@ -10,8 +10,10 @@ import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
+import com.intellij.testGuiFramework.util.Key
 import com.intellij.ui.popup.PopupFactoryImpl
-import org.fest.swing.timing.Pause
+import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.timing.Pause.pause
 import org.fest.swing.timing.Timeout
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -21,25 +23,25 @@ class TypeAheadTest : GuiTestCase() {
 
   @Test
   fun testProjectCreate() {
-    createProject()
+    CommunityProjectCreator.createCommandLineProject("type-ahead-problem")
     ideFrame {
       //a pause to wait when an (Edit Configurations...) action will be enabled
-      Pause.pause(5000)
+      pause(5000)
       waitForBackgroundTasksToFinish()
       openRunDebugConfiguration()
       dialog("Run/Debug Configurations") {
         addJUnitConfiguration()
         for (i in 0..20) {
           combobox("Test kind:").selectItem("Category")
-          Pause.pause(2000)
+          pause(2000)
           combobox("Test kind:").selectItem("Class")
-          Pause.pause(2000)
+          pause(2000)
           combobox("Test kind:").selectItem("Method")
-          Pause.pause(2000)
+          pause(2000)
         }
         button("OK").click()
       }
-      Pause.pause(30000)
+      pause(30000)
     }
   }
 
@@ -51,21 +53,6 @@ class TypeAheadTest : GuiTestCase() {
     popupClick("JUnit")
   }
 
-  private fun GuiTestCase.createProject() {
-    welcomeFrame {
-      actionLink("Create New Project").click()
-      GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
-      dialog("New Project") {
-        button("Next").click()
-        checkbox("Create project from template").click()
-        jList("Command Line App").clickItem("Command Line App")
-        button("Next").click()
-        typeText("typeAheadProblem")
-        button("Finish").click()
-      }
-    }
-  }
-
   private fun IdeFrameFixture.openRunDebugConfiguration() {
     val attempts = 5
     val timeoutInterval = 2L
@@ -74,19 +61,39 @@ class TypeAheadTest : GuiTestCase() {
       actionButton("Run").waitUntilEnabledAndShowing()
       for (i in 0..attempts) {
         button("Main").click()
-        if (ensureEditConfigurationsIsEnabled()) break;
+        if (ensureEditConfigurationsIsEnabled()) break
         else if (i == attempts - 1) throw Exception("Action 'Edit Configurations' is still disabled")
-        Pause.pause(timeoutInterval, TimeUnit.SECONDS)
+        pause(timeoutInterval, TimeUnit.SECONDS)
+        shortcut(Key.ESCAPE)
       }
       popupClick("Edit Configurations...")
+      //check that we clicked to edit configurations after it become enabled
+      if (!ensureJBListPopupFixtureIsGone()) {
+        shortcut(Key.ESCAPE)
+        button("Main").click()
+        popupClick("Edit Configurations...")
+      }
     }
   }
 
+  private fun IdeFrameFixture.ensureJBListPopupFixtureIsGone(timeoutInMs: Long = 100): Boolean {
+    val (jListFixture, index) = try {
+      getJBListPopupFixtureAndItem(timeoutInMs)
+    }
+    catch (cle: ComponentLookupException) {
+      return true
+    }
+    return !jListFixture.target().isShowing
+  }
+
   private fun IdeFrameFixture.ensureEditConfigurationsIsEnabled(): Boolean {
-    val (jListFixture, index) = JBListPopupFixture.getJListFixtureAndItemToClick("Edit Configurations...", false, null, this.robot(),
-                                                                                 Timeout.timeout(1000))
+    val (jListFixture, index) = getJBListPopupFixtureAndItem()
     val actionItem = jListFixture.target().model.getElementAt(index) as PopupFactoryImpl.ActionItem
     return actionItem.action.templatePresentation.isEnabled
   }
+
+  private fun IdeFrameFixture.getJBListPopupFixtureAndItem(timeoutInMs: Long = 1000) =
+    JBListPopupFixture.getJListFixtureAndItemToClick("Edit Configurations...", false, null, this.robot(),
+                                                     Timeout.timeout(timeoutInMs))
 
 }

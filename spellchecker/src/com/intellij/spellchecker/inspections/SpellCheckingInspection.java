@@ -137,7 +137,7 @@ public class SpellCheckingInspection extends LocalInspectionTool {
 
     SpellCheckerQuickFix[] fixes = strategy != null
                                    ? strategy.getRegularFixes(element, offset, textRange, useRename, wordWithTypo)
-                                   : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo);
+                                   : SpellcheckingStrategy.getDefaultRegularFixes(useRename, wordWithTypo, element);
 
     final ProblemDescriptor problemDescriptor = createProblemDescriptor(element, offset, textRange, holder, fixes, true, wordWithTypo);
     holder.registerProblem(problemDescriptor);

@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -50,10 +51,24 @@ public class FSContent {
     return Objects.hash(product, user);
   }
 
-  public final String asJsonString(){
+  public final String asJsonString() {
     return new GsonBuilder().create().toJson(this, FSContent.class);
   }
-  public static FSContent fromJson(@NotNull String gson){
+
+  public static FSContent fromJson(@NotNull String gson) {
     return new GsonBuilder().create().fromJson(gson, FSContent.class);
+  }
+
+  public void removeEmptyData() {
+    if (sessions != null) {
+      FSSession[] toArray = sessions.toArray(new FSSession[0]);
+      for (FSSession session : toArray) {
+        session.removeEmptyData();
+        List<FSGroup> groups = session.getGroups();
+        if (groups == null || groups.isEmpty()) {
+          sessions.remove(session);
+        }
+      }
+    }
   }
 }

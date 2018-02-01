@@ -391,6 +391,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(false, false);
   }
 
+  // PY-28247
+  public void testAsyncAndAwaitAsIdentifiersIn37() {
+    doTest(LanguageLevel.PYTHON37, false, false);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();

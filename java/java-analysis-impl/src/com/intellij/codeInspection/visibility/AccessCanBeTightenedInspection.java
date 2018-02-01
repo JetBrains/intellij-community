@@ -10,9 +10,11 @@ import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
@@ -255,7 +257,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       PsiClass innerClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
       boolean isAbstractMember = member.hasModifierProperty(PsiModifier.ABSTRACT);
       if (memberClass != null && PsiTreeUtil.isAncestor(innerClass, memberClass, false) ||
-          innerClass != null && PsiTreeUtil.isAncestor(memberClass, innerClass, false) && !innerClass.hasModifierProperty(PsiModifier.STATIC)) {
+          innerClass != null && PsiTreeUtil.isAncestor(memberClass, innerClass, false)) {
         // access from the same file can be via private
         // except when used in annotation:
         // @Ann(value = C.VAL) class C { public static final String VAL = "xx"; }
@@ -301,7 +303,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
 
     private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
       PsiExpression qualifier = getQualifier(element);
-      if (qualifier == null) return false;
+      if (qualifier == null) {
+        PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, Condition.TRUE, true);
+        return enclosingInstance != null && enclosingInstance != memberClass;
+      }
       PsiClass qClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
       return qClass != null && qClass.isInheritor(memberClass, true);
     }

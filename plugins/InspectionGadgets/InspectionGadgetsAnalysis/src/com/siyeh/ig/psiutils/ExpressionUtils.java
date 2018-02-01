@@ -54,6 +54,9 @@ public class ExpressionUtils {
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyIterator", "emptyMap", "emptySortedMap",
                            "emptySortedSet", "emptyListIterator").parameterCount(0);
 
+  private static final CallMatcher GET_OR_DEFAULT =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "getOrDefault").parameterCount(2);
+
   private ExpressionUtils() {}
 
   @Nullable
@@ -229,8 +232,7 @@ public class ExpressionUtils {
 
   /**
    * Returns stream of sub-expressions of supplied expression which could be equal (by ==) to resulting
-   * value of the expression. The expressions in returned stream are guaranteed not to be each other ancestors.
-   * Also the expression value is guaranteed to be equal to one of returned sub-expressions.
+   * value of the expression. The expression value is guaranteed to be equal to one of returned sub-expressions.
    *
    * <p>
    * E.g. for {@code ((a) ? (Foo)b : (c))} the stream will contain b and c.
@@ -261,6 +263,12 @@ public class ExpressionUtils {
           }
         }
         return e;
+      })
+      .flatMap(e -> {
+        if(e instanceof PsiMethodCallExpression && GET_OR_DEFAULT.matches(e)) {
+          return StreamEx.of(e, ((PsiMethodCallExpression)e).getArgumentList().getExpressions()[1]);
+        }
+        return StreamEx.of(e);
       });
   }
 

@@ -90,7 +90,7 @@ public class ResizeableMappedFile implements Forceable {
       suggestedSize = Math.max(realSize + 1, 2); // suggestedSize should increase with int multiplication on 1.625 factor
 
       while (max > suggestedSize) {
-        long newSuggestedSize = (suggestedSize * 13) >> 3;
+        long newSuggestedSize = suggestedSize * 13 >> 3;
         if (newSuggestedSize >= Integer.MAX_VALUE) {
           suggestedSize += suggestedSize / 5;
         }
@@ -101,7 +101,7 @@ public class ResizeableMappedFile implements Forceable {
 
       int roundFactor = myRoundFactor;
       if (suggestedSize % roundFactor != 0) {
-        suggestedSize = ((suggestedSize / roundFactor) + 1) * roundFactor;
+        suggestedSize = (suggestedSize / roundFactor + 1) * roundFactor;
       }
     }
 
@@ -129,14 +129,16 @@ public class ResizeableMappedFile implements Forceable {
         public DataOutputStream execute(boolean lastAttempt) throws IOException {
           try {
             return new DataOutputStream(new FileOutputStream(lengthFile));
-         } catch (FileNotFoundException ex) {
+          }
+          catch (FileNotFoundException ex) {
             final File parentFile = lengthFile.getParentFile();
             
             if (!parentFile.exists()) {
               if (!parentWasCreated) {
                 parentFile.mkdirs();
                 parentWasCreated = true;
-              } else {
+              }
+              else {
                 throw new IOException("Parent file still doesn't exist:" + lengthFile);
               }
             }

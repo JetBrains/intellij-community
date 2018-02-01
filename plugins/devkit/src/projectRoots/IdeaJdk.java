@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -107,7 +108,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    if (isFromIDEAProject(path)) {
+    if (PsiUtil.isPathToIntelliJIdeaSources(path)) {
       return true;
     }
     File home = new File(path);
@@ -123,13 +124,6 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     f = new File(libDir, "openapi.jar");
     if (f.exists()) return f;
     return null;
-  }
-
-  public static boolean isFromIDEAProject(String path) {
-    File ultimate = new File(path, "idea.iml");
-    File community = new File(path, "community-main.iml");
-    return ultimate.exists() && ultimate.isFile() ||
-           community.exists() && community.isFile();
   }
 
   @Override
@@ -150,7 +144,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    if (isFromIDEAProject(sdkHome)) return "Local IDEA [" + sdkHome + "]";
+    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
@@ -281,7 +275,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Nullable
   private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
-    if (isFromIDEAProject(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
+    if (PsiUtil.isPathToIntelliJIdeaSources(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
     File apiJar = getPlatformApiJar(ideaSdk.getHomePath());
     return apiJar != null ? ClsParsingUtil.getJdkVersionByBytecode(getIdeaClassFileVersion(apiJar)) : null;
   }
@@ -308,7 +302,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static boolean setupSdkPaths(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
-    if (isFromIDEAProject(sdkHome)) {
+    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) {
       try {
         ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
           setupSdkPathsFromIDEAProject(sdk, sdkModificator, sdkModel);

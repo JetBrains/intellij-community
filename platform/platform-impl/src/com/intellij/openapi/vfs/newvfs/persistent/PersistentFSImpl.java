@@ -241,7 +241,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.readContent(getFileId(file));
   }
 
-  @Nullable
+  @NotNull
   private static DataInputStream readContentById(int contentId) {
     return FSRecords.readContentById(contentId);
   }
@@ -541,15 +541,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     catch (IOException e) {
       FSRecords.handleError(e);
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
   @NotNull
   public byte[] contentsToByteArray(int contentId) throws IOException {
     final DataInputStream stream = readContentById(contentId);
-    assert stream != null : contentId;
     return FileUtil.loadBytes(stream);
   }
 

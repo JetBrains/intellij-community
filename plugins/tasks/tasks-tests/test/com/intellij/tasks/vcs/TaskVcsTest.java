@@ -333,7 +333,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
   private List<Change> addChanges(@NotNull LocalChangeList list) {
     VirtualFile file = myFixture.getTempDirFixture().createFile("Test.txt");
     FilePath path = VcsUtil.getFilePath(file);
-    Change change = new Change(new SimpleContentRevision("", path, ""),
+    Change change = new Change(null,
                                new CurrentContentRevision(path));
 
     List<Change> changes = Collections.singletonList(change);

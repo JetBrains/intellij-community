@@ -57,7 +57,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
@@ -213,7 +212,7 @@ public class CompileDriver {
     for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
       List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
         () -> myProject.isDisposed() ? Collections.emptyList()
-                                     : provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
+                                     : provider.getBuildTargetScopes(scope, myProject, forceBuild));
       scopes = CompileScopeUtil.mergeScopes(scopes, providerScopes);
     }
     return scopes;

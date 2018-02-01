@@ -34,6 +34,7 @@ public class CaptureSettingsProvider {
 
     addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY);
     addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
+    addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY);
 
     addCapture("java/util/concurrent/CompletableFuture", "supplyAsync", FIRST_PARAM);
     AgentInsertPoint point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply",

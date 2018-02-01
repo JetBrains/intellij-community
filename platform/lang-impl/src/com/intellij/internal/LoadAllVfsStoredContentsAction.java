@@ -19,7 +19,6 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,11 +30,11 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -90,12 +89,14 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
       return true;
     }
     try {
-      DataInputStream stream = FSRecords.readContent(file.getId());
-      if (stream == null) return true;
-      byte[] bytes = FileUtil.loadBytes(stream);
-      totalSize.addAndGet(bytes.length);
-      count.incrementAndGet();
-      ProgressManager.getInstance().getProgressIndicator().setText(file.getPresentableUrl());
+      try (InputStream stream = PersistentFS.getInstance().getInputStream(file)) {
+        // check if it's really cached in VFS
+        if (!(stream instanceof DataInputStream)) return true;
+        byte[] bytes = FileUtil.loadBytes(stream);
+        totalSize.addAndGet(bytes.length);
+        count.incrementAndGet();
+        ProgressManager.getInstance().getProgressIndicator().setText(file.getPresentableUrl());
+      }
     }
     catch (IOException e) {
       LOG.error(e);

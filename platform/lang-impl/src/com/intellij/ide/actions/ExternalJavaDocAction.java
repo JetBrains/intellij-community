@@ -21,6 +21,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationHandler;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
@@ -152,7 +153,7 @@ public class ExternalJavaDocAction extends AnAction {
     boolean enabled;
     if (provider instanceof ExternalDocumentationProvider) {
       final ExternalDocumentationProvider edProvider = (ExternalDocumentationProvider)provider;
-      enabled = edProvider.hasDocumentationFor(element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
+      enabled = CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement) || edProvider.canPromptToConfigureDocumentation(element);
     }
     else {
       final List<String> urls = provider.getUrlFor(element, originalElement);

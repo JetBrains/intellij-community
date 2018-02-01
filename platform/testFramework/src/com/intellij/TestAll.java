@@ -89,6 +89,7 @@ public class TestAll implements Test {
   private TestRecorder myTestRecorder;
   
   private static final List<Throwable> outClassLoadingProblems = new ArrayList<>();
+  private static JUnit4TestAdapterCache ourUnit4TestAdapterCache;
 
   public TestAll(String rootPackage) throws Throwable {
     this(rootPackage, getClassRoots());
@@ -406,7 +407,7 @@ public class TestAll implements Test {
       if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass)) {
         boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
-        if (runEverything) return new JUnit4TestAdapter(testCaseClass);
+        if (runEverything) return createJUnit4Adapter(testCaseClass);
 
         final RunWith runWithAnnotation = testCaseClass.getAnnotation(RunWith.class);
         if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
@@ -415,11 +416,11 @@ public class TestAll implements Test {
             return null;
           }
           else {
-            return new JUnit4TestAdapter(testCaseClass);
+            return createJUnit4Adapter(testCaseClass);
           }
         }
 
-        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
+        JUnit4TestAdapter adapter = createJUnit4Adapter(testCaseClass);
         try {
           adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
         }
@@ -475,6 +476,24 @@ public class TestAll implements Test {
       t.printStackTrace(System.err);
       return null;
     }
+  }
+
+  @NotNull
+  private static JUnit4TestAdapter createJUnit4Adapter(@NotNull Class<?> testCaseClass) {
+    return new JUnit4TestAdapter(testCaseClass, getJUnit4TestAdapterCache());
+  }
+
+  private static JUnit4TestAdapterCache getJUnit4TestAdapterCache() {
+    if (ourUnit4TestAdapterCache == null) {
+      try {
+        ourUnit4TestAdapterCache = (JUnit4TestAdapterCache)Class.forName("org.apache.tools.ant.taskdefs.optional.junit.CustomJUnit4TestAdapterCache").getMethod("getInstance").invoke(null);
+      }
+      catch (Exception e) {
+        System.out.println("Failed to create CustomJUnit4TestAdapterCache, the default JUnit4TestAdapterCache will be used and ignored tests won't be properly reported: " + e.toString());
+        ourUnit4TestAdapterCache = JUnit4TestAdapterCache.getDefault();
+      }
+    }
+    return ourUnit4TestAdapterCache;
   }
 
   @Nullable
