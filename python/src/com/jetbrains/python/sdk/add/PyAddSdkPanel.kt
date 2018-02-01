@@ -19,7 +19,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.io.File
@@ -56,13 +55,6 @@ abstract class PyAddSdkPanel : JPanel() {
       }
       return ValidationInfo(message, field)
     }
-
-    @JvmStatic protected fun validateAnacondaPresense(component: JComponent?): ValidationInfo? =
-      when {
-        PyCondaPackageService.getSystemCondaExecutable() == null ->
-          ValidationInfo("Anaconda installation is not found", component)
-        else -> null
-      }
 
     @JvmStatic
     protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox): ValidationInfo? =
