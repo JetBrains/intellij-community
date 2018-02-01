@@ -36,7 +36,7 @@ public class PyEduStackFrame extends PyStackFrame {
     }
     final VirtualFile file = myPosition.getFile();
     String frameName = myFrameInfo.getName();
-    component.setIcon(MODULE.equals(frameName) ? PythonPsiApiIcons.Python.PythonFile : PythonEducationalIcons.Field);
+    component.setIcon(MODULE.equals(frameName) ? PythonPsiApiIcons.PythonFile : PythonEducationalIcons.Field);
     if (MODULE.equals(frameName)) {
       component.append(GLOBAL_FRAME, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append(" (" + file.getName() + ")", getGrayAttributes(SimpleTextAttributes.REGULAR_ATTRIBUTES));

@@ -75,7 +75,7 @@ public class PythonFileType extends LanguageFileType {
 
   @NotNull
   public Icon getIcon() {
-    return PythonPsiApiIcons.Python.PythonFile;
+    return PythonPsiApiIcons.PythonFile;
   }
 
   @Override
