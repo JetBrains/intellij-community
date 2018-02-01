@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
@@ -1300,6 +1301,11 @@ public class JBUI {
         return tabSelected ? getColor("ToolWindow.header.closeButton.background", 0xB9B9B9)
                            : headerBackground(tabActive);
       }
+
+      public static Icon closeTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
+                       : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
+      }
     }
 
     public static class Label {
@@ -1326,5 +1332,9 @@ public class JBUI {
   private static Color getColor(String propertyName, int defaultColor) {
     Color color = UIManager.getColor(propertyName);
     return color == null ? new Color(defaultColor) : color;
+  }
+  private static Icon getIcon(String propertyName, Icon defaultIcon) {
+    Icon icon = UIManager.getIcon(propertyName);
+    return icon == null ? defaultIcon : icon;
   }
 }
