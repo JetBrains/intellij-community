@@ -18,7 +18,7 @@ import com.intellij.util.ObjectUtils.consumeIfCast
 /**
  * Created by Nikita.Skvortsov
  */
-class RunConfigurationHandler: ConfigurationHandler {
+class RunConfigurationHandler : ConfigurationHandler {
 
   companion object {
     val LOG = Logger.getInstance(RunConfigurationHandler::class.java)
@@ -26,76 +26,66 @@ class RunConfigurationHandler: ConfigurationHandler {
 
   private fun Any?.isTrue(): Boolean = this != null && this is Boolean && this
 
-  override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) { }
+  override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {}
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    configuration.eachRunConfiguration(RunManager.getInstance(project),
-                                       { importer, runConfiguration, externalCfg ->
-                                         importer.process(project, runConfiguration, externalCfg, modelsProvider)
-                                       })
-  }
-
-  private fun ConfigurationData.eachRunConfiguration(runManager: RunManager, visit: (RunConfigurationImporter, RunConfiguration, Map<String, *>) -> Unit) {
-    val runCfgMap = find("runConfigurations")
-    val runManagerEx = runManager as RunManagerEx
+    val runCfgMap = configuration.find("runConfigurations")
+    val runManagerEx = RunManagerEx.getInstanceEx(project)
 
     if (runCfgMap !is List<*>) return
 
-    runCfgMap.sortedBy { !((it as? Map<*,*>)?.get("defaults").isTrue()) }.forEach { cfg ->
-      if (cfg !is Map<*, *>) {
-        LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
-        return@forEach
-      }
+    runCfgMap
+      .filterIsInstance<Map<*, *>>()
+      .sortedByDescending { it["defaults"].isTrue() }
+      .forEach { cfg ->
 
-      val name = cfg["name"] as? String ?: ""
-
-      val typeName = cfg["type"] as? String
-      if (typeName == null) {
-        LOG.warn("Missing type for run configuration: '${name}', skipping")
-        return@forEach
-      }
-
-      val importer = RunConfigImporterExtensionManager.handlerForType(typeName)
-      if (importer == null) {
-        LOG.warn("No importers for run configuration '${name}' with type '$typeName', skipping")
-        return@forEach
-      }
-
-      val isDefaults = cfg["defaults"].isTrue()
-
-      val runnerAndConfigurationSettings = if (isDefaults) {
-        runManagerEx.getConfigurationTemplate(importer.configurationFactory)
-      }
-      else {
-        runManagerEx.createConfiguration(name, importer.configurationFactory)
-      }
-
-      try {
-        visit(importer, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>)
-
-        if (!isDefaults) {
-          runManagerEx.addConfiguration(runnerAndConfigurationSettings)
+        val name = cfg["name"] as? String ?: ""
+        val typeName = cfg["type"] as? String
+        if (typeName == null) {
+          LOG.warn("Missing type for run configuration: '${name}', skipping")
+          return@forEach
         }
 
-        consumeIfCast(cfg["beforeRun"], List::class.java) {
-          // TODO add extension point
-          it.filterIsInstance(Map::class.java)
-            .firstOrNull { it["id"] == "Make" }
-            ?.let { cfg ->
-              val enabled = (cfg["enabled"] as? Boolean) ?: true
-              if (!enabled) {
-                val filtered = runManagerEx
-                  .getBeforeRunTasks(runnerAndConfigurationSettings.configuration)
-                  .filterNot { it.providerId == CompileStepBeforeRun.ID }
-                runManagerEx.setBeforeRunTasks(runnerAndConfigurationSettings.configuration, filtered)
+        val importer = RunConfigImporterExtensionManager.handlerForType(typeName)
+        if (importer == null) {
+          LOG.warn("No importers for run configuration '${name}' with type '$typeName', skipping")
+          return@forEach
+        }
+
+        val isDefaults = cfg["defaults"].isTrue()
+
+        val runnerAndConfigurationSettings = if (isDefaults) {
+          runManagerEx.getConfigurationTemplate(importer.configurationFactory)
+        }
+        else {
+          runManagerEx.createConfiguration(name, importer.configurationFactory)
+        }
+
+        try {
+          importer.process(project, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>, modelsProvider)
+          if (!isDefaults) {
+            runManagerEx.addConfiguration(runnerAndConfigurationSettings)
+          }
+
+          consumeIfCast(cfg["beforeRun"], List::class.java) {
+            // TODO add extension point
+            it.filterIsInstance(Map::class.java)
+              .firstOrNull { it["id"] == "Make" }
+              ?.let { cfg ->
+                val enabled = (cfg["enabled"] as? Boolean) ?: true
+                if (!enabled) {
+                  val filtered = runManagerEx
+                    .getBeforeRunTasks(runnerAndConfigurationSettings.configuration)
+                    .filterNot { it.providerId == CompileStepBeforeRun.ID }
+                  runManagerEx.setBeforeRunTasks(runnerAndConfigurationSettings.configuration, filtered)
+                }
               }
-            }
+          }
         }
-
-      } catch (e: Exception) {
-        LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
+        catch (e: Exception) {
+          LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
+        }
       }
-    }
   }
 }
 
