@@ -4252,8 +4252,8 @@ public class UIUtil {
     return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 
-  public static boolean isHelpButton(JComponent button) {
-    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
+  public static boolean isHelpButton(Component button) {
+    return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
   }
 
   public static void typeAheadUntilFocused(InputEvent event, Component component) {

@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -43,7 +44,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     JComponent c = getComponent();
     return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
            UIUtil.getParentOfType(JSpinner.class, c) != null ?
-            JBUI.scale(18) : JBUI.scale(16) + i.top + i.bottom;
+            JBUI.scale(22) : JBUI.scale(20) + i.top + i.bottom;
   }
 
   @Override
@@ -88,12 +89,14 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   protected void paintDarculaBackground(Graphics g, JTextComponent component) {
     Graphics2D g2 = (Graphics2D)g.create();
+    Rectangle r = new Rectangle(component.getSize());
+    JBInsets.removeFrom(r, JBUI.insets(1));
+
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      Rectangle r = new Rectangle(component.getWidth(), component.getHeight());
       g2.translate(r.x, r.y);
 
       float arc = isSearchField(component) ? JBUI.scale(6f) : 0.0f;

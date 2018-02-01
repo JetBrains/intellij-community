@@ -1,14 +1,10 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-package com.intellij.ide.ui.laf.darcula
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.bw
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.lw
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getTextColor
-import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.scale
@@ -16,7 +12,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
-import java.awt.geom.Line2D
+import java.awt.geom.Rectangle2D
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.border.Border
@@ -59,7 +55,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
 
     g.color = if (b.isEnabled) getTextColor(b) else getDisabledTextColor()
-    g.fill(DarculaComboBoxUI.getArrowShape(b.width, b.height))
+    g.fill(DarculaComboBoxUI.getArrowShape(b))
   }
 
   override fun configureArrowButton() = super.configureArrowButton().also { arrowButton.isOpaque = false }
@@ -82,11 +78,11 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   }
 
   protected open fun paintSeparator(g: Graphics2D, c: JComponent) {
-    val yOffset = bw() + lw(g)
+    val yOffset = bw() + lw(g) + scale(1)
     val x = mainButton.width.toFloat()
 
-    g.color = (mainButton.border as DarculaButtonPainter).borderColor
-    g.draw(Line2D.Float(x, yOffset, x, mainButton.height - yOffset - lw(g)))
+    g.color = (mainButton.border as DarculaButtonPainter).getBorderColor(c)
+    g.fill(Rectangle2D.Float(x, yOffset, lw(g), mainButton.height - yOffset * 2))
   }
 
   override fun updateOptions() = super.updateOptions().also {
