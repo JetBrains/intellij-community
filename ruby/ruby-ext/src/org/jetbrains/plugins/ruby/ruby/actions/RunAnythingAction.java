@@ -266,7 +266,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (clickCount > 1 && clickCount % 2 == 0 || tryGetSettingsModel() != null) {
+        if (clickCount > 1 && clickCount % 2 == 0 || myList.getModel() instanceof RunAnythingSettingsModel) {
           event.consume();
           final int i = myList.locationToIndex(event.getPoint());
           if (i != -1) {
@@ -389,7 +389,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     if (index != -1) {
 
-      final RunAnythingSearchListModel model = tryGetSearchingModel(myList);
+      final RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model != null) {
         if (isMoreItem(index)) {
           RunAnythingGroup.WidgetID wid = RunAnythingGroup.findWidget(index);
@@ -502,19 +502,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private boolean isMoreItem(int index) {
-    return tryGetSearchingModel(myList) != null && RunAnythingGroup.isMoreIndex(index);
+    return getSearchingModel(myList) != null && RunAnythingGroup.isMoreIndex(index);
   }
 
   @Nullable
-  public static RunAnythingSearchListModel tryGetSearchingModel(@NotNull JBList list) {
+  public static RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
     ListModel model = list.getModel();
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
-  }
-
-  @Nullable
-  private RunAnythingSettingsModel tryGetSettingsModel() {
-    ListModel model = myList.getModel();
-    return model instanceof RunAnythingSettingsModel ? (RunAnythingSettingsModel)model : null;
   }
 
   private void rebuildList(final String pattern) {
@@ -690,7 +684,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         updateAdText();
 
         Object selectedValue = myList.getSelectedValue();
-        if (selectedValue == null || tryGetSearchingModel(myList) == null) return;
+        if (selectedValue == null || getSearchingModel(myList) == null) return;
 
         String lastInput = myTextField.getText();
         myIsItemSelected = true;
@@ -876,7 +870,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     DumbAwareAction.create(e -> {
       //todo
-      RunAnythingSearchListModel model = tryGetSearchingModel(myList);
+      RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model == null) return;
 
       Object selectedValue = myList.getSelectedValue();
@@ -981,7 +975,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         bg = cmp.getBackground();
       }
       myMainPanel.removeAll();
-      RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
+      RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model != null) {
         String title = RunAnythingGroup.getTitle(index);
         if (title != null) {
@@ -1010,7 +1004,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     public void recalculateWidth() {
-      RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
+      RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model == null) return;
 
       myTitle.setIcon(EmptyIcon.ICON_16);
@@ -1042,7 +1036,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myProject = project;
       myModule = getModule();
       myPattern = pattern;
-      RunAnythingSearchListModel model = tryGetSearchingModel(myList);
+      RunAnythingSearchListModel model = getSearchingModel(myList);
       myListModel = reuseModel ? model != null ? model : new RunAnythingSearchListModel() : new RunAnythingSearchListModel();
     }
 
@@ -1056,7 +1050,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
           myList.getEmptyText().setText("Searching...");
 
-          if (tryGetSearchingModel(myList) != null) {
+          if (getSearchingModel(myList) != null) {
             //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
