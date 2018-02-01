@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -20,12 +22,15 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -72,7 +77,7 @@ public class CommitPanel extends JBPanel {
     myContainingBranchesPanel = new BranchesPanel();
 
     metadataPanel.setOpaque(false);
-    
+
     myMessagePanel.setBorder(JBUI.Borders.empty(EXTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, SIDE_BORDER));
     myHashAndAuthorPanel.setBorder(JBUI.Borders.empty());
     metadataPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER));
@@ -260,6 +265,17 @@ public class CommitPanel extends JBPanel {
     public RootPanel(@NotNull JComponent component) {
       myReferent = component;
       setVerticalSizeReferent(myReferent);
+      addMouseMotionListener(new MouseAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          if (IdeTooltipManager.getInstance().hasCurrent()) {
+            IdeTooltipManager.getInstance().hideCurrent(e);
+            return;
+          }
+          if (myIcon == null || myTooltipText == null) return;
+          VcsLogUiUtil.showTooltip(RootPanel.this, new Point(myIcon.getIconWidth() / 2, 0), Balloon.Position.above, myTooltipText);
+        }
+      });
     }
 
     @Override
@@ -299,11 +315,6 @@ public class CommitPanel extends JBPanel {
         FontMetrics metrics = getFontMetrics(myHashAndAuthorPanel.getBodyFont());
         myIcon.paintIcon(this, g, 0, metrics.getMaxAscent() - h + (h - myIcon.getIconHeight() - 1) / 2);
       }
-    }
-
-    @Override
-    public String getToolTipText() {
-      return myTooltipText;
     }
   }
 }
