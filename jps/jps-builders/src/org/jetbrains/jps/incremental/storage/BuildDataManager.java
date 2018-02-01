@@ -22,6 +22,7 @@ import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -145,6 +146,10 @@ public class BuildDataManager implements StorageOwner {
     final SourceToOutputMappingImpl sourceToOutputMapping = fetchValue(mySourceToOutputs, target, SOURCE_OUTPUT_MAPPING_VALUE_FACTORY);
     final int buildTargetId = myTargetsState.getBuildTargetId(target);
     return new SourceToOutputMappingWrapper(sourceToOutputMapping, buildTargetId);
+  }
+
+  public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
+    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), "data"));
   }
 
   @NotNull
@@ -328,6 +333,10 @@ public class BuildDataManager implements StorageOwner {
   
   private File getSourceToOutputMapRoot(BuildTarget<?> target) {
     return new File(myDataPaths.getTargetDataRoot(target), "src-out");
+  }
+
+  private File getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
+    return new File(myDataPaths.getTargetDataRoot(targetType, targetId), "src-out");
   }
 
   private File getSourceToFormsRoot() {
