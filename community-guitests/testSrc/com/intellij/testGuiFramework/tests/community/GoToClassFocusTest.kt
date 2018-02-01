@@ -1,37 +1,37 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.testGuiFramework.tests.community
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.util.Key
+import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
 import org.junit.Assert
 import org.junit.Test
 import java.awt.Container
+import java.awt.KeyboardFocusManager
 import java.lang.Math.tan
 import java.util.*
 import javax.swing.JLabel
 
 class GoToClassFocusTest: GuiTestCase() {
 
-  private val typedString = "Here is a string to check missing symbols"
-  private val LOG = Logger.getInstance(this::class.java)
+  private val typedString = "hefuihwefwehrf;werfwerfw"
+  private val actionKeyStroke by lazy {  ActionManager.getInstance().getKeyboardShortcut("GotoClass")!!.firstKeyStroke }
 
   @Test
   fun testGoToClassFocus() {
     CommunityProjectCreator.createCommandLineProject()
     Pause.pause(1000)
     ideFrame {
+      focusOnEditor()
       for(i in 0..10) {
-        startIntensiveCalcOnParallel()
         openGoToClassSearchAndType(this@GoToClassFocusTest)
         focusOnEditor()
       }
@@ -65,8 +65,10 @@ class GoToClassFocusTest: GuiTestCase() {
   }
 
   private fun openGoToClassSearchAndType(guiTestCase: GuiTestCase) {
-    invokeAction("GotoClass")
-    GuiTestUtil.typeText(typedString, guiTestRule.robot(),0)
+
+    val smartRobot = guiTestCase.robot() as SmartWaitRobot
+    smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
+    Pause.pause(500)
     checkSearchWindow(guiTestCase)
     shortcut(Key.ESCAPE)
   }
@@ -80,7 +82,7 @@ class GoToClassFocusTest: GuiTestCase() {
   }
 
   private fun findSearchWindow(guiTestCase: GuiTestCase): Container {
-    val windowContainer = WindowManagerEx.getInstanceEx().mostRecentFocusedWindow // it should be a window container for go to class ideally
+    val windowContainer = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow // it should be a window container for go to class ideally
     GuiTestUtilKt.findAllWithBFS(windowContainer, JLabel::class.java).firstOrNull { it.text == "Enter class name:" } ?: throw ComponentLookupException("Unable to find GoToClass search window")
     return windowContainer
   }
