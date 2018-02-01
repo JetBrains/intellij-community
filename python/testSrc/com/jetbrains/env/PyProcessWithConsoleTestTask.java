@@ -19,6 +19,7 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -75,7 +76,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
   }
 
   @Override
-  public void runTestOn(final String sdkHome) throws Exception {
+  public void runTestOn(@NotNull final String sdkHome, @Nullable final Sdk existingSdk) throws Exception {
 
     //Since this task uses I/O pooled thread, it needs to register such threads as "known offenders" (one that may leak)
     // Generally, this should be done in thread tracker itself, but since ApplicationManager.getApplication() may return null on TC,
@@ -87,7 +88,9 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
                              ProcessIOExecutorService.POOLED_THREAD_PREFIX);
 
 
-    createTempSdk(sdkHome, myRequiredSdkType);
+    if (existingSdk == null) {
+      createTempSdk(sdkHome, myRequiredSdkType);
+    }
     prepare();
     final T runner = createProcessRunner();
     do {

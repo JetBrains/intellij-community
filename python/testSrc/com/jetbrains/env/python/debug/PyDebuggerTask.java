@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
@@ -62,7 +63,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     return Sets.newHashSet("python2.6", "python2.7", "python3.5", "python3.6", "jython", "IronPython", "pypy");
   }
 
-  public void runTestOn(String sdkHome) throws Exception {
+  @Override
+  public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     final Project project = getProject();
 
     final ConfigurationFactory factory = PythonConfigurationType.getInstance().getConfigurationFactories()[0];
