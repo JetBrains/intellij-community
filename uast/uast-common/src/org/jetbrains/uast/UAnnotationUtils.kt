@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * @return an annotation name element (identifier) for annotation entry.
- * Considers not only direct [UAnnotation]s but also annotations in annotations which are not always converted to [UAnnotation]
+ * Considers not only direct [UAnnotation]s but also nested annotations, which are not always converted to [UAnnotation]
  */
 fun getNameElement(uElement: UElement?): PsiElement? =
   when (uElement) {
@@ -30,14 +30,35 @@ fun getNameElement(uElement: UElement?): PsiElement? =
  * Passed element should be convertable to [UIdentifier].
  * @return an [UDeclaration] to which full annotation belongs to or `null` if given argument is not an identifier in annotation.
  */
-fun getIdentifierAnnotationOwner(identifier: PsiElement): UDeclaration? {
+fun getIdentifierAnnotationOwner(identifier: PsiElement): UDeclaration? =
+  getUParentForAnnotationIdentifier(identifier)?.getContainingDeclaration()
+
+/**
+ * @param identifier an identifier element that occurs in annotation, including annotations nested inside annotations (e.g. as value attribute).
+ * Passed element should be convertable to [UIdentifier].
+ * @return an annotation-like owner of passed identifier.
+ * Result could be:
+ * - an [UAnnotation] if this is a root annotation
+ * - an [UCallExpression] if this is a nested annotation
+ * - another [UElement] if something strange is going on
+ * - `null` if given argument is not an identifier in annotation.
+ */
+fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
   val originalParent = getUParentForIdentifier(identifier) ?: return null
   when (originalParent) {
-    is UAnnotation -> return originalParent.getContainingDeclaration()
+    is UAnnotation -> return originalParent
     is UReferenceExpression -> {
       val resolve = originalParent.resolve()
-      if (resolve is PsiClass && resolve.isAnnotationType)
-        return originalParent.parentAnyway?.getContainingDeclaration()
+      if (resolve is PsiClass && resolve.isAnnotationType) {
+        val parentAnyway = originalParent.parentAnyway ?: return null
+        val annotationLikeParent = parentAnyway
+                                     .withContainingElements
+                                     .dropWhile { it is UTypeReferenceExpression || it is UReferenceExpression }
+                                     .firstOrNull() ?: return parentAnyway
+        if (annotationLikeParent !is UAnnotation && annotationLikeParent.uastParent is UAnnotation)
+          return annotationLikeParent.uastParent
+        return annotationLikeParent
+      }
     }
   }
   return null
