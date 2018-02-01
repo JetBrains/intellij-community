@@ -1,8 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -19,7 +18,7 @@ import java.util.Collection;
 /**
  * @author Bas Leijdekkers
  */
-public class IgnoreClassFix extends InspectionGadgetsFix {
+public class IgnoreClassFix extends InspectionGadgetsFix implements LowPriorityAction {
 
   final Collection<String> myIgnoredClasses;
   final String myQualifiedName;
