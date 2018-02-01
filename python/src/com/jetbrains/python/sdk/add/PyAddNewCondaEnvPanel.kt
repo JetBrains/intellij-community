@@ -137,7 +137,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
   }
 
   private fun updatePathField() {
-    val baseDir = defaultBaseDir ?: SystemProperties.getUserHome()
+    val baseDir = defaultBaseDir ?: SystemProperties.getUserHome() + "/.conda/envs"
     val dirName = PathUtil.getFileName(projectBasePath ?: "untitled")
     pathField.text = FileUtil.toSystemDependentName(FileUtil.findSequentNonexistentFile(File(baseDir), dirName, "").path)
   }
