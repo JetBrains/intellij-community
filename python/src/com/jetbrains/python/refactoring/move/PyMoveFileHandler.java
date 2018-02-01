@@ -317,13 +317,10 @@ public class PyMoveFileHandler extends MoveFileHandler {
                                                                                @Nullable QualifiedName qualifiedName) {
     final Couple<PsiElement> range = getRelativeImportSourceRange(importStatement);
     if (range != null && qualifiedName != null) {
-      if (range.getFirst() == range.getSecond()) {
-        replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
-      }
-      else {
+      if (range.getFirst() != range.getSecond()) {
         importStatement.deleteChildRange(range.getFirst().getNextSibling(), range.getSecond());
-        replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
       }
+      replaceWithQualifiedExpression(range.getFirst(), qualifiedName);
     }
     return importStatement;
   }
