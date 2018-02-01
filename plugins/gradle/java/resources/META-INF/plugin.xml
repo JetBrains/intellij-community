@@ -60,6 +60,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.GradleIdeManager"
+                        serviceImplementation="org.jetbrains.plugins.gradle.GradleJavaIdeManager"/>
+
     <compileServer.plugin classpath="gradle-jps-plugin.jar"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.startup.GradleJvmStartupActivity"/>
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
