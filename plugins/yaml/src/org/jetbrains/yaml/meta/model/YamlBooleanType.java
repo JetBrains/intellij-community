@@ -46,6 +46,7 @@ public class YamlBooleanType extends YamlEnumType {
 
     public StandardYamlBoolean() {
       super("yaml:boolean");
+      setDisplayName("boolean");
       withLiterals("true", "false");
       /*
       Theoretically, YAML spec allows more exotic variants for boolean values, e.g "ON", "off", "No", or even "Y".
