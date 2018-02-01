@@ -53,6 +53,7 @@ import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -237,12 +238,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void refreshSdkList() {
-    final List<Sdk> pythonSdks = myInterpreterList.getAllPythonSdks(myProject);
+    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     Sdk projectSdk = getSdk();
-    if (!myShowOtherProjectVirtualenvs) {
-      VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
-    }
-    //noinspection unchecked
+    final List<Sdk> notAssociatedWithOtherProjects = StreamEx
+      .of(allPythonSdks)
+      .filter(sdk -> !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .toList();
+
+    final List<Sdk> pythonSdks = myShowOtherProjectVirtualenvs ? allPythonSdks : notAssociatedWithOtherProjects;
     mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
     mySdkListChanged = false;
