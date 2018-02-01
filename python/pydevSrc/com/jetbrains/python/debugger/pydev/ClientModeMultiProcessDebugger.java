@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -15,19 +14,17 @@ import com.jetbrains.python.debugger.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
  */
 public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private static final Logger LOG = Logger.getInstance(ClientModeMultiProcessDebugger.class);
-  public static final long CONNECTION_ATTEMPT_DELAY = TimeUnit.MILLISECONDS.toNanos(500L);
 
   private final IPyDebugProcess myDebugProcess;
   @NotNull private final String myHost;
@@ -40,40 +37,6 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private final List<RemoteDebugger> myDebuggers = Lists.newArrayList();
 
   private ThreadRegistry myThreadRegistry = new ThreadRegistry();
-
-  private static final int DEBUGGER_CONNECTION_TASKS = 10;
-
-  private final ExecutorService myExecutorService;
-
-  /**
-   * Guards {@link #myDebuggersRequests}.
-   */
-  private final Lock myLock = new ReentrantLock();
-
-  /**
-   * Represents the number of debugger process that awaits the connection from
-   * the IDE:
-   * <ul>
-   * <li>initialized with {@code 1} on {@link #waitForConnect()};</li>
-   * <li>increased on {@link RemoteDebugger#onProcessCreatedEvent()};</li>
-   * <li>decreased on successful {@link RemoteDebugger} connection (when handshake succeeded).</li>
-   * </ul>
-   * <p>
-   * Guarded by {@link #myLock}.
-   */
-  private int myDebuggersRequests = 0;
-
-  /**
-   * Occurs when {@link #myDebuggersRequests} > 0.
-   */
-  private final Condition myNotZeroRequests = myLock.newCondition();
-
-  private final Condition myTimeCondition = myLock.newCondition();
-
-  /**
-   * Guarded by {@link #myLock}.
-   */
-  private long myLastConnectionAttemptTime = System.nanoTime();
 
   /**
    * Indicates that this {@link ClientModeMultiProcessDebugger} has connected
@@ -89,112 +52,44 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   private final CompositeRemoteDebuggerCloseListener myCompositeListener = new CompositeRemoteDebuggerCloseListener();
 
+  private final RecurrentTaskExecutor<RemoteDebugger> myExecutor;
+
   public ClientModeMultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                                         @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myHost = host;
     myPort = port;
 
-    ThreadFactory threadFactory = ConcurrencyUtil.newNamedThreadFactory("Debugger connection threads (" + host + ":" + port + ")");
-    myExecutorService = Executors.newFixedThreadPool(DEBUGGER_CONNECTION_TASKS, threadFactory);
+    String connectionThreadsName = "Debugger connection threads (" + host + ":" + port + ")";
+    myExecutor = new RecurrentTaskExecutor<>(connectionThreadsName, this::tryToConnectRemoteDebugger, this::onRemoteDebuggerConnected);
   }
 
+  /**
+   * Should either successfully connect to the debugger script and return the
+   * {@link RemoteDebugger} or throw {@link IOException} because of the
+   * connection error or the socket timeout error.
+   * <p>
+   * We assume that debugger is successfully connected if the Python debugger
+   * script responded on `CMD_VERSION` command (see
+   * {@link RemoteDebugger#handshake()}).
+   *
+   * @return the successfully connected {@link RemoteDebugger}
+   * @throws Exception if the connection or timeout error occurred
+   * @see com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport
+   */
   @NotNull
-  private RemoteDebugger createDebugger() {
-    return new RemoteDebugger(myDebugProcess, myHost, myPort) {
+  private RemoteDebugger tryToConnectRemoteDebugger() throws Exception {
+    RemoteDebugger debugger = new RemoteDebugger(myDebugProcess, myHost, myPort) {
       @Override
       protected void onProcessCreatedEvent() {
-        myLock.lock();
-        try {
-          myDebuggersRequests++;
-
-          myNotZeroRequests.signalAll();
-        }
-        finally {
-          myLock.unlock();
-        }
+        myExecutor.incrementRequests();
       }
     };
-  }
-
-  private void initializeDebuggerConnectionTasks() {
-    for (int i = 0; i < DEBUGGER_CONNECTION_TASKS; i++) {
-      myExecutorService.submit(() -> {
-        while (true) {
-          try {
-            runDebuggerConnection();
-          }
-          catch (InterruptedException e) {
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(Thread.currentThread() + " interrupted");
-            }
-            // exit while loop
-            return;
-          }
-          catch (Exception e) {
-            LOG.debug(e);
-          }
-        }
-      });
-    }
-  }
-
-  private void runDebuggerConnection() throws Exception {
-    // 1. Wait for new requests
-    myLock.lock();
-    try {
-      do {
-        //noinspection WhileLoopSpinsOnField
-        while (myDebuggersRequests <= 0) {
-          myNotZeroRequests.await();
-        }
-
-        // we have process requests, let's check if we should start
-        do {
-          // check the latest time debugger stepped into connection
-
-          long currentTime = System.nanoTime();
-          long timeToStart = myLastConnectionAttemptTime + CONNECTION_ATTEMPT_DELAY;
-
-          if (timeToStart > currentTime) {
-            long timeToSleep = timeToStart - currentTime;
-
-            myTimeCondition.awaitNanos(timeToSleep);
-          }
-          else {
-            // it's time to run!
-            break;
-          }
-        }
-        while (myDebuggersRequests > 0);
-      }
-      while (myDebuggersRequests <= 0); // let's check requests again
-
-      // finally we made through it
-      myLastConnectionAttemptTime = System.nanoTime();
-    }
-    finally {
-      myLock.unlock();
-    }
-
-    // 2. Create new debugger and try to connect to the process
-    RemoteDebugger debugger = createDebugger();
-    // should either connect or timeout in 5 seconds
     debugger.waitForConnect();
+    return debugger;
+  }
 
-    // 3. Handle successful debugger connection
-    myLock.lock();
-    try {
-      myDebuggersRequests--;
-
-      // let the next tasks attempt to connect
-      myLastConnectionAttemptTime = System.nanoTime() - CONNECTION_ATTEMPT_DELAY;
-      myTimeCondition.signalAll();
-    }
-    finally {
-      myLock.unlock();
-    }
-
+  private void onRemoteDebuggerConnected(@NotNull RemoteDebugger debugger) {
     // register successfully connected debugger
     synchronized (myDebuggersObject) {
       myDebuggers.add(debugger);
@@ -211,7 +106,12 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     else {
       // for consequent processes we should init them by ourselves
       myDebugProcess.init();
-      debugger.run();
+      try {
+        debugger.run();
+      }
+      catch (PyDebuggerException e) {
+        LOG.debug("Failed to `CMD_RUN` the recently connected Python debugger process");
+      }
     }
   }
 
@@ -224,22 +124,8 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   public void waitForConnect() throws Exception {
     Thread.sleep(500L);
 
-    initializeDebuggerConnectionTasks();
-
-    myLock.lock();
-    try {
-      if (myDebuggersRequests != 0) {
-        throw new IllegalStateException("waitForConnect() must be called once");
-      }
-      // initial number of requests
-      myDebuggersRequests = 1;
-
-      // the first request appeared
-      myNotZeroRequests.signalAll();
-    }
-    finally {
-      myLock.unlock();
-    }
+    // increment the number of debugger connection request initially
+    myExecutor.incrementRequests();
 
     // waiting for the first connected thread
     myConnectedLatch.await(60, TimeUnit.SECONDS);
@@ -247,7 +133,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void close() {
-    myExecutorService.shutdownNow();
+    myExecutor.dispose();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.close();
@@ -262,7 +148,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public void disconnect() {
-    myExecutorService.shutdownNow();
+    myExecutor.dispose();
 
     for (ProcessDebugger d : allDebuggers()) {
       d.disconnect();
