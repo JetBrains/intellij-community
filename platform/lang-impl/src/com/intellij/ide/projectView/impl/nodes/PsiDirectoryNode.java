@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -139,10 +140,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   private static boolean moduleNameMatchesDirectoryName(@NotNull Module module, @NotNull VirtualFile directoryFile, @NotNull ProjectFileIndex fileIndex) {
     String moduleName = module.getName();
     String directoryName = directoryFile.getName();
-    if (moduleName.equals(directoryName)) {
+    if (moduleName.equalsIgnoreCase(directoryName)) {
       return true;
     }
-    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(module.getProject()) && moduleName.endsWith(directoryName)) {
+    if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(module.getProject()) && StringUtil.endsWithIgnoreCase(moduleName, directoryName)) {
       int parentPrefixLength = moduleName.length() - directoryName.length() - 1;
       if (parentPrefixLength > 0 && moduleName.charAt(parentPrefixLength) == '.') {
         VirtualFile parentDirectory = directoryFile.getParent();
