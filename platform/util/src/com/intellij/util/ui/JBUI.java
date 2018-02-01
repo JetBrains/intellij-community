@@ -1295,6 +1295,11 @@ public class JBUI {
         }
         return font;
       }
+
+      public static Color closeButtonBackground(boolean tabActive, boolean tabSelected) {
+        return tabSelected ? getColor("ToolWindow.header.closeButton.background", 0xB9B9B9)
+                           : headerBackground(tabActive);
+      }
     }
 
     public static class Label {
