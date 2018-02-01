@@ -1,16 +1,15 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-package com.siyeh.ig.psiutils;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Tagir Valeev
- */
+import java.util.List;
+
 public class BlockUtils {
 
   /**
@@ -109,5 +108,93 @@ public class BlockUtils {
       return ((PsiCatchSection)element).getCatchBlock();
     }
     throw new AssertionError("can't get body from " + element);
+  }
+
+  public static void unwrapTryBlock(PsiTryStatement tryStatement) {
+    PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+    if (tryBlock == null) {
+      return;
+    }
+    final PsiElement parent = tryStatement.getParent();
+    boolean singleStatement = false;
+    if (parent instanceof PsiStatement) {
+      final PsiStatement[] statements = tryBlock.getStatements();
+      if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement)) {
+        singleStatement = true;
+      }
+      else {
+        tryStatement = expandSingleStatementToBlockStatement(tryStatement);
+      }
+    }
+    else if (parent instanceof PsiCodeBlock) {
+      if (containsConflictingDeclarations(tryBlock, (PsiCodeBlock)parent)) {
+        tryStatement = expandSingleStatementToBlockStatement(tryStatement);
+      }
+    }
+    else {
+      return;
+    }
+
+    tryBlock = tryStatement.getTryBlock();
+    assert tryBlock != null;
+    final PsiElement first = singleStatement ? skip(tryBlock.getFirstBodyElement(), true) : tryBlock.getFirstBodyElement();
+    final PsiElement last = singleStatement? skip(tryBlock.getLastBodyElement(), false) : tryBlock.getLastBodyElement();
+    assert first != null && last != null;
+    tryStatement.getParent().addRangeBefore(first, last, tryStatement);
+    tryStatement.delete();
+  }
+
+  private static PsiElement skip(PsiElement element, boolean forward) {
+    if (!(element instanceof PsiWhiteSpace)) {
+      return element;
+    }
+    return forward ? element.getNextSibling() : element.getPrevSibling();
+  }
+
+  public static boolean containsConflictingDeclarations(PsiCodeBlock block, PsiCodeBlock parentBlock) {
+    final PsiStatement[] statements = block.getStatements();
+    if (statements.length == 0) {
+      return false;
+    }
+    final int endOffset = block.getTextRange().getEndOffset();
+    final List<PsiCodeBlock> affectedBlocks =
+      SyntaxTraverser.psiTraverser(parentBlock)
+        .filter(PsiCodeBlock.class)
+        .filter(cb -> cb.getTextRange().getEndOffset() > endOffset)
+        .addAllTo(new SmartList<>());
+    final Project project = block.getProject();
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
+    for (final PsiStatement statement : statements) {
+      if (!(statement instanceof PsiDeclarationStatement)) {
+        continue;
+      }
+      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
+      final PsiElement[] variables = declaration.getDeclaredElements();
+      for (PsiElement variable : variables) {
+        if (!(variable instanceof PsiLocalVariable)) {
+          continue;
+        }
+        final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
+        final String variableName = localVariable.getName();
+        if (variableName == null) {
+          continue;
+        }
+        for (PsiCodeBlock codeBlock : affectedBlocks) {
+          final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
+          if (target instanceof PsiLocalVariable) {
+            return true;
+          }
+          if (target instanceof PsiField) {
+            for (PsiCodeBlock affectedBlock : affectedBlocks) {
+              if (!SyntaxTraverser.psiTraverser(affectedBlock).filter(PsiReferenceExpression.class).filter(ref -> ref.resolve() == target).isEmpty()) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
   }
 }
