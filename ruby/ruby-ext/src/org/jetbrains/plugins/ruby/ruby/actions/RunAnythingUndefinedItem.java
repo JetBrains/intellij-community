@@ -37,16 +37,16 @@ import org.jetbrains.plugins.ruby.version.management.rbenv.gemsets.RbenvGemsetMa
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class RunAnythingUndefinedItem extends RunAnythingItem<String> {
-  static final Icon UNDEFINED_COMMAND_ICON = RubyIcons.RunAnything.Run_anything;
-  private static final ArrayList<String> COMMANDS = ContainerUtil.newArrayList(
-    "bundle", "rake", "erb", "gem", "irb", "rdoc", "ruby", "rails");
   @Nullable private final Module myModule;
   @NotNull private final String myCommandLine;
   @NotNull private final Project myProject;
+  static final Icon UNDEFINED_COMMAND_ICON = RubyIcons.RunAnything.Run_anything;
 
   public RunAnythingUndefinedItem(@NotNull Project project, @Nullable Module module, @NotNull String commandLine) {
     myProject = project;
@@ -175,14 +175,13 @@ public class RunAnythingUndefinedItem extends RunAnythingItem<String> {
   private static String getRVMAwareCommand(@NotNull Sdk sdk, @NotNull String commandLine, @NotNull Project project) {
     if (commandLine.startsWith("rvm ")) return commandLine;
 
-    String exeCommand = (commandLine.contains(" ")) ? StringUtil.substringBefore(commandLine, " ") : commandLine;
     String version = RVMSupportUtil.getRVMSdkVersion(sdk);
     String gemset = RVMSupportUtil.getGemset(sdk);
 
     if (version == null) return commandLine;
     if (gemset != null) version += '@' + gemset;
 
-    if (!COMMANDS.contains(exeCommand) || !RunAnythingCache.getInstance(project).CAN_RUN_RVM) return commandLine;
+    if (!RunAnythingCache.getInstance(project).CAN_RUN_RVM) return commandLine;
 
     return "rvm " + version + " do " + commandLine;
   }
