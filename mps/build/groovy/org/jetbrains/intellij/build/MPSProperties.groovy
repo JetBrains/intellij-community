@@ -18,12 +18,11 @@ class MPSProperties extends ProductProperties {
 
         productLayout.mainJarName = "platform.jar"
         productLayout.mainModules = ["intellij.idea.community.main"]
-        productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES
-        productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
+        productLayout.productApiModules = ["intellij.java.execution"]
+        productLayout.productImplementationModules =
                 ["intellij.platform.main",
                  "intellij.platform.testFramework",
                  "intellij.tools.testsBootstrap",
-                 "intellij.java.execution",
                  "intellij.java.execution.impl",
                  "intellij.java.compiler.instrumentationUtil",
                  "intellij.platform.externalSystem.impl"]
