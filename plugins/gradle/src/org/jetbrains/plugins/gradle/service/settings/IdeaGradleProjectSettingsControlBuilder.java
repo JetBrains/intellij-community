@@ -13,7 +13,6 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.FixedSizeButton;
@@ -546,7 +545,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleJdkComboBox.refreshData(sdkItem, projectJdk);
     if (myGradleJdkSetUpButton != null) {
       ProjectSdksModel sdksModel = new ProjectSdksModel();
-      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id instanceof JavaSdk);
+      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id != null && "JavaSDK".equals(id.getName()));
     }
   }
 
