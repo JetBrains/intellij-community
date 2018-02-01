@@ -60,16 +60,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     public Dimension preferredLayoutSize(Container parent) {
       if (parent instanceof JViewport) {
         JViewport viewport = (JViewport)parent;
-        Component view = viewport.getView();
-        if (view instanceof Scrollable) {
-          Scrollable scrollable = (Scrollable)view;
-          if (view instanceof JList) return getPreferredScrollableViewportSize((JList)view);
-          if (view instanceof JTree) return getPreferredScrollableViewportSize((JTree)view);
-          return scrollable.getPreferredScrollableViewportSize();
-        }
-        if (view != null) {
-          return view.getPreferredSize();
-        }
+        Dimension size = getPreferredScrollableViewportSize(viewport.getView());
+        if (size != null) return size; // may be null for for tables or custom components
       }
       return new Dimension();
     }
@@ -517,6 +509,13 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
   }
 
+  private static Dimension getPreferredScrollableViewportSize(Component view) {
+    if (view instanceof JList) return getPreferredScrollableViewportSize((JList)view);
+    if (view instanceof JTree) return getPreferredScrollableViewportSize((JTree)view);
+    if (view instanceof Scrollable) return ((Scrollable)view).getPreferredScrollableViewportSize();
+    return view == null ? null : view.getPreferredSize();
+  }
+
   private static Class<?> getPreferredScrollableViewportSizeDeclaringClass(@NotNull Scrollable scrollable) {
     try {
       return scrollable.getClass().getMethod("getPreferredScrollableViewportSize").getDeclaringClass();
@@ -526,10 +525,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     }
   }
 
-  @NotNull
   private static Dimension getPreferredScrollableViewportSize(@NotNull JList list) {
     if (JList.class != getPreferredScrollableViewportSizeDeclaringClass(list)) {
-      return list.getPreferredScrollableViewportSize();
+      return list.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = list.getPreferredSize();
     if (size == null) return new Dimension();
@@ -572,10 +570,9 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return size;
   }
 
-  @NotNull
   private static Dimension getPreferredScrollableViewportSize(@NotNull JTree tree) {
     if (JTree.class != getPreferredScrollableViewportSizeDeclaringClass(tree)) {
-      return tree.getPreferredScrollableViewportSize();
+      return tree.getPreferredScrollableViewportSize(); // may be null
     }
     Dimension size = tree.getPreferredSize();
     if (size == null) return new Dimension();

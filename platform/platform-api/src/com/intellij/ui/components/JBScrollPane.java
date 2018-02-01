@@ -687,7 +687,9 @@ public class JBScrollPane extends JScrollPane {
             viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
           }
           Dimension viewportExtentSize = viewport.getPreferredSize();
+          if (viewportExtentSize == null) viewportExtentSize = new Dimension();
           Dimension viewPreferredSize = view.getPreferredSize();
+          if (viewPreferredSize == null) viewPreferredSize = new Dimension();
           if (view instanceof JComponent && !view.isPreferredSizeSet()) {
             Insets insets = JBViewport.getViewInsets((JComponent)view);
             JBInsets.removeFrom(viewportExtentSize, insets);
