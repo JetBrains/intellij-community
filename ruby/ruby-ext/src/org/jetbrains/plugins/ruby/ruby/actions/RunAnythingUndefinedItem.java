@@ -164,15 +164,6 @@ public class RunAnythingUndefinedItem extends RunAnythingItem<String> {
                                              @Nullable Module module) {
     String exeCommand = commandLine.contains(" ") ? StringUtil.substringBefore(commandLine, " ") : commandLine;
     String shimsExec = RbenvGemsetManager.getShimsCommandPath(Objects.requireNonNull(exeCommand));
-    if (shimsExec == null) return commandLine;
-
-    for (String shim : Objects.requireNonNull(new File(shimsExec).getParentFile().list())) {
-      if (shim.equals(exeCommand)) {
-        shimsExec = RbenvGemsetManager.getShimsCommandPath(shim);
-        break;
-      }
-    }
-
     if (shimsExec == null || !RunAnythingCache.getInstance(project).CAN_RUN_RBENV) return commandLine;
 
     RubyAbstractRunner.patchRbenvEnv(env, module, sdk);
