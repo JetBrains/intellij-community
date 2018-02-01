@@ -174,11 +174,6 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.lang.Math double fma(double, double, double)'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="pure" val="true"/>
-    </annotation>
-  </item>
   <item name='java.lang.Math double hypot(double, double)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -230,11 +225,6 @@
     </annotation>
   </item>
   <item name='java.lang.Math double toRadians(double)'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="pure" val="true"/>
-    </annotation>
-  </item>
-  <item name='java.lang.Math float fma(float, float, float)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
