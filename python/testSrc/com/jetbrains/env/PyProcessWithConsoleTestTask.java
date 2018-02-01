@@ -162,7 +162,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
         final IllegalStateException exception = new IllegalStateException("Exception thrown while running test", e);
         throw exception;
       }
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.defaultModalityState());
 
 
     final boolean processStarted = processStartedSemaphore.tryAcquire(5, TimeUnit.MINUTES);

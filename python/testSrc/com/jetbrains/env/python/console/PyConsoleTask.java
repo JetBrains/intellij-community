@@ -54,7 +54,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   protected PydevConsoleCommunication myCommunication;
 
   private boolean shouldPrintOutput = false;
-  private PythonConsoleView myConsoleView;
+  private volatile PythonConsoleView myConsoleView;
   private Semaphore myCommandSemaphore;
   private Semaphore myConsoleInitSemaphore;
   private PythonConsoleExecuteActionHandler myExecuteHandler;
@@ -108,7 +108,18 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
    * Disposes Python console and waits for Python console server thread to die.
    */
   private void disposeConsole() throws InterruptedException, ExecutionException, TimeoutException {
-    disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
+    try {
+      disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
+    }
+    finally {
+      // Even if console failed in its side we need
+      if (myConsoleView != null) {
+        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+          Disposer.dispose(myConsoleView);
+        });
+        myConsoleView = null;
+      }
+    }
   }
 
   @NotNull
@@ -171,6 +182,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     myCommandSemaphore = new Semaphore(1);
 
     myConsoleView = consoleRunner.getConsoleView();
+    Disposer.register(myFixture.getProject(), myConsoleView);
     myProcessHandler = consoleRunner.getProcessHandler();
 
     myExecuteHandler = consoleRunner.getConsoleExecuteActionHandler();
