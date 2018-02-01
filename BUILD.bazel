@@ -10,11 +10,14 @@ iml_project(
     build = "build.xml",
     data = [
         "//prebuilts/studio/jdk",
+        "//prebuilts/python/linux-x86",
+        "//prebuilts/python/windows-x86",
         "//prebuilts/tools/common/kotlin-gradle-plugin",
         "//prebuilts/tools/common/kotlin-plugin-ij:kotlin_plugin",
         "//prebuilts/tools/common/kotlin-plugin:kotlin-plugin-for-studio",
         "//prebuilts/tools/common/offline-m2:android-gradle-2.3.2",  # TODO what do we need?
         "//prebuilts/tools/common/simpleperf",
+        "//prebuilts/tools:lldb",
         "//prebuilts/tools:offline-sdk",
         "//tools/adt/idea/adt-ui/lib/libwebp",
         "//tools/adt/idea/native/installer:uninstaller",
@@ -29,7 +32,6 @@ iml_project(
         "//tools/idea/lib:all-libs",
         "//tools/idea/platform/build-scripts:scripts",
         "//tools/idea/studio:ant_prebuilts",
-        "//tools/vendor/google/android-ndk/bin/lldb/shared",
     ] + glob([
         "license/**",
         ".idea/.name",

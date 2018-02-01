@@ -278,10 +278,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
-    buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/shared") {
-      fileset(dir: "$root/tools/vendor/google/android-ndk/bin/lldb/shared") {
-        exclude(name: "BUILD")
-      }
+    buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
+      fileset(dir: "$root/prebuilts/tools/common/lldb")
     }
   }
 
@@ -326,6 +324,14 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         context.ant.copy(file: "$androidRoot/native/installer/win/builds/uninstall.exe", tofile: "$targetDirectory/uninstall.exe")
         context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/win/webp_jni.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni.dll")
         context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/win/webp_jni64.dll", tofile: "$targetDirectory/plugins/android/lib/webp_jni64.dll")
+
+        def lldbTarget = "$targetDirectory/bin/lldb/"
+        context.ant.copy(todir: "$lldbTarget") {
+          fileset(dir: "$root/prebuilts/tools/windows-x86_64/lldb")
+        }
+        context.ant.copy(todir: "$lldbTarget/lib") {
+          fileset(dir: "$root/prebuilts/python/windows-x86/x64/Lib")
+        }
       }
     }
   }
@@ -352,6 +358,16 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         def androidRoot = "$root/tools/adt/idea"
         context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/linux/libwebp_jni.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni.so")
         context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/linux/libwebp_jni64.so", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.so")
+
+        def lldbTarget = "$targetDirectory/bin/lldb/"
+        context.ant.copy(todir: "$lldbTarget") {
+          fileset(dir: "$root/prebuilts/tools/linux-x86_64/lldb")
+        }
+        extraExecutables.add("bin/lldb/bin/LLDBFrontend")
+        extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
+        context.ant.copy(todir: "$lldbTarget/lib/python2.7") {
+          fileset(dir: "$root/prebuilts/python/linux-x86/lib/python2.7")
+        }
       }
     }
   }
@@ -388,6 +404,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
         def androidRoot = "$root/tools/adt/idea"
         context.ant.copy(file: "$androidRoot/adt-ui/lib/libwebp/mac/libwebp_jni64.dylib", tofile: "$targetDirectory/plugins/android/lib/libwebp_jni64.dylib")
+
+        context.ant.copy(todir: "$targetDirectory/bin/lldb") {
+          fileset(dir: "$root/prebuilts/tools/darwin-x86_64/lldb")
+        }
+        extraExecutables.add("bin/lldb/bin/LLDBFrontend")
+        extraExecutables.add("bin/lldb/bin/minidump_stackwalk")
       }
     }
   }
