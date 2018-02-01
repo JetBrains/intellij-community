@@ -18,12 +18,12 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
 
   @NotNull
   @Override
-  protected String getKey() {
+  protected String getSettingsKey() {
     return "run.anything.settings.commands";
   }
 
   @Override
-  protected int getMax() {
+  protected int getMaxItemsToShow() {
     return MAX_COMMANDS;
   }
 
@@ -41,12 +41,6 @@ public class RunAnythingCommandGroup extends RunAnythingGroup {
       check.run();
     }
     return result;
-  }
-
-  @NotNull
-  @Override
-  public WidgetID getWidget() {
-    return WidgetID.COMMANDS;
   }
 
   @Override

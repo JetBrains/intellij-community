@@ -13,14 +13,8 @@ public class RunAnythingPermanentRunConfigurationGroup extends RunAnythingRunCon
 
   @NotNull
   @Override
-  protected String getKey() {
+  protected String getSettingsKey() {
     return "run.anything.settings.permanent.configurations";
-  }
-
-  @NotNull
-  @Override
-  public WidgetID getWidget() {
-    return WidgetID.PERMANENT;
   }
 
   @Override

@@ -91,8 +91,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
-import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingCommandItem.UNDEFINED_COMMAND_ICON;
+import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
@@ -392,14 +392,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       final RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model != null) {
         if (isMoreItem(index)) {
-          RunAnythingGroup.WidgetID wid = RunAnythingGroup.findWidget(index);
+          RunAnythingGroup group = RunAnythingGroup.findRunAnythingGroup(index);
 
-          if (wid != null) {
+          if (group != null) {
             myCurrentWorker.doWhenProcessed(() -> {
               myCalcThread = new CalcThread(project, pattern, true);
               myPopupActualWidth = 0;
-              RunAnythingUtil.triggerMoreStatistics(wid);
-              myCurrentWorker = myCalcThread.insert(index, wid);
+              RunAnythingUtil.triggerMoreStatistics(group);
+              myCurrentWorker = myCalcThread.insert(index, group);
             });
 
             return;
@@ -1252,12 +1252,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       return myDone;
     }
 
-    public ActionCallback insert(final int index, final RunAnythingGroup.WidgetID id) {
+    public ActionCallback insert(final int index, @NotNull RunAnythingGroup group) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
         try {
-          RunAnythingGroup group = RunAnythingGroup.findGroup(id);
-          SearchResult result =
-            group == null ? new SearchResult() : group.getAllItems(myProject, myModule, myListModel, myPattern, true, this::check);
+          SearchResult result = group.getAllItems(myProject, myModule, myListModel, myPattern, true, this::check);
 
           check();
           SwingUtilities.invokeLater(() -> {
@@ -1272,7 +1270,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
               }
 
               RunAnythingGroup.shiftIndexes(index, shift);
-              if (!result.needMore) RunAnythingGroup.dropMoreIndex(id);
+              if (!result.needMore) {
+                group.dropMoreIndex();
+              }
 
               clearSelection();
               ScrollingUtil.selectItem(myList, index);

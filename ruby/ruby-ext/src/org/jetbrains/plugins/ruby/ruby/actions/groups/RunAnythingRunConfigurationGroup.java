@@ -17,7 +17,7 @@ public abstract class RunAnythingRunConfigurationGroup extends RunAnythingGroup 
   private static final int MAX_RUN_CONFIGURATION = 6;
 
   @Override
-  protected int getMax() {
+  protected int getMaxItemsToShow() {
     return MAX_RUN_CONFIGURATION;
   }
 

@@ -406,7 +406,7 @@ public class RunAnythingUtil {
     if (RunAnythingAction.getExecutor() instanceof DefaultDebugExecutor) UsageTrigger.trigger(DEBUGGER_FEATURE_USAGE);
   }
 
-  static void triggerMoreStatistics(@NotNull RunAnythingGroup.WidgetID wid) {
-    UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + wid.name());
+  static void triggerMoreStatistics(@NotNull RunAnythingGroup group) {
+    UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
   }
 }

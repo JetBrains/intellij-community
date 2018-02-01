@@ -10,7 +10,7 @@ public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> 
 
   @NotNull
   @Override
-  protected String getKey() {
+  protected String getSettingsKey() {
     return "run.anything.settings.generators";
   }
 
@@ -27,14 +27,8 @@ public class RunAnythingGeneratorGroup extends RunAnythingActionGroup<AnAction> 
   }
 
   @Override
-  protected int getMax() {
+  protected int getMaxItemsToShow() {
     return MAX_GENERATORS;
-  }
-
-  @NotNull
-  @Override
-  public WidgetID getWidget() {
-    return WidgetID.GENERATORS;
   }
 
   @NotNull

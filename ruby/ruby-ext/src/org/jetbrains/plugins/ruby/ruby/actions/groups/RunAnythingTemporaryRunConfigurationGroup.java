@@ -13,14 +13,8 @@ public class RunAnythingTemporaryRunConfigurationGroup extends RunAnythingRunCon
 
   @NotNull
   @Override
-  protected String getKey() {
+  protected String getSettingsKey() {
     return "run.anything.settings.temporary.configurations";
-  }
-
-  @NotNull
-  @Override
-  public WidgetID getWidget() {
-    return WidgetID.TEMPORARY;
   }
 
   @Override

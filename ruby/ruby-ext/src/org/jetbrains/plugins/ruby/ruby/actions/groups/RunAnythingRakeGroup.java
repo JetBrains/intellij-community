@@ -18,7 +18,7 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
 
   @NotNull
   @Override
-  protected String getKey() {
+  protected String getSettingsKey() {
     return "run.anything.settings.rake.tasks";
   }
 
@@ -41,14 +41,8 @@ public class RunAnythingRakeGroup extends RunAnythingActionGroup<RakeAction> {
   }
 
   @Override
-  protected int getMax() {
+  protected int getMaxItemsToShow() {
     return MAX_RAKE;
-  }
-
-  @NotNull
-  @Override
-  public WidgetID getWidget() {
-    return WidgetID.RAKE;
   }
 
   @NotNull

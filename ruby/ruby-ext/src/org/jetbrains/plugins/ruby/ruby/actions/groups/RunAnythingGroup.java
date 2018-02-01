@@ -25,17 +25,12 @@ public abstract class RunAnythingGroup {
   private volatile int titleIndex = -1;
 
   @NotNull
-  protected abstract String getTitle();
+  public abstract String getTitle();
 
   @NotNull
-  protected abstract String getKey();
+  protected abstract String getSettingsKey();
 
-  protected abstract int getMax();
-
-  public enum WidgetID {PERMANENT, RAKE, BUNDLER, TEMPORARY, GENERATORS, COMMANDS}
-
-  @NotNull
-  public abstract WidgetID getWidget();
+  protected abstract int getMaxItemsToShow();
 
   protected abstract SearchResult getItems(@NotNull Project project,
                                            @Nullable Module module,
@@ -78,7 +73,7 @@ public abstract class RunAnythingGroup {
                     @NotNull String textToMatch,
                     boolean isMore) {
     if (!listModel.contains(item) && NameUtil.buildMatcher("*" + pattern).build().matches(textToMatch)) {
-      if (result.size() == (isMore ? DEFAULT_MORE_STEP_COUNT : getMax())) {
+      if (result.size() == (isMore ? DEFAULT_MORE_STEP_COUNT : getMaxItemsToShow())) {
         result.needMore = true;
         return true;
       }
@@ -93,9 +88,12 @@ public abstract class RunAnythingGroup {
                                   @NotNull String pattern,
                                   boolean isMore,
                                   @NotNull Runnable check) {
-    return !Registry.is(getKey()) ? new SearchResult() : getItems(project, module, listModel, pattern, isMore, check);
+    return !Registry.is(getSettingsKey()) ? new SearchResult() : getItems(project, module, listModel, pattern, isMore, check);
   }
 
+  public void dropMoreIndex() {
+    moreIndex = -1;
+  }
 
   private static void shiftMoreIndex(int index, int shift) {
     Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.moreIndex >= index)
@@ -114,9 +112,7 @@ public abstract class RunAnythingGroup {
   }
 
   public static void clearMoreIndex() {
-    for (RunAnythingGroup runAnythingGroup : EP_NAME.getExtensions()) {
-      runAnythingGroup.moreIndex = -1;
-    }
+      Arrays.stream(EP_NAME.getExtensions()).forEach(runAnythingGroup -> runAnythingGroup.moreIndex = -1);
   }
 
   private static void clearTitleIndex() {
@@ -136,33 +132,21 @@ public abstract class RunAnythingGroup {
   }
 
   @Nullable
-  public static WidgetID findWidget(int index) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.moreIndex).findFirst()
-                 .map(RunAnythingGroup::getWidget).orElse(null);
+  public static RunAnythingGroup findRunAnythingGroup(int index) {
+    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> index == runAnythingGroup.moreIndex).findFirst().orElse(null);
   }
 
   public static boolean isMoreIndex(int index) {
     return Arrays.stream(EP_NAME.getExtensions()).anyMatch(runAnythingGroup -> runAnythingGroup.moreIndex == index);
   }
 
-  public static void shiftIndexes(int index, int shift) {
-    shift(index, shift);
-    shiftMoreIndex(index, shift);
-  }
-
-  public static void dropMoreIndex(@NotNull WidgetID id) {
-    Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> runAnythingGroup.getWidget().equals(id))
-          .forEach(runAnythingGroup -> runAnythingGroup.moreIndex = -1);
+  public static void shiftIndexes(int baseIndex, int shift) {
+    shift(baseIndex, shift);
+    shiftMoreIndex(baseIndex, shift);
   }
 
   public static void clearIndexes() {
     clearTitleIndex();
     clearMoreIndex();
-  }
-
-  @Nullable
-  public static RunAnythingGroup findGroup(@NotNull WidgetID id) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(runAnythingGroup -> id.equals(runAnythingGroup.getWidget())).findFirst()
-                 .orElse(null);
   }
 }

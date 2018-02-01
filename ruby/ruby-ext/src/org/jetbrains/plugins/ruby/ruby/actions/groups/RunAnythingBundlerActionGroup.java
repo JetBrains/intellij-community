@@ -14,7 +14,7 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
 
   @NotNull
   @Override
-  protected String getKey() {
+  protected String getSettingsKey() {
     return "run.anything.settings.bundler.actions";
   }
 
@@ -31,14 +31,8 @@ public class RunAnythingBundlerActionGroup extends RunAnythingActionGroup {
   }
 
   @Override
-  protected int getMax() {
+  protected int getMaxItemsToShow() {
     return MAX_BUNDLER_ACTIONS;
-  }
-
-  @NotNull
-  @Override
-  public WidgetID getWidget() {
-    return WidgetID.BUNDLER;
   }
 
   @NotNull
