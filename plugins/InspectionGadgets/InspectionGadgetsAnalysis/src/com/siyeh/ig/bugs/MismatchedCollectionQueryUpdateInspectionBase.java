@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -107,6 +93,10 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
     return true;
   }
 
+  static boolean isCollectionInitializer(PsiExpression initializer) {
+    return isEmptyCollectionInitializer(initializer) || ConstructionUtils.isPrepopulatedCollectionInitializer(initializer);
+  }
+
   @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
@@ -153,8 +143,8 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null) {
           List<PsiExpression> expressions = ExpressionUtils.nonStructuralChildren(initializer).collect(Collectors.toList());
-          if (!expressions.stream().allMatch(MismatchedCollectionQueryUpdateInspectionBase::isEmptyCollectionInitializer)) {
-            expressions.stream().filter(MismatchedCollectionQueryUpdateInspectionBase::isEmptyCollectionInitializer)
+          if (!expressions.stream().allMatch(MismatchedCollectionQueryUpdateInspectionBase::isCollectionInitializer)) {
+            expressions.stream().filter(MismatchedCollectionQueryUpdateInspectionBase::isCollectionInitializer)
                        .forEach(emptyCollection -> registerError(emptyCollection, Boolean.TRUE));
             return;
           }
@@ -168,7 +158,9 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       super.visitField(field);
       if (!field.hasModifierProperty(PsiModifier.PRIVATE)) {
         PsiClass aClass = field.getContainingClass();
-        if (aClass == null || !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (aClass == null || !aClass.hasModifierProperty(PsiModifier.PRIVATE) || field.hasModifierProperty(PsiModifier.PUBLIC)) {
+          // Public field within private class can be written/read via reflection even without setAccessible hacks
+          // so we don't analyze such fields to reduce false-positives
           return;
         }
       }
@@ -240,7 +232,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
       final PsiExpression initializer = variable.getInitializer();
       return initializer != null &&
              ExpressionUtils.nonStructuralChildren(initializer)
-                            .noneMatch(MismatchedCollectionQueryUpdateInspectionBase::isEmptyCollectionInitializer);
+                            .noneMatch(MismatchedCollectionQueryUpdateInspectionBase::isCollectionInitializer);
     }
   }
 
@@ -314,8 +306,14 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
         }
         if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == reference) {
           PsiExpression rValue = ((PsiAssignmentExpression)parent).getRExpression();
-          if (rValue == null || ExpressionUtils.nonStructuralChildren(rValue)
-                                               .allMatch(MismatchedCollectionQueryUpdateInspectionBase::isEmptyCollectionInitializer)) {
+          if (rValue == null) return;
+          if (ExpressionUtils.nonStructuralChildren(rValue)
+                             .allMatch(MismatchedCollectionQueryUpdateInspectionBase::isEmptyCollectionInitializer)) {
+            return;
+          }
+          if (ExpressionUtils.nonStructuralChildren(rValue)
+                             .allMatch(MismatchedCollectionQueryUpdateInspectionBase::isCollectionInitializer)) {
+            makeUpdated();
             return;
           }
         }

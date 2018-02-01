@@ -15,7 +15,6 @@
  */
 package com.siyeh.igtest.bugs.mismatched_collection_query_update;
 
-import java.util.*;
 import java.io.FileInputStream;
 import java.util.concurrent.BlockingQueue;
 
@@ -182,12 +181,27 @@ public class MismatchedCollectionQueryUpdate {
       tpc.field.add("foo");
     }
 
+    void copyConstructors() {
+      // IDEA-175455
+      Map<String, String> sourceMap = new HashMap<>();
+      sourceMap.put("foo", "bar");
+
+      Map<String, String> <warning descr="Contents of collection 'destMap' are updated, but never queried">destMap</warning> = new HashMap<>(sourceMap);
+      destMap.put("hello", "world");
+
+      Collection<String> sourceList = new ArrayList<>();
+      sourceList.add("hello");
+
+      Collection<String> <warning descr="Contents of collection 'destList' are updated, but never queried">destList</warning> = new ArrayList<>(sourceList);
+      destList.add("world");
+    }
+
     private class TestPrivateClass {
-      public List<String> <warning descr="Contents of collection 'field' are updated, but never queried">field</warning> = new ArrayList<>();
+      List<String> <warning descr="Contents of collection 'field' are updated, but never queried">field</warning> = new ArrayList<>();
     }
 
     class TestPackageClass {
-      public List<String> field = new ArrayList<>();
+      List<String> field = new ArrayList<>();
     }
 
     class Node{
