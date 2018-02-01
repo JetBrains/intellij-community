@@ -3,10 +3,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.settings
 
-import com.intellij.compiler.options.CompileStepBeforeRun
-import com.intellij.execution.RunManager
 import com.intellij.execution.RunManagerEx
-import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
@@ -68,18 +65,19 @@ class RunConfigurationHandler : ConfigurationHandler {
           }
 
           consumeIfCast(cfg["beforeRun"], List::class.java) {
-            // TODO add extension point
+            var tasksList = runManagerEx.getBeforeRunTasks(runnerAndConfigurationSettings.configuration)
             it.filterIsInstance(Map::class.java)
-              .firstOrNull { it["id"] == "Make" }
-              ?.let { cfg ->
-                val enabled = (cfg["enabled"] as? Boolean) ?: true
-                if (!enabled) {
-                  val filtered = runManagerEx
-                    .getBeforeRunTasks(runnerAndConfigurationSettings.configuration)
-                    .filterNot { it.providerId == CompileStepBeforeRun.ID }
-                  runManagerEx.setBeforeRunTasks(runnerAndConfigurationSettings.configuration, filtered)
+              .forEach { beforeRunConfig ->
+                val typeName = beforeRunConfig["type"] as? String ?: return@forEach
+                BeforeRunTaskImporterExtensionManager.importerForType(typeName)?.let { importer ->
+                  tasksList = importer.process(project,
+                                               modelsProvider,
+                                               runnerAndConfigurationSettings.configuration,
+                                               tasksList,
+                                               beforeRunConfig as MutableMap<String, *>)
                 }
               }
+            runManagerEx.setBeforeRunTasks(runnerAndConfigurationSettings.configuration, tasksList)
           }
         }
         catch (e: Exception) {
@@ -98,3 +96,10 @@ class RunConfigImporterExtensionManager {
   }
 }
 
+
+class BeforeRunTaskImporterExtensionManager {
+  companion object {
+    fun importerForType(typeName: String): BeforeRunTaskImporter? =
+      Extensions.getExtensions(BeforeRunTaskImporter.EP_NAME).firstOrNull { it.canImport(typeName) }
+  }
+}
