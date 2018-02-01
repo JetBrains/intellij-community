@@ -1261,7 +1261,18 @@ public class JBUI {
   public static class CurrentTheme {
     public static class ToolWindow {
       public static Color tabSelectedBackground() {
-        return getColor("ToolWindow.header.tab.selected.background", 0xdedede);
+        return getColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+      }
+
+      public static Color tabSelectedActiveBackground() {
+        return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+      }
+
+      /**
+       * Used for hover as well
+       */
+      public static Color tabSelectedBackground(boolean active) {
+        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
       }
 
       public static Color headerBackground(boolean active) {
@@ -1288,7 +1299,7 @@ public class JBUI {
 
     public static class Label {
       public static Color foreground(boolean selected) {
-        return selected ? getColor("Label.selectedForeground", 0xffffff)
+        return selected ? getColor("Label.selectedForeground", 0xFFFFFF)
                         : getColor("Label.foreground", 0x000000);
       }
 
