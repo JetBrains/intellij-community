@@ -7,7 +7,6 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea/plugins/maven:maven2-server-impl",
         "//tools/idea/json",
         "//tools/idea/platform/tasks-platform-impl",
         "//tools/idea/platform/credential-store",

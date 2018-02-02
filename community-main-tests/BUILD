@@ -8,7 +8,6 @@ iml_module(
     test_runtime_deps = [
         "//tools/idea/platform/credential-store",
         "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/plugins/maven:maven2-server-impl",
         "//tools/vendor/intellij/cidr:doxygen",
         "//tools/idea/plugins/settings-repository",
         "//tools/idea/jps/javac-ref-scanner-8",
