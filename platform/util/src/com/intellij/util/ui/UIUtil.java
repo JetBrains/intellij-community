@@ -724,7 +724,7 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
-    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4 
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
     if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
     if (SystemInfo.isMac) {
@@ -1247,6 +1247,10 @@ public class UIUtil {
   public static Color getTreeUnfocusedSelectionBackground() {
     Color background = getTreeTextBackground();
     return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
+  }
+
+  public static Color getTableUnfocusedSelectionBackground() {
+    return getListUnfocusedSelectionBackground();
   }
 
   public static Color getTextFieldForeground() {
