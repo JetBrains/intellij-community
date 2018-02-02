@@ -56,7 +56,6 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -1220,6 +1219,10 @@ public class UIUtil {
   public static Color getTreeUnfocusedSelectionBackground() {
     Color background = getTreeTextBackground();
     return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
+  }
+
+  public static Color getTableUnfocusedSelectionBackground() {
+    return getListUnfocusedSelectionBackground();
   }
 
   public static Color getTextFieldForeground() {
