@@ -25,7 +25,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       "intellij.pycharm.community", "intellij.python.configure", "intellij.pycharm.edu", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
-    additionalIDEPropertiesFilePaths = ["$home/community/python/educational-python/build/pycharm-edu.properties".toString()]
+    additionalIDEPropertiesFilePaths = ["$pythonCommunityPath/educational-python/build/pycharm-edu.properties".toString()]
   }
 
   @Override
