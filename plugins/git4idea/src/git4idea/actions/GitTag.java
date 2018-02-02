@@ -15,20 +15,26 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.i18n.GitBundle;
+import git4idea.tag.GitTagDialogHandler;
 import git4idea.ui.GitTagDialog;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Git "tag" action
  */
 public class GitTag extends GitRepositoryAction {
+  private static ExtensionPointName<GitTagDialogHandler> handlerPointName = ExtensionPointName.create("Git4Idea.GitTagDialogHandler");
+  private static List<GitTagDialogHandler> handlerList = Arrays.asList(handlerPointName.getExtensions());
+
   /**
    * {@inheritDoc}
    */
@@ -45,10 +51,15 @@ public class GitTag extends GitRepositoryAction {
                          @NotNull final List<VirtualFile> gitRoots,
                          @NotNull final VirtualFile defaultRoot) {
     GitTagDialog d = new GitTagDialog(project, gitRoots, defaultRoot);
+    handlerList.forEach(handler -> handler.createDialog(d));
     if (d.showAndGet()) {
       new Task.Modal(project, "Tagging...", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          handlerList.forEach(GitTagDialogHandler::beforeCheckin);
+          for (GitTagDialogHandler handler : handlerList) {
+            if (handler.beforeCheckin() == GitTagDialogHandler.ReturnResult.CANCEL) return;
+          }
           d.runAction();
         }
       }.queue();

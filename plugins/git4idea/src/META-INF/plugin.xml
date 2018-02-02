@@ -233,5 +233,8 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
+    <extensionPoint qualifiedName="Git4Idea.GitMergeDialogHandler" interface="git4idea.merge.GitMergeDialogHandler"/>
+    <extensionPoint qualifiedName="Git4Idea.GitStashDialogHandler" interface="git4idea.stash.GitStashDialogHandler"/>
+    <extensionPoint qualifiedName="Git4Idea.GitTagDialogHandler" interface="git4idea.tag.GitTagDialogHandler"/>
   </extensionPoints>
 </idea-plugin>
