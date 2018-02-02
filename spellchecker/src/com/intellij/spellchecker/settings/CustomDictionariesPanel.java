@@ -67,8 +67,8 @@ public class CustomDictionariesPanel extends JPanel {
           if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
             JBList<DictionaryLocation> locationList = new JBList<>();
             locationList.setListData(new DictionaryLocation[]{
-              new LocalDictionaryLocation(project, myCustomDictionariesTableView),
-              new RepositoryDictionaryLocation(project, myCustomDictionariesTableView)
+              new RepositoryDictionaryLocation(project, myCustomDictionariesTableView),
+              new LocalDictionaryLocation(project, myCustomDictionariesTableView)
             });
             locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
             locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
