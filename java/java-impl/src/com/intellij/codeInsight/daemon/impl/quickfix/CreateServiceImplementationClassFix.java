@@ -194,15 +194,17 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      JPanel radioButtons = UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(mySubclassButton))
-        .add(UI.PanelFactory.panel(myProviderButton))
-        .createPanel();
-
       return UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(radioButtons).withLabel("Implementation:"))
+        .add(UI.PanelFactory.panel(mySubclassButton).withLabel("Implementation:"))
+        .add(UI.PanelFactory.panel(myProviderButton))
         .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
         .createPanel();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return mySubclassButton;
     }
 
     @Nullable
