@@ -302,6 +302,16 @@ public class EnterHandler extends BaseEnterHandler {
     return commenter.isDocumentationComment(comment);
   }
 
+  /**
+   * Adjusts indentation of the line with {@code offset} in {@code document}.
+   * 
+   * @param language used for code style extraction 
+   * @param document for indent adjustment
+   * @param editor   used for code style extraction
+   * @param offset   in {@code document} for indent adjustment
+   * @return new offset in the {@code document} after commit-free indent adjustment or 
+   *         {@code -1} if commit-free indent adjustment is unavailable in position.   
+   */
   public static int adjustLineIndentNoCommit(Language language, @NotNull Document document, @NotNull Editor editor, int offset) {
     final CharSequence docChars = document.getCharsSequence();
     int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
