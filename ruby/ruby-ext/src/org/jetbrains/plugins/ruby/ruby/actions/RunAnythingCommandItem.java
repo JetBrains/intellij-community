@@ -13,6 +13,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class RunAnythingCommandItem extends RunAnythingItem<String> {
+  private static final Logger LOG = Logger.getInstance(RunAnythingCommandItem.class);
   @Nullable private final Module myModule;
   @NotNull private final String myCommandLine;
   @NotNull private final Project myProject;
@@ -91,10 +93,31 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     }
 
     List<String> shellCommand = getShellCommand();
+    String exePath;
+    List<String> parameters = ContainerUtil.emptyList();
+    if (shellCommand.isEmpty()) {
+      List<String> params = ParametersListUtil.parse(command);
+      if (params.size() > 0) {
+        exePath = params.get(0);
+        if (params.size() > 1) {
+          parameters = params.subList(1, params.size());
+        }
+      }
+      else {
+        // exec must be not null to execute command
+        LOG.warn("No parameters parsed for command line: " + command);
+        return;
+      }
+    }
+    else {
+      assert shellCommand.size() == 2;
+      exePath = shellCommand.get(0);
+      parameters = ContainerUtil.immutableList(shellCommand.get(1), command);
+    }
+
     commandLine
-      .withExePath(shellCommand.size() > 0 ? shellCommand.get(0) : ParametersListUtil.parse(command).get(0))
-      .withParameters(shellCommand.size() == 2 ? ContainerUtil.immutableSingletonList(shellCommand.get(1)) : ContainerUtil.emptyList())
-      .withParameters(command)
+      .withExePath(exePath)
+      .withParameters(parameters)
       .withEnvironment(env)
       .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(project, workDirectory));
 
