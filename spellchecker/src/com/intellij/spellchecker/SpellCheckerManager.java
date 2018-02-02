@@ -222,18 +222,18 @@ public class SpellCheckerManager implements Disposable {
         UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
           @Override
           public void undo() {
-            dictionary.removeFromDictionary(word);
+            dictionary.removeFromDictionary(transformed);
             restartInspections();
           }
 
           @Override
           public void redo() {
-            dictionary.addToDictionary(word);
+            dictionary.addToDictionary(transformed);
             restartInspections();
           }
         });
       }
-      dictionary.addToDictionary(word);
+      dictionary.addToDictionary(transformed);
       restartInspections();
     }
   }
