@@ -39,9 +39,16 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.LinePainter2D.StrokeType;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.paint.PaintUtil.ParityMode;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
+import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntFunction;
 import gnu.trove.TIntObjectHashMap;
@@ -1045,13 +1052,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void doPaintFoldingTree(final Graphics2D g, final Rectangle clip, int firstVisibleOffset, int lastVisibleOffset) {
-    final int anchorX = getFoldingAreaOffset();
-    final int width = getFoldingAnchorWidth();
+    final double width = getFoldingAnchorWidth2D();
 
     Collection<DisplayedFoldingAnchor> anchorsToDisplay =
       myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegion);
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
-      drawFoldingAnchor(width, clip, g, anchorX, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
+      drawFoldingAnchor(width, clip, g, anchor.visualLine, anchor.type, anchor.foldRegion == myActiveFoldRegion);
     }
   }
 
@@ -1061,7 +1067,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     if ((shown || (myEditor.isInDistractionFreeMode() && Registry.is("editor.distraction.gutter.separator"))) && myPaintBackground) {
       g.setColor(getOutlineColor(false));
       int x = getWhitespaceSeparatorOffset();
-      UIUtil.drawLine(g, x, clip.y, x, clip.y + clip.height);
+      LinePainter2D.paint(g, x, clip.y, x, clip.y + clip.height, StrokeType.CENTERED, getStrokeWidth());
     }
 
     if (!shown) return;
@@ -1078,7 +1084,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (startY <= clip.y + clip.height && endY + 1 + myEditor.getDescent() >= clip.y) {
         g.setColor(getOutlineColor(true));
         int lineX = anchorX + width / 2;
-        UIUtil.drawLine(g, lineX, startY, lineX, endY);
+        LinePainter2D.paint(g, lineX, startY, lineX, endY, StrokeType.CENTERED, getStrokeWidth());
       }
     }
   }
@@ -1099,7 +1105,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return myEditor.visibleLineToY(line) + myEditor.getLineHeight() / 2;
   }
 
-  private int getFoldAnchorY(int line, int width) {
+  private double getFoldAnchorY(int line, double width) {
     return myEditor.visibleLineToY(line) + myEditor.getAscent() - width;
   }
 
@@ -1107,28 +1113,29 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     return getLineCenterY(myEditor.offsetToVisualLine(foldRange.getStartOffset()));
   }
 
-  private void drawFoldingAnchor(int width, Rectangle clip, Graphics2D g, int anchorX, int visualLine,
+  private void drawFoldingAnchor(double width, Rectangle clip, Graphics2D g, int visualLine,
                                  DisplayedFoldingAnchor.Type type, boolean active) {
-    int off = (int)((float)width / 4);
-    int height = width + off;
-    int baseHeight = height - width / 2;
-    int y = getFoldAnchorY(visualLine, width);
+    double off = width / 4;
+    double height = PaintUtil.alignToInt(width + off, g);
+    double baseHeight = PaintUtil.alignToInt(height - width / 2, g);
+    double y = PaintUtil.alignToInt(getFoldAnchorY(visualLine, width), g);
+    double centerX = LinePainter2D.getStrokeCenter(g, getWhitespaceSeparatorOffset(), StrokeType.CENTERED, getStrokeWidth());
     switch (type) {
       case COLLAPSED:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlus(g, anchorX, y, width, active);
+          drawSquareWithPlus(g, centerX, y, width, active);
         }
         break;
       case EXPANDED_TOP:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, height, baseHeight, active);
+          drawDirectedBox(g, centerX, y, width, height, baseHeight, active);
         }
         break;
       case EXPANDED_BOTTOM:
         //noinspection SuspiciousNameCombination
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, anchorX, y, width, -height, -baseHeight, active);
+          drawDirectedBox(g, centerX, y, width, -height, -baseHeight, active);
         }
         break;
     }
@@ -1141,82 +1148,103 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private void drawDirectedBox(Graphics2D g,
-                               int anchorX,
-                               int y,
-                               int width,
-                               int height,
-                               int baseHeight,
-                               boolean active) {
-    Object antialiasing = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    if (UIUtil.isJreHiDPI(g)) {
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    }
+                               double centerX,
+                               double y,
+                               double width,
+                               double height,
+                               double baseHeight,
+                               boolean active)
+  {
+    double sw = getStrokeWidth();
+    g.setColor(myEditor.getBackgroundColor());
+    boolean up = height < 0;
+    double x = PaintUtil.alignToInt(centerX - width / 2, g);
+    // (-1) matches the rect box right stroke
+    double x2 = x + width - 1;
+    double y2 = y + height + (up ? 1 : -1);
+    double[] dxPoints = {x, x, x2, x2, centerX};
+    double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y2};
+    LinePainter2D.fillPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    try {
-      int off = getSquareInnerOffset(width);
+    g.setColor(getOutlineColor(active));
+    LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      g.setColor(myEditor.getBackgroundColor());
-      int[] xPoints = {anchorX, anchorX + width, anchorX + width, anchorX + width / 2, anchorX};
-      int[] yPoints = {y, y, y + baseHeight, y + height, y + baseHeight};
-      g.fillPolygon(xPoints, yPoints, 5);
+    drawMinus(g, centerX, y, width, up, sw);
+  }
 
-      g.setColor(getOutlineColor(active));
-      g.drawPolygon(xPoints, yPoints, 5);
-
-      //Minus
-      int minusHeight = y + baseHeight / 2 + (height - baseHeight) / 4;
-      UIUtil.drawLine(g, anchorX + off, minusHeight, anchorX + width - off, minusHeight);
-    }
-    finally {
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, antialiasing);
-    }
+  private void drawMinus(Graphics2D g, double centerX, double y, double width, boolean up, double strokeWidth) {
+    double swc = LinePainter2D.getStrokeCenter(g, 0, StrokeType.CENTERED, strokeWidth);
+    double off = PaintUtil.alignToInt(getSquareInnerOffset(width), g, RoundingMode.FLOOR);
+    double lw = PaintUtil.alignToInt(width - off * 2, g, PaintUtil.getParityMode(strokeWidth, g));
+    double lx = PaintUtil.alignToInt(centerX - lw / 2, g);
+    double ly = PaintUtil.alignToInt(y + (width / 2 - swc) * (up ? -1 : 1), g, RoundingMode.FLOOR);
+    LinePainter2D.paint(g, lx, ly, lx + lw - 1, ly, StrokeType.CENTERED, strokeWidth);
   }
 
   private void drawSquareWithPlus(Graphics2D g,
-                                  int anchorX,
-                                  int y,
-                                  int width,
-                                  boolean active) {
-    drawSquareWithMinus(g, anchorX, y, width, active);
-    int off = getSquareInnerOffset(width);
-    UIUtil.drawLine(g, anchorX + width / 2, y + off, anchorX + width / 2, y + width - off);
+                                  double centerX,
+                                  double y,
+                                  double width,
+                                  boolean active)
+  {
+    drawSquareWithMinus(g, centerX, y, width, active);
+    // Draw plus
+    double sw = getStrokeWidth();
+    double off = PaintUtil.alignToInt(getSquareInnerOffset(width), g, RoundingMode.FLOOR);
+    double lw = PaintUtil.alignToInt(width - off * 2, g, PaintUtil.getParityMode(sw, g));
+    double ly = PaintUtil.alignToInt(y + width / 2 - lw / 2, g, RoundingMode.FLOOR);
+    int x = getWhitespaceSeparatorOffset();
+    LinePainter2D.paint(g, x, ly, x, ly + lw - 1, StrokeType.CENTERED, sw);
   }
 
   /**
    * Returns the gap between the sign and the square itself
    */
-  private static int getSquareInnerOffset(int width) {
-    return Math.max(width / 5, JBUI.scale(2));
+  private double getSquareInnerOffset(double width) {
+    return Math.max(width / 5, scale(2));
+  }
+
+  private double scale(double v) {
+    //return BaseScaleContext.create(OBJ_SCALE.of(myEditor.getScale())).getScale(PIX_SCALE) * v;
+    return JBUI.scale((float)v) * myEditor.getScale();
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
   private void drawSquareWithMinus(Graphics2D g,
-                                   int anchorX,
-                                   int y,
-                                   int width,
-                                   boolean active) {
+                                   double centerX,
+                                   double y,
+                                   double width,
+                                   boolean active)
+  {
+    double sw = getStrokeWidth();
+    double x = PaintUtil.alignToInt(centerX - width / 2, g);
+
     g.setColor(myEditor.getBackgroundColor());
-    g.fillRect(anchorX, y, width, width);
+    RectanglePainter2D.FILL.paint(g, x, y, width, width, null, StrokeType.CENTERED, sw);
 
     g.setColor(getOutlineColor(active));
-    g.drawRect(anchorX, y, width, width);
-    int off = getSquareInnerOffset(width);
-    // Draw plus
-    if (!active) g.setColor(getOutlineColor(true));
-    UIUtil.drawLine(g, anchorX + off, y + width / 2, anchorX + width - off, y + width / 2);
+    RectanglePainter2D.DRAW.paint(g, x, y, width, width, null, StrokeType.CENTERED, sw);
+    drawMinus(g, centerX, y, width, false, sw);
   }
 
   private int getFoldingAnchorWidth() {
-    // have to be odd number to be perfectly symmetric (as long as we have plus sign inside)
-    return roundToEven(Math.min(JBUI.scale(4) * myEditor.getScale(), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2);
+    return (int)Math.round(getFoldingAnchorWidth2D());
   }
 
-  private static int roundToEven(float f) {
-    int lower = (int)Math.floor(f);
-    int upper = (int)Math.ceil(f);
-    if (lower % 2 == 0) return lower;
-    if (upper % 2 == 0) return upper;
-    return lower > 0 ? lower - 1 : 0; // lower == upper == f
+  private double getFoldingAnchorWidth2D() {
+    // have to match the parity of the stroke width to be perfectly symmetric (as long as we have plus sign inside)
+    double width = Math.min(scale(4), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2;
+    ScaleContext ctx = ScaleContext.create(myEditor.getComponent());
+    ParityMode swParity = PaintUtil.getParityMode(getStrokeWidth(), ctx, RoundingMode.ROUND);
+    width = PaintUtil.alignToInt(width, ctx, RoundingMode.ROUND, swParity);
+    double diff = RectanglePainter2D.getStrokedSize(ctx, width, StrokeType.CENTERED, getStrokeWidth()) - width;
+    return width - diff;
+  }
+
+  private double getStrokeWidth() {
+    double sw = UIUtil.isJreHiDPIEnabled() || scale(1f) < 2 ? 1 : 2;
+    ScaleContext ctx = ScaleContext.create(myEditor.getComponent());
+    return PaintUtil.alignToInt(sw, ctx, PaintUtil.devValue(1, ctx) > 2 ? RoundingMode.FLOOR : RoundingMode.ROUND, null);
   }
 
   private int getFoldingAreaOffset() {
@@ -1424,7 +1452,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @SuppressWarnings("SuspiciousNameCombination")
   private Rectangle rectangleByFoldOffset(int foldStart, int anchorWidth, int anchorX) {
-    return new Rectangle(anchorX, getFoldAnchorY(foldStart, anchorWidth), anchorWidth, anchorWidth);
+    return new Rectangle(anchorX, (int)getFoldAnchorY(foldStart, anchorWidth), anchorWidth, anchorWidth);
   }
 
   @Override

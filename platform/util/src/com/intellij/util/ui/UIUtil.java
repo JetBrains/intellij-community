@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -387,6 +388,7 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
+  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
   private static Boolean jreHiDPI;
   private static boolean jreHiDPI_earlierVersion;
 
@@ -770,21 +772,12 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link LinePainter2D#paint(Graphics, double, double, double, double)} instead.
+   */
+  @Deprecated
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
-    Stroke stroke = ((Graphics2D)g).getStroke();
-    if (stroke instanceof BasicStroke) {
-      if (x1 == x2) {
-        float lineWidth = ((BasicStroke)stroke).getLineWidth();
-        ((Graphics2D)g).fill(new Rectangle2D.Float(x1, Math.min(y1, y2), lineWidth, Math.abs(y1 - y2) + lineWidth));
-        return;
-      }
-      if (y1 == y2) {
-        float lineWidth = ((BasicStroke)stroke).getLineWidth();
-        ((Graphics2D)g).fill(new Rectangle2D.Float(Math.min(x1, x2), y1, Math.abs(x1 - x2) + lineWidth, lineWidth));
-        return;
-      }
-    }
-    g.drawLine(x1, y1, x2, y2);
+    LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
   }
 
   public static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
@@ -796,7 +789,7 @@ public class UIUtil {
     if (bgColor != null) {
       g.setBackground(bgColor);
     }
-    drawLine(g, x1, y1, x2, y2);
+    LinePainter2D.paint(g, x1, y1, x2, y2);
     if (fgColor != null) {
       g.setColor(oldFg);
     }
