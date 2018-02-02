@@ -10,9 +10,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.function.Consumer;
 
 import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
@@ -110,7 +109,7 @@ abstract class GitImplBase implements Git {
   private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
     Project project = handler.project();
     if (project != null && handler.isRemote()) {
-      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler)){
+      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler)) {
         return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
@@ -139,18 +138,20 @@ abstract class GitImplBase implements Git {
 
     getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
 
+    GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
+    handler.addLineListener(resultListener);
+
     try (AccessToken ignored = lock(handler)) {
-      GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
-      handler.addLineListener(resultListener);
-
       writeOutputToConsole(handler);
-
       handler.runInCurrentThread();
-      return new GitCommandResult(resultListener.myStartFailed,
-                                  resultListener.myExitCode,
-                                  outputCollector.myErrorOutput,
-                                  outputCollector.myOutput);
     }
+    catch (IOException e) {
+      return GitCommandResult.error("Error processing input stream: " + e.getLocalizedMessage());
+    }
+    return new GitCommandResult(resultListener.myStartFailed,
+                                resultListener.myExitCode,
+                                outputCollector.myErrorOutput,
+                                outputCollector.myOutput);
   }
 
   /**

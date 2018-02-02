@@ -132,11 +132,6 @@ public class GitIndexUtil {
     });
     h.endOptions();
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-
-    if (!h.errors().isEmpty()) {
-      notNull(GitVcs.getInstance(repository.getProject())).showErrors(h.errors(), "Applying index modifications");
-      throw h.errors().get(0);
-    }
     return HashImpl.build(output.trim());
   }
 

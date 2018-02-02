@@ -427,8 +427,23 @@ public abstract class GitHandler {
     return myPreValidateExecutable;
   }
 
-  void runInCurrentThread() {
-    runInCurrentThread(null);
+  void runInCurrentThread() throws IOException {
+    try {
+      start();
+      if (isStarted()) {
+        try {
+          if (myInputProcessor != null) {
+            myInputProcessor.consume(myProcess.getOutputStream());
+          }
+        }
+        finally {
+          waitForProcess();
+        }
+      }
+    }
+    finally {
+      logTime();
+    }
   }
 
   private void logTime() {
@@ -502,28 +517,6 @@ public abstract class GitHandler {
     return myCommandLine.toString();
   }
 
-  //region removal candidates
-  //region TODO: move this functionality to GitCommandResult
-  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
-
-  /**
-   * add error to the error list
-   *
-   * @param ex an error to add to the list
-   */
-  public void addError(VcsException ex) {
-    myErrors.add(ex);
-  }
-
-  /**
-   * @return unmodifiable list of errors.
-   */
-  public List<VcsException> errors() {
-    return Collections.unmodifiableList(myErrors);
-  }
-  //endregion
-  //endregion
-
   //region deprecated stuff
   //Used by Gitflow in GitInitLineHandler.onTextAvailable
   @Deprecated
@@ -536,6 +529,8 @@ public abstract class GitHandler {
   private final int LAST_OUTPUT_SIZE = 5;
   @Deprecated
   private boolean myProgressParameterAllowed = false;
+  @Deprecated
+  private final List<VcsException> myErrors = Collections.synchronizedList(new ArrayList<VcsException>());
 
   /**
    * Adds "--progress" parameter. Usable for long operations, such as clone or fetch.
@@ -612,17 +607,7 @@ public abstract class GitHandler {
         if (postStartAction != null) {
           postStartAction.run();
         }
-        try {
-          if (myInputProcessor != null && myProcess != null) {
-            myInputProcessor.consume(myProcess.getOutputStream());
-          }
-        }
-        catch (IOException e) {
-          addError(new VcsException(e));
-        }
-        finally {
-          waitForProcess();
-        }
+        waitForProcess();
       }
     }
     finally {
@@ -637,5 +622,25 @@ public abstract class GitHandler {
    */
   @Deprecated
   abstract void destroyProcess();
+
+  /**
+   * add error to the error list
+   *
+   * @param ex an error to add to the list
+   * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
+   */
+  @Deprecated
+  public void addError(VcsException ex) {
+    myErrors.add(ex);
+  }
+
+  /**
+   * @return unmodifiable list of errors.
+   * @deprecated remove together with {@link GitHandlerUtil} and {@link GitTask}
+   */
+  @Deprecated
+  public List<VcsException> errors() {
+    return Collections.unmodifiableList(myErrors);
+  }
   //endregion
 }

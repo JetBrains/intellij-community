@@ -296,7 +296,7 @@ public class GitLogUtil {
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
-    Git.getInstance().runCommandWithoutCollectingOutput(handler);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).getOutputOrThrow();
     handlerListener.reportErrors();
 
     sw.report();
@@ -354,10 +354,6 @@ public class GitLogUtil {
 
     readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
     recordCollector.finish();
-
-    if (!handler.errors().isEmpty()) {
-      throw new VcsException(GitUIUtil.stringifyErrors(handler.errors()));
-    }
   }
 
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
