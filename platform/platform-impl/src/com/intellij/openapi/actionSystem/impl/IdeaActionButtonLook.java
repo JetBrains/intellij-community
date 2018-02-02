@@ -19,6 +19,8 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -36,6 +38,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
 
   private static final Color POPPED_BORDER  = new JBColor(Gray.xCC, new Color(0x757b80));
   private static final Color PRESSED_BORDER = new JBColor(Gray.xC4, new Color(0x7a8084));
+
+  private static final Insets INSETS = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
+                                       JBUI.insets(3, 0): JBUI.emptyInsets();
 
   public void paintBackground(Graphics g, JComponent component, int state) {
     if (state != ActionButtonComponent.NORMAL) {
@@ -84,6 +89,13 @@ public class IdeaActionButtonLook extends ActionButtonLook {
   }
 
   private static Shape getShape(Dimension size) {
-    return new RoundRectangle2D.Double(1, 1, size.width - 3, size.height - 3, 4, 4);
+    Rectangle r = new Rectangle(size);
+    JBInsets.removeFrom(r, INSETS);
+    return new RoundRectangle2D.Double(r.x, r.y, r.width - 1, r.height - 1, 4, 4);
+  }
+
+  @Override
+  public Insets getInsets() {
+    return INSETS;
   }
 }

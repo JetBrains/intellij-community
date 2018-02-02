@@ -49,12 +49,12 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return MacIntelliJIconCache.getIcon(clickable ? "searchFieldWithHistory" : "search");
+    return MacIntelliJIconCache.getIcon(clickable ? "searchWithHistory" : "search");
   }
 
   @Override
   protected Icon getClearIcon(boolean hovered, boolean clickable) {
-    return !clickable ? null : MacIntelliJIconCache.getIcon("searchFieldClear");
+    return !clickable ? null : MacIntelliJIconCache.getIcon("clear");
   }
 
   @Override
