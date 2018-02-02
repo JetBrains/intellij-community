@@ -15,6 +15,8 @@
  */
 package com.intellij.java.codeInspection.bytecodeAnalysis.data;
 
+// Precompiled class to test the clash of the same class in different source paths
+// To compile it just use javac TestConflict.java
 public class TestConflict {
   static native int throwInDataNativeInConflict();
 

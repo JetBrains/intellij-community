@@ -20,14 +20,13 @@ import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.junit.Assert;
 
-import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.MessageDigest;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.stream.Stream;
 
@@ -65,6 +64,13 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     checkAnnotations(TestNonStable.class);
     checkAnnotations(TestConflict.class);
     checkAnnotations(TestEnum.class);
+  }
+
+  public void testJava9Inference() throws IOException, ClassNotFoundException {
+    try (URLClassLoader cl = new URLClassLoader(new URL[]{new File(myModule.getProject().getBasePath()).toURI().toURL()})) {
+      Class<?> java9Class = cl.loadClass(Test01.class.getPackage().getName() + ".TestJava9");
+      checkAnnotations(java9Class);
+    }
   }
 
   public void testHashCollision() {
@@ -118,7 +124,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
             isLeaking = true;
           }
         }
-        assertEquals(method.toString() + " #" + i, isLeaking, map.get(method)[i]);
+        assertEquals(method + " #" + i, isLeaking, map.get(method)[i]);
       }
     }
   }
@@ -246,27 +252,26 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.addLibrary(myModule, "dataClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
 
     if(getTestName(false).equals("Inference")) {
-      setUpConflictingClasses(basePath);
+      setUpPrecompiledDataClasses(basePath);
     }
   }
 
-  private void setUpConflictingClasses(String basePath) throws IOException {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
-    StandardJavaFileManager manager = compiler.getStandardFileManager(diagnostics, null, null);
+  private void setUpPrecompiledDataClasses(String basePath) throws IOException {
     File sourcePath = new File(PlatformTestUtil.getCommunityPath() + "/java/java-tests/testSrc/" + PACKAGE_PATH);
-    File[] sourceFiles = new File(sourcePath.getParentFile(), "classConflict").listFiles((dir, name) -> name.endsWith(".java"));
+    File[] sourceFiles = new File(sourcePath.getParentFile(), "precompiledData").listFiles((dir, name) -> name.endsWith(".java"));
     assertNotNull(sourceFiles);
-    Iterable<? extends JavaFileObject> sources = manager.getJavaFileObjectsFromFiles(Arrays.asList(sourceFiles));
-    File conflictOutput = new File(basePath + "/conflict/");
+    File conflictOutput = new File(basePath + "/precompiled/"+PACKAGE_PATH);
     assertTrue(conflictOutput.mkdirs());
-    manager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(conflictOutput));
-    JavaCompiler.CompilationTask task = compiler.getTask(null, manager, diagnostics, null, null, sources);
-    if(!task.call()) {
-      fail(diagnostics.getDiagnostics().toString());
+    for (File file : sourceFiles) {
+      File precompiledFile = new File(file.getParentFile(), file.getName().replaceFirst(".java$", ".class"));
+      if(!precompiledFile.exists()) {
+        fail("Unable to find precompiled "+precompiledFile+" for source file "+file);
+      }
+      FileUtil.copy(precompiledFile, new File(conflictOutput, precompiledFile.getName()));
     }
+
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(conflictOutput);
     assertNotNull(vFile);
-    PsiTestUtil.addLibrary(myModule, "conflictClasses", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
+    PsiTestUtil.addLibrary(myModule, "precompiled", vFile.getPath(), new String[]{""}, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 }
