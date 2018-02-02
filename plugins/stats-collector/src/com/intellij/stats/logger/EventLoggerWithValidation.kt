@@ -16,28 +16,39 @@
 
 package com.intellij.stats.logger
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.completion.CompletionEventLogger
+import com.intellij.stats.completion.LogEventSerializer
 import com.intellij.stats.completion.events.LogEvent
 
 /**
  * @author Vitaliy.Bibaev
  */
-class EventLoggerWithValidation(private val logger: CompletionEventLogger, private val validator: SessionValidator)
-    : CompletionEventLogger {
+class EventLoggerWithValidation(private val fileLogger: FileLogger, private val validator: SessionValidator)
+    : CompletionEventLogger, Disposable {
     private val session: MutableList<LogEvent> = mutableListOf()
 
     override fun log(event: LogEvent) {
         if (session.isEmpty() || event.sessionUid == session.first().sessionUid) {
             session.add(event)
         } else {
-            val completionSession = session.toList()
-            ApplicationManager.getApplication().executeOnPooledThread({
-                validator.validate(completionSession)
-                completionSession.forEach(logger::log)
-            })
+            val lastSession = session.toList()
+            ApplicationManager.getApplication().executeOnPooledThread { validateAndLog(lastSession) }
             session.clear()
             session.add(event)
+        }
+    }
+
+    override fun dispose() {
+        validateAndLog(session.toList())
+        session.clear()
+    }
+
+    private fun validateAndLog(session: List<LogEvent>) {
+        validator.validate(session)
+        for (event in session) {
+            fileLogger.println(LogEventSerializer.toString(event))
         }
     }
 }

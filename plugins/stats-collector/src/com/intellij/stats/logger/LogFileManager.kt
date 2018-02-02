@@ -16,45 +16,38 @@
 
 package com.intellij.stats.logger
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.stats.network.assertNotEDT
 import com.intellij.stats.storage.FilePathProvider
 import java.io.File
 
-class LogFileManager(private val filePathProvider: FilePathProvider) {
+class LogFileManager(private val filePathProvider: FilePathProvider) : FileLogger {
     private companion object {
         const val MAX_SIZE_BYTE = 250 * 1024
     }
 
     private var storage = LineStorage()
 
-    @Synchronized
-    fun println(message: String) {
-        if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
-            saveDataChunk(storage)
-            storage = LineStorage()
+    override fun println(message: String) {
+        synchronized(this) {
+            if (storage.size > 0 && storage.sizeWithNewLine(message) > MAX_SIZE_BYTE) {
+                saveDataChunk(storage)
+                storage = LineStorage()
+            }
+            storage.appendLine(message)
         }
-        storage.appendLine(message)
     }
 
-    @Synchronized
     fun flush() {
-        if (storage.size > 0) {
-            saveDataChunk(storage)
+        synchronized(this) {
+            if (storage.size > 0) {
+                saveDataChunk(storage)
+                storage = LineStorage()
+            }
         }
-
-        storage = LineStorage()
     }
 
     private fun saveDataChunk(storage: LineStorage) {
-        if (ApplicationManager.getApplication().isUnitTestMode) {
-            save(storage)
-        } else {
-            ApplicationManager.getApplication().executeOnPooledThread({ save(storage) })
-        }
-    }
-
-    @Synchronized
-    private fun save(storage: LineStorage) {
+        assertNotEDT()
         val dir = filePathProvider.getStatsDataDirectory()
         val tmp = File(dir, "tmp_data")
         storage.dump(tmp)

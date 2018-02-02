@@ -17,7 +17,8 @@
 package com.intellij.stats.logger
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.completion.CompletionEventLogger
+import com.intellij.stats.completion.DeserializedLogEvent
+import com.intellij.stats.completion.LogEventSerializer
 import com.intellij.stats.completion.ValidationStatus
 import com.intellij.stats.completion.events.DownPressedEvent
 import com.intellij.stats.completion.events.LogEvent
@@ -34,14 +35,14 @@ class ValidationOnClientTest : PlatformTestCase() {
         val event2 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1)
 
         TestCase.assertEquals(ValidationStatus.UNKNOWN, event1.validationStatus)
-        val queue = LinkedBlockingQueue<ValidationStatus>()
-        val logger = createLogger { queue.add(it.validationStatus) }
+        val queue = LinkedBlockingQueue<DeserializedLogEvent>()
+        val logger = createLogger { queue.add(it) }
 
         logger.log(event1)
         logger.log(event2)
 
-        val status = queue.take()
-        TestCase.assertEquals(ValidationStatus.VALID, status)
+        val event = queue.take().event!!
+        TestCase.assertEquals(ValidationStatus.VALID, event.validationStatus)
     }
 
     fun `test log after session finished`() {
@@ -49,7 +50,7 @@ class ValidationOnClientTest : PlatformTestCase() {
         val event2 = DownPressedEvent("1", "1", emptyList(), emptyList(), 2)
         val event3 = DownPressedEvent("1", "2", emptyList(), emptyList(), 1)
 
-        val queue = LinkedBlockingQueue<LogEvent>()
+        val queue = LinkedBlockingQueue<DeserializedLogEvent>()
 
         val logger = createLogger { queue.put(it) }
 
@@ -60,10 +61,10 @@ class ValidationOnClientTest : PlatformTestCase() {
         TestCase.assertTrue(queue.isEmpty())
         logger.log(event3)
 
-        val e1 = queue.take()
-        TestCase.assertEquals(event1, e1)
-        val e2 = queue.take()
-        TestCase.assertEquals(event2, e2)
+        val e1 = queue.take().event!!
+        TestCase.assertEquals(event1.sessionUid, e1.sessionUid)
+        val e2 = queue.take().event!!
+        TestCase.assertEquals(event2.sessionUid, e2.sessionUid)
         TestCase.assertTrue(queue.isEmpty())
     }
 
@@ -85,10 +86,10 @@ class ValidationOnClientTest : PlatformTestCase() {
         }
     }
 
-    private fun createLogger(onLogCallback: (LogEvent) -> Unit): CompletionEventLogger {
-        return EventLoggerWithValidation(object : CompletionEventLogger {
-            override fun log(event: LogEvent) {
-                onLogCallback(event)
+    private fun createLogger(onLogCallback: (DeserializedLogEvent) -> Unit): EventLoggerWithValidation {
+        return EventLoggerWithValidation(object : FileLogger {
+            override fun println(message: String) {
+                onLogCallback(LogEventSerializer.fromString(message))
             }
         }, DefaultValidator())
     }

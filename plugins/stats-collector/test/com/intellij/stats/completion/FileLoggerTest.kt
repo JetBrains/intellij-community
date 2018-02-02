@@ -25,7 +25,10 @@ import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.StandardWatchEventKinds
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class FileLoggerTest : PlatformTestCase() {
@@ -75,13 +78,18 @@ class FileLoggerTest : PlatformTestCase() {
             `when`(psiFile).thenReturn(null)
             `when`(editor).thenReturn(mock(Editor::class.java))
         }
-        
+
+        val watchService = FileSystems.getDefault().newWatchService()
+        val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE)
+
         logger.completionStarted(lookup, true, 2)
-        
+
         logger.completionCancelled()
         loggerProvider.disposeComponent()
 
+        watchService.poll(15, TimeUnit.SECONDS)
+        key.cancel()
         assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
+        watchService.close()
     }
-    
 }
