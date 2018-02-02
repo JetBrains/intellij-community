@@ -16,6 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitExecutableProblemsNotifier;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
@@ -121,8 +125,18 @@ abstract class GitImplBase implements Git {
    */
   @NotNull
   private static GitCommandResult doRun(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
-    GitCommandResult preValidationResult = preValidateExecutable(handler);
-    if (preValidationResult != null) return preValidationResult;
+    GitVersion version = GitVersion.NULL;
+    if (handler.isPreValidateExecutable()) {
+      String executablePath = handler.getExecutablePath();
+      try {
+        version = GitExecutableManager.getInstance().identifyVersion(executablePath);
+      }
+      catch (Exception e) {
+        return handlePreValidationException(handler.project(), executablePath, e);
+      }
+    }
+
+    getGitTraceEnvironmentVariables(version).forEach(handler::addCustomEnvironmentVariable);
 
     try (AccessToken ignored = lock(handler)) {
       GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
@@ -136,6 +150,20 @@ abstract class GitImplBase implements Git {
                                   outputCollector.myErrorOutput,
                                   outputCollector.myOutput);
     }
+  }
+
+  /**
+   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
+   */
+  @NotNull
+  public static Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
+    Map<String, String> environment = new HashMap<>(5);
+    environment.put("GIT_TRACE", "0");
+    if (GitVersionSpecialty.ENV_GIT_TRACE_PACK_ACCESS_ALLOWED.existsIn(version)) environment.put("GIT_TRACE_PACK_ACCESS", "");
+    environment.put("GIT_TRACE_PACKET", "");
+    environment.put("GIT_TRACE_PERFORMANCE", "0");
+    environment.put("GIT_TRACE_SETUP", "0");
+    return environment;
   }
 
   private static class GitCommandResultListener implements GitLineHandlerListener {
@@ -191,33 +219,25 @@ abstract class GitImplBase implements Git {
     abstract void errorLineReceived(@NotNull String line);
   }
 
-  @Nullable
-  private static GitCommandResult preValidateExecutable(@NotNull GitLineHandler handler) {
-    if (handler.isPreValidateExecutable()) {
-      String executablePath = handler.getExecutablePath();
-      try {
-        GitExecutableManager.getInstance().identifyVersion(executablePath);
-      }
-      catch (Exception e) {
-        // Show notification if it's a project non-modal task and cancel the task
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        Project project = handler.project();
-        if (project != null
-            && progressIndicator != null
-            && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
-          GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(handler.getExecutablePath(), e);
-          throw new ProcessCanceledException(e);
-        }
-        else {
-          return GitCommandResult.error(
-            GitBundle.getString("git.executable.validation.error.title") + " \n" +
-            GitBundle.message("git.executable.validation.error.start.subtitle", executablePath) + ": " +
-            GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
-          );
-        }
-      }
+  @NotNull
+  private static GitCommandResult handlePreValidationException(@Nullable Project project,
+                                                               @NotNull String executablePath,
+                                                               @NotNull Exception e) {
+    // Show notification if it's a project non-modal task and cancel the task
+    ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    if (project != null
+        && progressIndicator != null
+        && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
+      GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(executablePath, e);
+      throw new ProcessCanceledException(e);
     }
-    return null;
+    else {
+      return GitCommandResult.startError(
+        GitBundle.getString("git.executable.validation.error.title") + " \n" +
+        GitBundle.message("git.executable.validation.error.start.subtitle", executablePath) + ": " +
+        GitExecutableProblemsNotifier.getPrettyErrorMessage(e)
+      );
+    }
   }
 
   private static void writeOutputToConsole(@NotNull GitLineHandler handler) {

@@ -482,22 +482,7 @@ public abstract class GitHandler {
     executionEnvironment.clear();
     executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
-    executionEnvironment.putAll(getGitTraceEnvironmentVariables());
     executionEnvironment.putAll(myCustomEnv);
-  }
-
-  /**
-   * Only public because of {@link git4idea.config.GitExecutableValidator#isExecutableValid()}
-   */
-  @NotNull
-  public static Map<String, String> getGitTraceEnvironmentVariables() {
-    Map<String, String> environment = new HashMap<>(5);
-    environment.put("GIT_TRACE", "0");
-    environment.put("GIT_TRACE_PACK_ACCESS", "");
-    environment.put("GIT_TRACE_PACKET", "");
-    environment.put("GIT_TRACE_PERFORMANCE", "0");
-    environment.put("GIT_TRACE_SETUP", "0");
-    return environment;
   }
 
   protected abstract Process startProcess() throws ExecutionException;
@@ -616,7 +601,6 @@ public abstract class GitHandler {
   }
 
   /**
-   *
    * @param postStartAction
    * @deprecated remove together with {@link GitHandlerUtil}
    */
