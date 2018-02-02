@@ -57,11 +57,11 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   }
 
   @Override
-  public void run(@NotNull Executor executor,
-                  @Nullable VirtualFile workDirectory,
-                  @Nullable Component component,
-                  @NotNull Project project,
-                  @Nullable AnActionEvent event) {
+  public void runInner(@NotNull Executor executor,
+                       @Nullable VirtualFile workDirectory,
+                       @Nullable Component component,
+                       @NotNull Project project,
+                       @Nullable AnActionEvent event) {
     runCommand(workDirectory, project, myCommandLine, myModule, executor);
   }
 
@@ -240,6 +240,11 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
   @Override
   public String getValue() {
     return myCommandLine;
+  }
+
+  @Override
+  public void triggerUsage() {
+    RunAnythingUtil.triggerDebuggerStatistics();
   }
 
   @NotNull

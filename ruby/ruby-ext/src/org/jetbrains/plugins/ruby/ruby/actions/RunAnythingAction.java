@@ -425,12 +425,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     Runnable onDone = null;
     AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      if (value instanceof RunAnythingRunConfigurationItem) {
-        RunAnythingUtil.triggerDebuggerStatistics();
-        runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
-        return;
-      }
-      else if (value instanceof RunAnythingActionItem) {
+      if (value instanceof RunAnythingRunConfigurationItem || value instanceof RunAnythingActionItem) {
         runOnFocusSettlesDown(project, (RunAnythingItem)value, focusManager);
         return;
       }
@@ -447,7 +442,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       token.finish();
       final ActionCallback callback = onPopupFocusLost();
       if (onDone != null) {
-        RunAnythingUtil.triggerDebuggerStatistics();
         callback.doWhenDone(onDone);
       }
     }

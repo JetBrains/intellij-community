@@ -24,11 +24,11 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   }
 
   @Override
-  public void run(@NotNull Executor executor,
-                  @Nullable VirtualFile workDirectory,
-                  @Nullable Component component,
-                  @NotNull Project project,
-                  @Nullable AnActionEvent event) {
+  public void runInner(@NotNull Executor executor,
+                       @Nullable VirtualFile workDirectory,
+                       @Nullable Component component,
+                       @NotNull Project project,
+                       @Nullable AnActionEvent event) {
     Object value = myWrapper.getValue();
     if (value instanceof RunnerAndConfigurationSettings) {
       Executor runExecutor = RunAnythingUtil.findExecutor((RunnerAndConfigurationSettings)value);
@@ -42,6 +42,11 @@ public class RunAnythingRunConfigurationItem extends RunAnythingItem<ChooseRunCo
   @Override
   public String getText() {
     return myWrapper.getText();
+  }
+
+  @Override
+  public void triggerUsage() {
+    RunAnythingUtil.triggerDebuggerStatistics();
   }
 
   @NotNull

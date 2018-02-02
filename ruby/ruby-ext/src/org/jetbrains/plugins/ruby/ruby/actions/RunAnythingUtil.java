@@ -348,6 +348,8 @@ public class RunAnythingUtil {
                                           @Nullable VirtualFile workDirectory) {
     if (pattern.isEmpty()) return;
 
+    triggerDebuggerStatistics();
+
     RunAnythingProvider provider = RunAnythingProvider.findMatchedProvider(project, pattern, workDirectory);
     if (provider != null) {
       runMatchedConfiguration(RunAnythingAction.getExecutor(), workDirectory, project,

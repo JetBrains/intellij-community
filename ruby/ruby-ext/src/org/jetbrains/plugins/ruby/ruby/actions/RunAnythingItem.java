@@ -11,11 +11,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class RunAnythingItem<T> {
-  public abstract void run(@NotNull Executor executor,
-                           @Nullable VirtualFile workDirectory,
-                           @Nullable Component component,
-                           @NotNull Project project,
-                           @Nullable AnActionEvent event);
+  protected abstract void runInner(@NotNull Executor executor,
+                                   @Nullable VirtualFile workDirectory,
+                                   @Nullable Component component,
+                                   @NotNull Project project,
+                                   @Nullable AnActionEvent event);
 
   @NotNull
   public abstract String getText();
@@ -26,8 +26,19 @@ public abstract class RunAnythingItem<T> {
   @NotNull
   public abstract T getValue();
 
+  protected void triggerUsage() {}
+
   @NotNull
   public abstract Component getComponent(boolean isSelected);
+
+  public void run(@NotNull Executor executor,
+                  @Nullable VirtualFile workDirectory,
+                  @Nullable Component component,
+                  @NotNull Project project,
+                  @Nullable AnActionEvent event) {
+    triggerUsage();
+    runInner(executor, workDirectory, component, project, event);
+  }
 
   @NotNull
   public static String getActualWorkDirectory(@NotNull Project project, @Nullable VirtualFile workDirectory) {
