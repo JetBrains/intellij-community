@@ -48,8 +48,4 @@ public class EnterBetweenBracesDelegate {
   protected boolean isBracePair(char lBrace, char rBrace) {
     return (lBrace == '(' && rBrace == ')') || (lBrace == '{' && rBrace == '}');
   }
-
-  public static boolean isValidOffset(int offset, CharSequence text) {
-    return offset >= 0 && offset < text.length();
-  }
 }
