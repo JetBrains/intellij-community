@@ -496,14 +496,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         return size;
       }
-
-      @Override
-      public Dimension getMaximumSize() {
-        if (myHint == null && myManager.myToolWindow == null) {
-          return getPreferredSize();
-        }
-        return super.getMaximumSize();
-      }
     };
     layeredPane.add(myScrollPane);
     layeredPane.setLayer(myScrollPane, 0);
