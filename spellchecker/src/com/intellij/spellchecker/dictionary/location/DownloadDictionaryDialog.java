@@ -29,7 +29,7 @@ import static com.intellij.util.PathUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
 public class DownloadDictionaryDialog extends DialogWrapper {
-  private static final String ENGLISH = "English";
+  private static final String ENGLISH_USA = "English (USA)";
   private JComboBox<String> myDictionaryCombobox;
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myMainPanel;
@@ -53,7 +53,7 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     final SortedComboBoxModel<String> model = new SortedComboBoxModel<>(String::compareTo);
     model.setAll(namesToPaths.keySet());
-    model.setSelectedItem(ENGLISH);
+    model.setSelectedItem(ENGLISH_USA);
     myDictionaryCombobox.setModel(model);
     myDirectoryTextField.setText(myProject.getBasePath());
     FileChooserDescriptor singleFileDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -113,26 +113,60 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   }
 
   private static final Map<String, String> namesToPaths = ImmutableMap.<String, String>builder()
-    .put("English (Great Britain)", "en/en_GB")
-    .put("Russian", "ru_RU/ru_RU")
-    .put("French", "fr_FR/fr_FR")
+    .put("Afrikaans (South Africa)", "af_ZA/af_ZA")
+    .put("Aragonese", "an_ES/an_ES")
+    .put("Arabic", "ar/ar")
+    .put("Belarusian", "be_BY/be_BY")
+    .put("Bulgarian", "bg_BG/bg_BG")
+    .put("Bengali", "bn_BD/bn_BD")
+    .put("Breton", "br_FR/br_FR")
+    .put("Bosnian", "bs_BA/bs_BA")
+    .put("Czech", "cs_CZ/cs_CZ")
+    .put("Dutch (Denmark)", "da_DK/da_DK")
     .put("German (Germany)", "de/de_DE_frami")
+    .put("German (Austria)", "de/de_AT_frami")
+    .put("German (Switzerland)", "de/de_CH_frami")
+    .put("Greek", "el_GR/el_GR")
+    .put("English (Great Britain)", "en/en_GB")
     .put("English (Canada)", "en/en_CA")
-    .put("English (USA)", "en/en_US")
+    .put(ENGLISH_USA, "en/en_US")
     .put("English (Australia)", "en/en_AU")
     .put("English (South African)", "en/en_ZA")
     .put("Spanish", "es/es_ANY")
-    .put("Swedish", "sv_SE/sv_SE")
-    .put("Italian", "it_IT/it_IT")
-    .put("Hungarian", "hu_HU/hu_HU")
-    .put("Dutch", "da_DK/da_DK")
-    .put("Polish", "pl_PL/pl_PL")
-    .put("Greek", "el_GR/el_GR")
+    .put("Estonian", "et_EE/et_EE")
+    .put("French", "fr_FR/fr_FR")
+    .put("Gaelic (Scotland)", "gd_GB/gd_GB")
+    .put("Galician", "gl/gl_ES")
+    .put("Gujarati", "gu_IN/gu_IN")
+    .put("Guarani (Paraguay)", "gug/gug")
+    .put("Hebrew (Israel)", "he_IL/he_IL")
+    .put("Hindi", "hi_IN/hi_IN")
     .put("Croatian","hr_HR/hr_HR")
+    .put("Hungarian", "hu_HU/hu_HU")
+    .put("Icelandic", "is/is")
+    .put("Italian", "it_IT/it_IT")
+    .put("Lithuanian", "lt_LT/lt_LT")
+    .put("Latvian", "lv_LV/lv_LV")
+    .put("Nepali", "ne_NP/ne_NP")
+    .put("Dutch (Netherlands)", "nl_NL/nl_NL")
+    .put("Norwegian (Bokmål)", "no/nb_NO")
+    .put("Norwegian (Nynorsk)", "no/nn_NO")
+    .put("Occitan", "oc_FR/oc_FR")
+    .put("Polish", "pl_PL/pl_PL")
+    .put("Portuguese (Brazil)", "pt_BR/pt_BR")
+    .put("Portuguese (Portugal)", "pt_PT/pt_PT")
     .put("Romanian", "ro/ro_RO")
+    .put("Russian", "ru_RU/ru_RU")
+    .put("Sinhala", "si_LK/si_LK")
+    .put("Slovak", "sk_SK/sk_SK")
     .put("Slovenian", "sl_SI/sl_SI")
-    .put("Portuguese", "pt_PT/pt_PT")
-    .put("Arabic", "ar/ar")
-
+    .put("Albanian", "sq_AL/sq_AL")
+    .put("Serbian", "sr/sr")
+    .put("Swedish (Sweden)", "sv_SE/sv_SE")
+    .put("Swedish (Finland)", "sv_SE/sv_SE")
+    .put("Swahili (Tanzania)", "sw_TZ/sw_TZ")
+    .put("Thai", "th_TH/th_TH")
+    .put("Ukrainian", "uk_UA/uk_UA")
+    .put("Vietnamese", "vi/vi_VN")
     .build();
 }
