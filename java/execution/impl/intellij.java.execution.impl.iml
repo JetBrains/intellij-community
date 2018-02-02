@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.java.jshell.protocol" />
     <orderEntry type="library" name="Coverage" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="precompiled_jshell-frontend" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
   <component name="copyright">
     <Base>

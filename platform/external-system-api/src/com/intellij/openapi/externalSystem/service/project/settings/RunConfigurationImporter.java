@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.externalSystem.service.project.settings;
 
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -25,11 +27,12 @@ import java.util.Map;
 
 @ApiStatus.Experimental
 public interface RunConfigurationImporter {
-  ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationImporter");
+  ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationImporter");
 
-  default void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {}
-  default void process(@NotNull Module module, @NotNull  String name, @NotNull Map<String, Object> cfg) {}
-  default boolean canHandle(@NotNull String typeName) {
-    return false;
-  }
+  void process(@NotNull Project project,
+                       @NotNull RunConfiguration runConfiguration,
+                       @NotNull Map<String, Object> cfg,
+                       @NotNull IdeModifiableModelsProvider modelsProvider);
+  boolean canImport(@NotNull String typeName);
+  @NotNull ConfigurationFactory getConfigurationFactory();
 }

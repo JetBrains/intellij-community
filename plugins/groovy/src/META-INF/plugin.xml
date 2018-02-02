@@ -543,6 +543,8 @@
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyGenerationSettingsProvider"/>
+    <externalSystem.codeStyleConfigurationImporter implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleImporter"/>
+
 
     <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.type.GroovyTypeHierarchyProvider"/>
     <callHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.call.GrCallHierarchyProvider"/>
@@ -1682,6 +1684,8 @@
     <generateAccessorProvider implementation="org.jetbrains.plugins.groovy.actions.generate.accessors.GroovyGenerateAccessorProvider"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.groovy.execution.filters.GrCompilationErrorsFilterProvider"/>
     <outOfSourcesChecker implementation="org.jetbrains.plugins.groovy.projectRoots.GroovyOutOfSourcesChecker"/>
+
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.groovy.compiler.GroovyCompilerGradleConfigurationHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
