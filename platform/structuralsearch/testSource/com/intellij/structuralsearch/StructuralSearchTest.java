@@ -1385,6 +1385,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Comment matching", 3, findMatchesCount(s1, "// 'Comment:[regex( .*(?:comment).* )]"));
     assertEquals("Comment matching, 2", 3, findMatchesCount(s1, "/* 'Comment:[regex( .*(?:comment).* )] */"));
     assertEquals("Java doc matching", 1, findMatchesCount(s1, "/** 'Comment:[regex( .*(?:comment).* )] */"));
+    assertEquals("Comment matching with negate", 2, findMatchesCount(s1, "// 'not_comment:[!regex( .*(?:comment).* )]"));
+    assertEquals("Multi line", 1, findMatchesCount(s1, "//'_comment:[regex( .*another.* )]"));
+    assertEquals("Multi line negated", 4, findMatchesCount(s1, "//'_comment:[!regex( .*another.* )]"));
 
     String s4 = "class X {{ java.util.Arrays.asList(\"'test\", \"another test\", \"garbage\"); }}";
     assertEquals("Literal content", 2, findMatchesCount(s4, "\"'test:[regex( .*test.* )]\""));
