@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupEditor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.setupMethodBody
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
@@ -22,64 +21,36 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.PsiUtil.setModifierProperty
-import com.intellij.psi.util.createSmartPointer
 
 /**
  * @param abstract whether this action creates a method with explicit abstract modifier
  */
 internal class CreateMethodAction(
   targetClass: PsiClass,
-  private val abstract: Boolean,
-  private val myRequest: CreateMethodRequest
-) : BaseIntentionAction() {
+  override val request: CreateMethodRequest,
+  private val abstract: Boolean
+) : CreateMemberAction(targetClass, request) {
+
+  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
+    return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
+  }
 
   override fun getFamilyName(): String = message("create.method.from.usage.family")
 
-  override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = myTargetClass.element
-
-  override fun startInWriteAction(): Boolean = true
-
-  private val myTargetClass = targetClass.createSmartPointer()
-
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    val targetClass = myTargetClass.element ?: return false
-    if (!myRequest.isValid) return false
-
-    val name = myRequest.methodName
-    if (!PsiNameHelper.getInstance(targetClass.project).isIdentifier(name)) return false
-
-    val requestedModifiers = myRequest.modifiers
-    val static = JvmModifier.STATIC in requestedModifiers
-
-    if (abstract && static) return false
-
-    if (abstract) {
-      if (!targetClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false
-      if (targetClass.isInterface) return false
-    }
-    else if (static) {
-      // static method in interfaces are allowed starting with Java 8
-      if (targetClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) return false
-      // static methods in inner classes are disallowed JLS §8.1.3
-      if (targetClass.containingClass != null && !targetClass.hasModifierProperty(PsiModifier.STATIC)) return false
-    }
-
-    val className = getNameForClass(targetClass, false)
-    text = if (abstract) {
-      message("create.abstract.method.from.usage.full.text", name, className)
+  override fun getText(): String {
+    val what = request.methodName
+    val where = getNameForClass(target, false)
+    return if (abstract) {
+      message("create.abstract.method.from.usage.full.text", what, where)
     }
     else {
-      message("create.method.from.usage.full.text", name, className)
+      message("create.method.from.usage.full.text", what, where)
     }
-    return true
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val targetClass = myTargetClass.element ?: error("Target class was invalidated between isAvailable() and invoke()")
-    assert(myRequest.isValid) { "Request was invalidates between isAvailable() and invoke()" }
-    JavaMethodRenderer(project, abstract, targetClass, myRequest).doMagic()
+    JavaMethodRenderer(project, abstract, target, request).doMagic()
   }
 }
 
