@@ -140,6 +140,7 @@ public class BuildManager implements Disposable {
     Collections.synchronizedMap(new HashMap<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
   private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager requestProcessor pool");
+  private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager auto-make trigger");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
   private volatile int myFileChangeCounter;
 
@@ -229,7 +230,7 @@ public class BuildManager implements Disposable {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE) {
-          application.executeOnPooledThread(() -> {
+          myAutomakeTrigger.submit(() -> {
             if (!application.isDisposed()) {
               ReadAction.run(()->{ if (shouldTriggerMake(events)) scheduleAutoMake(); });
             }
