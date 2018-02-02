@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Consumer;
 
 import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
@@ -108,8 +110,7 @@ abstract class GitImplBase implements Git {
   private static GitCommandResult run(@NotNull GitLineHandler handler, @NotNull OutputCollector outputCollector) {
     Project project = handler.project();
     if (project != null && handler.isRemote()) {
-      try {
-        GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler);
+      try (GitHandlerAuthenticationManager authenticationManager = GitHandlerAuthenticationManager.prepare(project, handler)){
         return GitCommandResult.withAuthentication(doRun(handler, outputCollector), authenticationManager.isHttpAuthFailed());
       }
       catch (IOException e) {
