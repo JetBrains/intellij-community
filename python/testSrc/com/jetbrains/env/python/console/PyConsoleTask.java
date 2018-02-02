@@ -120,6 +120,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     if (rpc.isPresent()) {
       final Thread thread = rpc.get();
       // There is no way to interrupt this thread with "interrupt": it has infinite loop (bug) which does not check ".isInterrupted()"
+      //noinspection CallToThreadStopSuspendOrResumeManager
       thread.stop();
       thread.join();
     }
