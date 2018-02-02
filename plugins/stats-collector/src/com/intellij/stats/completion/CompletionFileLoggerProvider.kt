@@ -18,7 +18,7 @@ package com.intellij.stats.completion
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.stats.logger.EventLoggerWithValidation
 import com.intellij.stats.logger.LogFileManager
-import com.intellij.stats.logger.ServerSessionValidator
+import com.intellij.stats.logger.ClientSessionValidator
 import com.intellij.stats.storage.FilePathProvider
 import java.util.*
 
@@ -28,7 +28,7 @@ class CompletionFileLoggerProvider(
 ) : ApplicationComponent, CompletionLoggerProvider() {
 
   private val logFileManager = LogFileManager(filePathProvider)
-  private val eventLogger = EventLoggerWithValidation(logFileManager, ServerSessionValidator())
+  private val eventLogger = EventLoggerWithValidation(logFileManager, ClientSessionValidator())
 
   override fun disposeComponent() {
     eventLogger.dispose()

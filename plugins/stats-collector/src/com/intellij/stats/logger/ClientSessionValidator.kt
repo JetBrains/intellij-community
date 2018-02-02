@@ -25,7 +25,7 @@ import com.intellij.stats.validation.SimpleSessionValidationResult
 /**
  * @author Vitaliy.Bibaev
  */
-class ServerSessionValidator : SessionValidator {
+class ClientSessionValidator : SessionValidator {
     override fun validate(session: List<LogEvent>) {
         val validationResult = SimpleSessionValidationResult()
         val line2event = session.associateTo(linkedMapOf(), { LogEventSerializer.toString(it) to it })
