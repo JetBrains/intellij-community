@@ -20,11 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Paint;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.geom.Path2D;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
-import java.util.Objects;
 
 /**
  * @author Sergey.Malenkov
