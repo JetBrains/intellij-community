@@ -2,8 +2,11 @@
 package com.intellij.spellchecker.settings;
 
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -30,6 +33,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
+import static com.intellij.openapi.extensions.PluginId.getId;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
@@ -57,29 +62,36 @@ public class CustomDictionariesPanel extends JPanel {
         @Override
         public void run(AnActionButton button) {
           myCustomDictionariesTableView.stopEditing();
-          JBList<DictionaryLocation> locationList = new JBList<>();
-          locationList.setListData(new DictionaryLocation[]{
-            new LocalDictionaryLocation(project, myCustomDictionariesTableView),
-            new RepositoryDictionaryLocation(project, myCustomDictionariesTableView)
-          });
-          locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
-          locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
-            @Override
-            protected void customizeCellRenderer(@NotNull JList<? extends DictionaryLocation> list,
-                                                 DictionaryLocation value,
-                                                 int index,
-                                                 boolean selected,
-                                                 boolean hasFocus) {
-              append(value.getName());
-            }
-          });
-          JBPopupFactory.getInstance().createListPopupBuilder(locationList)
+          final PluginId hunspellId = getId("hunspell");
+          final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(hunspellId);
+          if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
+            JBList<DictionaryLocation> locationList = new JBList<>();
+            locationList.setListData(new DictionaryLocation[]{
+              new LocalDictionaryLocation(project, myCustomDictionariesTableView),
+              new RepositoryDictionaryLocation(project, myCustomDictionariesTableView)
+            });
+            locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
+            locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
+              @Override
+              protected void customizeCellRenderer(@NotNull JList<? extends DictionaryLocation> list,
+                                                   DictionaryLocation value,
+                                                   int index,
+                                                   boolean selected,
+                                                   boolean hasFocus) {
+                append(value.getName());
+              }
+            });
+            JBPopupFactory.getInstance().createListPopupBuilder(locationList)
                           .setTitle(SpellCheckerBundle.message("dictionary.location.choose"))
                           .setItemChoosenCallback(() -> locationList.getSelectedValue().findAndAddNewDictionary())
                           .setMovable(false)
                           .setResizable(false)
-                        .createPopup()
-                        .show(button.getPreferredPopupPoint());
+                          .createPopup()
+                          .show(button.getPreferredPopupPoint());
+          }
+          else {
+            new LocalDictionaryLocation(project, myCustomDictionariesTableView).findAndAddNewDictionary();
+          }
         }
       })
 
