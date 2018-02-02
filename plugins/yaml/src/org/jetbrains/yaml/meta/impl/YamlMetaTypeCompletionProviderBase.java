@@ -6,7 +6,6 @@ package org.jetbrains.yaml.meta.impl;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -23,7 +22,6 @@ import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlScalarType;
 import org.jetbrains.yaml.psi.*;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -164,8 +162,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
           final YamlMetaType.ForcedCompletionPath completionPath = YamlMetaType.ForcedCompletionPath.forDeepCompletion(pathToInsert);
           LookupElementBuilder l = LookupElementBuilder
             .create(completionPath, completionPath.getName())
+            .withIcon(lastField.getLookupIcon())
             .withInsertHandler(new YamlKeyInsertHandlerImpl(needsSequenceItemMark, pathToInsert.get(0)))
-            .withTypeText(lastField.getDefaultType().getDisplayName(), getLookupIcon(lastField), true)
+            .withTypeText(lastField.getDefaultType().getDisplayName(), true)
             .withStrikeoutness(lastField.isDeprecated());
           result.addElement(l);
         }
@@ -194,14 +193,6 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
         .map(l -> l.withInsertHandler(keyInsertHandler))
         .forEach(result::addElement);
     }
-  }
-
-  @Nullable
-  private static Icon getLookupIcon(@NotNull final Field field) {
-    if (field.isMany()) {
-      return AllIcons.Json.Array;
-    }
-    return null;
   }
 
   @NotNull
