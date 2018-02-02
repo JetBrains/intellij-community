@@ -114,6 +114,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging //Thread leak
   public void testCompoundVariable() {
     runPythonTest(new PyConsoleTask() {
       @Override
