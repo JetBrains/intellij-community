@@ -84,5 +84,10 @@ public interface VcsLogFilterCollection {
     public static <T extends VcsLogFilter> FilterKey<T> create(@NotNull String name) {
       return new FilterKey<>(name);
     }
+
+    @Override
+    public String toString() {
+      return myName + " filter";
+    }
   }
 }
