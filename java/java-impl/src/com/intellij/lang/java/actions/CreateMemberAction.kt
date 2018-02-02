@@ -2,6 +2,7 @@
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.actions.ActionRequest
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -25,6 +26,8 @@ internal abstract class CreateMemberAction(
     get() = requireNotNull(myTargetPointer.element) {
       "Don't access this property if isAvailable() returned false"
     }
+
+  open fun getTarget(): JvmClass = target
 
   override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = target
 

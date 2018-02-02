@@ -14,7 +14,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateMethodFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.CreateMethodRequest
+import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -30,11 +30,15 @@ internal class CreateMethodAction(
   targetClass: PsiClass,
   override val request: CreateMethodRequest,
   private val abstract: Boolean
-) : CreateMemberAction(targetClass, request) {
+) : CreateMemberAction(targetClass, request), JvmGroupIntentionAction {
+
+  override fun getActionGroup(): JvmActionGroup = if (abstract) CreateAbstractMethodActionGroup else CreateMethodActionGroup
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
     return super.isAvailable(project, editor, file) && PsiNameHelper.getInstance(project).isIdentifier(request.methodName)
   }
+
+  override fun getRenderData() = JvmActionGroup.RenderData { request.methodName }
 
   override fun getFamilyName(): String = message("create.method.from.usage.family")
 

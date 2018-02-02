@@ -8,8 +8,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.posi
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.lang.jvm.actions.CreateEnumConstantActionGroup
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.lang.jvm.actions.ExpectedTypes
+import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -23,7 +25,7 @@ internal class CreateEnumConstantAction(
   override val request: CreateFieldRequest
 ) : CreateFieldActionBase(target, request) {
 
-  override fun getFamilyName(): String = QuickFixBundle.message("create.field.from.usage.family")
+  override fun getActionGroup(): JvmActionGroup = CreateEnumConstantActionGroup
 
   override fun getText(): String = QuickFixBundle.message("create.enum.constant.from.usage.text", request.fieldName)
 

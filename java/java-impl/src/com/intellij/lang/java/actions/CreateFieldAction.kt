@@ -9,7 +9,7 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -23,7 +23,9 @@ internal class CreateFieldAction(
   target: PsiClass,
   request: CreateFieldRequest,
   private val constantField: Boolean
-) : CreateFieldActionBase(target, request) {
+) : CreateFieldActionBase(target, request), JvmGroupIntentionAction {
+
+  override fun getActionGroup(): JvmActionGroup = if (constantField) CreateConstantActionGroup else CreateFieldActionGroup
 
   override fun getText(): String {
     val what = request.fieldName
