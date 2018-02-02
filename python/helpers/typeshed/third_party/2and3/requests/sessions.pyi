@@ -1,6 +1,6 @@
 # Stubs for requests.sessions (Python 3)
 
-from typing import Any, Union, MutableMapping, Text, Optional, IO, Tuple, Callable
+from typing import Any, Union, List, MutableMapping, Text, Optional, IO, Tuple, Callable, Iterable
 from . import adapters
 from . import auth as _auth
 from . import compat
@@ -56,7 +56,10 @@ class SessionRedirectMixin:
     def rebuild_proxies(self, prepared_request, proxies): ...
 
 _Data = Union[None, bytes, MutableMapping[Text, Text], IO]
-_Hooks = MutableMapping[Text, Callable[[Response], Any]]
+
+_Hook = Callable[[Response], Any]
+_Hooks = MutableMapping[Text, List[_Hook]]
+_HooksInput = MutableMapping[Text, Union[Iterable[_Hook], _Hook]]
 
 class Session(SessionRedirectMixin):
     __attrs__ = ...  # type: Any
@@ -87,7 +90,7 @@ class Session(SessionRedirectMixin):
                 timeout: Union[None, float, Tuple[float, float]] = ...,
                 allow_redirects: Optional[bool] = ...,
                 proxies: Optional[MutableMapping[Text, Text]] = ...,
-                hooks: Optional[_Hooks] = ...,
+                hooks: Optional[_HooksInput] = ...,
                 stream: Optional[bool] = ...,
                 verify: Union[None, bool, Text] = ...,
                 cert: Union[Text, Tuple[Text, Text], None] = ...,
