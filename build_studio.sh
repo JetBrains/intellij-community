@@ -11,7 +11,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>]" > /dev/stderr
+  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>] [--enable-aswb]" > /dev/stderr
   exit 1
 }
 
@@ -32,8 +32,11 @@ function set_java_home() {
     esac
 }
 
+ASWB=
 while [[ -n "$1" ]]; do
-  if [[ -z "$OUT" ]]; then
+  if [[ $1 == "--enable-aswb" ]]; then
+      ASWB=1
+  elif [[ -z "$OUT" ]]; then
     OUT="$1"
   elif [[ -z "$DIST" ]]; then
     DIST="$1"
@@ -70,6 +73,7 @@ echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
 echo "## Out dir  : $OUT"
 echo "## Prog dir : $PROG_DIR"
+echo "## ASWB?    : $ASWB"
 echo
 
 set_java_home
@@ -81,7 +85,7 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" -Dbundle.gradle.release.plugin=true fullupdater
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "-Dinclude.aswb=$ASWB" -Dbundle.gradle.release.plugin=true fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
