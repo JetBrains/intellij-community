@@ -92,32 +92,15 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
       }
     }
 
-    List<String> shellCommand = getShellCommand();
-    String exePath;
-    List<String> parameters = ContainerUtil.emptyList();
+    List<String> shellCommand = ContainerUtil.newArrayList(getShellCommand());
     if (shellCommand.isEmpty()) {
-      List<String> params = ParametersListUtil.parse(command);
-      if (params.size() > 0) {
-        exePath = params.get(0);
-        if (params.size() > 1) {
-          parameters = params.subList(1, params.size());
-        }
-      }
-      else {
-        // exec must be not null to execute command
-        LOG.warn("No parameters parsed for command line: " + command);
-        return;
-      }
+      shellCommand = ParametersListUtil.parse(command, false, true);
     }
     else {
-      assert shellCommand.size() == 2;
-      exePath = shellCommand.get(0);
-      parameters = ContainerUtil.immutableList(shellCommand.get(1), command);
+      shellCommand.add(command);
     }
 
-    commandLine
-      .withExePath(exePath)
-      .withParameters(parameters)
+    commandLine = new GeneralCommandLine(shellCommand)
       .withEnvironment(env)
       .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(project, workDirectory));
 
