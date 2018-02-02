@@ -1,12 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -41,13 +44,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         if (parameters.length == 1) {
           PsiParameter parameter = parameters[0];
           if (ExpressionUtils.isReferenceTo(expression, parameter)) {
-            PsiClass aClass = ((PsiClassType)type).resolve();
-            if (aClass != null && CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) {
-              PsiType[] typeParameters = ((PsiClassType)type).getParameters();
-              if (typeParameters.length == 2 && typeParameters[1].isAssignableFrom(typeParameters[0])) {
-                registerProblem(lambda, "Function.identity()", CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()");
-              }
-            }
+            processFunctionIdentity(lambda, (PsiClassType)type);
           }
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
@@ -58,6 +55,35 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
             }
           }
         }
+      }
+
+      private void processFunctionIdentity(PsiLambdaExpression lambda, PsiClassType type) {
+        PsiClass aClass = type.resolve();
+        if (aClass == null || !CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) return;
+        PsiType[] typeParameters = type.getParameters();
+        if (typeParameters.length != 2 || !typeParameters[1].isAssignableFrom(typeParameters[0])) return;
+        PsiElement parent = PsiTreeUtil
+          .skipParentsOfType(lambda, PsiConditionalExpression.class, PsiTypeCastExpression.class, PsiParenthesizedExpression.class);
+        String replacement = CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()";
+        if (parent instanceof PsiExpressionList) {
+          PsiExpressionList args = (PsiExpressionList)parent;
+          PsiCallExpression call = ObjectUtils.tryCast(args.getParent(), PsiCallExpression.class);
+          if (call != null && args.getExpressionCount() != 1) {
+            JavaResolveResult result = call.resolveMethodGenerics();
+            if (result == JavaResolveResult.EMPTY) return;
+            Object mark = new Object();
+            PsiTreeUtil.mark(lambda, mark);
+            PsiCallExpression copy = (PsiCallExpression)call.copy();
+            PsiTreeUtil.releaseMark(lambda, mark);
+            PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)PsiTreeUtil.releaseMark(copy, mark);
+            if (lambdaCopy == null) return;
+            lambdaCopy.replace(JavaPsiFacade.getElementFactory(lambda.getProject()).createExpressionFromText(replacement, lambdaCopy));
+            JavaResolveResult resultCopy = copy.resolveMethodGenerics();
+            if (resultCopy == JavaResolveResult.EMPTY) return;
+            if (resultCopy instanceof MethodCandidateInfo && ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() != null) return;
+          }
+        }
+        registerProblem(lambda, "Function.identity()", replacement);
       }
 
       private void handlePatternAsPredicate(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {
