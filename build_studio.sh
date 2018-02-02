@@ -35,7 +35,7 @@ function set_java_home() {
 ASWB=
 while [[ -n "$1" ]]; do
   if [[ $1 == "--enable-aswb" ]]; then
-      ASWB=1
+      ASWB=true
   elif [[ -z "$OUT" ]]; then
     OUT="$1"
   elif [[ -z "$DIST" ]]; then
@@ -89,18 +89,31 @@ $ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "-Dinclude.aswb=
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
-cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
+if [ $ASWB = true ]; then
+  cp -Rfv "$OUT"/artifacts/aswb* "$DIST"
+else
+  cp -Rfv "$OUT"/artifacts/android-studio* "$DIST"
 
-cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
-cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+  cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
+  cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
 
-# Artifact built with gradle. The ant build does not pass OUT_DIR or DIST_DIR
-# down to gradle, so it is relative to prog_dir.
-cp -Rfv ../../out/dist/offline_repo.zip "$DIST"/offline_repo.zip
-(cd ../../out/repo && zip -r - ".") > "$DIST"/gmaven_repo.zip
-# write the version number into the windows installer dir
-echo $BNUM > ../adt/idea/native/installer/win/version
-(cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
+  # Artifact built with gradle. The ant build does not pass OUT_DIR or DIST_DIR
+  # down to gradle, so it is relative to prog_dir.
+  cp -Rfv ../../out/dist/offline_repo.zip "$DIST"/offline_repo.zip
+  (cd ../../out/repo && zip -r - ".") > "$DIST"/gmaven_repo.zip
+  # write the version number into the windows installer dir
+  echo $BNUM > ../adt/idea/native/installer/win/version
+  (cd ../adt/idea/native/installer/win && zip -r - ".") > "$DIST"/android-studio-bundle-data.zip
+fi
 
 # execute a bunch of sanity checks on the final artifacts
-../base/bazel/bazel test //tools/idea:test_studio --test_output=streamed --test_arg=--out="$OUT" --test_arg=--dist="$DIST" --test_arg=--build=$BNUM --test_strategy=standalone --spawn_strategy=standalone  --nocache_test_results
+../base/bazel/bazel test \
+    //tools/idea:test_studio \
+    --test_output=streamed \
+    --test_arg=--out="$OUT" \
+    --test_arg=--dist="$DIST" \
+    --test_arg=--build=$BNUM \
+    --test_arg=--aswb=$ASWB \
+    --test_strategy=standalone \
+    --spawn_strategy=standalone \
+    --nocache_test_results

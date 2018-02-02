@@ -7,11 +7,28 @@
  Note that this script is for building IntelliJ IDEA Community Edition only. If you want to build your own product based on IntelliJ Platform,
  create a gant script for it, see javadoc for org.jetbrains.intellij.build for details.
  -->
-<project name="IntelliJ IDEA Community Edition" default="build">
+<project name="IntelliJ IDEA Community Edition" xmlns:if="ant:if" xmlns:unless="ant:unless" default="build">
   <property name="project.home" value="${basedir}"/>
   <condition property="intellij.build.output.root" else="${project.home}/out/studio">
     <isset property="intellij.build.output.root"/>
   </condition>
+
+  <!-- References to Bazel workspace and Bazel commandline to use -->
+  <dirname property="workspace" file="${project.home}/../"/>
+  <condition property="bazel" value="${workspace}/tools/base/bazel/bazel.cmd" else="${workspace}/tools/base/bazel/bazel">
+    <os family="windows" />
+  </condition>
+  <macrodef name="bazel">
+    <attribute name="action" />
+    <attribute name="target" />
+    <sequential>
+      <echo>${bazel} @{action} @{target}</echo>
+      <exec executable="${bazel}" dir="${workspace}" failonerror="true" taskname="bazel">
+        <arg value="@{action}" />
+        <arg value="@{target}" />
+      </exec>
+    </sequential>
+  </macrodef>
 
   <target name="init">
     <propertyset id="intellij.build.properties">
@@ -19,6 +36,7 @@
       <propertyref prefix="intellij.build."/>
       <propertyref prefix="custom.project."/>
       <propertyref name="ui.test.groups"/>
+      <propertyref name="include.aswb" />
     </propertyset>
     <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild">
       <property name="config" value="release"/>
@@ -45,6 +63,7 @@
   </macrodef>
 
   <target name="build" depends="init">
+    <bazel if:set="include.aswb" action="build" target="@blaze//java/com/google/devtools/intellij/blaze/plugin/aswb:aswb_blaze_zip" />
     <call_gant script="${project.home}/build/scripts/idea_community.gant"/>
   </target>
 

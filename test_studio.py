@@ -9,17 +9,23 @@ import zipfile
 out_dir = None
 dist_dir = None
 build = None
+aswb = False
 
-class TestStringMethods(unittest.TestCase):
+class StudioTests(unittest.TestCase):
+  def artifact_prefix(self):
+    if aswb:
+      return "aswb-"
+    else:
+      return "android-studio-"
 
   def test_artifacts_are_present(self):
-    name = "android-studio-" + build
+    name = self.artifact_prefix() + build
     for suffix in [ ".mac.zip", ".tar.gz", ".win.zip", ".win32.zip"]:
       file = os.path.join(dist_dir, name + suffix)
       self.assertTrue(os.path.exists(file), "Artifact " + file + " not found.")
 
   def test_mac_contents_clean(self):
-    name = os.path.join(dist_dir, "android-studio-" + build + ".mac.zip")
+    name = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
     file = zipfile.ZipFile(name)
     for f in file.namelist():
       m = re.search("Android Studio.*\.app/Contents/([^/]+)$", f)
@@ -27,7 +33,7 @@ class TestStringMethods(unittest.TestCase):
         self.assertEquals(m.group(1), "Info.plist", "Only Info.plist should be present in Contents (Found " + m.group(1) + ")")
 
   def test_no_build_files(self):
-    name = "android-studio-" + build
+    name = self.artifact_prefix() + build
     for suffix in [ ".mac.zip", ".win.zip", ".win32.zip"]:
       file_name = os.path.join(dist_dir, name + suffix)
       with zipfile.ZipFile(file_name) as file:
@@ -47,14 +53,14 @@ class TestStringMethods(unittest.TestCase):
           "plugins/android/resources/perfa/%s/libperfa.so" % abi,
       ]
 
-    name = os.path.join(dist_dir, "android-studio-" + build + ".win.zip")
+    name = os.path.join(dist_dir, self.artifact_prefix() + build + ".win.zip")
     files = zipfile.ZipFile(name).namelist()
     for req in required:
       if "android-studio/" + req not in files:
         self.fail("Required file not found in distribution: " + req)
 
   def test_mac_attributes(self):
-    name = os.path.join(dist_dir, "android-studio-" + build + ".mac.zip")
+    name = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
     with zipfile.ZipFile(name) as file:
       found = False
       for f in file.infolist():
@@ -70,17 +76,41 @@ class TestStringMethods(unittest.TestCase):
           self.assertFalse(is_symlink, f.filename + " should not be a symlink")
       self.assertTrue(found, "Android Studio.*\.app/Contents/jre/jdk/Contents/MacOS/libjli.dylib not found")
 
+  def test_aswb_includes_blaze_plugin(self):
+    if not aswb:
+      return
+
+    required = [
+        "plugins/aswb-blaze/lib/aswb_blaze.jar",
+        "plugins/aswb-blaze/aspect/intellij_info_bundled.bzl",
+      ];
+
+    name = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
+    files = zipfile.ZipFile(name).namelist()
+    for req in required:
+      self.assertTrue(any(fname.endswith(req) for fname in files), req + " not present in " + name)
+
+  def test_studio_does_not_contain_aswb(self):
+    if aswb:
+      return
+
+    name = os.path.join(dist_dir, self.artifact_prefix() + build + ".mac.zip")
+    files = zipfile.ZipFile(name).namelist()
+    self.assertFalse(any("plugins/aswb" in fname for fname in files), name + " contains plugins/aswb")
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--out', required = True)
     parser.add_argument('--dist', required = True)
     parser.add_argument('--build', required = True)
+    parser.add_argument('--aswb', required = False)
     parser.add_argument('unittest_args', nargs='*')
 
     args = parser.parse_args()
     out_dir = args.out
     dist_dir = args.dist
     build = args.build
+    aswb = args.aswb == "true"
 
     sys.argv[1:] = args.unittest_args
     unittest.main()
