@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.spellchecker.settings;
+package com.intellij.spellchecker.dictionary.location;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 
-class LocalDictionaryLocation implements DictionaryLocation {
+public class LocalDictionaryLocation implements DictionaryLocation {
   private final Project myProject;
   private final TableView<String> myTableView;
 
-  LocalDictionaryLocation(@NotNull Project project, @NotNull TableView<String> tableView) {
+  public LocalDictionaryLocation(@NotNull Project project, @NotNull TableView<String> tableView) {
     myProject = project;
     myTableView = tableView;
   }

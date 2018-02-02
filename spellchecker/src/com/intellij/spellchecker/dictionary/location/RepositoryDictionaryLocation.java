@@ -1,17 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.spellchecker.settings;
+package com.intellij.spellchecker.dictionary.location;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.table.TableView;
 import org.jetbrains.annotations.NotNull;
 
-class RepositoryDictionaryLocation implements DictionaryLocation {
+public class RepositoryDictionaryLocation implements DictionaryLocation {
 
   private final Project myProject;
   private final TableView<String> myTableView;
 
-  RepositoryDictionaryLocation(@NotNull Project project, TableView<String> tableView){
+  public RepositoryDictionaryLocation(@NotNull Project project, TableView<String> tableView){
     myProject = project;
     myTableView = tableView;
   }
