@@ -91,7 +91,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   }
 
   override fun validateAll() =
-    listOfNotNull(validateEmptyOrNonExistingDirectoryLocation(pathField),
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
                   validateSdkComboBox(baseSdkField))
 
   override fun getOrCreateSdk(): Sdk? {

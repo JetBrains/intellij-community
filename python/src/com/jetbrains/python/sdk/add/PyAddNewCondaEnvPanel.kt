@@ -106,7 +106,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll() =
-    listOfNotNull(validateAnacondaPath(), validateEmptyOrNonExistingDirectoryLocation(pathField))
+    listOfNotNull(validateAnacondaPath(), validateEnvironmentDirectoryLocation(pathField))
 
   override fun getOrCreateSdk(): Sdk? {
     val condaPath = condaPathField.text

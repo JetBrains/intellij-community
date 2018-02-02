@@ -44,13 +44,13 @@ abstract class PyAddSdkPanel : JPanel() {
 
   companion object {
     @JvmStatic
-    protected fun validateEmptyOrNonExistingDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
+    protected fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
       val text = field.text
       val file = File(text)
       val message = when {
-        StringUtil.isEmptyOrSpaces(text) -> "Location field is empty"
-        file.exists() && !file.isDirectory -> "Location field path is not a directory"
-        file.isNotEmptyDirectory -> "Location directory is not empty"
+        StringUtil.isEmptyOrSpaces(text) -> "Environment location field is empty"
+        file.exists() && !file.isDirectory -> "Environment location field path is not a directory"
+        file.isNotEmptyDirectory -> "Environment location directory is not empty"
         else -> return null
       }
       return ValidationInfo(message, field)
