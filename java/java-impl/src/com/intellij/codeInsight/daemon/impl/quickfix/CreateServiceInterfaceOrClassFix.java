@@ -98,18 +98,18 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       if (!psiRootDirs.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
-          Boolean isClass = file.getUserData(SERVICE_IS_CLASS);
-          if (rootDir != null && isClass != null) {
-            WriteAction.run(() -> createClassInRoot(myInterfaceName, isClass, rootDir, file, null));
+          CreateClassKind classKind = file.getUserData(SERVICE_CLASS_KIND);
+          if (rootDir != null && classKind != null) {
+            WriteAction.run(() -> createClassInRoot(myInterfaceName, classKind, rootDir, file, null));
           }
           return;
         }
         CreateServiceInterfaceDialog dialog = new CreateServiceInterfaceDialog(project, psiRootDirs);
         if (dialog.showAndGet()) {
           PsiDirectory rootDir = dialog.getRootDir();
-          boolean isClass = dialog.isClass();
           if (rootDir != null) {
-            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, isClass, rootDir, file, null));
+            CreateClassKind classKind = dialog.getClassKind();
+            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, classKind, rootDir, file, null));
             positionCursor(psiClass);
           }
         }
@@ -145,7 +145,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
 
     protected CreateServiceInterfaceDialog(@Nullable Project project, @NotNull Map<Module, PsiDirectory[]> psiRootDirs) {
       super(project);
-      setTitle("Create Service Interface or Class");
+      setTitle("Create Service");
 
       myModuleCombo.setRenderer(new ListCellRendererWrapper<Module>() {
         @Override
@@ -166,6 +166,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
                           CreateClassKind.CLASS.name());
       myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON,
                           CreateClassKind.INTERFACE.name());
+      myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON,
+                          CreateClassKind.ANNOTATION.name());
 
       init();
     }
@@ -205,8 +207,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       return (PsiDirectory)myRootDirCombo.getSelectedItem();
     }
 
-    public boolean isClass() {
-      return CreateClassKind.CLASS.name().equals(myKindCombo.getSelectedName());
+    public CreateClassKind getClassKind() {
+      return CreateClassKind.valueOf(myKindCombo.getSelectedName());
     }
   }
 }

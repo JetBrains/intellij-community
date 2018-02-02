@@ -131,7 +131,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
 
   private PsiClass createClassInRoot(@NotNull PsiDirectory psiRootDir, boolean isSubclass, @NotNull PsiElement contextElement) {
     Project project = psiRootDir.getProject();
-    PsiClass psiImplClass = createClassInRoot(myImplementationClassName, true,
+    PsiClass psiImplClass = createClassInRoot(myImplementationClassName, CreateClassKind.CLASS,
                                               psiRootDir, contextElement, isSubclass ? mySuperClassName : null);
     if (psiImplClass != null && !isSubclass) {
       String text = "public static " + mySuperClassName + " provider() { return null;}";
