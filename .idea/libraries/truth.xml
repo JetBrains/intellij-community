@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="truth">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28" />
+      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28" />
+      <root url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" />
     </SOURCES>
-    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28" recursive="false" />
-    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28" recursive="false" type="SOURCES" />
+    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/../../prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34" recursive="false" type="SOURCES" />
   </library>
 </component>

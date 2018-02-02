@@ -26,8 +26,8 @@ java_library(
     name = "truth",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.34:jar"],
 )
 
 java_library(

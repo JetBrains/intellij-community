@@ -1,12 +1,12 @@
 
 class Test {
-  static class IterableSubject<S extends IterableSubject<S, C>, C> {}
+  static class IterableSubject {}
 
-  public static <J> IterableSubject<? extends IterableSubject<?, J>, J> bar(Iterable<J> target) {
+  public static <J> IterableSubject bar(Iterable<J> target) {
     return foo(target);
   }
 
-  public static <J> IterableSubject<? extends IterableSubject<?, J>, J> foo(Iterable<J> target) {
+  public static <J> IterableSubject foo(Iterable<J> target) {
     return null;
   }
 
