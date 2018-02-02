@@ -136,6 +136,9 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
           parseString(ignoredTypesString, ignoredTypes);
         }
       }
+      if ("showWarningForStreamHoldingResource".equals(name)) {
+        showWarningForStreamHoldingResource = Boolean.parseBoolean(option.getAttributeValue("value"));
+      }
     }
     myMethodMatcher.readSettings(node);
   }
@@ -147,6 +150,10 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
       final String ignoredTypesString = formatString(ignoredTypes);
       node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
+    }
+    if (!showWarningForStreamHoldingResource) {
+      node.addContent(new Element("option").setAttribute("name", "showWarningForStreamHoldingResource").setAttribute("value",
+                                                                                                      String.valueOf(showWarningForStreamHoldingResource)));
     }
     myMethodMatcher.writeSettings(node);
   }
