@@ -40,7 +40,13 @@ public class GradleSMTestProxy extends SMTestProxy {
   public void addStdOutput(String output, Key outputType) {
     addLast(new Printable() {
       public void printOn(final Printer printer) {
-        printer.printWithAnsiColoring(output, ConsoleViewContentType.getConsoleViewType(outputType));
+        ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(outputType);
+        if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
+          printer.printWithAnsiColoring(output, contentType);
+        }
+        else {
+          printer.print(output, contentType);
+        }
       }
     });
   }

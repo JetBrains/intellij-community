@@ -15,6 +15,7 @@ import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +56,7 @@ public class TraceStreamAction extends AnAction {
   private final List<SupportedLibrary> mySupportedLibraries =
     LibrarySupportProvider.getList().stream().map(SupportedLibrary::new).collect(Collectors.toList());
   private final Set<String> mySupportedLanguages = StreamEx.of(mySupportedLibraries).map(x -> x.languageId).toSet();
+  private int myLastVisitedPsiElementHash;
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -65,9 +68,16 @@ public class TraceStreamAction extends AnAction {
       presentation.setEnabled(false);
     }
     else {
-      if (mySupportedLanguages.contains(element.getLanguage().getID())) {
+      final String languageId = element.getLanguage().getID();
+      if (mySupportedLanguages.contains(languageId)) {
         presentation.setVisible(true);
-        presentation.setEnabled(isChainExists(element));
+        final boolean chainExists = isChainExists(element);
+        presentation.setEnabled(chainExists);
+        final int elementHash = System.identityHashCode(element);
+        if (chainExists && myLastVisitedPsiElementHash != elementHash) {
+          UsageTrigger.trigger("debugger.streams." + languageId.toLowerCase(Locale.US) + ".activated");
+          myLastVisitedPsiElementHash = elementHash;
+        }
       }
       else {
         presentation.setEnabledAndVisible(false);
@@ -129,6 +139,7 @@ public class TraceStreamAction extends AnAction {
 
   private static void runTrace(@NotNull StreamChain chain, @NotNull SupportedLibrary library, @NotNull XDebugSession session) {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
+    UsageTrigger.trigger("debugger.streams." + library.languageId.toLowerCase(Locale.US) + ".used");
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
     final TraceExpressionBuilder expressionBuilder = library.createExpressionBuilder(project);

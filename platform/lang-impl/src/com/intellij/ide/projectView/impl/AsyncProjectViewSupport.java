@@ -39,6 +39,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.Consumer;
@@ -245,24 +246,18 @@ class AsyncProjectViewSupport {
   }
 
   void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
-    int size = visitors == null ? 0 : visitors.size();
     if (visitors != null && !visitors.isEmpty()) {
-      // start visiting on the background thread to ensure that root node is already invalidated
-      myStructureTreeModel.getInvoker().invokeLater(() -> {
-        if (1 == visitors.size()) {
-          myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
-            if (path != null) consumer.consume(singletonList(path));
-          });
-        }
-        else if (size > 1) {
-          myStructureTreeModel.getInvoker().invokeLater(() -> {
-            List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
-            collectResults(promises, true).done(list -> {
-              if (list != null && !list.isEmpty()) consumer.consume(list);
-            });
-          });
-        }
-      });
+      if (1 == visitors.size()) {
+        myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
+          if (path != null) consumer.consume(singletonList(path));
+        });
+      }
+      else {
+        List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
+        collectResults(promises, true).done(list -> {
+          if (list != null && !list.isEmpty()) consumer.consume(list);
+        });
+      }
     }
   }
 
@@ -294,7 +289,12 @@ class AsyncProjectViewSupport {
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
+    RestoreSelectionListener listener = new RestoreSelectionListener();
+    tree.addTreeSelectionListener(listener);
     tree.setModel(model);
-    Disposer.register(model, () -> tree.setModel(null));
+    Disposer.register(model, () -> {
+      tree.setModel(null);
+      tree.removeTreeSelectionListener(listener);
+    });
   }
 }

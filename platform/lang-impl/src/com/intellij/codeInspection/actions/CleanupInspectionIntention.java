@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
@@ -111,7 +112,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       if (quickfixClass != null && startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
-          .runWriteActionWithProgressInDispatchThread(presentationText, project, null, null, fixesTask::doRun);
+          .runWriteActionWithProgressInDispatchThread(presentationText, project, null, CommonBundle.getCancelButtonText(), fixesTask::doRun);
       }
       else {
         final SequentialModalProgressTask progressTask =

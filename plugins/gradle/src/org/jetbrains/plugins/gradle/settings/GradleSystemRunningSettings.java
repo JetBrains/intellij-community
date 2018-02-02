@@ -55,7 +55,7 @@ public class GradleSystemRunningSettings implements PersistentStateComponent<Gra
 
   @NotNull
   public PreferredTestRunner getPreferredTestRunner() {
-    return myUseGradleAwareMake ? PreferredTestRunner.GRADLE_TEST_RUNNER : myPreferredTestRunner;
+    return myPreferredTestRunner;
   }
 
   @NotNull

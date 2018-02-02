@@ -20,9 +20,12 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
@@ -130,26 +133,42 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
   @SuppressWarnings("unchecked")
   @Override
   protected void doExecute() throws Exception {
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
-                                                                                          getExternalProjectPath(),
-                                                                                          getExternalSystemId());
-    KeyFMap keyFMap = getUserMap();
-    for (Key key : keyFMap.getKeys()) {
-      settings.putUserData(key, keyFMap.get(key));
-    }
-    
-    RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
-    RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
-    final List<String> vmOptions = parseCmdParameters(myVmOptions);
-    final List<String> arguments = parseCmdParameters(myArguments);
-    settings
-      .withVmOptions(vmOptions)
-      .withArguments(arguments)
-      .withEnvironmentVariables(myEnv)
-      .passParentEnvs(myPassParentEnvs);
+    ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
+      (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    ExternalSystemTaskId id = getId();
+    String projectPath = getExternalProjectPath();
 
-    taskManager.executeTasks(getId(), myTasksToExecute, getExternalProjectPath(), settings, myJvmAgentSetup);
+    ExternalSystemExecutionSettings settings;
+    RemoteExternalSystemTaskManager taskManager;
+    try {
+      progressNotificationManager.onStart(id, projectPath);
+
+      final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+      settings = ExternalSystemApiUtil.getExecutionSettings(getIdeProject(),
+                                                            projectPath,
+                                                            getExternalSystemId());
+      KeyFMap keyFMap = getUserMap();
+      for (Key key : keyFMap.getKeys()) {
+        settings.putUserData(key, keyFMap.get(key));
+      }
+
+      RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), projectPath, getExternalSystemId());
+      taskManager = facade.getTaskManager();
+      final List<String> vmOptions = parseCmdParameters(myVmOptions);
+      final List<String> arguments = parseCmdParameters(myArguments);
+      settings
+        .withVmOptions(vmOptions)
+        .withArguments(arguments)
+        .withEnvironmentVariables(myEnv)
+        .passParentEnvs(myPassParentEnvs);
+    }
+    catch (Exception e) {
+      progressNotificationManager.onFailure(id, e);
+      progressNotificationManager.onEnd(id);
+      throw e;
+    }
+
+    taskManager.executeTasks(id, myTasksToExecute, projectPath, settings, myJvmAgentSetup);
   }
 
   @Override

@@ -730,8 +730,8 @@ java_library(
     name = "Eclipse",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:ecj-4.6.2"],
-    runtime_deps = ["//tools/idea/lib:ecj-4.6.2"],
+    exports = ["//tools/idea/lib:ecj-4.7.2"],
+    runtime_deps = ["//tools/idea/lib:ecj-4.7.2"],
 )
 
 java_library(

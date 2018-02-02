@@ -411,8 +411,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   private DfaValue popQualifier(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     @NotNull final DfaValue qualifier = memState.pop();
-    boolean unboxing = instruction.getMethodType() == MethodCallInstruction.MethodType.UNBOXING;
-    NullabilityProblem problem = unboxing ? NullabilityProblem.unboxingNullable : NullabilityProblem.callNPE;
+    NullabilityProblem problem;
+    switch (instruction.getMethodType()) {
+      case UNBOXING:
+        problem = NullabilityProblem.unboxingNullable;
+        break;
+      case REGULAR_METHOD_CALL:
+      case METHOD_REFERENCE_CALL:
+        problem = NullabilityProblem.callNPE;
+        break;
+      default:
+        // BOXING or CAST do not dereference
+        return qualifier;
+    }
     PsiElement anchor = instruction.getContext();
     if (!checkNotNullable(memState, qualifier, problem, anchor)) {
       forceNotNull(runner, memState, qualifier);

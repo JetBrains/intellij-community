@@ -15,7 +15,7 @@
  */
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.ide.PrivacyPolicy
+import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
@@ -188,8 +188,8 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   protected fun needToShowAgreement(): Boolean {
-    val policy = PrivacyPolicy.getContent()
-    return !PrivacyPolicy.isVersionAccepted(policy.getFirst())
+    val agreement = EndUserAgreement.getLatestDocument()
+    return !agreement.isAccepted();
   }
 
   protected fun needToShowCompleteInstallation(): Boolean {

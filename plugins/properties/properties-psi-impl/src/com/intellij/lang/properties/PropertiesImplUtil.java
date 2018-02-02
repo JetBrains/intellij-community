@@ -71,7 +71,12 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   @NotNull
-  public static ResourceBundle getResourceBundle(@NotNull final PropertiesFile representative) {
+  public static List<PropertiesFile> getResourceBundleFiles(@NotNull PropertiesFile representative) {
+    return getResourceBundleWithCachedFiles(representative).getFiles();
+  }
+
+  @NotNull
+  public static ResourceBundle getResourceBundle(@NotNull PropertiesFile representative) {
     return getResourceBundleWithCachedFiles(representative).getBundle();
   }
 

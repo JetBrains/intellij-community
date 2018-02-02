@@ -135,7 +135,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
     PsiField innerClassField = psiClass.getInnerClasses()[0].getFields()[0];
 
-    svc.select(innerClassField, true);
+    PlatformTestUtil.waitForPromise(svc.select(innerClassField, true));
 
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),

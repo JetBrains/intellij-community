@@ -118,7 +118,7 @@ public class TestPackage extends TestObject {
       @Override
       protected boolean findTestsInClasspath() {
         try {
-          return Registry.is("junit4.search.4.tests.in.classpath", true) && !JavaSdkUtil.isJdkAtLeast(getJavaParameters().getJdk(), JavaSdkVersion.JDK_1_9);
+          return Registry.is("junit4.search.4.tests.in.classpath", false) && !JavaSdkUtil.isJdkAtLeast(getJavaParameters().getJdk(), JavaSdkVersion.JDK_1_9);
         }
         catch (ExecutionException e) {
           return false;

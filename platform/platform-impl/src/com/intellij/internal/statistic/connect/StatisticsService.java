@@ -32,10 +32,6 @@ public interface StatisticsService {
   @NonNls String TITLE = "title";
   @NonNls String DETAILS = "details";
   @NonNls String ALLOW_CHECKBOX = "allow-checkbox";
-  @NonNls String LINK_URL = "linkUrl";
-  @NonNls String LINK_BEFORE_TEXT = "linkBeforeText";
-  @NonNls String LINK_TEXT = "linkText";
-  @NonNls String LINK_AFTER_TEXT = "linkAfterText";
 
   StatisticsResult send();
 

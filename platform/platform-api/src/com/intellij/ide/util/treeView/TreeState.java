@@ -245,6 +245,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
+    LOG.debug(new IllegalStateException("restore paths"));
     if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
@@ -470,26 +471,21 @@ public class TreeState implements JDOMExternalizable {
     return false;
   }
 
-  private Promise<List<TreePath>> expand(@NotNull TreeVisitor.Acceptor acceptor, @NotNull JTree tree) {
-    return collectResults(myExpandedPaths.stream()
-                            .map(elements -> new Visitor(elements, tree::expandPath))
-                            .map(acceptor::accept).collect(toList()));
+  private Promise<List<TreePath>> expand(@NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream().map(elements -> TreeUtil.promiseExpand(tree, new Visitor(elements))).collect(toList()));
   }
 
-  private Promise<List<TreePath>> select(@NotNull TreeVisitor.Acceptor acceptor) {
-    return collectResults(mySelectedPaths.stream()
-                            .map(elements -> new Visitor(elements, null))
-                            .map(acceptor::accept).collect(toList()));
+  private Promise<List<TreePath>> select(@NotNull JTree tree) {
+    return collectResults(mySelectedPaths.stream().map(elements -> TreeUtil.promiseVisit(tree, new Visitor(elements))).collect(toList()));
   }
 
   private boolean visit(@NotNull JTree tree) {
     TreeModel model = tree.getModel();
     if (!(model instanceof TreeVisitor.Acceptor)) return false;
-    TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
 
-    expand(tree, promise -> expand(acceptor, tree).processed(expanded -> {
+    expand(tree, promise -> expand(tree).processed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {
-        select(acceptor).processed(selected -> {
+        select(tree).processed(selected -> {
           if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);
@@ -504,11 +500,9 @@ public class TreeState implements JDOMExternalizable {
 
   private static final class Visitor implements TreeVisitor {
     private final List<PathElement> elements;
-    private final Consumer<TreePath> consumer;
 
-    Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
+    Visitor(List<PathElement> elements) {
       this.elements = elements;
-      this.consumer = consumer;
     }
 
     @NotNull
@@ -517,9 +511,7 @@ public class TreeState implements JDOMExternalizable {
       int count = path.getPathCount();
       if (count > elements.size()) return Action.SKIP_CHILDREN;
       boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());
-      if (!matches) return Action.SKIP_CHILDREN;
-      if (consumer != null) consumer.accept(path);
-      return count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
+      return !matches ? Action.SKIP_CHILDREN : count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
     }
   }
 }

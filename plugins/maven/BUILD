@@ -28,7 +28,6 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/maven:maven2-server-impl",
         "//tools/idea/platform/credential-store",
         "//tools/idea/platform/tasks-platform-impl",
         "//tools/idea/json",
@@ -60,7 +59,6 @@ iml_module(
         "//tools/idea/platform/lang-impl[module]",
         "//tools/idea/jps/model-impl:jps-model-impl[module]",
         "//tools/idea/plugins/maven/jps-plugin:maven-jps-plugin[module]",
-        "//tools/idea/plugins/maven/artifact-resolver-m2:maven-artifact-resolver-m2[module]",
         "//tools/idea/plugins/maven/artifact-resolver-m3:maven-artifact-resolver-m3[module]",
         "//tools/idea/plugins/maven/artifact-resolver-m31:maven-artifact-resolver-m31[module]",
         "//tools/idea/spellchecker[module]",
@@ -90,8 +88,6 @@ iml_module(
         "//tools/idea/platform/credential-store",
         "//tools/idea/java/compiler/instrumentation-util-8",
     ],
-    test_srcs = ["maven2-server-impl/test"],
-    test_tags = ["manual"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     deps = [

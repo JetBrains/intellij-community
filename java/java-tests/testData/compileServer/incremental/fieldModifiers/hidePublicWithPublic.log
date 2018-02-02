@@ -1,0 +1,16 @@
+Cleaning output files:
+out/production/HidePublicWithPublic/ppp/Derived.class
+End of files
+Compiling files:
+src/ppp/Derived.java
+End of files
+Cleaning output files:
+out/production/HidePublicWithPublic/ppp/ClientInside.class
+out/production/HidePublicWithPublic/qqq/ClientOutside.class
+out/production/HidePublicWithPublic/qqq/DerivedOutside.class
+End of files
+Compiling files:
+src/ppp/ClientInside.java
+src/qqq/ClientOutside.java
+src/qqq/DerivedOutside.java
+End of files

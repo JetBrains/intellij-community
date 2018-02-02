@@ -179,8 +179,8 @@ class Proto implements RW.Savable, Streamable {
       }
 
       @Override
-      public boolean weakedAccess() {
-        return Difference.weakerAccess(past.access, access);
+      public boolean accessRestricted() {
+        return Difference.weakerAccess(access, past.access);
       }
 
       @Override

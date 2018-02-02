@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.impl.FailureResultImpl;
+import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
@@ -59,7 +59,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -371,15 +370,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+            FailureResult failureResult =
+              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
             if (progressListener != null) {
-              FailureResultImpl failureResult =
-                ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
               progressListener.onEvent(new FinishBuildEventImpl(
                 id, null, System.currentTimeMillis(), "failed", failureResult));
             }
-            String exceptionMessage = ExceptionUtil.getMessage(e);
-            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
-            processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+            ExternalSystemUtil.printFailure(e, failureResult, consoleView, processHandler);
             processHandler.notifyProcessTerminated(1);
           }
 

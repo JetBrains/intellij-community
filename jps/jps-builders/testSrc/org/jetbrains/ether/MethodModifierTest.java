@@ -48,6 +48,10 @@ public class MethodModifierTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testSetProtectedFromPublic() {
+    doTest();
+  }
+
 
   public void testUnsetFinal() {
     doTest();

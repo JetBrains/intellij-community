@@ -17,6 +17,7 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -39,7 +40,7 @@ import java.util.List;
  */
 public abstract class GitTextHandler extends GitHandler {
   private static final int WAIT_TIMEOUT_MS = 50;
-  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60 * 10;
+  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60;
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
@@ -138,11 +139,8 @@ public abstract class GitTextHandler extends GitHandler {
           }
         }
         catch (ProcessCanceledException pce) {
-          myHandler.destroyProcess();
-          // signal was sent, but we still need to wait for process to finish its dark deeds
-          if (!myHandler.waitFor(TERMINATION_TIMEOUT_MS)) {
-            LOG.error("Time out while waiting for cancellation of [" + printableCommandLine() + "].\nDestroying process manually");
-            myHandler.getProcess().destroy();
+          if (!tryKill()) {
+            LOG.error("Could not terminate [" + printableCommandLine() + "].");
           }
           throw pce;
         }
@@ -150,14 +148,28 @@ public abstract class GitTextHandler extends GitHandler {
     }
   }
 
-  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    commandLine.setCharset(getCharset());
-    return new MyOSProcessHandler(commandLine);
+  private boolean tryKill() {
+    myHandler.destroyProcess();
+
+    // signal was sent, but we still need to wait for process to finish its dark deeds
+    if (myHandler.waitFor(TERMINATION_TIMEOUT_MS)) {
+      return true;
+    }
+
+    LOG.warn("Soft-kill failed for [" + printableCommandLine() + "].");
+
+    ExecutionManagerImpl.stopProcess(myHandler);
+    return myHandler.waitFor(TERMINATION_TIMEOUT_MS);
   }
 
-  private static class MyOSProcessHandler extends KillableProcessHandler {
-    private MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-      super(commandLine, true);
+  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    commandLine.setCharset(getCharset());
+    return new MyOSProcessHandler(commandLine, true);
+  }
+
+  protected static class MyOSProcessHandler extends KillableProcessHandler {
+    protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
+      super(commandLine, withMediator);
     }
 
     @NotNull

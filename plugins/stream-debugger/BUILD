@@ -6,7 +6,6 @@ iml_module(
     iml_files = ["stream-debugger.iml"],
     resources = ["resources"],
     tags = ["managed"],
-    test_resources = ["testData"],
     test_srcs = ["test"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],

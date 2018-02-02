@@ -269,10 +269,11 @@ public class GroovyPositionManager implements PositionManager {
       if (classes.isEmpty()) {
         classes = cache.getClassesByFQName(qName, addModuleContent(searchScope), false);
       }
-      if (classes.isEmpty()) return null;
-      classes.sort(PsiClassUtil.createScopeComparator(searchScope));
-      PsiClass clazz = classes.get(0);
-      if (clazz != null) return clazz.getContainingFile();
+      if (!classes.isEmpty()) {
+        classes.sort(PsiClassUtil.createScopeComparator(searchScope));
+        PsiClass clazz = classes.get(0);
+        if (clazz != null) return clazz.getContainingFile();
+      }
     }
     catch (ProcessCanceledException | IndexNotReadyException e) {
       return null;

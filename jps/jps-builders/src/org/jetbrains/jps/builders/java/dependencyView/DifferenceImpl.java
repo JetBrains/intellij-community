@@ -23,8 +23,8 @@ class DifferenceImpl extends Difference{
     return myDelegate.no();
   }
 
-  public boolean weakedAccess() {
-    return myDelegate.weakedAccess();
+  public boolean accessRestricted() {
+    return myDelegate.accessRestricted();
   }
 
   public int addedModifiers() {

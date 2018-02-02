@@ -316,6 +316,15 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
   }
 
+  void testPreferLambdaToRecentSelections() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'String'
+    myFixture.type('\n str;\n') // select 'String'
+    myFixture.type('s.reduce(')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> ', 's', 'str', 'String'
+  }
+
   private checkResultByFileName() {
     checkResultByFile(getTestName(false) + "_after.java")
   }

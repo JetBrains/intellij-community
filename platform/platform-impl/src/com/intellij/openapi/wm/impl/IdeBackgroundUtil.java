@@ -22,20 +22,16 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
@@ -46,7 +42,6 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -228,7 +223,7 @@ public class IdeBackgroundUtil {
   private static class MyGraphics extends Graphics2DDelegate {
     final PaintersHelper helper;
     final int[] offsets;
-    Set<Color> preserved;
+    Condition<Color> preserved;
 
     static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
       MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
@@ -239,7 +234,7 @@ public class IdeBackgroundUtil {
       return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets, Set<Color> preserved) {
+    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets, Condition<Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;
@@ -352,7 +347,7 @@ public class IdeBackgroundUtil {
       Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
       if (tmpClip == null) return;
       
-      boolean preserve = preserved != null && reason instanceof Color && preserved.contains(reason);
+      boolean preserve = preserved != null && reason instanceof Color && preserved.value((Color)reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
@@ -364,12 +359,6 @@ public class IdeBackgroundUtil {
       }
     }
   }
-
-  private static final JBIterable<Object> ourPreservedKeys = JBIterable.of(
-    EditorColors.SELECTION_BACKGROUND_COLOR,
-    EditorColors.ADDED_LINES_COLOR, EditorColors.MODIFIED_LINES_COLOR, EditorColors.DELETED_LINES_COLOR,
-    EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, EditorColors.BORDER_LINES_COLOR,
-    DiffColors.DIFF_INSERTED, DiffColors.DIFF_DELETED, DiffColors.DIFF_MODIFIED, DiffColors.DIFF_CONFLICT);
 
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
@@ -386,14 +375,9 @@ public class IdeBackgroundUtil {
           if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
           Graphics2D gg = withEditorBackground(g, c);
           if (gg instanceof MyGraphics) {
-            EditorColorsScheme scheme = editor.getColorsScheme();
-            ((MyGraphics)gg).preserved = ourPreservedKeys.map(
-              o -> {
-                if (o instanceof ColorKey) return scheme.getColor((ColorKey)o);
-                TextAttributes attrs = scheme.getAttributes((TextAttributesKey)o);
-                return attrs != null ? attrs.getBackgroundColor() : null;
-              }
-            ).toSet();
+            Color background1 = ((EditorEx)editor).getBackgroundColor();
+            Color background2 = ((EditorEx)editor).getGutterComponentEx().getBackground();
+            ((MyGraphics)gg).preserved = color -> color != background1 && color != background2;
           }
           return gg;
         }
@@ -404,7 +388,7 @@ public class IdeBackgroundUtil {
         Color selectionColor = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
                                view instanceof JList ? UIUtil.getListSelectionBackground() :
                                view instanceof JTable ? UIUtil.getTableSelectionBackground() : null;
-        ((MyGraphics)gg).preserved = ContainerUtil.createMaybeSingletonSet(selectionColor);
+        ((MyGraphics)gg).preserved = color -> color == selectionColor;
       }
       return gg;
     }

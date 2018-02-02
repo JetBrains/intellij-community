@@ -143,7 +143,7 @@ public class StartupUtil {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
       /* Android Studio will not show the JetBrains privacy policy.
-      AppUIUtil.showPrivacyPolicy();
+      AppUIUtil.showUserAgreementAndConsentsIfNeeded();
       */
     }
 

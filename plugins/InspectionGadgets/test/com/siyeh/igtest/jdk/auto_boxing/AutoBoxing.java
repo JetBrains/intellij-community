@@ -9,9 +9,9 @@ public class AutoBoxing {
         Long someNumber = <warning descr="Auto-boxing '0L'">0L</warning>;
         Long aLong = <warning descr="Auto-boxing 'someNumber << 2'">someNumber << 2</warning>;
         Long other = <warning descr="Auto-boxing 'someNumber'">someNumber</warning>++;
-        someNumber = <warning descr="Auto-boxing '~someNumber'">~<warning descr="Auto-boxing 'someNumber'">someNumber</warning></warning>;
-        someNumber = <warning descr="Auto-boxing '-someNumber'">-<warning descr="Auto-boxing 'someNumber'">someNumber</warning></warning>;
-        someNumber = <warning descr="Auto-boxing '+someNumber'">+<warning descr="Auto-boxing 'someNumber'">someNumber</warning></warning>;
+        someNumber = <warning descr="Auto-boxing '~someNumber'">~someNumber</warning>;
+        someNumber = <warning descr="Auto-boxing '-someNumber'">-someNumber</warning>;
+        someNumber = <warning descr="Auto-boxing '+someNumber'">+someNumber</warning>;
     }
 
     public void foo() {

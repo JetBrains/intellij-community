@@ -431,6 +431,7 @@ private fun moveComponentConfiguration(defaultProject: Project, element: Element
 
   val workspaceComponentNames = THashSet(listOf("GradleLocalSettings"))
   val compilerComponentNames = THashSet<String>()
+  val goImportsComponentNames = THashSet<String>()
 
   fun processComponents(aClass: Class<*>) {
     val stateAnnotation = StoreUtil.getStateSpec(aClass)
@@ -443,6 +444,7 @@ private fun moveComponentConfiguration(defaultProject: Project, element: Element
     when {
       storage.path == StoragePathMacros.WORKSPACE_FILE -> workspaceComponentNames.add(stateAnnotation.name)
       storage.path == "compiler.xml" -> compilerComponentNames.add(stateAnnotation.name)
+      storage.path == "go.imports.xml" -> goImportsComponentNames.add(stateAnnotation.name)
     }
   }
 
@@ -458,7 +460,7 @@ private fun moveComponentConfiguration(defaultProject: Project, element: Element
   }
 
   @Suppress("RemoveExplicitTypeArguments")
-  val elements = mapOf(compilerComponentNames to SmartList<Element>(), workspaceComponentNames to SmartList<Element>())
+  val elements = mapOf(compilerComponentNames to SmartList<Element>(), goImportsComponentNames to SmartList<Element>(), workspaceComponentNames to SmartList<Element>())
   val iterator = componentElements.iterator()
   for (componentElement in iterator) {
     val name = componentElement.getAttributeValue("name") ?: continue
@@ -471,7 +473,12 @@ private fun moveComponentConfiguration(defaultProject: Project, element: Element
   }
 
   for ((names, list) in elements) {
-    writeConfigFile(list, projectConfigDir.resolve(if (names === workspaceComponentNames) "workspace.xml" else "compiler.xml"))
+    val name = when {
+      names === workspaceComponentNames -> "workspace.xml"
+      names === goImportsComponentNames -> "go.imports.xml"
+      else -> "compiler.xml"
+    }
+    writeConfigFile(list, projectConfigDir.resolve(name))
   }
 }
 

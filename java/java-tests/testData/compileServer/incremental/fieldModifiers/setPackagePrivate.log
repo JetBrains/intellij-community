@@ -1,0 +1,17 @@
+Cleaning output files:
+out/production/SetPackagePrivate/qqq/Util$1.class
+out/production/SetPackagePrivate/qqq/Util$Base.class
+out/production/SetPackagePrivate/qqq/Util$BaseImpl.class
+out/production/SetPackagePrivate/qqq/Util.class
+End of files
+Compiling files:
+src/qqq/Util.java
+End of files
+Cleaning output files:
+out/production/SetPackagePrivate/ppp/Client$MyUtil$1.class
+out/production/SetPackagePrivate/ppp/Client$MyUtil.class
+out/production/SetPackagePrivate/ppp/Client.class
+End of files
+Compiling files:
+src/ppp/Client.java
+End of files

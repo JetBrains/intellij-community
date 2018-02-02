@@ -846,7 +846,8 @@ public class ExpressionUtils {
     }
     final PsiType expressionType = expression.getType();
     if (PsiPrimitiveType.getUnboxedType(expressionType) != null && parent instanceof PsiUnaryExpression) {
-      return true;
+      final IElementType sign = ((PsiUnaryExpression)parent).getOperationTokenType();
+      return sign == JavaTokenType.PLUSPLUS || sign == JavaTokenType.MINUSMINUS;
     }
     if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
       return false;

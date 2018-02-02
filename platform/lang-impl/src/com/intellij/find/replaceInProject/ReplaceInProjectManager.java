@@ -45,6 +45,7 @@ import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -103,26 +104,36 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public void replaceInProject(@NotNull DataContext dataContext) {
-    final boolean isOpenInNewTabEnabled;
-    final boolean toOpenInNewTab;
-    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
-    if (selectedContent != null && selectedContent.isPinned()) {
-      toOpenInNewTab = true;
-      isOpenInNewTabEnabled = false;
+  /**
+   * @param model would be used for replacing if not null, otherwise shared (project-level) model would be used
+   */
+  public void replaceInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
+    final FindManager findManager = FindManager.getInstance(myProject);
+    final FindModel findModel;
+    if (model == null) {
+      final boolean isOpenInNewTabEnabled;
+      final boolean toOpenInNewTab;
+      final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      if (selectedContent != null && selectedContent.isPinned()) {
+        toOpenInNewTab = true;
+        isOpenInNewTabEnabled = false;
+      }
+      else {
+        toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+        isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      }
+
+      findModel = findManager.getFindInProjectModel().clone();
+      findModel.setReplaceState(true);
+      findModel.setOpenInNewTabVisible(true);
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
+      findModel.setOpenInNewTab(toOpenInNewTab);
+      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
     else {
-      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      findModel = model;
     }
-    final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = findManager.getFindInProjectModel().clone();
-    findModel.setReplaceState(true);
-    findModel.setOpenInNewTabVisible(true);
-    findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
-    findModel.setOpenInNewTab(toOpenInNewTab);
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
-    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
 
     findManager.showFindDialog(findModel, () -> {
       if (!findModel.isProjectScope() &&
@@ -166,7 +177,7 @@ public class ReplaceInProjectManager {
     @Override
     public String getLongDescriptiveName() {
       UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
-      return "Replace "+ StringUtil.decapitalize(presentation.getToolwindowTitle())+" with '"+ myFindModel.getStringToReplace()+"'";
+      return "Replace " + StringUtil.decapitalize(presentation.getToolwindowTitle()) + " with '" + myFindModel.getStringToReplace() + "'";
     }
 
     @Override
@@ -179,7 +190,7 @@ public class ReplaceInProjectManager {
       Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       ReplaceInProjectManager findInProjectManager = getInstance(myProject);
-      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
   }
 
@@ -286,13 +297,13 @@ public class ReplaceInProjectManager {
 
       if (result == FindManager.PromptResult.SKIP_ALL_IN_THIS_FILE) {
         int j;
-        for(j = i + 1;j < usages.length; ++j) {
+        for (j = i + 1; j < usages.length; ++j) {
           final PsiElement nextElt = ((UsageInfo2UsageAdapter)usages[j]).getUsageInfo().getElement();
           if (nextElt == null) continue;
           if (nextElt.getContainingFile() == psiFile) continue;
           break;
         }
-        i = j -1;
+        i = j - 1;
       }
 
       if (result == FindManager.PromptResult.ALL_IN_THIS_FILE) {
@@ -300,7 +311,7 @@ public class ReplaceInProjectManager {
 
         Runnable runnable = () -> {
           int j = currentNumber;
-          boolean  success = true;
+          boolean success = true;
           for (; j < usages.length; j++) {
             final Usage usage1 = usages[j];
             final UsageInfo usageInfo1 = ((UsageInfo2UsageAdapter)usage1).getUsageInfo();
@@ -351,9 +362,10 @@ public class ReplaceInProjectManager {
   public boolean showReplaceAllConfirmDialog(String usagesCount, String stringToFind, String filesCount, String stringToReplace) {
     return Messages.YES == MessageDialogBuilder.yesNo(
       FindBundle.message("find.replace.all.confirmation.title"),
-      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount, StringUtil.escapeXml(stringToReplace)))
-             .yesText(Messages.OK_BUTTON)
-             .noText(Messages.CANCEL_BUTTON).show();
+      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
+                         StringUtil.escapeXml(stringToReplace)))
+      .yesText(Messages.OK_BUTTON)
+      .noText(Messages.CANCEL_BUTTON).show();
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
@@ -410,46 +422,47 @@ public class ReplaceInProjectManager {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }
-    
+
     int[] replacedCount = {0};
     final boolean[] success = {true};
 
     success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
       FindBundle.message("find.replace.all.confirmation.title"),
-      myProject, 
+      myProject,
       null,
       "Stop",
       indicator -> {
         int processed = 0;
         VirtualFile lastFile = null;
-        
+
         for (final Usage usage : usages) {
           ++processed;
           indicator.checkCanceled();
           indicator.setFraction((float)processed / usages.size());
-          
-          if(usage instanceof UsageInFile) {
+
+          if (usage instanceof UsageInFile) {
             VirtualFile virtualFile = ((UsageInFile)usage).getFile();
             if (virtualFile != null && !virtualFile.equals(lastFile)) {
               indicator.setText2(virtualFile.getPresentableUrl());
               lastFile = virtualFile;
             }
           }
-          
+
           ProgressManager.getInstance().executeNonCancelableSection(() -> {
             try {
               if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
                 replacedCount[0]++;
               }
-            } catch (FindManager.MalformedReplacementStringException ex) {
+            }
+            catch (FindManager.MalformedReplacementStringException ex) {
               markAsMalformedReplacement(replaceContext, usage);
               success[0] = false;
             }
-          });           
+          });
         }
       }
     );
-    
+
     replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];
@@ -520,10 +533,11 @@ public class ReplaceInProjectManager {
     FindManager findManager = FindManager.getInstance(myProject);
     final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
+    FindResult findResult =
+      findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
     if (!findResult.isStringFound() ||
         // find result should be in needed range
-        !(findResult.getStartOffset() >= textOffset && findResult.getEndOffset() <= textEndOffset) ) {
+        !(findResult.getStartOffset() >= textOffset && findResult.getEndOffset() <= textEndOffset)) {
       return false;
     }
 
@@ -607,7 +621,7 @@ public class ReplaceInProjectManager {
     private final FindUsagesProcessPresentation myProcessPresentation;
 
     private UsageSearcherFactory(@NotNull FindModel findModelCopy,
-                                @NotNull FindUsagesProcessPresentation processPresentation) {
+                                 @NotNull FindUsagesProcessPresentation processPresentation) {
       myFindModelCopy = findModelCopy;
       myProcessPresentation = processPresentation;
     }

@@ -15,11 +15,17 @@
  */
 package com.intellij.util.xml;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.mock.MockModule;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
@@ -531,6 +537,22 @@ public class DomBasicsTest extends DomTestCase {
       }
     }.execute();
     assertFalse(child.isValid());
+    assertTrue(copy.isValid());
+  }
+
+  public void testStableCopySurvivesPsiFileInvalidation() {
+    XmlFile xmlFile = (XmlFile)PsiFileFactory.getInstance(getProject())
+      .createFileFromText(XMLLanguage.INSTANCE, "<a><child-element/><child-element/></a>");
+    VirtualFile file = xmlFile.getViewProvider().getVirtualFile();
+
+    getDomManager().registerFileDescription(new MockDomFileDescription<>(MyElement.class, "a", file), getTestRootDisposable());
+    
+    MyElement element = getDomManager().getFileElement(xmlFile, MyElement.class).getRootElement().getChildElements().get(1);
+    MyElement copy = element.createStableCopy();
+
+    ApplicationManager.getApplication().runWriteAction(() -> ((FileManagerImpl)PsiManagerEx.getInstanceEx(getProject()).getFileManager()).forceReload(file));
+    
+    assertFalse(element.isValid());
     assertTrue(copy.isValid());
   }
 

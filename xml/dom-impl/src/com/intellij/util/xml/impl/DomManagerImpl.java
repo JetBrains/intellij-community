@@ -335,7 +335,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   @Nullable
-  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(XmlFile file) {
+  public final <T extends DomElement> DomFileElementImpl<T> getFileElement(@Nullable XmlFile file) {
     if (file == null) return null;
     if (!(file.getFileType() instanceof DomSupportEnabled)) return null;
     final VirtualFile virtualFile = file.getVirtualFile();

@@ -49,6 +49,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -60,6 +61,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -73,6 +77,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.function.BooleanSupplier;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
@@ -85,6 +90,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private AbstractTreeBuilder myTreeBuilder;
   // subId->Tree state; key may be null
   private final Map<String,TreeState> myReadTreeState = new HashMap<>();
+  private final AtomicBoolean myTreeStateRestored = new AtomicBoolean();
   private String mySubId;
   @NonNls private static final String ELEMENT_SUBPANE = "subPane";
   @NonNls private static final String ATTRIBUTE_SUBID = "subId";
@@ -209,6 +215,17 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @NotNull
   public abstract ActionCallback updateFromRoot(boolean restoreExpandedPaths);
+
+  public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
+    AbstractTreeBuilder builder = getTreeBuilder();
+    if (builder != null) {
+      builder.queueUpdateFrom(element, forceResort, updateStructure);
+    }
+    else if (element instanceof PsiElement) {
+      AsyncProjectViewSupport support = getAsyncSupport();
+      if (support != null) support.updateByElement((PsiElement)element, updateStructure);
+    }
+  }
 
   public abstract void select(Object element, VirtualFile file, boolean requestFocus);
 
@@ -358,6 +375,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @Nullable
+  public PsiElement getPSIElementFromNode(TreeNode node) {
+    return getPSIElement(getElementFromTreeNode(node));
+  }
+
+  @Nullable
   protected Module getNodeModule(@Nullable final Object element) {
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement)element;
@@ -460,6 +482,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   protected void saveExpandedPaths() {
+    myTreeStateRestored.set(false);
     if (myTree != null) {
       TreeState treeState = TreeState.createOn(myTree);
       if (!treeState.isEmpty()) {
@@ -469,6 +492,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public final void restoreExpandedPaths(){
+    if (myTreeStateRestored.getAndSet(true)) return;
     TreeState treeState = myReadTreeState.get(getSubId());
     if (treeState != null && !treeState.isEmpty()) {
       treeState.applyTo(myTree);
@@ -485,6 +509,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public void installComparator(AbstractTreeBuilder treeBuilder) {
     installComparator(treeBuilder, createComparator());
+  }
+
+  @TestOnly
+  public void installComparator(Comparator<NodeDescriptor> comparator) {
+    installComparator(getTreeBuilder(), comparator);
   }
 
   protected void installComparator(AbstractTreeBuilder builder, Comparator<NodeDescriptor> comparator) {
@@ -612,7 +641,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       myDropTarget = new ProjectViewDropTarget(myTree, new Retriever() {
         @Override
         public PsiElement getPsiElement(@Nullable TreeNode node) {
-          return getPSIElement(getElementFromTreeNode(node));
+          return getPSIElementFromNode(node);
         }
 
         @Override
@@ -740,6 +769,20 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     if (myTreeBuilder == null) return ActionCallback.DONE;
     if (myTreeBuilder.isDisposed()) return ActionCallback.REJECTED;
     return myTreeBuilder.getUi().getReady(requestor);
+  }
+
+  @TestOnly
+  @Deprecated
+  public Promise<TreePath> promisePathToElement(Object element) {
+    AbstractTreeBuilder builder = getTreeBuilder();
+    if (builder != null) {
+      DefaultMutableTreeNode node = builder.getNodeForElement(element);
+      if (node == null) return Promises.rejectedPromise();
+      return Promises.resolvedPromise(new TreePath(node.getPath()));
+    }
+    TreeVisitor visitor = AsyncProjectViewSupport.createVisitor(element);
+    if (visitor == null || myTree == null) return Promises.rejectedPromise();
+    return TreeUtil.promiseVisit(myTree, visitor);
   }
 
   AsyncProjectViewSupport getAsyncSupport() {
