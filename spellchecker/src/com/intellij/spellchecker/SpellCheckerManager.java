@@ -218,19 +218,21 @@ public class SpellCheckerManager implements Disposable {
     final String transformed = spellChecker.getTransformation().transform(word);
     final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
-      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
-        @Override
-        public void undo() {
-          dictionary.removeFromDictionary(word);
-          restartInspections();
-        }
+      if(file != null) {
+        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(file) {
+          @Override
+          public void undo() {
+            dictionary.removeFromDictionary(word);
+            restartInspections();
+          }
 
-        @Override
-        public void redo() {
-          dictionary.addToDictionary(word);
-          restartInspections();
-        }
-      });
+          @Override
+          public void redo() {
+            dictionary.addToDictionary(word);
+            restartInspections();
+          }
+        });
+      }
       dictionary.addToDictionary(word);
       restartInspections();
     }
