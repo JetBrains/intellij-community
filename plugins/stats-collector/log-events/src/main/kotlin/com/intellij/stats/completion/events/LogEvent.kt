@@ -29,7 +29,7 @@ abstract class LogEvent(
 ) {
 
     @Transient var recorderId = "completion-stats"
-    @Transient var recorderVersion = "3"
+    @Transient var recorderVersion = "4"
     @Transient var timestamp = System.currentTimeMillis()
     @Transient var bucket = "-1"
     var validationStatus = ValidationStatus.UNKNOWN
