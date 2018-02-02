@@ -270,7 +270,7 @@ class CollectMigration extends BaseStreamApiMigration {
       return StreamRefactoringUtil.generateMapOperation(myElement, addedType, ct.markUnchanged(mapping));
     }
 
-    public String generateCollector(CommentTracker ct, boolean strictMode) {
+    String generateCollector(CommentTracker ct, boolean strictMode) {
       return getCollectionCollector(ct, myInitializer, myTargetType, strictMode);
     }
 
