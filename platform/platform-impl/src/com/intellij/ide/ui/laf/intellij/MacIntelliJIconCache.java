@@ -40,7 +40,7 @@ public class MacIntelliJIconCache {
     String dir = "";
 
     // For Mac blue theme and other LAFs use default directory icons
-    if (UIUtil.isUnderDefaultMacTheme() && IntelliJLaf.isGraphite()) dir = "graphite/";
+    if (UIUtil.isUnderDefaultMacTheme()) dir = IntelliJLaf.isGraphite() ? "graphite/" : "";
     else if (UIUtil.isUnderWin10LookAndFeel()) dir = "win10/";
     else if (UIUtil.isUnderDarcula()) dir = "darcula/";
     else if (UIUtil.isUnderIntelliJLaF()) dir = "intellij/";
