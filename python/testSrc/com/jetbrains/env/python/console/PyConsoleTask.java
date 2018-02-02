@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.*;
 
@@ -91,6 +92,9 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
+    // Prevents thread leak, see its doc
+    killRpcThread();
+
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
@@ -105,11 +109,28 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   /**
+   * Kill XML-Rpc thread
+   * Due to stupid bug in {@link LiteXmlRpcTransport#initConnection()} which has <strong>infinite</strong> loop that
+   * tries to connect to already dead process (already closed socket): See "tries" var.
+   */
+  private static void killRpcThread() throws InterruptedException {
+    final Optional<Thread> rpc = Thread.getAllStackTraces().keySet().stream()
+                                       .filter(o -> o.getClass().getName().contains("XmlRpc"))
+                                       .findFirst();
+    if (rpc.isPresent()) {
+      final Thread thread = rpc.get();
+      // There is no way to interrupt this thread with "interrupt": it has infinite loop (bug) which does not check ".isInterrupted()"
+      thread.stop();
+      thread.join();
+    }
+  }
+
+  /**
    * Disposes Python console and waits for Python console server thread to die.
    */
-  private void disposeConsole() throws InterruptedException, ExecutionException, TimeoutException {
+  private void disposeConsole() throws InterruptedException, ExecutionException {
     try {
-      disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
+      disposeConsoleAsync().get();
     }
     finally {
       // Even if console failed in its side we need
