@@ -5,7 +5,9 @@
     <constraints>
       <xy x="20" y="20" width="650" height="295"/>
     </constraints>
-    <properties/>
+    <properties>
+      <preferredSize width="600" height="81"/>
+    </properties>
     <border type="none"/>
     <children>
       <component id="a40bb" class="com.intellij.openapi.ui.ComboBox" binding="myDictionaryCombobox">
