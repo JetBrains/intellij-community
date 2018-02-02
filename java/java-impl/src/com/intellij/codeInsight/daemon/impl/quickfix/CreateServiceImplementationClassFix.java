@@ -12,6 +12,7 @@ import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -194,11 +195,13 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(mySubclassButton).withLabel("Implementation:"))
-        .add(UI.PanelFactory.panel(myProviderButton))
-        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
-        .createPanel();
+      PanelGridBuilder builder = UI.PanelFactory.grid();
+      builder.add(UI.PanelFactory.panel(mySubclassButton).withLabel("Implementation:"))
+             .add(UI.PanelFactory.panel(myProviderButton));
+      if (myRootDirCombo.getModel().getSize() > 1) {
+        builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
+      }
+      return builder.createPanel();
     }
 
     @Nullable

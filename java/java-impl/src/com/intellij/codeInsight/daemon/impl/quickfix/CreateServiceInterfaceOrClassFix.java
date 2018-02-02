@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -194,12 +195,12 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     protected JComponent createNorthPanel() {
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
-      return UI.PanelFactory.grid()
-        .add(UI.PanelFactory.panel(nameTextField).withLabel("Name:"))
-        .add(UI.PanelFactory.panel(myModuleCombo).withLabel("Module:"))
-        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
-        .add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"))
-        .createPanel();
+      PanelGridBuilder builder = UI.PanelFactory.grid();
+      builder.add(UI.PanelFactory.panel(nameTextField).withLabel("Name:"));
+      if (myModuleCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Module:"));
+      if (myRootDirCombo.getModel().getSize() > 1) builder.add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"));
+      builder.add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"));
+      return builder.createPanel();
     }
 
     @Nullable
