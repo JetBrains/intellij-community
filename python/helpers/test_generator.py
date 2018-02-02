@@ -278,7 +278,7 @@ class _DiffPrintingTestCase(unittest.TestCase):
                 print("?%s" % sl)
             raise self.failureException(msg)
         else:
-            self.failUnlessEqual(etalon, specimen, msg)
+            unittest.TestCase.assertEqual(self, etalon, specimen, msg)
 
 
 class TestSpecialCases(unittest.TestCase):
