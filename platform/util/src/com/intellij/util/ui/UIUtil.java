@@ -1859,7 +1859,8 @@ public class UIUtil {
       g.fillRect(x, 0, width, height);
 
       if (active) {
-        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
+        Color headerColor = ObjectUtils.notNull(ACTIVE_HEADER_COLOR, new Color(100, 150, 230, toolWindow ? 50 : 30)));
+        g.setColor(headerColor);
         g.fillRect(x, 0, width, height);
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
