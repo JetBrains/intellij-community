@@ -21,6 +21,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <fileTypeFactory implementation="org.toml.lang.TomlFileTypeFactory"/>
+        <fileTypeDetector implementation="org.toml.lang.TomlFileTypeDetector"/>
         <lang.parserDefinition language="TOML" implementationClass="org.toml.lang.parse.TomlParserDefinition"/>
         <lang.ast.factory language="TOML" implementationClass="org.toml.lang.psi.impl.TomlASTFactory"/>
         <lang.syntaxHighlighterFactory language="TOML" implementationClass="org.toml.ide.TomlHighlighterFactory"/>
