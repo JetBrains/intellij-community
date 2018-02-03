@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
-import com.intellij.execution.filters.UrlFilter;
 import com.intellij.ide.dnd.DnDDropHandler;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDSupport;
@@ -128,8 +127,6 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   @Override
   protected JediTermWidget createInnerTerminalWidget(TabbedSettingsProvider settingsProvider) {
     JBTerminalWidget widget = new JBTerminalWidget(myProject, mySettingsProvider, myParent);
-
-    widget.addMessageFilter(myProject, new UrlFilter());
 
     convertActions(widget, widget.getActions());
     convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), input -> {

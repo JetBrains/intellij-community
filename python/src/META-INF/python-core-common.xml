@@ -631,6 +631,8 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
+
+    <consoleFilterProvider implementation="com.jetbrains.python.run.PyMessageFilterProvider"/>
   </extensions>
 
   <extensionPoints>
