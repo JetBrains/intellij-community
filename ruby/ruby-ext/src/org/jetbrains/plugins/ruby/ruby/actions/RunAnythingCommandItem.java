@@ -38,10 +38,8 @@ import org.jetbrains.plugins.ruby.version.management.rbenv.gemsets.RbenvGemsetMa
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 public class RunAnythingCommandItem extends RunAnythingItem<String> {
   private static final Logger LOG = Logger.getInstance(RunAnythingCommandItem.class);
@@ -145,7 +143,17 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     if (SystemInfoRt.isWindows) return ContainerUtil.immutableList(ExecUtil.getWindowsShellName(), "/c");
 
     String shell = System.getenv("SHELL");
-    return shell == null || !new File(shell).canExecute() ? ContainerUtil.emptyList() : ContainerUtil.immutableList(shell, "-c");
+    if (shell == null || !new File(shell).canExecute()) {
+      return ContainerUtil.emptyList();
+    }
+    else {
+      List<String> shellCommands = ContainerUtil.newArrayList(shell);
+      if ("/bin/bash".equals(shell)) {
+        shellCommands.add("--login");
+      }
+      shellCommands.add("-c");
+      return shellCommands;
+    }
   }
 
   private static String getRubyAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env, @NotNull String commandLine) {
