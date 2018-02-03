@@ -193,40 +193,47 @@ public class LinePainter2D {
   /**
    * Fills a polygon.
    *
-   * @param g
-   * @param xPoints
-   * @param yPoints
-   * @param nPoints
-   * @param strokeType
-   * @param strokeWidth
-   * @param valueAA
+   * @param g           the graphics
+   * @param xPoints     the x polygon points
+   * @param yPoints     the y polygon points
+   * @param nPoints     the number of points
+   * @param strokeType  the stroke type
+   * @param strokeWidth the stroke width
+   * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
   @ApiStatus.Experimental
-  public static void fillPolygon(@NotNull Graphics2D g,
+  public static void fillPolygon(@NotNull final Graphics2D g,
                                  double[] xPoints, double[] yPoints,
                                  int nPoints,
                                  StrokeType strokeType, double strokeWidth,
                                  @NotNull Object valueAA)
   {
-    int[] ixPoints = new int[nPoints];
-    int[] iyPoints = new int[nPoints];
-    for (int p = 0; p < nPoints; p++) {
-      ixPoints[p] = (int)Math.round(xPoints[p]);
-      iyPoints[p] = (int)Math.round(yPoints[p]);
+    // [tav] todo: mind strokeWidth and strokeType
+    final Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    path.moveTo(xPoints[0], yPoints[0]);
+    for (int p = 1; p < nPoints; p++) {
+      path.lineTo(xPoints[p], yPoints[p]);
     }
-    g.fillPolygon(ixPoints, iyPoints, nPoints);
+    path.closePath();
+    PaintUtil.paintWithAA(g, valueAA,
+                          new Runnable() {
+                            @Override
+                            public void run() {
+                              g.fill(path);
+                            }
+                          });
   }
 
   /**
    * Draws a polygon.
    *
-   * @param g
-   * @param xPoints
-   * @param yPoints
-   * @param nPoints
-   * @param strokeType
-   * @param strokeWidth
-   * @param valueAA
+   * @param g           the graphics
+   * @param xPoints     the x polygon points
+   * @param yPoints     the y polygon points
+   * @param nPoints     the number of points
+   * @param strokeType  the stroke type
+   * @param strokeWidth the stroke width
+   * @param valueAA     overrides current {@link RenderingHints#KEY_ANTIALIASING} to {@code valueAA}
    */
   @ApiStatus.Experimental
   public static void paintPolygon(@NotNull Graphics2D g,
@@ -237,12 +244,12 @@ public class LinePainter2D {
   {
     double x1, x2, y1, y2;
     boolean thickPixel = UIUtil.isJreHiDPIEnabled() && PaintUtil.devValue(strokeWidth, g) > 1;
-    boolean prevStraight = nPoints > 1 ? isStraightLine(xPoints, yPoints, nPoints, nPoints) : true;
+    boolean prevStraight = nPoints <= 1 || isStraightLine(xPoints, yPoints, nPoints, nPoints);
 
     for (int p = 0; p < nPoints; p++) {
       x1 = xPoints[p];
-      x2 = xPoints[(p + 1) % nPoints];
       y1 = yPoints[p];
+      x2 = xPoints[(p + 1) % nPoints];
       y2 = yPoints[(p + 1) % nPoints];
       boolean thisStraight = x1 == x2 || y1 == y2;
       // [tav] todo: mind the angle, the strokeWidth and the strokeType
