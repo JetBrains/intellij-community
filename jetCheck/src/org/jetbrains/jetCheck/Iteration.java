@@ -58,9 +58,11 @@ class Iteration<T> {
     throw new GeneratorException(this, new CannotSatisfyCondition(DATA_IS_DIFFERENT));
   }
 
-  String printToReproduce() {
-    return "To reproduce the last iteration, run PropertyChecker.forAll(...).rechecking(" + iterationSeed + "L, " + sizeHint + ").shouldHold(...)\n" +
-           "Global seed: " + session.globalSeed + "L";
+  String printToReproduce(@Nullable Throwable failureReason) {
+    String rechecking = failureReason != null && StatusNotifier.printStackTrace(failureReason).contains("ImperativeCommand.checkScenario") ?
+      "ImperativeCommand.checkScenario(" + iterationSeed + "L, " + sizeHint + ", ...))\n" :
+      "PropertyChecker.forAll(...).rechecking(" + iterationSeed + "L, " + sizeHint + ").shouldHold(...)\n";
+    return "To reproduce the last iteration, run " + rechecking + "Global seed: " + session.globalSeed + "L";
   }
 
   String printSeeds() {
