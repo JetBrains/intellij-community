@@ -40,12 +40,14 @@ public class GitCommand {
   public static final GitCommand CHECKOUT = write("checkout");
   public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand COMMIT = write("commit");
+  public static final GitCommand SVN_WRITE = write("svn");
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY = read("cherry");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");
   public static final GitCommand CLONE = read("clone"); // write, but can't interfere with any other command => should be treated as read
   public static final GitCommand DIFF = read("diff");
   public static final GitCommand FETCH = read("fetch");  // fetch is a read-command, because it doesn't modify the index
+  public static final GitCommand SVN_READ = read("svn");
   public static final GitCommand INIT = write("init");
   public static final GitCommand LOG = read("log");
   public static final GitCommand LS_FILES = read("ls-files");

@@ -41,10 +41,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
@@ -183,8 +185,17 @@ public class GitFetcher {
                                 ArrayUtil.EMPTY_STRING_ARRAY;
 
     GitFetchPruneDetector pruneDetector = new GitFetchPruneDetector();
-    GitCommandResult result = git.fetch(repository, remote,
-                                        Collections.singletonList(pruneDetector), additionalParams);
+    GitCommandResult result;
+    if (remote.isSvnBridge()) {
+      String[] command = new String[] {"fetch"};
+      String[] commandAndParams = Stream.concat(Arrays.stream(command), Arrays.stream(additionalParams))
+        .toArray(String[]::new);
+      result = git.svnRead(repository, remote,
+                         Collections.singletonList(pruneDetector), commandAndParams);
+    } else {
+      result = git.fetch(repository, remote,
+                         Collections.singletonList(pruneDetector), additionalParams);
+    }
 
     GitFetchResult fetchResult;
     if (result.success()) {

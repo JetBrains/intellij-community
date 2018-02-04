@@ -64,7 +64,7 @@ public final class GitRemote implements Comparable<GitRemote> {
    *   remote = .
    *   merge = refs/remotes/git-svn
    */
-  public static final GitRemote DOT = new GitRemote(".", Collections.singletonList("."), emptyList(), emptyList(), emptyList());
+  public static final GitRemote DOT = new GitRemote(".", Collections.singletonList("."), emptyList(), emptyList(), emptyList(), false);
 
   /**
    * Default remote name in Git is "origin".
@@ -77,14 +77,25 @@ public final class GitRemote implements Comparable<GitRemote> {
   @NotNull private final Collection<String> myPushUrls;
   @NotNull private final List<String> myFetchRefSpecs;
   @NotNull private final List<String> myPushRefSpecs;
+  @NotNull private final boolean myIsSvnBridge;
 
   public GitRemote(@NotNull String name, @NotNull List<String> urls, @NotNull Collection<String> pushUrls,
-                   @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs) {
+                   @NotNull List<String> fetchRefSpecs, @NotNull List<String> pushRefSpecs, @NotNull boolean isSvnBridge) {
     myName = name;
     myUrls = urls;
     myPushUrls = pushUrls;
     myFetchRefSpecs = fetchRefSpecs;
     myPushRefSpecs = pushRefSpecs;
+    myIsSvnBridge = isSvnBridge;
+  }
+
+  /**
+   * Returns if remote represents a git-svn bridge
+   * @return
+   */
+  @NotNull
+  public boolean isSvnBridge() {
+    return myIsSvnBridge;
   }
 
   @NotNull

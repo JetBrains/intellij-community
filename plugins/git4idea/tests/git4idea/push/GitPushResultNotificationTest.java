@@ -205,7 +205,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
   private static GitRemoteBranch to(String to) {
     int firstSlash = to.indexOf('/');
     GitRemote remote = new GitRemote(to.substring(0, firstSlash), Collections.emptyList(), Collections.emptyList(),
-                                     Collections.emptyList(), Collections.emptyList());
+                                     Collections.emptyList(), Collections.emptyList(), false);
     return new GitStandardRemoteBranch(remote, to.substring(firstSlash + 1));
   }
 

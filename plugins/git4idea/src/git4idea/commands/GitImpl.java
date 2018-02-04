@@ -489,6 +489,52 @@ public class GitImpl extends GitImplBase {
   }
 
   /**
+   * Write operation on git-svn bridge
+   * {@code git fetch <remote> <params>}
+   */
+  @Override
+  @NotNull
+  public GitCommandResult svnWrite(@NotNull final GitRepository repository,
+                                  @NotNull final GitRemote remote,
+                                  @NotNull final List<GitLineHandlerListener> listeners,
+                                  final String... params) {
+    return runCommand(() -> {
+      final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.SVN_WRITE);
+      h.setSilent(false);
+      h.setStdoutSuppressed(false);
+      h.setUrls(remote.getUrls());
+      h.addParameters(remote.getName());
+      h.addParameters(params);
+      GitVcs vcs = GitVcs.getInstance(repository.getProject());
+      addListeners(h, listeners);
+      return h;
+    });
+  }
+
+  /**
+   * Read operation on git-svn bridge
+   * {@code git fetch <remote> <params>}
+   */
+  @Override
+  @NotNull
+  public GitCommandResult svnRead(@NotNull final GitRepository repository,
+                                @NotNull final GitRemote remote,
+                                @NotNull final List<GitLineHandlerListener> listeners,
+                                final String... params) {
+    return runCommand(() -> {
+      final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.SVN_READ);
+      h.setSilent(false);
+      h.setStdoutSuppressed(false);
+      h.setUrls(remote.getUrls());
+      h.addParameters(remote.getName());
+      h.addParameters(params);
+      GitVcs vcs = GitVcs.getInstance(repository.getProject());
+      addListeners(h, listeners);
+      return h;
+    });
+  }
+
+  /**
    * Fetch remote branch
    * {@code git fetch <remote> <params>}
    */

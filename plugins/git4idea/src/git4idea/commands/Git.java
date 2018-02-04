@@ -173,6 +173,18 @@ public interface Git {
   GitCommandResult stashPop(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
+  GitCommandResult svnRead(@NotNull GitRepository repository,
+                         @NotNull GitRemote remote,
+                         @NotNull List<GitLineHandlerListener> listeners,
+                         String... params);
+
+  @NotNull
+  GitCommandResult svnWrite(@NotNull GitRepository repository,
+                           @NotNull GitRemote remote,
+                           @NotNull List<GitLineHandlerListener> listeners,
+                           String... params);
+
+  @NotNull
   GitCommandResult fetch(@NotNull GitRepository repository,
                          @NotNull GitRemote remote,
                          @NotNull List<GitLineHandlerListener> listeners,
