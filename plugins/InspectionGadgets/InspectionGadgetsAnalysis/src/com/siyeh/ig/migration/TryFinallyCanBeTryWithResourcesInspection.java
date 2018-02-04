@@ -102,8 +102,8 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
       }
       sb.append(tryBlock.getText());
-      for (PsiCodeBlock block : tryStatement.getCatchBlocks()) {
-        sb.append("catch").append(block.getText());
+      for (PsiCatchSection section : tryStatement.getCatchSections()) {
+        sb.append(section.getText());
       }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
       if(finallyBlock == null) return;
