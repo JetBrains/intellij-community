@@ -861,27 +861,32 @@ public class LambdaUtil {
     PsiElement body = lambda.getBody();
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
-    PsiMethod oldTarget;
-    if (call != null && (oldTarget = call.resolveMethod()) != null) {
-      Object marker = new Object();
-      PsiTreeUtil.mark(lambda, marker);
-      PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
-      PsiCall copyCall = copyTopLevelCall(call);
-      if (copyCall == null) return false;
-      PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
-      if (lambdaCopy == null) return false;
-      PsiExpression function = replacer.apply(lambdaCopy);
-      if (function == null) return false;
-      JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
-      if (resultCopy.getElement() != oldTarget) return false;
-      if (resultCopy instanceof MethodCandidateInfo && ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() != null) return false;
-      if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
-        return false;
-      }
-      PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
-      if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
-          ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
-        return false;
+    if (call != null) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      PsiElement oldTarget = result.getElement();
+      if (oldTarget != null) {
+        String origErrorMessage = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getInferenceErrorMessage() : null;
+        Object marker = new Object();
+        PsiTreeUtil.mark(lambda, marker);
+        PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
+        PsiCall copyCall = copyTopLevelCall(call);
+        if (copyCall == null) return false;
+        PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
+        if (lambdaCopy == null) return false;
+        PsiExpression function = replacer.apply(lambdaCopy);
+        if (function == null) return false;
+        JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
+        if (resultCopy.getElement() != oldTarget) return false;
+        String copyMessage = resultCopy instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() : null;
+        if (!Objects.equals(origErrorMessage, copyMessage)) return false;
+        if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
+          return false;
+        }
+        PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
+        if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
+            ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
+          return false;
+        }
       }
     }
     return true;
