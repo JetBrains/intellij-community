@@ -863,25 +863,25 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
                                               balloon);
 
     DumbAwareAction.create(e -> {
-      //todo
       RunAnythingSearchListModel model = getSearchingModel(myList);
       if (model == null) return;
 
       Object selectedValue = myList.getSelectedValue();
-      if (!(selectedValue instanceof RunAnythingCommandItem)) return;
+      int index = myList.getSelectedIndex();
+      if (!(selectedValue instanceof RunAnythingCommandItem) || isMoreItem(index)) return;
 
       RunAnythingCache.getInstance(getProject()).getState().undefinedCommands.remove(((RunAnythingCommandItem)selectedValue).getText());
 
-      int shift = -1;
-      int index = myList.getSelectedIndex();
-
       model.remove(index);
-
-      RunAnythingGroup.shiftIndexes(index, shift);
-
+      RunAnythingGroup.shiftIndexes(index, -1);
       if (model.size() > 0) ScrollingUtil.selectItem(myList, index < model.size() ? index : index - 1);
 
-      updatePopupBounds();
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(() -> {
+        if (myCalcThread != null) {
+          myCalcThread.updatePopup();
+        }
+      });
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("shift BACK_SPACE"), editor, balloon);
 
     new DumbAwareAction() {
@@ -1123,8 +1123,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     @SuppressWarnings("SSBasedInspection")
-    private void updatePopup() {
-      check();
+    void updatePopup() {
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
