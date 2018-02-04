@@ -20,17 +20,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public class UnnecessaryToStringCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -55,14 +52,6 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
     return new UnnecessaryToStringCallFix(text);
   }
 
-  @NonNls
-  static String calculateReplacementText(PsiExpression expression) {
-    if (expression == null) {
-      return "this";
-    }
-    return expression.getText();
-  }
-
   private static class UnnecessaryToStringCallFix extends InspectionGadgetsFix {
 
     private final String replacementText;
@@ -85,15 +74,12 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)descriptor.getPsiElement().getParent().getParent();
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        PsiReplacementUtil.replaceExpression(methodCallExpression, "this");
-      }
-      else {
-        methodCallExpression.replace(qualifier);
-      }
+      final PsiMethodCallExpression call =
+        ObjectUtils.tryCast(descriptor.getPsiElement().getParent().getParent(), PsiMethodCallExpression.class);
+      if (!isRedundantToString(call)) return;
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
+      call.replace(qualifier);
     }
   }
 
@@ -105,38 +91,29 @@ public class UnnecessaryToStringCallInspection extends BaseInspection implements
   private static class UnnecessaryToStringCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String referenceName = methodExpression.getReferenceName();
-      if (!"toString".equals(referenceName)) {
-        return;
-      }
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      if (!isRedundantToString(call)) return;
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
       PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
-      if (referenceNameElement == null) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length != 0) {
-        return;
-      }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier == null) {
-        return;
-      }
-      if (qualifier.getType() instanceof PsiArrayType) {
-        // do not warn on nonsensical code
-        return;
-      }
-      if (qualifier instanceof PsiSuperExpression) {
-        return;
-      }
-      final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.Throwable");
-      if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
-        return;
-      }
-      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, calculateReplacementText(qualifier));
+      if (referenceNameElement == null) return;
+      registerError(referenceNameElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                    ExpressionUtils.getQualifierOrThis(methodExpression).getText());
     }
+  }
+
+  @Contract("null -> false")
+  private static boolean isRedundantToString(PsiMethodCallExpression call) {
+    if (call == null) return false;
+    PsiReferenceExpression methodExpression = call.getMethodExpression();
+    @NonNls final String referenceName = methodExpression.getReferenceName();
+    if (!"toString".equals(referenceName) || !call.getArgumentList().isEmpty()) return false;
+    final PsiExpression qualifier = ExpressionUtils.getQualifierOrThis(methodExpression);
+    if (qualifier.getType() instanceof PsiArrayType) {
+      // do not warn on nonsensical code
+      return false;
+    }
+    if (qualifier instanceof PsiSuperExpression) return false;
+    final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(qualifier, "java.lang.Throwable");
+    return !ExpressionUtils.isConversionToStringNecessary(call, throwable);
   }
 }
