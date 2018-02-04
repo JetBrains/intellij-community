@@ -5,9 +5,9 @@ public interface Version {
   /**
    * Current plugin version.
    */
-  String PLUGIN_VERSION = "0.16";
+  String PLUGIN_VERSION = "0.17";
   /**
    * Current version of lombok plugin
    */
-  String LAST_LOMBOK_VERSION = "1.16.18";
+  String LAST_LOMBOK_VERSION = "1.16.20";
 }
