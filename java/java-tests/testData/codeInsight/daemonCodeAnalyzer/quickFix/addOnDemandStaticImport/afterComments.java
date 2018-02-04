@@ -1,4 +1,6 @@
 // "Add on demand static import for 'java.util.Arrays'" "true"
+import java.util.*;
+
 import static java.util.Arrays.*;
 
 class Foo {
