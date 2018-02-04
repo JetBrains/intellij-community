@@ -2,32 +2,17 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.ValidationInfo
-import com.jetbrains.python.sdk.add.wizard.WizardStep
+import com.jetbrains.python.sdk.add.wizard.WizardView
 import javax.swing.Icon
 
 /**
  * Represents the view for adding new Python SDK. It is used in
  * [PyAddSdkDialog].
  */
-interface PyAddSdkView {
+interface PyAddSdkView : WizardView<Sdk> {
   val panelName: String
 
   val icon: Icon
 
   fun getOrCreateSdk(): Sdk?
-
-  /**
-   * Returns the list of validation errors. The returned list is empty if there
-   * are no errors found.
-   *
-   * @see com.intellij.openapi.ui.DialogWrapper.doValidateAll
-   */
-  fun validateAll(): List<ValidationInfo>
-
-  /**
-   * Returns the first wizard step or `null` if this is not a wizard.
-   */
-  // TODO refactor me!
-  fun getFirstWizardStep(): WizardStep<Sdk?>
 }

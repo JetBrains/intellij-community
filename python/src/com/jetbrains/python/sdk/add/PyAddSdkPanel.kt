@@ -20,7 +20,11 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.sdk.add.wizard.WizardStep
+import com.jetbrains.python.sdk.add.wizard.WizardActionCallback
+import com.jetbrains.python.sdk.add.wizard.WizardControlAction
+import com.jetbrains.python.sdk.add.wizard.WizardControlAction.OK
+import com.jetbrains.python.sdk.add.wizard.WizardControlsListener
+import com.jetbrains.python.sdk.add.wizard.WizardView.StateListener
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.awt.Component
@@ -33,6 +37,28 @@ import javax.swing.JPanel
  * @author vlan
  */
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
+  override val actions: Map<WizardControlAction, Boolean>
+    get() = mapOf(OK.enabled())
+
+  override val component: Component
+    get() = this
+
+  /**
+   * [component] is permanent. [StateListener.onStateChanged] won't be called
+   * anyway.
+   */
+  override fun addStateListener(stateListener: StateListener) = Unit
+
+  override fun addControlListener(listener: WizardControlsListener) = Unit
+
+  override fun navigate(type: WizardControlAction) = Unit
+
+  override fun act(action: WizardControlAction, callback: WizardActionCallback<Sdk>) {
+    if (action != OK) throw IllegalStateException("$OK action is expected but $action found")
+  }
+
+  override fun reset() = Unit
+
   override abstract val panelName: String
   override val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
@@ -44,25 +70,6 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override fun validateAll(): List<ValidationInfo> = emptyList()
 
   open fun addChangeListener(listener: Runnable) {}
-
-  /**
-   * Returns the "wizard" with the single step.
-   */
-  override fun getFirstWizardStep(): WizardStep<Sdk?> = object : WizardStep<Sdk?> {
-    override fun finish(): Sdk? = getOrCreateSdk()
-
-    override val component: Component = this@PyAddSdkPanel
-
-    override fun hasNext(): Boolean = false
-
-    override fun next(): WizardStep<Sdk?> = throw IllegalStateException()
-
-    override fun hasPrevious(): Boolean = false
-
-    override fun previous(): WizardStep<Sdk?> = throw IllegalStateException()
-
-    override fun validateAll(): List<ValidationInfo> = this@PyAddSdkPanel.validateAll()
-  }
 
   companion object {
     @JvmStatic

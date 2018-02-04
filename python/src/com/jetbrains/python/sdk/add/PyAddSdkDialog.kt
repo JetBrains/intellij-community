@@ -21,26 +21,25 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBCardLayout
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.util.PlatformUtils
-import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.create
-import com.jetbrains.python.sdk.add.wizard.WizardStep
+import com.jetbrains.python.sdk.add.wizard.*
+import com.jetbrains.python.sdk.add.wizard.WizardControlAction.*
 import com.jetbrains.python.sdk.detectVirtualEnvs
 import com.jetbrains.python.sdk.isAssociatedWithProject
 import icons.PythonIcons
-import java.awt.*
+import java.awt.CardLayout
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 /**
  * The dialog may look like the normal dialog with OK, Cancel and Help buttons
@@ -82,8 +81,6 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private var southPanel: JPanel? = null
 
-  private var selectedWizardStep: WizardStep<Sdk?>? = null
-
   override fun createSouthPanel(): JComponent {
     val regularDialogSouthPanel = super.createSouthPanel()
     val wizardDialogSouthPanel = createWizardSouthPanel()
@@ -104,35 +101,16 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     assert(value = style != DialogStyle.COMPACT,
            lazyMessage = { "${PyAddSdkDialog::class.java} is not ready for ${DialogStyle.COMPACT} dialog style" })
 
-    val panel = JPanel(BorderLayout())
-    //noinspection UseDPIAwareInsets
-    val insets = if (SystemInfo.isMacOSLeopard)
-      if (UIUtil.isUnderIntelliJLaF()) JBUI.insets(0, 8) else JBUI.emptyInsets()
-    else if (UIUtil.isUnderWin10LookAndFeel()) JBUI.emptyInsets() else Insets(8, 0, 0, 0) //don't wrap to JBInsets
-
-    val bag = GridBag().setDefaultInsets(insets)
-
-    val lrButtonsPanel = NonOpaquePanel(GridBagLayout())
-
-    val rightButtonsPanel = createButtonsPanel(listOf(previousButton.value))
-    rightButtonsPanel.border = BorderFactory.createEmptyBorder(0, 0, 0, 20)  // leave some space between button groups
-    lrButtonsPanel.add(rightButtonsPanel, bag.next())
-
-    lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1.0).fillCellHorizontally())   // left strut
-
-    val buttonsPanel = createButtonsPanel(listOf(nextButton.value, cancelButton.value))
-
-    lrButtonsPanel.add(buttonsPanel, bag.next())
-
-    panel.add(lrButtonsPanel, BorderLayout.CENTER)
-
-    panel.border = JBUI.Borders.emptyTop(8)
-
-    return panel
+    return doCreateSouthPanel(leftButtons = listOf(), rightButtons = listOf(previousButton.value, nextButton.value, cancelButton.value))
   }
 
   private val nextAction: Action = object : DialogWrapperAction("Next") {
-    override fun doAction(e: ActionEvent) = onNext()
+    override fun doAction(e: ActionEvent) {
+      selectedPanel?.let {
+        if (it.actions.containsKey(NEXT)) onNext()
+        else if (it.actions.containsKey(FINISH)) onFinish()
+      }
+    }
   }
 
   private val nextButton = lazy { createJButtonForAction(nextAction) }
@@ -151,20 +129,11 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private val cancelButton = lazy { createJButtonForAction(cancelAction) }
 
-  private fun createButtonsPanel(buttons: List<JButton>): JPanel {
-    val hgap = if (SystemInfo.isMacOSLeopard) if (UIUtil.isUnderIntelliJLaF()) 8 else 0 else 5
-    val buttonsPanel = NonOpaquePanel(GridLayout(1, buttons.size, hgap, 0))
-    for (button in buttons) {
-      buttonsPanel.add(button)
-    }
-    return buttonsPanel
-  }
-
   override fun postponeValidation() = false
 
-  override fun doValidateAll(): List<ValidationInfo> = selectedWizardStep?.validateAll() ?: emptyList()
+  override fun doValidateAll(): List<ValidationInfo> = selectedPanel?.validateAll() ?: emptyList()
 
-  fun getOrCreateSdk(): Sdk? = selectedWizardStep?.finish()
+  fun getOrCreateSdk(): Sdk? = TODO("Implement reasonably")
 
   private fun createCardSplitter(panels: List<PyAddSdkView>): Splitter {
     this.panels = panels
@@ -173,7 +142,21 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       val cardPanel = JPanel(cardLayout).apply {
         preferredSize = JBUI.size(640, 480)
         for (panel in panels) {
-          add(panel.getFirstWizardStep().component, panel.panelName)
+          add(panel.component, panel.panelName)
+
+          panel.addStateListener(object : WizardView.StateListener {
+            override fun onStateChanged() {
+              swipe(mainPanel, panel.component, JBCardLayout.SwipeDirection.FORWARD)
+
+              selectedPanel?.let { updateWizardActionButtons(it) }
+            }
+          })
+
+          panel.addControlListener(object : WizardControlsListener {
+            override fun onControlsChanged() {
+              selectedPanel?.let { updateWizardActionButtons(it) }
+            }
+          })
         }
       }
       val cardsList = JBList(panels).apply {
@@ -188,15 +171,14 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         }
         addListSelectionListener {
           selectedPanel = selectedValue
-          val newSelectedWizardStep = selectedValue.getFirstWizardStep()
-          selectedWizardStep = newSelectedWizardStep
           cardLayout.show(cardPanel, selectedValue.panelName)
 
           southPanel?.let {
-            if (newSelectedWizardStep.hasNext()) {
+            if (selectedValue.actions.containsKey(NEXT)) {
               navigationPanelCardLayout?.show(it, WIZARD_CARD_PANE)
               rootPane.defaultButton = nextButton.value
-              previousButton.value.isEnabled = false
+
+              updateWizardActionButtons(selectedValue)
             }
             else {
               navigationPanelCardLayout?.show(it, REGULAR_CARD_PANE)
@@ -254,19 +236,13 @@ class PyAddSdkDialog private constructor(private val project: Project?,
    * Navigates to the next step of the current wizard view.
    */
   private fun onNext() {
-    selectedWizardStep?.let {
-      val newWizardStep = it.next()
+    selectedPanel?.let {
+      it.navigate(NEXT)
 
       // sliding effect
-      val stepContent = newWizardStep.component
-      val stepContentName = stepContent.hashCode().toString()
+      swipe(mainPanel, it.component, JBCardLayout.SwipeDirection.FORWARD)
 
-      mainPanel.add(stepContentName, stepContent)
-      (mainPanel.layout as JBCardLayout).swipe(mainPanel, stepContentName, JBCardLayout.SwipeDirection.FORWARD)
-
-      previousButton.value.isEnabled = true
-
-      selectedWizardStep = newWizardStep
+      updateWizardActionButtons(it)
     }
   }
 
@@ -274,12 +250,12 @@ class PyAddSdkDialog private constructor(private val project: Project?,
    * Navigates to the previous step of the current wizard view.
    */
   private fun onPrevious() {
-    selectedWizardStep?.let {
-      val previousWizardStep = it.previous()
+    selectedPanel?.let {
+      it.navigate(PREVIOUS)
 
       // sliding effect
-      if (previousWizardStep.hasPrevious()) {
-        val stepContent = previousWizardStep.component
+      if (it.actions.containsKey(PREVIOUS)) {
+        val stepContent = it.component
         val stepContentName = stepContent.hashCode().toString()
 
         (mainPanel.layout as JBCardLayout).swipe(mainPanel, stepContentName, JBCardLayout.SwipeDirection.BACKWARD)
@@ -289,9 +265,29 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         (mainPanel.layout as JBCardLayout).swipe(mainPanel, SPLITTER_COMPONENT, JBCardLayout.SwipeDirection.BACKWARD)
       }
 
-      previousButton.value.isEnabled = previousWizardStep.hasPrevious()
+      updateWizardActionButtons(it)
+    }
+  }
 
-      selectedWizardStep = previousWizardStep
+  private fun onFinish() {
+    selectedPanel?.act(action = FINISH, callback = object : WizardActionCallback<Sdk> {
+      override fun onFinish(): Sdk {
+        TODO()
+      }
+    })
+  }
+
+  private fun updateWizardActionButtons(it: PyAddSdkView) {
+    previousButton.value.isEnabled = false
+
+    it.actions.forEach { (action, isEnabled) ->
+      val actionButton = when (action) {
+        PREVIOUS -> previousButton.value
+        NEXT -> nextButton.value.apply { text = "Next" }
+        FINISH -> nextButton.value.apply { text = "Finish" }
+        else -> null
+      }
+      actionButton?.isEnabled = isEnabled
     }
   }
 
