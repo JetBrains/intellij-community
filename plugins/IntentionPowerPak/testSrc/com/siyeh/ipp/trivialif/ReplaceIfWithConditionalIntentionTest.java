@@ -28,6 +28,7 @@ public class ReplaceIfWithConditionalIntentionTest extends IPPTestCase {
   public void testReplaceableAssignmentsWithDiamondsLeave() { doTest(); }
   public void testConditionalCondition() { doTest(); }
   public void testComments() { doTest(); }
+  public void testCommentsInCondition() { doTest(); }
   public void testInsideLambda() { doTest(); }
 
   public void testInsideLambda1() {
