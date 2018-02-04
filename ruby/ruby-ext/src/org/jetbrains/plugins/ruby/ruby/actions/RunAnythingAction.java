@@ -112,6 +112,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+  private static final String AD_REMOVE_COMMAND =
+    String.format("%s to delete recent command", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("shift BACK_SPACE")));
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(RubyIcons.RunAnything.Run_anything, 16, 16);
   static final String RUN_ANYTHING = "RunAnything";
   private RunAnythingAction.MyListRenderer myRenderer;
@@ -773,6 +775,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
     else if (value instanceof RunAnythingActionItem) {
       text = AD_ACTION_TEXT;
+    }
+    else if (value instanceof RunAnythingCommandItem) {
+      text += " , " + AD_REMOVE_COMMAND;
     }
 
     setAdText(text);
