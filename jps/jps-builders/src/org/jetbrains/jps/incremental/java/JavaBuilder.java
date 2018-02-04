@@ -315,13 +315,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
             compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
-            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
             filesWithErrors = diagnosticSink.getFilesWithErrors();
-            for (File file : filesWithErrors) {
-              if (!file.exists()) {
-                FSOperations.markDeleted(context, file);
-              }
-            }
+            // heuristic: incorrect paths data recovery, so that the next make should not contain non-existing sources in 'recompile' list
+            //for (File file : filesWithErrors) {
+            //  if (!file.exists()) {
+            //    FSOperations.markDeleted(context, file);
+            //  }
+            //}
           }
         }
 
