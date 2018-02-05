@@ -76,7 +76,7 @@ private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
         }
         val uSwitchExpression = codeBlockParent.uastParent as? JavaUSwitchExpression ?: return uParent
         val psiElement = psi ?: return uParent
-        return findUSwitchClauseBody(uSwitchExpression, psiElement)
+        return findUSwitchClauseBody(uSwitchExpression, psiElement) ?: return codeBlockParent
       }
       if (codeBlockParent is JavaUSwitchExpression) {
         return unwrapSwitch(codeBlockParent)
