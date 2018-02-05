@@ -65,9 +65,10 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testImperativeCommandRechecking() {
+    AtomicInteger counter = new AtomicInteger();
     Supplier<ImperativeCommand> command = () -> env -> {
       List<Integer> list = env.generateValue(listsOf(integers()), "%s");
-      if (list.size() > 5) {
+      if (list.size() > 5 || counter.incrementAndGet() > 50) {
         throw new AssertionError();
       }
     };
