@@ -31,6 +31,9 @@
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
+    </component>
   </project-components>
 
   <actions>

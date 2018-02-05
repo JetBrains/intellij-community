@@ -33,7 +33,7 @@ object JavaInlayHintsProvider {
         val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
                         else if (varargHint && i == arguments.size) callExpression.textRange.endOffset - 1
                         else argumentList.textOffset + 1
-        InlayInfo(paramToShow + ':', offset, false, params.size == 1, varargHint)
+        InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
       }.toSet()
     }
     
@@ -222,7 +222,7 @@ private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, sh
   val paramName = methodParam.name ?: return null
   val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
   val offset = inlayOffset(callArgument)
-  return InlayInfo(paramToShow + ':', offset, showOnlyIfExistedBefore)
+  return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
 }
 
 fun inlayOffset(callArgument: PsiExpression): Int = inlayOffset(callArgument, false)

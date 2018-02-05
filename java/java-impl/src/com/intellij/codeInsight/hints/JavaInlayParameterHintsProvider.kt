@@ -1,15 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
-import com.intellij.codeInsight.ExternalAnnotationsManager
-import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.hints.HintInfo.MethodInfo
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 
 class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
   
@@ -31,32 +29,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     if (element is PsiCallExpression) {
       return JavaInlayHintsProvider.hints(element).toList()
     }
-    if (element is PsiModifierListOwner && showAnnotations()) {
-      val externalAnnotations = ExternalAnnotationsManager.getInstance(element.project).findExternalAnnotations(element)
-      val inferredAnnotations = InferredAnnotationsManager.getInstance(element.project).findInferredAnnotations(element)
-
-      return (externalAnnotations.orEmpty().asSequence() + inferredAnnotations.asSequence())
-        .mapNotNull { createInlay(it, element) }
-        .toList()
-    }
     return emptyList()
   }
-
-  private fun createInlay(annotation: PsiAnnotation, element: PsiModifierListOwner): InlayInfo? {
-    if (annotation.nameReferenceElement != null && element.modifierList != null) {
-      return InlayInfo("@" + annotation.nameReferenceElement?.referenceName + annotation.parameterList.text,
-                       element.modifierList!!.textRange.startOffset)
-    }
-    return null
-  }
-
-  private fun showAnnotations(): Boolean {
-    val value = Registry.get("java.annotations.show.inline")
-    if (value.isBoolean) return value.asBoolean()
-    return "internal" == value.asString() && ApplicationManager.getApplication().isInternal
-  }
-
-  override fun getInlayPresentation(inlayText: String): String = inlayText
 
   override fun canShowHintsWhenDisabled(): Boolean {
     return true
