@@ -20,7 +20,7 @@ import static com.intellij.util.ui.JBUI.scale;
  *
  * @author tav
  */
-public class RectanglePainter2DTest extends AbstractPainter2D {
+public class RectanglePainter2DTest extends AbstractPainter2DTest {
   private static final int RECT_SIZE = 10;
   private static final double ARC_SIZE = RECT_SIZE / 3;
 
@@ -36,8 +36,10 @@ public class RectanglePainter2DTest extends AbstractPainter2D {
   @Test
   public void testRectOutlining() {
     /*
-     * On some scale factors (more precisely, on combination of factor and coordinates) the outlining has
-     * subtle (one device pixel) difference from the rectangle. These factors are commented for the test.
+     * In fact, absolute accuracy is achieved by painting with enabled antialiasing, in which case alpha more precisely
+     * shows sub-pixel offsets. However, in that case outlining the right/bottom rect edge would bring additional
+     * complexity to calculating the outline x/y. This is likely an overkill. So, in this test the only scale factors
+     * which allow to achieve pixel-perfect accuracy are counted (more precisely, the combination of factor and coordinates).
      * The test thus represents a defacto behaviour.
      */
 
@@ -48,7 +50,7 @@ public class RectanglePainter2DTest extends AbstractPainter2D {
       testRectOutline(scale, false, StrokeType.INSIDE);
     }
     // JRE-HiDPI
-    for (double scale : new double[]{1, 1.25, 1.5, /*1.75,*/ 2, 2.25, 2.5, /*2.75,*/ 3}) {
+    for (double scale : new double[]{1, 1.25, /*1.5,*/ 1.75, 2, 2.25, /*2.5,*/ 2.75, 3}) {
       testRectOutline(scale, true, StrokeType.CENTERED);
       testRectOutline(scale, true, StrokeType.INSIDE);
     }
@@ -113,8 +115,10 @@ public class RectanglePainter2DTest extends AbstractPainter2D {
     compare(rect, outline, scale, false);
   }
 
-  private Rectangle2D rectBounds() {
-    return new Rectangle2D.Float(scale(3f), scale(3f), scale(10f), scale(10f));
+  private Rectangle2D rectBounds(Graphics2D g) {
+    double x = PaintUtil.alignToInt(scale(3f), g), y = x;
+    double w = PaintUtil.alignToInt(scale(10f), g), h = w;
+    return new Rectangle2D.Double(x, y, w, h);
   }
 
   private Void paintRectInside(Graphics2D g) {
@@ -126,16 +130,16 @@ public class RectanglePainter2DTest extends AbstractPainter2D {
   }
 
   private Void _paintRect(Graphics2D g, boolean inside) {
-    Rectangle2D b = rectBounds();
+    Rectangle2D b = rectBounds(g);
     RectanglePainter2D.DRAW.paint(g, b.getX(), b.getY(), b.getWidth(), b.getHeight(), null,
                                   inside ? StrokeType.INSIDE : StrokeType.CENTERED, scale(1f));
     return null;
   }
 
   private Void outlineRectInside(Graphics2D g) {
-    Rectangle2D b = rectBounds();
-    double x = UIUtil.isJreHiDPIEnabled() ? b.getX() : PaintUtil.alignToInt(b.getX(), g);
-    double y = UIUtil.isJreHiDPIEnabled() ? b.getY() : PaintUtil.alignToInt(b.getY(), g);
+    Rectangle2D b = rectBounds(g);
+    double x = b.getX();
+    double y = b.getY();
     double xx = x + b.getWidth();
     double yy = y + b.getHeight();
 
@@ -151,9 +155,9 @@ public class RectanglePainter2DTest extends AbstractPainter2D {
   }
 
   private Void outlineRectCentered(Graphics2D g) {
-    Rectangle2D b = rectBounds();
-    double x = UIUtil.isJreHiDPIEnabled() ? b.getX() : PaintUtil.alignToInt(b.getX(), g);
-    double y = UIUtil.isJreHiDPIEnabled() ? b.getY() : PaintUtil.alignToInt(b.getY(), g);
+    Rectangle2D b = rectBounds(g);
+    double x = b.getX();
+    double y = b.getY();
     double xx = x + b.getWidth();
     double yy = y + b.getHeight();
 

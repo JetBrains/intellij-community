@@ -42,7 +42,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.ui.paint.PaintUtil;
-import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.*;
@@ -64,6 +63,8 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
 
@@ -1066,7 +1067,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
     if ((shown || (myEditor.isInDistractionFreeMode() && Registry.is("editor.distraction.gutter.separator"))) && myPaintBackground) {
       g.setColor(getOutlineColor(false));
-      int x = getWhitespaceSeparatorOffset();
+      double x = getWhitespaceSeparatorOffset2D();
       LinePainter2D.paint(g, x, clip.y, x, clip.y + clip.height, StrokeType.CENTERED, getStrokeWidth());
     }
 
@@ -1091,7 +1092,12 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public int getWhitespaceSeparatorOffset() {
-    return getFoldingAreaOffset() + getFoldingAnchorWidth() / 2;
+    return (int)Math.round(getWhitespaceSeparatorOffset2D());
+  }
+
+  private double getWhitespaceSeparatorOffset2D() {
+    return PaintUtil.alignToInt(getFoldingAreaOffset() + getFoldingAnchorWidth() / 2,
+                                ScaleContext.create(myEditor.getComponent()), RoundingMode.ROUND, null);
   }
 
   void setActiveFoldRegion(FoldRegion activeFoldRegion) {
@@ -1116,26 +1122,28 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void drawFoldingAnchor(double width, Rectangle clip, Graphics2D g, int visualLine,
                                  DisplayedFoldingAnchor.Type type, boolean active) {
     double off = width / 4;
-    double height = PaintUtil.alignToInt(width + off, g);
-    double baseHeight = PaintUtil.alignToInt(height - width / 2, g);
-    double y = PaintUtil.alignToInt(getFoldAnchorY(visualLine, width), g);
-    double centerX = LinePainter2D.getStrokeCenter(g, getWhitespaceSeparatorOffset(), StrokeType.CENTERED, getStrokeWidth());
+    double height = width + off;
+    double baseHeight = height - width / 2;
+    double y = getFoldAnchorY(visualLine, width);
+    double centerX = LinePainter2D.getStrokeCenter(g, getWhitespaceSeparatorOffset2D(), StrokeType.CENTERED, getStrokeWidth());
+    double strokeOff = centerX - getWhitespaceSeparatorOffset2D();
+    // need to have the same sub-device-pixel offset as centerX for the square_with_plus rect to have equal dev width/height
+    double centerY = PaintUtil.alignToInt(y + width / 2, g) + strokeOff;
     switch (type) {
       case COLLAPSED:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawSquareWithPlus(g, centerX, y, width, active);
+          drawSquareWithPlus(g, centerX, centerY, width, active);
         }
         break;
       case EXPANDED_TOP:
         if (y <= clip.y + clip.height && y + height >= clip.y) {
-          drawDirectedBox(g, centerX, y, width, height, baseHeight, active);
+          drawDirectedBox(g, centerX, centerY, width, height, baseHeight, active);
         }
         break;
       case EXPANDED_BOTTOM:
-        //noinspection SuspiciousNameCombination
         y += width;
         if (y - height <= clip.y + clip.height && y >= clip.y) {
-          drawDirectedBox(g, centerX, y, width, -height, -baseHeight, active);
+          drawDirectedBox(g, centerX, centerY, width, -height, -baseHeight, active);
         }
         break;
     }
@@ -1149,52 +1157,60 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void drawDirectedBox(Graphics2D g,
                                double centerX,
-                               double y,
+                               double centerY,
                                double width,
                                double height,
                                double baseHeight,
                                boolean active)
   {
     double sw = getStrokeWidth();
+    Rectangle2D rect = RectanglePainter2D.align(g,
+                                                EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
+                                                centerX, centerY, width, width, StrokeType.CENTERED, sw);
+
+    double x1 = rect.getX();
+    double x2 = x1 + rect.getWidth() - 1;
+    double y = height > 0 ? rect.getY() : rect.getY() + rect.getHeight() - 1;
+    double[] dxPoints = {x1, x1, x2, x2, centerX};
+    double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
+
     g.setColor(myEditor.getBackgroundColor());
-    boolean up = height < 0;
-    double x = PaintUtil.alignToInt(centerX - width / 2, g);
-    // (-1) matches the rect box right stroke
-    double x2 = x + width - 1;
-    double y2 = y + height + (up ? 1 : -1);
-    double[] dxPoints = {x, x, x2, x2, centerX};
-    double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y2};
     LinePainter2D.fillPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
     g.setColor(getOutlineColor(active));
     LinePainter2D.paintPolygon(g, dxPoints, dyPoints, 5, StrokeType.CENTERED_CAPS_SQUARE, sw, RenderingHints.VALUE_ANTIALIAS_ON);
 
-    drawMinus(g, centerX, y, width, up, sw);
+    drawPlusOrMinus(g, false, centerX, centerY, width, sw);
   }
 
-  private void drawMinus(Graphics2D g, double centerX, double y, double width, boolean up, double strokeWidth) {
-    double swc = LinePainter2D.getStrokeCenter(g, 0, StrokeType.CENTERED, strokeWidth);
-    double off = PaintUtil.alignToInt(getSquareInnerOffset(width), g, RoundingMode.FLOOR);
-    double lw = PaintUtil.alignToInt(width - off * 2, g, PaintUtil.getParityMode(strokeWidth, g));
-    double lx = PaintUtil.alignToInt(centerX - lw / 2, g);
-    double ly = PaintUtil.alignToInt(y + (width / 2 - swc) * (up ? -1 : 1), g, RoundingMode.FLOOR);
-    LinePainter2D.paint(g, lx, ly, lx + lw - 1, ly, StrokeType.CENTERED, strokeWidth);
+  private void drawPlusOrMinus(Graphics2D g, boolean plus, double centerX, double centerY, double width, double strokeWidth) {
+    double length = width - getSquareInnerOffset(width) * 2;
+    Line2D line = LinePainter2D.align(g,
+                                      EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
+                                      centerX, centerY, length, plus, StrokeType.CENTERED, strokeWidth);
+
+    LinePainter2D.paint(g, line, StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF);
   }
 
   private void drawSquareWithPlus(Graphics2D g,
                                   double centerX,
-                                  double y,
+                                  double centerY,
                                   double width,
                                   boolean active)
   {
-    drawSquareWithMinus(g, centerX, y, width, active);
-    // Draw plus
     double sw = getStrokeWidth();
-    double off = PaintUtil.alignToInt(getSquareInnerOffset(width), g, RoundingMode.FLOOR);
-    double lw = PaintUtil.alignToInt(width - off * 2, g, PaintUtil.getParityMode(sw, g));
-    double ly = PaintUtil.alignToInt(y + width / 2 - lw / 2, g, RoundingMode.FLOOR);
-    int x = getWhitespaceSeparatorOffset();
-    LinePainter2D.paint(g, x, ly, x, ly + lw - 1, StrokeType.CENTERED, sw);
+    Rectangle2D rect = RectanglePainter2D.align(g,
+                                                EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
+                                                centerX, centerY, width, width, StrokeType.CENTERED, sw);
+
+    g.setColor(myEditor.getBackgroundColor());
+    RectanglePainter2D.FILL.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+    g.setColor(getOutlineColor(active));
+    RectanglePainter2D.DRAW.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+    drawPlusOrMinus(g, false, centerX, centerY, width, sw);
+    drawPlusOrMinus(g, true, centerX, centerY, width, sw);
   }
 
   /**
@@ -1205,26 +1221,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private double scale(double v) {
-    //return BaseScaleContext.create(OBJ_SCALE.of(myEditor.getScale())).getScale(PIX_SCALE) * v;
     return JBUI.scale((float)v) * myEditor.getScale();
-  }
-
-  @SuppressWarnings("SuspiciousNameCombination")
-  private void drawSquareWithMinus(Graphics2D g,
-                                   double centerX,
-                                   double y,
-                                   double width,
-                                   boolean active)
-  {
-    double sw = getStrokeWidth();
-    double x = PaintUtil.alignToInt(centerX - width / 2, g);
-
-    g.setColor(myEditor.getBackgroundColor());
-    RectanglePainter2D.FILL.paint(g, x, y, width, width, null, StrokeType.CENTERED, sw);
-
-    g.setColor(getOutlineColor(active));
-    RectanglePainter2D.DRAW.paint(g, x, y, width, width, null, StrokeType.CENTERED, sw);
-    drawMinus(g, centerX, y, width, false, sw);
   }
 
   private int getFoldingAnchorWidth() {
@@ -1232,13 +1229,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   private double getFoldingAnchorWidth2D() {
-    // have to match the parity of the stroke width to be perfectly symmetric (as long as we have plus sign inside)
-    double width = Math.min(scale(4), myEditor.getLineHeight() / 2 - JBUI.scale(2)) * 2;
-    ScaleContext ctx = ScaleContext.create(myEditor.getComponent());
-    ParityMode swParity = PaintUtil.getParityMode(getStrokeWidth(), ctx, RoundingMode.ROUND);
-    width = PaintUtil.alignToInt(width, ctx, RoundingMode.ROUND, swParity);
-    double diff = RectanglePainter2D.getStrokedSize(ctx, width, StrokeType.CENTERED, getStrokeWidth()) - width;
-    return width - diff;
+    return Math.min(scale(4f), myEditor.getLineHeight() / 2f - JBUI.scale(2f)) * 2;
   }
 
   private double getStrokeWidth() {

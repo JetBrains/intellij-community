@@ -28,7 +28,7 @@ import static junit.framework.TestCase.assertTrue;
  *
  * @author tav
  */
-public abstract class AbstractPainter2D {
+public abstract class AbstractPainter2DTest {
   private float originalUserScale;
   private boolean originalJreHiDPIEnabled;
 
