@@ -15,13 +15,13 @@
  */
 package com.intellij.stats.completion
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.stats.completion.events.*
 import java.lang.reflect.Field
 
 object JsonSerializer {
-    private val gson = Gson()
+    private val gson = GsonBuilder().serializeNulls().create()
     private val ignoredFields = setOf(
       "recorderId", "timestamp", "sessionUid", "actionType", "userUid", "bucket", "recorderVersion"
     )
