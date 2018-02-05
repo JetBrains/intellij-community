@@ -60,7 +60,7 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     return new ManualArrayToCollectionCopyFix();
   }
 
-  private static PsiArrayAccessExpression getArrayAccessExpression(PsiForStatement forStatement) {
+  static PsiArrayAccessExpression getArrayAccessExpression(PsiForStatement forStatement) {
     final PsiStatement body = getBody(forStatement);
     if (body == null) {
       return null;
@@ -600,13 +600,14 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
       if (arguments.length != 1) {
         return false;
       }
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (!(qualifier instanceof PsiReferenceExpression) &&
           !(qualifier instanceof PsiThisExpression) &&
           !(qualifier instanceof PsiSuperExpression)) {
+        return false;
+      }
+      if (VariableAccessUtils.variableIsUsed(variable, qualifier)) {
         return false;
       }
       final PsiExpression argument = arguments[0];
