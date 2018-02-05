@@ -149,7 +149,7 @@ public class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, newText, animated);
     }
 
-    @Nullable
+    @NotNull
     @Override
     protected TextAttributes getTextAttributes(@NotNull Editor editor) {
       return editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
