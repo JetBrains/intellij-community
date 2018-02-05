@@ -1,6 +1,7 @@
 package com.siyeh.igtest.style.size_replaceable_by_is_empty;
 
 import java.util.Collection;
+import java.util.ArrayList;
 
 public class SizeReplaceableByIsEmpty {
 
@@ -32,5 +33,9 @@ public class SizeReplaceableByIsEmpty {
     {
       return this.size() == 0;
     }
+  }
+
+  boolean x(ArrayList<String> list) {
+    return list.size() == 0;
   }
 }
