@@ -27,6 +27,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.BooleanFunction;
+import com.jetbrains.python.newProject.ProjectSettingsConfigurer;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -94,8 +95,8 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
                                               final ProjectSpecificSettingsStep settingsStep,
                                               @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
-    if (generator instanceof PythonProjectGenerator) {
-      final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
+    if (generator instanceof ProjectSettingsConfigurer) {
+      final ProjectSettingsConfigurer projectGenerator = (ProjectSettingsConfigurer)generator;
       projectSettings = projectGenerator.getProjectSettings();
     }
     else if (generator instanceof WebProjectTemplate) {

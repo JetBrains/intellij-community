@@ -17,5 +17,6 @@
     <orderEntry type="module" module-name="intellij.pycharm.edu" />
     <orderEntry type="module" module-name="intellij.vcs.hg" />
     <orderEntry type="module" module-name="intellij.python.ipnb" />
+    <orderEntry type="module" module-name="intellij.pycharm.edu.java" />
   </component>
 </module>

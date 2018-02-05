@@ -19,9 +19,6 @@ import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistryImpl;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
@@ -321,7 +318,7 @@ public class PyCharmEduInitialConfigurator {
   private static void patchRootAreaExtensions() {
     ExtensionsArea rootArea = Extensions.getArea(null);
 
-    rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
+    //rootArea.unregisterExtensionPoint("com.intellij.runLineMarkerContributor");
     for (ToolWindowEP ep : Extensions.getExtensions(ToolWindowEP.EP_NAME)) {
       if (ToolWindowId.FAVORITES_VIEW.equals(ep.id) || ToolWindowId.TODO_VIEW.equals(ep.id) || EventLog.LOG_TOOL_WINDOW_ID.equals(ep.id)
           || ToolWindowId.STRUCTURE_VIEW.equals(ep.id)) {
@@ -355,9 +352,9 @@ public class PyCharmEduInitialConfigurator {
   }
 
   private static void patchProjectAreaExtensions(@NotNull final Project project) {
-    Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
-    unregisterAction(debugExecutor.getId(), ExecutorRegistryImpl.RUNNERS_GROUP);
-    unregisterAction(debugExecutor.getContextActionId(), ExecutorRegistryImpl.RUN_CONTEXT_GROUP);
+    //Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    //unregisterAction(debugExecutor.getId(), ExecutorRegistryImpl.RUNNERS_GROUP);
+    //unregisterAction(debugExecutor.getContextActionId(), ExecutorRegistryImpl.RUN_CONTEXT_GROUP);
 
     ExtensionsArea projectArea = Extensions.getArea(project);
 

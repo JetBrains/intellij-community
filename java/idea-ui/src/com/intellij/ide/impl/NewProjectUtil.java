@@ -120,18 +120,7 @@ public class NewProjectUtil {
         CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> applyJdkToProject(newProject, jdk)), null, null);
       }
 
-      final String compileOutput = dialog.getNewCompileOutput();
-      CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-        String canonicalPath = compileOutput;
-        try {
-          canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
-        }
-        catch (IOException e) {
-          //file doesn't exist
-        }
-        canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
-        CompilerProjectExtension.getInstance(newProject).setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
-      }), null, null);
+      setupCompilerOutputPath(newProject, dialog.getNewCompileOutput());
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         newProject.save();
@@ -193,6 +182,23 @@ public class NewProjectUtil {
         projectBuilder.cleanup();
       }
     }
+  }
+
+  public static void setupCompilerOutputPath(Project newProject, final String compileOutput) {
+    CommandProcessor.getInstance().executeCommand(newProject, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      String canonicalPath = compileOutput;
+      try {
+        canonicalPath = FileUtil.resolveShortWindowsName(compileOutput);
+      }
+      catch (IOException e) {
+        //file doesn't exist
+      }
+      canonicalPath = FileUtil.toSystemIndependentName(canonicalPath);
+      final CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(newProject);
+      if (compilerProjectExtension != null) {
+        compilerProjectExtension.setCompilerOutputUrl(VfsUtilCore.pathToUrl(canonicalPath));
+      }
+    }), null, null);
   }
 
   public static void applyJdkToProject(@NotNull Project project, @NotNull Sdk jdk) {

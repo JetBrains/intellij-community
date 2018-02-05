@@ -37,6 +37,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
+import com.jetbrains.python.newProject.ProjectSettingsConfigurer;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
@@ -256,12 +257,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
   @Override
   protected JPanel createBasePanel() {
+    final JPanel panel;
     if (myProjectGenerator instanceof PythonProjectGenerator) {
       final BorderLayout layout = new BorderLayout();
 
       final JPanel locationPanel = new JPanel(layout);
 
-      final JPanel panel = new JPanel(new VerticalFlowLayout(0, 2));
+      panel = new JPanel(new VerticalFlowLayout(0, 2));
       final LabeledComponent<TextFieldWithBrowseButton> location = createLocationComponent();
 
       locationPanel.add(location, BorderLayout.CENTER);
@@ -272,10 +274,18 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       if (basePanelExtension != null) {
         panel.add(basePanelExtension);
       }
-      return panel;
+    } else {
+      panel = super.createBasePanel();
     }
 
-    return super.createBasePanel();
+    if (myProjectGenerator instanceof ProjectSettingsConfigurer) {
+      final JPanel basePanelExtension = ((ProjectSettingsConfigurer)myProjectGenerator).extendBasePanel();
+      if (basePanelExtension != null) {
+        panel.add(basePanelExtension);
+      }
+    }
+
+    return panel;
   }
 
   @NotNull

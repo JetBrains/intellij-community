@@ -1,5 +1,7 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work ONLY in Pycharm Educational Edition -->
+  <id>com.intellij</id>
+  <name>IDEA CORE</name>
 
   <application-components>
     <component>
@@ -11,7 +13,8 @@
   <xi:include href="/META-INF/IdeTipsAndTricks.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/python-core-ide.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  
+  <xi:include href="/META-INF/java-edu.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
   <application-components>
     <component>
       <implementation-class>com.jetbrains.python.edu.PyCharmEduInitialConfigurator</implementation-class>
@@ -35,17 +38,17 @@
   </extensions>
 
 
-  <extensionPoints>
-    <extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>
-  </extensionPoints>
+  <!--<extensionPoints>-->
+    <!--<extensionPoint qualifiedName="Edu.executeFile" interface="com.jetbrains.python.edu.PyExecuteFileExtensionPoint"/>-->
+  <!--</extensionPoints>-->
 
-  <extensions defaultExtensionNs="com.intellij">
-    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>
-  </extensions>
+  <!--<extensions defaultExtensionNs="com.intellij">-->
+    <!--<codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.edu.PyExecuteFileLineMarkerProvider"/>-->
+  <!--</extensions>-->
 
-  <extensions defaultExtensionNs="Edu">
-    <executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>
-    <executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>
-  </extensions>
+  <!--<extensions defaultExtensionNs="Edu">-->
+    <!--<executeFile implementation="com.jetbrains.python.edu.PyEduAddParametersAction" order="last"/>-->
+    <!--<executeFile implementation="com.jetbrains.python.edu.PyDebugCurrentFile"/>-->
+  <!--</extensions>-->
 
 </idea-plugin>

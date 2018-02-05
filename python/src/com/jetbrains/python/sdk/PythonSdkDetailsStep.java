@@ -59,6 +59,10 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           @NotNull final Point popupPoint,
                           @Nullable String newProjectPath,
                           @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
+    if (getAvailableOptions(showAllDialog != null).size() == 1) {
+      createLocalSdk(project, existingSdks, newProjectPath, sdkAddedCallback);
+      return;
+    }
     final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, showAllDialog, ownerComponent, existingSdks,
                                                                        sdkAddedCallback);
     sdkHomesStep.myNewProjectPath = newProjectPath;
@@ -111,11 +115,15 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
     }
   }
 
-  private void createLocalSdk() {
-    final Project project = myNewProjectPath != null ? null : myProject;
-    final PyAddSdkDialog dialog = new PyAddSdkDialog(project, Arrays.asList(myExistingSdks), myNewProjectPath);
+  private static void createLocalSdk(Project project, Sdk[] existingSdks, String newProjectPath, NullableConsumer<Sdk> sdkAddedCallback) {
+    project = newProjectPath != null ? null : project;
+    final PyAddSdkDialog dialog = new PyAddSdkDialog(project, Arrays.asList(existingSdks), newProjectPath);
     final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
-    mySdkAddedCallback.consume(sdk);
+    sdkAddedCallback.consume(sdk);
+  }
+
+  private void createLocalSdk() {
+    createLocalSdk(myProject, myExistingSdks, myNewProjectPath, mySdkAddedCallback);
   }
 
   private void createRemoteSdk() {
