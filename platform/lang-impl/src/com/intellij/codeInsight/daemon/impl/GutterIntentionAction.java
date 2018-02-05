@@ -62,7 +62,7 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-    MouseEvent mouseEvent = ApplicationManager.getApplication().isOnAir() ? null : relativePoint.toMouseEvent();
+    MouseEvent mouseEvent = relativePoint.toMouseEvent();
     myAction.actionPerformed(
       new AnActionEvent(mouseEvent, ((EditorEx)editor).getDataContext(), myText, new Presentation(),
                         ActionManager.getInstance(), 0));

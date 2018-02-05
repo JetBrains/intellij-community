@@ -34,15 +34,21 @@ public class RelativePoint extends UserDataHolderBase {
     boolean headless = Boolean.getBoolean("java.awt.headless");
     if (!headless) {
       init(event.getComponent(), event.getPoint());
-      myOriginalComponent = event.getComponent();
-      myOriginalPoint = event.getPoint();
+    } else {
+      myPointOnComponent = event.getPoint();
     }
+    myOriginalComponent = event.getComponent();
+    myOriginalPoint = event.getPoint();
   }
 
   public RelativePoint(@NotNull Component aComponent, Point aPointOnComponent) {
     boolean headless = Boolean.getBoolean("java.awt.headless");
     if (!headless) {
       init(aComponent, aPointOnComponent);
+    } else {
+      myComponent = aComponent;
+      myPointOnComponent = aPointOnComponent;
+      myOriginalPoint = aPointOnComponent;
     }
   }
 
