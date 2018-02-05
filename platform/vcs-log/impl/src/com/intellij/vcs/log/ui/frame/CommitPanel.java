@@ -81,9 +81,7 @@ public class CommitPanel extends JBPanel {
     myMessagePanel.setBorder(JBUI.Borders.empty(EXTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, SIDE_BORDER));
     myHashAndAuthorPanel.setBorder(JBUI.Borders.empty());
     metadataPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER));
-    myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
-    myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
-    myContainingBranchesPanel.setBorder(JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, EXTERNAL_BORDER, SIDE_BORDER));
+    myContainingBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER, EXTERNAL_BORDER, SIDE_BORDER));
 
     add(myMessagePanel);
     metadataPanel.add(myRootPanel, BorderLayout.WEST);
@@ -113,6 +111,12 @@ public class CommitPanel extends JBPanel {
     List<VcsRef> references = sortRefs(refs);
     myBranchesPanel.setReferences(references.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList()));
     myTagsPanel.setReferences(references.stream().filter(ref -> !ref.getType().isBranch()).collect(Collectors.toList()));
+    if (myTagsPanel.isVisible()) {
+      myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
+      myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
+    } else if (myBranchesPanel.isVisible()) {
+      myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
+    }
   }
 
   public void update() {
