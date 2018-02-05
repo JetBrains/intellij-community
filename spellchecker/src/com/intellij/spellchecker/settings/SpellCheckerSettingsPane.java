@@ -132,7 +132,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
     decorator = new HideableDecorator(myAdvancedSettingsPlaceHolder, SpellCheckerBundle.message("advanced.settings"), false);
     decorator.setContentComponent(myAdvancedSettingsPanel);
-    decorator.setOn(false);
+    decorator.setOn(!settings.isDefaultAdvancedSettings());
   }
 
   private static String getHunspellDescription() {
