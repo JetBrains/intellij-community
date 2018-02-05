@@ -79,6 +79,10 @@ public class RollbackWorker {
     };
 
     List<Change> otherChanges = revertPartialChanges(changes);
+    if (otherChanges.isEmpty()) {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(afterRefresh, null, myProject);
+      return;
+    }
 
     final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
 
