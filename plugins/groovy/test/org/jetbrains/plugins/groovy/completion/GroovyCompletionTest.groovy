@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.completion
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
@@ -314,7 +315,7 @@ class Foo<A, B> {
   }
 
   void testCompletionNamedArgumentWithoutSpace() {
-    def settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class)
+    def settings = CodeStyle.getSettings(project).getCustomSettings(GroovyCodeStyleSettings.class)
     settings.SPACE_IN_NAMED_ARGUMENT = false
 
     try {
@@ -1856,7 +1857,7 @@ class Autocompletion {
   }
 
   void testSpaceBeforeMethodCallParentheses() {
-    def settings = CodeStyleSettingsManager.getSettings(myFixture.project).getCommonSettings(GroovyLanguage.INSTANCE)
+    def settings = CodeStyle.getSettings(myFixture.project).getCommonSettings(GroovyLanguage.INSTANCE)
 
     boolean old = settings.SPACE_BEFORE_METHOD_CALL_PARENTHESES
     try {
