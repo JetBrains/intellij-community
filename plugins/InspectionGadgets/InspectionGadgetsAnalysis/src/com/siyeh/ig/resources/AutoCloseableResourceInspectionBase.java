@@ -56,7 +56,6 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
 
-  public boolean showWarningForStreamHoldingResource = true;
 
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   protected final MethodMatcher myMethodMatcher;
@@ -136,9 +135,6 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
           parseString(ignoredTypesString, ignoredTypes);
         }
       }
-      if ("showWarningForStreamHoldingResource".equals(name)) {
-        showWarningForStreamHoldingResource = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
     }
     myMethodMatcher.readSettings(node);
   }
@@ -151,10 +147,6 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       final String ignoredTypesString = formatString(ignoredTypes);
       node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
     }
-    if (!showWarningForStreamHoldingResource) {
-      node.addContent(new Element("option").setAttribute("name", "showWarningForStreamHoldingResource").setAttribute("value",
-                                                                                                      String.valueOf(showWarningForStreamHoldingResource)));
-    }
     myMethodMatcher.writeSettings(node);
   }
 
@@ -166,7 +158,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
   }
 
   private boolean isStreamHoldingResource(PsiExpression expression) {
-    return showWarningForStreamHoldingResource && STREAM_HOLDING_RESOURCE.matches(tryCast(expression, PsiMethodCallExpression.class));
+    return STREAM_HOLDING_RESOURCE.matches(tryCast(expression, PsiMethodCallExpression.class));
   }
 
   @Override
