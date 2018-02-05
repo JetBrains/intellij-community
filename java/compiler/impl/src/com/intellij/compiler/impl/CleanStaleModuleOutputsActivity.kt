@@ -66,7 +66,18 @@ class CleanStaleModuleOutputsActivity : StartupActivity, DumbAware {
   }
 
   private fun runCleanup(outputs: List<VirtualFile>, project: Project, onSuccess: () -> Unit) {
-    val outputsString = outputs.joinToString("<br>") { it.presentableUrl }
+    val outputsString: String
+    val threshold = 50
+    if (outputs.size <= threshold + 2) {
+      outputsString = outputs.joinToString("<br>") { it.presentableUrl }
+    }
+    else {
+      val parents = outputs.subList(threshold, outputs.size).mapTo(LinkedHashSet()) {it.parent}.toList()
+      outputsString = (outputs.subList(0, threshold).map {it.presentableUrl}
+                       + listOf("${outputs.size - threshold} more directories under ${parents.first().presentableUrl}")
+                       + parents.drop(1).map { "and ${it.presentableUrl}" }
+                      ).joinToString("<br>")
+    }
     val answer = Messages.showOkCancelDialog(project, CompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
                                              CompilerBundle.message("dialog.title.delete.old.outputs"),
                                              CompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText(), null)
