@@ -71,7 +71,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, sdks, newProjectPath),
                                            createAnacondaPanel(project),
                                            PyAddSystemWideInterpreterPanel(existingSdks))
-    val extendedPanels = PyAddSdkProvider.EP_NAME.extensions.map { it.createView() }
+    val extendedPanels = PyAddSdkProvider.EP_NAME.extensions.map { it.createView(existingSdks) }
     panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT, createCardSplitter(panels))
     return mainPanel
@@ -108,7 +108,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     override fun doAction(e: ActionEvent) {
       selectedPanel?.let {
         if (it.actions.containsKey(NEXT)) onNext()
-        else if (it.actions.containsKey(FINISH)) onFinish()
+        else if (it.actions.containsKey(FINISH)) {
+          onFinish()
+        }
       }
     }
   }
@@ -133,7 +135,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   override fun doValidateAll(): List<ValidationInfo> = selectedPanel?.validateAll() ?: emptyList()
 
-  fun getOrCreateSdk(): Sdk? = TODO("Implement reasonably")
+  fun getOrCreateSdk(): Sdk? = selectedPanel?.getOrCreateSdk()
 
   private fun createCardSplitter(panels: List<PyAddSdkView>): Splitter {
     this.panels = panels
@@ -185,6 +187,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
               rootPane.defaultButton = getButton(okAction)
             }
           }
+
+          selectedValue.onSelected()
         }
         selectedPanel = panels.getOrNull(0)
         selectedIndex = 0
@@ -270,11 +274,8 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   private fun onFinish() {
-    selectedPanel?.act(action = FINISH, callback = object : WizardActionCallback<Sdk> {
-      override fun onFinish(): Sdk {
-        TODO()
-      }
-    })
+    // TODO should we perform some validation here?
+    doOKAction()
   }
 
   private fun updateWizardActionButtons(it: PyAddSdkView) {

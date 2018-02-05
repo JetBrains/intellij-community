@@ -15,4 +15,6 @@ interface PyAddSdkView : WizardView<Sdk> {
   val icon: Icon
 
   fun getOrCreateSdk(): Sdk?
+
+  fun onSelected()
 }

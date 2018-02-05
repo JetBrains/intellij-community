@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.sdk.add.wizard.WizardActionCallback
 import com.jetbrains.python.sdk.add.wizard.WizardControlAction
 import com.jetbrains.python.sdk.add.wizard.WizardControlAction.OK
 import com.jetbrains.python.sdk.add.wizard.WizardControlsListener
@@ -53,9 +52,8 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   override fun navigate(type: WizardControlAction) = Unit
 
-  override fun act(action: WizardControlAction, callback: WizardActionCallback<Sdk>) {
-    if (action != OK) throw IllegalStateException("$OK action is expected but $action found")
-  }
+  // TODO could we return `null`?
+  override fun finish(): Sdk = getOrCreateSdk() ?: throw IllegalStateException()
 
   override fun reset() = Unit
 
@@ -66,6 +64,8 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   open var newProjectPath: String? = null
 
   override fun getOrCreateSdk(): Sdk? = sdk
+
+  override fun onSelected() = Unit
 
   override fun validateAll(): List<ValidationInfo> = emptyList()
 

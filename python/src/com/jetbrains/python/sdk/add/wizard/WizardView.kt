@@ -24,7 +24,7 @@ interface WizardView<T> {
    */
   fun navigate(type: WizardControlAction)
 
-  fun act(action: WizardControlAction, callback: WizardActionCallback<T>)
+  fun finish(): T
 
   /**
    * Returns the list of validation errors. The returned list is empty if there
