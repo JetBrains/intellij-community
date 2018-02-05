@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.search;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.PsiElement;
@@ -41,11 +40,10 @@ public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReferenc
       return;
     }
 
-    final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    String className;
-    SearchScope searchScope;
-    PyFunction function;
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      String className;
+      SearchScope searchScope;
+      PyFunction function;
       function = (PyFunction)element;
       if (!PyNames.INIT.equals(function.getName())) {
         return;
@@ -63,12 +61,9 @@ public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReferenc
       if (searchScope instanceof GlobalSearchScope) {
         searchScope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, PythonFileType.INSTANCE);
       }
-    }
-    finally {
-      accessToken.finish();
-    }
 
 
-    queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, function);
+      queryParameters.getOptimizer().searchWord(className, searchScope, UsageSearchContext.IN_CODE, true, function);
+    });
   }
 }

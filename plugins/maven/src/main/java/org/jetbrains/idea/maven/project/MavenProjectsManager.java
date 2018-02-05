@@ -185,14 +185,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
         public boolean execute(CompileContext context) {
-          AccessToken token = ReadAction.start();
-
-          try {
-            new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
-          }
-          finally {
-            token.finish();
-          }
+          ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
           return true;
         }
       });
@@ -460,14 +453,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
             MavenImportingSettings importingSettings;
 
-            AccessToken token = ReadAction.start();
-            try {
-              if (myProject.isDisposed()) return;
-              importingSettings = getImportingSettings();
-            }
-            finally {
-              token.finish();
-            }
+            importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
+            if (importingSettings == null) return;
 
             scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                          null,
@@ -538,13 +525,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isMavenizedModule(@NotNull Module m) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
-    }
-    finally {
-      accessToken.finish();
-    }
+    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
   }
 
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {

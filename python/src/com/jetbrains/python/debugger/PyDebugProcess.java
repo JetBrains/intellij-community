@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
@@ -650,23 +651,21 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     dropFrameCaches();
     if (isConnected() && !mySuspendedThreads.isEmpty()) {
       final PySourcePosition pyPosition = myPositionConverter.convertToPython(position);
-      String type = PyLineBreakpointType.ID;
-      AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
-        if (document != null) {
-          for (XBreakpointType breakpointType : Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME)) {
-            if (breakpointType instanceof PyBreakpointType &&
-                ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
-              type = breakpointType.getId();
-              break;
+      String type =
+        ReadAction.compute(() -> {
+          String t = PyLineBreakpointType.ID;
+          final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
+          if (document != null) {
+            for (XBreakpointType breakpointType : Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME)) {
+              if (breakpointType instanceof PyBreakpointType &&
+                  ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
+                t = breakpointType.getId();
+                break;
+              }
             }
           }
-        }
-      }
-      finally {
-        lock.finish();
-      }
+          return t;
+        });
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());
 
       passToCurrentThread(context, ResumeOrStepCommand.Mode.RESUME);
@@ -854,8 +853,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   @Nullable
   private String getFunctionName(@NotNull final XSourcePosition position) {
     final VirtualFile file = position.getFile();
-    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+    return ReadAction.compute(() -> {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       final Project project = getSession().getProject();
       if (document != null) {
@@ -872,10 +870,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         }
       }
       return null;
-    }
-    finally {
-      lock.finish();
-    }
+    });
   }
 
   public void addBreakpoint(final PySourcePosition position, final XLineBreakpoint breakpoint) {

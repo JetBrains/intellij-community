@@ -43,9 +43,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
@@ -499,17 +499,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       SwingUtilities.invokeLater(() -> getField().setText("#" + ((OptionsTopHitProvider)value).getId() + " "));
       return;
     }
-    Runnable onDone = null;
-
-    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+    Runnable onDone =
+    ReadAction.compute(() -> {
       if (value instanceof PsiElement) {
-        onDone = () -> NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
-        return;
+        return () -> NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
       }
       else if (isVirtualFile(value)) {
-        onDone = () -> OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
-        return;
+        return () -> OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
       }
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
@@ -530,24 +526,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 itemWrapper.perform(project, executor, dataManager.getDataContext(c));
               }
             }
-          } else {
+          }
+          else {
             GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
-            if (isToolWindowAction(value)) return;
           }
         });
-        return;
+        return ()->{};
       }
       else if (value instanceof Navigatable) {
-        onDone = () -> OpenSourceUtil.navigate(true, (Navigatable)value);
-        return;
+        return () -> OpenSourceUtil.navigate(true, (Navigatable)value);
       }
-    }
-    finally {
-      token.finish();
-      final ActionCallback callback = onFocusLost();
-      if (onDone != null) {
-        callback.doWhenDone(onDone);
-      }
+      return null;
+    });
+
+    final ActionCallback callback = onFocusLost();
+    if (onDone != null) {
+      callback.doWhenDone(onDone);
+      return;
     }
     focusManager.requestDefaultFocus(true);
   }

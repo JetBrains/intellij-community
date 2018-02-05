@@ -446,9 +446,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private static void makeUserAware(final MergingUpdateQueue mergingUpdateQueue, final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
       multicaster.addCaretListener(new CaretListener() {
@@ -487,10 +485,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           }
         }
       });
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   private static class MyNotification extends Notification {

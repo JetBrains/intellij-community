@@ -15,8 +15,6 @@
  */
 package com.jetbrains.python.psi.search;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -34,23 +32,20 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
     final PyClass containingClass = ReadAction.compute(() -> baseMethod.getContainingClass());
 
     return PyClassInheritorsSearch.search(containingClass, queryParameters.isCheckDeep()).forEach(pyClass -> {
-      final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      PyFunction overridingMethod;
-      try {
-        overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false, null);
-        if (overridingMethod != null) {
+      PyFunction overridingMethod
+        = ReadAction.compute(() -> {
+        PyFunction o = pyClass.findMethodByName(baseMethod.getName(), false, null);
+        if (o != null) {
           final Property baseProperty = baseMethod.getProperty();
-          final Property overridingProperty = overridingMethod.getProperty();
+          final Property overridingProperty = o.getProperty();
           if (baseProperty != null && overridingProperty != null) {
             final AccessDirection direction = PyUtil.getPropertyAccessDirection(baseMethod);
             final PyCallable callable = overridingProperty.getByDirection(direction).valueOrNull();
-            overridingMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
+            o = (callable instanceof PyFunction) ? (PyFunction)callable : null;
           }
         }
-      }
-      finally {
-        accessToken.finish();
-      }
+        return o;
+      });
       //noinspection SimplifiableIfStatement
       if (overridingMethod != null) {
         return consumer.process(overridingMethod);
