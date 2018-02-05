@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -48,6 +47,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(Java9GenerateModuleDescriptorsAction.class);
 
   private static final String TITLE = "Generate Module Descriptors";
+  private static final String COMMAND_TITLE = "Creating module-info Files";
 
   @Override
   public void update(AnActionEvent e) {
@@ -175,35 +175,50 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     public void increment() {
       myIndicator.setFraction(myUpToNow + myPhases[myPhase] * ++myCount / (double)mySize);
     }
+
+    public void dispose() {
+      myIndicator = null;
+    }
   }
 
   private static class DescriptorsGenerator {
-    private Project myProject;
+    private final Project myProject;
 
-    List<ModuleNode> moduleNodes = new ArrayList<>();
-    Set<String> usedExternallyPackages = new THashSet<>();
+    private final List<ModuleNode> myModuleNodes = new ArrayList<>();
+    private final Set<String> myUsedExternallyPackages = new THashSet<>();
 
-    ProgressTracker myProgressTracker = new ProgressTracker(0.3, 0.2, 0.2, 0.3);
+    private final ProgressTracker myProgressTracker = new ProgressTracker(0.5, 0.3, 0.2);
 
     public DescriptorsGenerator(Project project) {
       myProject = project;
     }
 
     void generate(THashMap<Module, List<File>> classFiles, int totalFiles) {
-      myProgressTracker.startPhase("Collecting Dependencies", totalFiles);
-      Map<String, Set<ModuleNode>> packagesDeclaredInModules = collectDependencies(classFiles);
-      myProgressTracker.nextPhase();
+      List<GeneratedCode> generatedCode;
+      try {
+        myProgressTracker.startPhase("Collecting Dependencies", totalFiles);
+        Map<String, Set<ModuleNode>> packagesDeclaredInModules = collectDependencies(classFiles);
+        myProgressTracker.nextPhase();
 
-      myProgressTracker.startPhase("Analysing Dependencies", moduleNodes.size());
-      analyseDependencies(packagesDeclaredInModules);
-      myProgressTracker.nextPhase();
+        myProgressTracker.startPhase("Analysing Dependencies", myModuleNodes.size());
+        analyseDependencies(packagesDeclaredInModules);
+        myProgressTracker.nextPhase();
 
-      myProgressTracker.startPhase("Generating Code", moduleNodes.size());
-      List<Pair.NonNull<PsiDirectory, String>> generatedCode = generateCode();
-      myProgressTracker.nextPhase();
+        myProgressTracker.startPhase("Preparing Code", myModuleNodes.size());
+        generatedCode = generateCode();
+        myProgressTracker.nextPhase();
+      }
+      finally {
+        myProgressTracker.dispose();
+      }
 
-      myProgressTracker.startPhase("Formatting Code", generatedCode.size());
-      createFiles(generatedCode);
+      ApplicationManager.getApplication().invokeLater(
+        () -> CommandProcessor.getInstance().executeCommand(
+          myProject, () ->
+            ((ApplicationImpl)ApplicationManager.getApplication())
+              .runWriteActionWithCancellableProgressInDispatchThread(
+                COMMAND_TITLE, myProject, null,
+                indicator -> createFiles(myProject, generatedCode, indicator)), COMMAND_TITLE, null));
     }
 
     private Map<String, Set<ModuleNode>> collectDependencies(THashMap<Module, List<File>> classFiles) {
@@ -222,9 +237,9 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
         Set<String> requiredPackages = visitor.getRequiredPackages();
         requiredPackages.removeAll(declaredPackages);
 
-        usedExternallyPackages.addAll(requiredPackages);
+        myUsedExternallyPackages.addAll(requiredPackages);
         ModuleNode moduleNode = new ModuleNode(module, declaredPackages, requiredPackages);
-        moduleNodes.add(moduleNode);
+        myModuleNodes.add(moduleNode);
         for (String declaredPackage : declaredPackages) {
           packagesDeclaredInModules.computeIfAbsent(declaredPackage, __ -> new THashSet<>()).add(moduleNode);
         }
@@ -234,7 +249,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
     private void analyseDependencies(Map<String, Set<ModuleNode>> packagesDeclaredInModules) {
       Map<PsiJavaModule, ModuleNode> nodesByDescriptor = new THashMap<>();
-      for (ModuleNode moduleNode : moduleNodes) {
+      for (ModuleNode moduleNode : myModuleNodes) {
         if (moduleNode.getDescriptor() != null) {
           nodesByDescriptor.put(moduleNode.getDescriptor(), moduleNode);
         }
@@ -262,15 +277,15 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       }
     }
 
-    private List<Pair.NonNull<PsiDirectory, String>> generateCode() {
-      List<Pair.NonNull<PsiDirectory, String>> generatedCode = new ArrayList<>();
-      for (ModuleNode moduleNode : moduleNodes) {
+    private List<GeneratedCode> generateCode() {
+      List<GeneratedCode> generatedCode = new ArrayList<>();
+      for (ModuleNode moduleNode : myModuleNodes) {
         if (moduleNode.getDescriptor() != null) {
           LOG.debug("Descriptor already exists in " + moduleNode);
           continue;
         }
         for (String packageName : moduleNode.getDeclaredPackages()) {
-          if (usedExternallyPackages.contains(packageName)) {
+          if (myUsedExternallyPackages.contains(packageName)) {
             moduleNode.getExports().add(packageName);
           }
         }
@@ -294,7 +309,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
         PsiDirectory rootDir = moduleNode.getRootDir();
         if (rootDir != null) {
-          generatedCode.add(Pair.createNonNull(rootDir, text.toString()));
+          generatedCode.add(new GeneratedCode(rootDir, text.toString()));
         }
         else {
           LOG.debug("Skipped module " + moduleNode);
@@ -304,26 +319,16 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return generatedCode;
     }
 
-    private void createFiles(List<Pair.NonNull<PsiDirectory, String>> generatedCode) {
-      ApplicationManager.getApplication().invokeAndWait(
-        () -> CommandProcessor.getInstance().executeCommand(myProject,
-                                                            () -> createFilesImpl(generatedCode),
-                                                            TITLE, null));
-    }
-
-    private void createFilesImpl(List<Pair.NonNull<PsiDirectory, String>> generatedCode) {
-      for (Pair.NonNull<PsiDirectory, String> code : generatedCode) {
-        PsiDirectory rootDir = code.getFirst();
-        String text = code.getSecond();
-        PsiFile file = PsiFileFactory.getInstance(myProject)
-                                     .createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaLanguage.INSTANCE, text);
-        WriteAction.run(
-          () -> {
-            PsiElement added = rootDir.add(file);
-            CodeStyleManager.getInstance(myProject).reformat(added);
-          });
-
-        myProgressTracker.increment();
+    private static void createFiles(Project project, List<GeneratedCode> generatedCode, ProgressIndicator indicator) {
+      indicator.setIndeterminate(false);
+      int count = 0;
+      double total = generatedCode.size();
+      PsiFileFactory factory = PsiFileFactory.getInstance(project);
+      for (GeneratedCode code : generatedCode) {
+        PsiFile file = factory.createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaLanguage.INSTANCE, code.myText);
+        PsiElement added = code.myRootDir.add(file);
+        CodeStyleManager.getInstance(project).reformat(added);
+        indicator.setFraction(++count / total);
       }
     }
 
@@ -348,7 +353,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private final Set<ModuleNode> myDependencies = new THashSet<>();
     private final Set<String> myExports = new THashSet<>();
     private final PsiJavaModule myDescriptor;
-    private String myName;
+    private final String myName;
 
     public ModuleNode(@NotNull Module module, @NotNull Set<String> declaredPackages, @NotNull Set<String> requiredPackages) {
       myModule = module;
@@ -407,6 +412,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return myDescriptor;
     }
 
+    @NotNull
     public String getName() {
       return myName;
     }
@@ -414,6 +420,16 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     @Override
     public String toString() {
       return myName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return this == o || o instanceof ModuleNode && myName.equals(((ModuleNode)o).myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return myName.hashCode();
     }
 
     @Override
@@ -505,6 +521,16 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
     public Set<String> getDeclaredPackages() {
       return myDeclaredPackages;
+    }
+  }
+
+  private static class GeneratedCode {
+    final PsiDirectory myRootDir;
+    final String myText;
+
+    private GeneratedCode(@NotNull PsiDirectory rootDir, @NotNull String text) {
+      myRootDir = rootDir;
+      myText = text;
     }
   }
 }
