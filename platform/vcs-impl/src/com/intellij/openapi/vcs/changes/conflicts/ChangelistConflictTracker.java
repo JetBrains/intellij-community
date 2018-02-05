@@ -173,6 +173,7 @@ public class ChangelistConflictTracker {
   }
 
   public boolean isWritingAllowed(@NotNull VirtualFile file) {
+    if (!shouldDetectConflictsFor(file)) return true;
     if (isFromActiveChangelist(file)) return true;
     Conflict conflict = myConflicts.get(file.getPath());
     return conflict != null && conflict.ignored;
