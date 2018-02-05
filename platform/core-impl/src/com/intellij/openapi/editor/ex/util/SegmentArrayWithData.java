@@ -126,7 +126,7 @@ public class SegmentArrayWithData extends SegmentArray {
     sa.myStarts = this.myStarts.clone();
     sa.myEnds = this.myEnds.clone();
     sa.myData = this.myData.clone();
-    return  sa;
+    return sa;
   }
 }
 
