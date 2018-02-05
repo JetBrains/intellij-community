@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
@@ -99,7 +100,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
     if (myCanceled) return false;
 
     final JComponent content = myPopup.getContent();
-    if (myPopup.isDisposed()) return false;
+    if ((myPopup instanceof AbstractPopup && content == null) || myPopup.isDisposed()) return false;
     ModalityState modalityState = content == null ? null : ModalityState.stateForComponent(content);
 
     synchronized (lock) {
