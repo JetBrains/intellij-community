@@ -127,7 +127,7 @@
                     <clientProperties>
                       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
                     </clientProperties>
-                    <border type="etched" title="Other Settings"/>
+                    <border type="etched" title="Advanced settings"/>
                     <children>
                       <component id="47654" class="com.intellij.ui.components.JBLabel">
                         <constraints>
