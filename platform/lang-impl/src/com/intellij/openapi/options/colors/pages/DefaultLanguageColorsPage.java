@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -169,6 +167,11 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED)
   };
 
+  private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
+    new ColorDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.border"),
+                        DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER, ColorDescriptor.Kind.FOREGROUND)
+  };
+
   @Nullable
   @Override
   public Icon getIcon() {
@@ -244,7 +247,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
   @NotNull
   @Override
   public ColorDescriptor[] getColorDescriptors() {
-    return ColorDescriptor.EMPTY_ARRAY;
+    return COLOR_DESCRIPTORS;
   }
 
   @NotNull

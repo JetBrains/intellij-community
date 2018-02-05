@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -283,10 +281,14 @@ public class ParameterHintsPresentationManager implements Disposable {
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, savedHint);
 
             if (current) {
-              savedHint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-              g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-              g.drawRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
-              g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+              Color borderClr = editor.getColorsScheme().getColor(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER);
+              if (borderClr != null) {
+                g.setColor(borderClr);
+                savedHint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.drawRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+              }
             }
           }
         }
