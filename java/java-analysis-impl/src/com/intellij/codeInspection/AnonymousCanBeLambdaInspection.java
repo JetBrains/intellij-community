@@ -199,6 +199,19 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     PsiElement parent = aClass.getParent();
     final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
     if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;
+    return isLambdaForm(aClass, acceptParameterizedFunctionTypes, reportNotAnnotatedInterfaces, ignoredRuntimeAnnotations);
+  }
+
+  public static boolean isLambdaForm(PsiAnonymousClass aClass,
+                                   boolean acceptParameterizedFunctionTypes,
+                                   @NotNull Set<String> ignoredRuntimeAnnotations) {
+    return isLambdaForm(aClass, acceptParameterizedFunctionTypes, true, ignoredRuntimeAnnotations);
+  }
+
+  public static boolean isLambdaForm(PsiAnonymousClass aClass,
+                                     boolean acceptParameterizedFunctionTypes,
+                                     boolean reportNotAnnotatedInterfaces,
+                                     @NotNull Set<String> ignoredRuntimeAnnotations) {
     if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
