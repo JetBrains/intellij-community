@@ -7,22 +7,27 @@ import java.awt.Component
 /**
  * Stateful wizard view.
  */
-interface WizardView<T> {
+interface WizardView<out T> {
   /**
-   * The navigation options are changed **only** in EDT.
-   * [StateListener.onStateChanged] is called right after these changes.
+   * [WizardControlsListener.onStateChanged] is called right after these changes.
    */
   val actions: Map<WizardControlAction, Boolean>
 
   /**
-   * The [component] *might* return the new [Component] after [navigate].
+   * The [component] *might* return the new [Component] after [next] or
+   * [previous].
    */
   val component: Component
 
   /**
    * @throws IllegalStateException
    */
-  fun navigate(type: WizardControlAction)
+  fun previous()
+
+  /**
+   * @throws IllegalStateException
+   */
+  fun next()
 
   fun finish(): T
 
@@ -34,13 +39,7 @@ interface WizardView<T> {
    */
   fun validateAll(): List<ValidationInfo>
 
-  fun reset()
-
-  fun addStateListener(stateListener: StateListener)
+  fun addStateListener(stateListener: WizardStateListener)
 
   fun addControlListener(listener: WizardControlsListener)
-
-  interface StateListener {
-    fun onStateChanged()
-  }
 }

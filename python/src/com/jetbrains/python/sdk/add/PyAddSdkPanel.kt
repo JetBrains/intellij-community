@@ -23,7 +23,7 @@ import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.add.wizard.WizardControlAction
 import com.jetbrains.python.sdk.add.wizard.WizardControlAction.OK
 import com.jetbrains.python.sdk.add.wizard.WizardControlsListener
-import com.jetbrains.python.sdk.add.wizard.WizardView.StateListener
+import com.jetbrains.python.sdk.add.wizard.WizardStateListener
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.awt.Component
@@ -46,16 +46,16 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
    * [component] is permanent. [StateListener.onStateChanged] won't be called
    * anyway.
    */
-  override fun addStateListener(stateListener: StateListener) = Unit
+  override fun addStateListener(stateListener: WizardStateListener) = Unit
 
   override fun addControlListener(listener: WizardControlsListener) = Unit
 
-  override fun navigate(type: WizardControlAction) = Unit
+  override fun previous() = throw UnsupportedOperationException()
+
+  override fun next() = throw UnsupportedOperationException()
 
   // TODO could we return `null`?
   override fun finish(): Sdk = getOrCreateSdk() ?: throw IllegalStateException()
-
-  override fun reset() = Unit
 
   override abstract val panelName: String
   override val icon: Icon = PythonIcons.Python.Python

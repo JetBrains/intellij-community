@@ -2,5 +2,5 @@
 package com.jetbrains.python.sdk.add.wizard
 
 interface WizardControlsListener {
-  fun onControlsChanged()
+  fun onStateChanged()
 }

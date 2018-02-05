@@ -76,7 +76,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions.map { it.createView(existingSdks) }
     panels.addAll(extendedPanels)
 */
-    mainPanel.add(SPLITTER_COMPONENT, createCardSplitter(panels))
+    mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
   }
 
@@ -149,7 +149,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         for (panel in panels) {
           add(panel.component, panel.panelName)
 
-          panel.addStateListener(object : WizardView.StateListener {
+          panel.addStateListener(object : WizardStateListener {
             override fun onStateChanged() {
               show(mainPanel, panel.component)
 
@@ -158,7 +158,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
           })
 
           panel.addControlListener(object : WizardControlsListener {
-            override fun onControlsChanged() {
+            override fun onStateChanged() {
               selectedPanel?.let { updateWizardActionButtons(it) }
             }
           })
@@ -244,7 +244,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
    */
   private fun onNext() {
     selectedPanel?.let {
-      it.navigate(NEXT)
+      it.next()
 
       // sliding effect
       swipe(mainPanel, it.component, JBCardLayout.SwipeDirection.FORWARD)
@@ -258,7 +258,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
    */
   private fun onPrevious() {
     selectedPanel?.let {
-      it.navigate(PREVIOUS)
+      it.previous()
 
       // sliding effect
       if (it.actions.containsKey(PREVIOUS)) {
@@ -269,7 +269,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
       }
       else {
         // this is the first wizard step
-        (mainPanel.layout as JBCardLayout).swipe(mainPanel, SPLITTER_COMPONENT, JBCardLayout.SwipeDirection.BACKWARD)
+        (mainPanel.layout as JBCardLayout).swipe(mainPanel, SPLITTER_COMPONENT_CARD_PANE, JBCardLayout.SwipeDirection.BACKWARD)
       }
 
       updateWizardActionButtons(it)
@@ -299,7 +299,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     private fun allowCreatingNewEnvironments(project: Project?) =
       project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
 
-    private val SPLITTER_COMPONENT = "Splitter"
+    private const val SPLITTER_COMPONENT_CARD_PANE = "Splitter"
 
     private const val REGULAR_CARD_PANE = "Regular"
 
