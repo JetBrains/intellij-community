@@ -325,9 +325,11 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       double total = generatedCode.size();
       PsiFileFactory factory = PsiFileFactory.getInstance(project);
       for (GeneratedCode code : generatedCode) {
-        PsiFile file = factory.createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaLanguage.INSTANCE, code.myText);
-        PsiElement added = code.myRootDir.add(file);
-        CodeStyleManager.getInstance(project).reformat(added);
+        ProgressManager.getInstance().executeNonCancelableSection(() -> {
+          PsiFile file = factory.createFileFromText(PsiJavaModule.MODULE_INFO_FILE, JavaLanguage.INSTANCE, code.myText);
+          PsiElement added = code.myRootDir.add(file);
+          CodeStyleManager.getInstance(project).reformat(added);
+        });
         indicator.setFraction(++count / total);
       }
     }
