@@ -27,12 +27,8 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     return doCalcWidth(text, getFontMetrics(editor).metrics)
   }
 
-  protected open fun getTextAttributes(editor: Editor): TextAttributes {
+  protected open fun getTextAttributes(editor: Editor): TextAttributes? {
     return editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
-  }
-
-  protected open fun shouldPaintText(): Boolean {
-    return true
   }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
@@ -40,8 +36,8 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
     val ascent = editor.ascent
     val descent = editor.descent
     val g2d = g as Graphics2D
-    if (text != null && shouldPaintText()) {
-      val attributes = getTextAttributes(editor)
+    val attributes = getTextAttributes(editor)
+    if (text != null && attributes != null) {
       val fontMetrics = getFontMetrics(editor)
       val gap = if (r.height < fontMetrics.lineHeight + 2) 1 else 2
       val backgroundColor = attributes.backgroundColor

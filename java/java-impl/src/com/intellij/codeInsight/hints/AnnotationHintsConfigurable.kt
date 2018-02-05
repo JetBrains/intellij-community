@@ -20,4 +20,9 @@ class AnnotationHintsConfigurable : BeanConfigurable<CodeInsightSettings>(CodeIn
              { settings.SHOW_INFERRED_ANNOTATIONS_INLINE },
              { v -> settings.SHOW_INFERRED_ANNOTATIONS_INLINE = v })
   }
+
+  override fun apply() {
+    super.apply()
+    AnnotationHintsPassFactory.forceHintsUpdateOnNextPass()
+  }
 }

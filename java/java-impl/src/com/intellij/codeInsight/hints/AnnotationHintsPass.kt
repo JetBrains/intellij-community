@@ -17,6 +17,7 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.util.DocumentUtil
 import gnu.trove.TIntObjectHashMap
 
 class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) : EditorBoundHighlightingPass(editor,
@@ -62,20 +63,26 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
   override fun doApplyInformationToEditor() {
     val keeper = CaretVisualPositionKeeper(myEditor)
 
-    val inlayModel = myEditor.inlayModel
-    inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
-      .filter { ANNOTATION_INLAY_KEY.isIn(it) }
-      .forEach { Disposer.dispose(it) }
+    DocumentUtil.executeInBulk(myEditor.document, hints.size() > 1000) {
+      val inlayModel = myEditor.inlayModel
+      inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
+        .filter { ANNOTATION_INLAY_KEY.isIn(it) }
+        .forEach { Disposer.dispose(it) }
 
-    hints.forEachEntry { offset, info ->
-      info.forEach {
-        val inlay = inlayModel.addInlineElement(offset, AnnotationHintRenderer(it.presentationText))
-        inlay.putUserData(ANNOTATION_INLAY_KEY, true)
+      hints.forEachEntry { offset, info ->
+        info.forEach {
+          val inlay = inlayModel.addInlineElement(offset, AnnotationHintRenderer(it.presentationText))
+          inlay.putUserData(ANNOTATION_INLAY_KEY, true)
+        }
+        true
       }
-      true
     }
 
     keeper.restoreOriginalLocation(false)
+
+    if (rootElement === myFile) {
+      AnnotationHintsPassFactory.putCurrentModificationStamp(myEditor, myFile)
+    }
   }
 
   class HintData(val presentationText: String)
@@ -93,6 +100,7 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
 
     override fun setSelected(e: AnActionEvent?, state: Boolean) {
       CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE = state
+      AnnotationHintsPassFactory.forceHintsUpdateOnNextPass()
     }
   }
 
@@ -101,6 +109,7 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
 
     override fun setSelected(e: AnActionEvent?, state: Boolean) {
       CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE = state
+      AnnotationHintsPassFactory.forceHintsUpdateOnNextPass()
     }
   }
 }

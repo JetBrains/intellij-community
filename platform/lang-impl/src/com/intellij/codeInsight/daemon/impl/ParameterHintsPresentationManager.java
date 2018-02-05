@@ -149,11 +149,14 @@ public class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, newText, animated);
     }
 
-    @NotNull
+    @Nullable
     @Override
     protected TextAttributes getTextAttributes(@NotNull Editor editor) {
-      return editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
-                                                                : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+      if (step > steps || startWidth != 0) {
+        return editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED
+                                                                  : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+      }
+      return null;
     }
 
     @Nullable
@@ -179,11 +182,6 @@ public class ParameterHintsPresentationManager implements Disposable {
     public int calcWidthInPixels(@NotNull Editor editor) {
       int endWidth = super.calcWidthInPixels(editor);
       return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
-    }
-
-    @Override
-    protected boolean shouldPaintText() {
-      return step > steps || startWidth != 0;
     }
 
     @Override
