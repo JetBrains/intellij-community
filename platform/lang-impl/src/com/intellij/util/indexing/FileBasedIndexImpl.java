@@ -2102,7 +2102,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
     @Override
     public boolean processFile(@NotNull final VirtualFile file) {
-      try (AccessToken ignore = ReadAction.start()) {
+      return ReadAction.compute(()->{
         if (!file.isValid()) {
           return true;
         }
@@ -2164,7 +2164,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
         ProgressManager.checkCanceled();
         return true;
-      }
+      });
     }
   }
 

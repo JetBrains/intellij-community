@@ -439,11 +439,6 @@ public class BraceHighlightingHandler {
       return;
     }
 
-    EditorColorsScheme scheme = myEditor.getColorsScheme();
-    final TextAttributes attributes =
-      matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
-              : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
-
     if (rBrace != null && !scopeHighlighting) {
       highlightBrace(rBrace, matched);
     }
@@ -463,10 +458,7 @@ public class BraceHighlightingHandler {
       if (endLine - startLine > 0) {
         final Runnable runnable = () -> {
           if (myProject.isDisposed() || myEditor.isDisposed()) return;
-          Color color = attributes.getBackgroundColor();
-          if (color == null) return;
-          color = ColorUtil.isDark(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
-          lineMarkFragment(startLine, endLine, color);
+          lineMarkFragment(startLine, endLine, matched);
         };
 
         if (!scopeHighlighting) {
@@ -565,7 +557,7 @@ public class BraceHighlightingHandler {
     removeLineMarkers();
   }
 
-  private void lineMarkFragment(int startLine, int endLine, @NotNull Color color) {
+  private void lineMarkFragment(int startLine, int endLine, boolean matched) {
     removeLineMarkers();
 
     if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
@@ -573,8 +565,11 @@ public class BraceHighlightingHandler {
     int startOffset = myDocument.getLineStartOffset(startLine);
     int endOffset = myDocument.getLineStartOffset(endLine);
 
+    LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
+    if (renderer == null) return;
+
     RangeHighlighter highlighter = myEditor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
-    highlighter.setLineMarkerRenderer(new MyLineMarkerRenderer(color));
+    highlighter.setLineMarkerRenderer(renderer);
     myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, highlighter);
   }
 
@@ -585,6 +580,20 @@ public class BraceHighlightingHandler {
       marker.dispose();
     }
     myEditor.putUserData(LINE_MARKER_IN_EDITOR_KEY, null);
+  }
+
+  @Nullable
+  public static LineMarkerRenderer createLineMarkerRenderer(boolean matched) {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    final TextAttributes attributes =
+      matched ? scheme.getAttributes(CodeInsightColors.MATCHED_BRACE_ATTRIBUTES)
+        : scheme.getAttributes(CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES);
+
+    Color color = attributes.getBackgroundColor();
+    if (color == null) return null;
+
+    color = ColorUtil.isDark(scheme.getDefaultBackground()) ? ColorUtil.shift(color, 1.5d) : color.darker();
+    return new MyLineMarkerRenderer(color);
   }
 
   private static class MyLineMarkerRenderer implements LineMarkerRenderer {

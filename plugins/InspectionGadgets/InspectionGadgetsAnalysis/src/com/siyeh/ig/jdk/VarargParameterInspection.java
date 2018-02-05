@@ -151,11 +151,8 @@ public class VarargParameterInspection extends BaseInspection {
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
         argumentList.deleteChildRange(firstArgument, arguments[arguments.length - 1]);
-        argumentList.add(arrayExpression);
       }
-      else {
-        argumentList.add(arrayExpression);
-      }
+      argumentList.add(arrayExpression);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
       CodeStyleManager.getInstance(project).reformat(argumentList);
     }

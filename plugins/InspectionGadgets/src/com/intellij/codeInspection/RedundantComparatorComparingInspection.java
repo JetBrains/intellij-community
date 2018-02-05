@@ -58,15 +58,16 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
         }
         String name = comparingCall.getMethodExpression().getReferenceName();
         holder
-          .registerProblem(comparingCall.getMethodExpression(), "Unnecessary '" + name + "' call", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                           new DeleteComparingCallFix(name, targetMethod));
+          .registerProblem(comparingCall.getMethodExpression(),
+                           InspectionsBundle.message("inspection.redundant.comparator.comparing.message", name),
+                           ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteComparingCallFix(name, targetMethod));
       }
     };
   }
 
   static class DeleteComparingCallFix implements LocalQuickFix {
-    private String mySourceMethod;
-    private String myTargetMethod;
+    private final String mySourceMethod;
+    private final String myTargetMethod;
 
     public DeleteComparingCallFix(String sourceMethod, String targetMethod) {
       mySourceMethod = sourceMethod;
@@ -78,15 +79,15 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     @Override
     public String getName() {
       return myTargetMethod.equals("thenComparing")
-             ? "Remove '" + mySourceMethod + "' call"
-             : "Remove '" + mySourceMethod + "' call and use '" + myTargetMethod + "'";
+             ? InspectionsBundle.message("inspection.redundant.comparator.comparing.fix.remove.name", mySourceMethod)
+             : InspectionsBundle.message("inspection.redundant.comparator.comparing.fix.replace.name", mySourceMethod, myTargetMethod);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Remove redundant call";
+      return InspectionsBundle.message("inspection.redundant.comparator.comparing.fix.family.name");
     }
 
     @Override

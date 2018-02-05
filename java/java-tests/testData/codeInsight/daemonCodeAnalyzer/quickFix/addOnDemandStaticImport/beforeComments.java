@@ -7,6 +7,12 @@ class Foo {
     }
 
     void test2(String[] foos, String[] bars) {
-        System.out.println(Arrays/*foos1*/./*foos2*/asList(foos)+":"+Arrays/*bars1*/./*bars2*/asList(bars));
+        System.out.println(/*foos0*/Arrays/*foos1*/./*foos2*/asList(foos)+":"+/*bars0*/Arrays/*bars1*/./*bars2*/asList(bars));
+    }
+
+    void test3(String[] foos, String[] bars) {
+        System.out.println(Arrays.//line comment
+                           asList(foos)+":"+Arrays.//line comment
+                                                    asList(bars));
     }
 }

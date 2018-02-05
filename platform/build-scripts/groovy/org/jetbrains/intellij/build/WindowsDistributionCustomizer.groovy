@@ -73,8 +73,8 @@ abstract class WindowsDistributionCustomizer {
   List<String> customNsiConfigurationFiles = []
 
   /**
-   * Path to silent.config which contains set of properties to manage UI options to install product in silent mode
-   * Default version (equals null): community/platform/build-scripts/resources/win/nsis/silent.config
+   * Path to a file which contains set of properties to manage UI options when installing the product in silent mode. If {@code null}
+   * the default platform/build-scripts/resources/win/nsis/silent.config will be used.
    */
   String silentInstallationConfig = null
 

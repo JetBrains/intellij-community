@@ -449,7 +449,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-21408
   public void testClassMetaAttrsAgainstStructural() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testCallableInstanceAgainstCallable() {
@@ -469,5 +469,55 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   // PY-28017
   public void testModuleWithGetAttr() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolWithImplementedMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolWithImplementedVariable() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstMergedTypingProtocols() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstGenericTypingProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstRecursiveTypingProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolWrongTypes() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testTypingProtocolAgainstProtocol() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26628
+  public void testAgainstTypingProtocolDefinition() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-26628
+  public void testTypingProtocolsInheritorAgainstHashable() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 }

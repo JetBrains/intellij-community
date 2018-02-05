@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -26,7 +27,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
+public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
@@ -63,10 +64,5 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   @Override
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
-  }
-
-  @Override
-  protected boolean fillBackgroundForIndeterminateSameAsForSelected() {
-    return false;
   }
 }

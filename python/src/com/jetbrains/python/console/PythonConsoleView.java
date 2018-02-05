@@ -102,7 +102,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk,  final boolean testMode) {
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
@@ -215,7 +215,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
                   if (editor != null) {
                     UIUtil.invokeLaterIfNeeded(
                       () -> HintManager.getInstance()
-                        .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+                                       .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
                   }
                   return;
                 }
@@ -226,7 +226,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
               }
             }
           });
-        } else {
+        }
+        else {
           requestFocus();
         }
       }
@@ -246,8 +247,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (psiFile != null) {
           CommandProcessor.getInstance().runUndoTransparentAction(() ->
                                                                     CodeStyleManager.getInstance(getProject())
-                                                                      .adjustLineIndent(psiFile,
-                                                                                        new TextRange(0, psiFile.getTextLength())));
+                                                                                    .adjustLineIndent(psiFile,
+                                                                                                      new TextRange(0, psiFile
+                                                                                                        .getTextLength())));
         }
       });
       int oldOffset = getConsoleEditor().getCaretModel().getOffset();
@@ -390,7 +392,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     EditorEx viewer = getHistoryViewer();
     DocumentEx document = viewer.getDocument();
     RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
-      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+                                                     .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
+                                                                          HighlighterTargetArea.EXACT_RANGE);
     final String prompt;
     if (isMainPrompt) {
       prompt = myPromptView.getMainPrompt();
@@ -524,5 +527,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public boolean isShowVars() {
     return isShowVars;
+  }
+
+  public void whenInitialized(Runnable runnable) {
+    myInitialized.doWhenDone(runnable);
   }
 }

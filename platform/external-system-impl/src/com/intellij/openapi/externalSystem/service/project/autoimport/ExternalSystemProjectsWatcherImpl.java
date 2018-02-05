@@ -9,6 +9,7 @@ import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
@@ -72,6 +73,8 @@ import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
  */
 public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotificationListenerAdapter
   implements ExternalSystemProjectsWatcher {
+
+  private static final Logger LOG = Logger.getInstance(ExternalSystemProjectsWatcherImpl.class);
 
   private static final ExtensionPointName<Contributor> EP_NAME =
     ExtensionPointName.create("com.intellij.externalProjectWatcherContributor");
@@ -300,6 +303,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       }
     }
     else {
+      LOG.debug("Scheduling new external project update notification", new Throwable("Schedule update call trace"));
       myUpdatesQueue.queue(new Update(Pair.create(systemId, projectPath)) {
         @Override
         public void run() {
@@ -442,9 +446,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private static void makeUserAware(final MergingUpdateQueue mergingUpdateQueue, final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
       multicaster.addCaretListener(new CaretListener() {
@@ -483,10 +485,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           }
         }
       });
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   private static class MyNotification extends Notification {

@@ -72,7 +72,7 @@ open class UsageViewSettings(
   var isShowModules by property(false)
 
   @get:OptionTag("IS_PREVIEW_USAGES")
-  var isPreviewUsages by property(false)
+  var isPreviewUsages by property(true)
 
   @get:OptionTag("IS_SORT_MEMBERS_ALPHABETICALLY")
   var isSortAlphabetically by property(false)

@@ -76,7 +76,6 @@ public class BuildOperations {
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
-    fsState.clearDeletedPaths(target);
     final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
     for (final Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext(); ) {
       final String path = it.next();

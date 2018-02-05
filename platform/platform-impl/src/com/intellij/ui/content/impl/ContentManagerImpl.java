@@ -493,11 +493,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
       if (enabledFocus) {
         return getFocusManager().requestFocus(myComponent, true).doWhenProcessed(() -> selection.run().notify(result));
       }
-      return selection.run().notify(result);
     }
-    else {
-      return selection.run().notify(result);
-    }
+    return selection.run().notify(result);
   }
 
   private boolean isSelectionHoldsFocus() {

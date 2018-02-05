@@ -31,6 +31,9 @@
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
+    </component>
   </project-components>
 
   <actions>
@@ -410,6 +413,7 @@
                                  id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title"
                                  bundle="messages.JavadocBundle"/>
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
 
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
@@ -424,6 +428,7 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.JavaCodeStyleSettingsProvider"/>
+    <externalSystem.codeStyleConfigurationImporter implementation="com.intellij.psi.codeStyle.JavaCodeStyleImporter" />
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>

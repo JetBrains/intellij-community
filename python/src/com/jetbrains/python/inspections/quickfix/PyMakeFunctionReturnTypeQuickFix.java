@@ -47,6 +47,7 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
     myReturnTypeName = (returnTypeName == null) ? PythonDocumentationProvider.getTypeName(function.getReturnStatementType(context), context) : returnTypeName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     PyFunction function = myFunction.getElement();
@@ -54,11 +55,13 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
     return PyBundle.message("QFIX.NAME.make.$0.return.$1", functionName, myReturnTypeName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("QFIX.NAME.make.$0.return.$1", "function", "inferred type");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (myAnnotation != null) {
@@ -66,7 +69,7 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
       if (annotation != null) {
         final PyExpression annotationExpr = annotation.getValue();
         if (annotationExpr == null) return;
-        annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON30, myReturnTypeName));
+        annotationExpr.replace(elementGenerator.createExpressionFromText(LanguageLevel.PYTHON34, myReturnTypeName));
       }
     }
     else if (myTypeCommentAnnotation != null) {

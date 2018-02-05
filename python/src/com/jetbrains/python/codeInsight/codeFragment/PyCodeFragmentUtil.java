@@ -100,7 +100,7 @@ public class PyCodeFragmentUtil {
     }
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
-    if (yieldsFound && LanguageLevel.forElement(owner).isOlderThan(LanguageLevel.PYTHON33)) {
+    if (yieldsFound && LanguageLevel.forElement(owner).isPython2()) {
       throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.yield"));
     }
     final boolean isAsync = owner instanceof PyFunction && ((PyFunction)owner).isAsync();

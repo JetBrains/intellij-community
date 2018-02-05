@@ -340,6 +340,11 @@
       <category>Python</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyAnnotateVariableTypeIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
     <testFinder implementation="com.jetbrains.python.codeInsight.testIntegration.PyTestFinder"/>
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
 
@@ -417,7 +422,8 @@
     <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Missing type hinting for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
     <localInspection language="Python" shortName="PyOverloadsInspection" suppressId="PyOverloads" displayName="Overloads in regular Python files" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOverloadsInspection"/>
     <localInspection language="Python" shortName="PyNamedTupleInspection" suppressId="PyNamedTuple" displayName="Namedtuple definition" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNamedTupleInspection"/>
-    <localInspection language="Python" shortName="PyDataclassInspection" suppressId="PyDataclass" displayName="Dataclass definition" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
+    <localInspection language="Python" shortName="PyDataclassInspection" suppressId="PyDataclass" displayName="Dataclass definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
+    <localInspection language="Python" shortName="PyProtocolInspection" suppressId="PyProtocol" displayName="Protocol definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyProtocolInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
@@ -631,6 +637,8 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
     <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
+
+    <consoleFilterProvider implementation="com.jetbrains.python.run.PyMessageFilterProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -706,6 +714,7 @@
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassesTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibModuleMembersProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
     <canonicalPathProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibCanonicalPathProvider"/>

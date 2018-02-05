@@ -42,8 +42,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -230,7 +230,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         UISettings.setupAntialiasing(gg);
       }
       gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = JBUI.alignToIntGrid(gg, true, false);
+      AffineTransform origTx = PaintUtil.alignToInt(gg, true, false);
       myEditor.paint(gg);
       if (origTx != null) gg.setTransform(origTx);
     }

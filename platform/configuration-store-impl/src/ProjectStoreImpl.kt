@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -50,9 +36,6 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
-import java.io.IOException
-import java.nio.file.FileAlreadyExistsException
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -132,7 +115,7 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
   }
 
   // used in upsource
-  protected fun setPath(filePath: String, refreshVfs: Boolean, useOldWorkspaceContentIfExists: Boolean) {
+  protected fun setPath(filePath: String, refreshVfs: Boolean) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
     if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
@@ -161,10 +144,6 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
-
-      if (useOldWorkspaceContentIfExists && !Paths.get(filePath).isDirectory()) {
-        useOldWorkspaceContent(filePath, Paths.get(workspaceFilePath))
-      }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
@@ -274,7 +253,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
 
   override fun setPath(path: String) {
-    setPath(path, true, true)
+    setPath(path, true)
   }
 
   override fun getProjectName(): String {
@@ -409,20 +388,3 @@ private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
 }
 
 private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
-
-private fun useOldWorkspaceContent(filePath: String, newWorkspacePath: Path) {
-  if (newWorkspacePath.exists()) {
-    return
-  }
-
-  try {
-    Paths.get(composeFileBasedProjectWorkSpacePath(filePath)).copy(newWorkspacePath)
-  }
-  catch (ignored: NoSuchFileException) {
-  }
-  catch (ignored: FileAlreadyExistsException) {
-  }
-  catch (e: IOException) {
-    LOG.error(e)
-  }
-}

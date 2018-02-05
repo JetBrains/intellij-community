@@ -74,7 +74,7 @@ public class BlockUtils {
       return statement;
     }
     final PsiBlockStatement blockStatement = (PsiBlockStatement)
-      JavaPsiFacade.getElementFactory(statement.getProject()).createStatementFromText("{}", statement);
+      JavaPsiFacade.getElementFactory(statement.getProject()).createStatementFromText("{\n}", statement);
     blockStatement.getCodeBlock().add(statement);
     final PsiBlockStatement result = (PsiBlockStatement)statement.replace(blockStatement);
 

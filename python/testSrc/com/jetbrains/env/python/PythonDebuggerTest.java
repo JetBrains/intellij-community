@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
 /**
  * @author traff
  */
-
+@Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
   private class BreakpointStopAndEvalTask extends PyDebuggerTask {
     public BreakpointStopAndEvalTask(String scriptName) {

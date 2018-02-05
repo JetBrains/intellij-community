@@ -4,6 +4,7 @@
 package org.jetbrains.yaml.meta.model;
 
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,12 @@ public abstract class YamlMetaType {
   @Contract(pure = true)
   public String getDisplayName() {
     return myDisplayName;
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public Icon getIcon() {
+    return AllIcons.Json.Object;
   }
 
   public void setDisplayName(@NotNull final String displayName) {

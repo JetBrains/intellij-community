@@ -28,7 +28,7 @@ import com.intellij.openapi.project.Project
  */
 class InspectionsProfileConfigurationHandler: ConfigurationHandler {
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val inspectionsSettings: Map<String, *> = configuration.find("inspections") as? Map<String,*> ?: return
+    val listOfInspectionConfigObjects: List<*> = configuration.find("inspections") as? List<*> ?: return
 
     val gradleProfileName = "Gradle Imported"
     val profileManager = ProjectInspectionProfileManager.getInstance(project)

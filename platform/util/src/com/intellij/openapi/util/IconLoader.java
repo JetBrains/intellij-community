@@ -389,7 +389,7 @@ public final class IconLoader {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
     if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1), SYS_SCALE.of(1)));
+      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity());
       if (img != null) {
         icon = new ImageIcon(img);
       }

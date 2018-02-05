@@ -3,10 +3,12 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
 
 import java.util.Objects;
 
@@ -17,6 +19,18 @@ public class InsertLineComment extends ActionOnRange {
   public InsertLineComment(PsiFile file, int startOffset, String toInsert) {
     super(file, startOffset, startOffset);
     myToInsert = toInsert;
+  }
+
+  @Override
+  public void performCommand(@NotNull Environment env) {
+    PsiDocumentManager.getInstance(getProject()).commitDocument(getDocument());
+    
+    int randomOffset = env.generateValue(Generator.integers(0, getFile().getTextLength()), null);
+    PsiElement leaf = getFile().findElementAt(randomOffset);
+    TextRange leafRange = leaf != null ? leaf.getTextRange() : null;
+    int insertOffset = leafRange != null ? leafRange.getEndOffset() : 0;
+    env.logMessage("Inserting '" + StringUtil.escapeStringCharacters(myToInsert) + "' at " + insertOffset + " in " + getPath());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(insertOffset, myToInsert));
   }
 
   public static Generator<InsertLineComment> insertComment(@NotNull PsiFile psiFile, String validComment) {
@@ -34,7 +48,7 @@ public class InsertLineComment extends ActionOnRange {
 
   @Override
   public String toString() {
-    return "LineComment{" + getVirtualFile().getPath() + " " + getCurrentStartOffset() + " " + myToInsert + "}";
+    return "LineComment{" + getPath() + " " + getCurrentStartOffset() + " " + myToInsert + "}";
   }
 
   @Override
@@ -46,6 +60,6 @@ public class InsertLineComment extends ActionOnRange {
     TextRange range = getFinalRange();
     if (range == null) return;
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(range.getStartOffset(), myToInsert + "\n"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(range.getStartOffset(), myToInsert));
   }
 }

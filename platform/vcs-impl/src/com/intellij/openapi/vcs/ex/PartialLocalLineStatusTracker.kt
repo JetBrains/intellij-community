@@ -32,7 +32,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
@@ -74,28 +75,27 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
   private var hasUndoInCommand: Boolean = false
-  private var undoModificationStamp: Int = 0
+
+  private val undoableActions: WeakList<MyUndoableAction> = WeakList()
 
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
-
     affectedChangeLists.add(defaultMarker.changelistId)
-
-    documentTracker.addListener(MyLineTrackerListener())
-    assert(blocks.isEmpty())
 
     val connection = application.messageBus.connect(disposable)
     connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
-    if (Registry.`is`("vcs.enable.partial.changelists.undo")) {
-      document.addDocumentListener(MyUndoDocumentListener(), disposable)
-      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
-    }
+    document.addDocumentListener(MyUndoDocumentListener(), disposable)
+    CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+    Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+
+    assert(blocks.isEmpty())
   }
 
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
                                                         this.marker.changelistId)
 
+  override fun createDocumentTrackerHandler(): DocumentTracker.Handler = PartialDocumentTrackerHandler()
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
@@ -141,6 +141,7 @@ class PartialLocalLineStatusTracker(project: Project,
     currentMarker = if (changelistId != null) ChangeListMarker(changelistId) else null
     try {
       setBaseRevision(vcsContent)
+      dropExistingUndoActions()
     }
     finally {
       currentMarker = null
@@ -202,7 +203,7 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    undoModificationStamp++
+    dropExistingUndoActions()
     updateAffectedChangeLists(false) // no need to notify CLM, as we're inside it's action
 
     for (block in affectedBlocks) {
@@ -231,11 +232,21 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
+  private fun dropExistingUndoActions() {
+    val actions = undoableActions.copyAndClear()
+    for (action in actions) {
+      action.drop()
+    }
+  }
+
+  @CalledInAwt
   private fun registerUndoAction(undo: Boolean) {
     val undoState = documentTracker.readLock {
       blocks.map { RangeState(it.range, it.marker.changelistId) }
     }
-    undoManager.undoableActionPerformed(MyUndoableAction(project, document, undoModificationStamp, undoState, undo))
+    val action = MyUndoableAction(project, document, undoState, undo)
+    undoManager.undoableActionPerformed(action)
+    undoableActions.add(action)
   }
 
   private inner class MyBatchFileChangeListener : BatchFileChangeListener {
@@ -259,14 +270,18 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  private inner class MyLineTrackerListener : DocumentTracker.Listener {
+  private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
     override fun onRangeAdded(block: Block) {
+      super.onRangeAdded(block)
+
       if (block.ourData.marker == null) { // do not override markers, that are set via other methods of this listener
         block.marker = defaultMarker
       }
     }
 
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
+      super.onRangeRefreshed(before, after)
+
       val marker = before.marker
       for (block in after) {
         block.marker = marker
@@ -274,6 +289,8 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangesChanged(before: List<Block>, after: Block) {
+      super.onRangesChanged(before, after)
+
       val affectedMarkers = before.map { it.marker }.distinct()
 
       val _currentMarker = currentMarker
@@ -292,13 +309,17 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangeShifted(before: Block, after: Block) {
+      super.onRangeShifted(before, after)
+
       after.marker = before.marker
     }
 
     override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
+      val superMergeable = super.onRangesMerged(range1, range2, merged)
+
       if (range1.marker == range2.marker) {
         merged.marker = range1.marker
-        return true
+        return superMergeable
       }
 
       if (range1.range.isEmpty || range2.range.isEmpty) {
@@ -311,25 +332,33 @@ class PartialLocalLineStatusTracker(project: Project,
         else {
           merged.marker = range1.marker
         }
-        return true
+        return superMergeable
       }
 
       return false
     }
 
     override fun afterRefresh() {
+      super.afterRefresh()
+
       updateAffectedChangeLists()
     }
 
     override fun afterRangeChange() {
+      super.afterRangeChange()
+
       updateAffectedChangeLists()
     }
 
     override fun afterExplicitChange() {
+      super.afterExplicitChange()
+
       updateAffectedChangeLists()
     }
 
     override fun onUnfreeze(side: Side) {
+      super.onUnfreeze(side)
+
       if (isValid()) eventDispatcher.multicaster.onBecomingValid()
     }
   }
@@ -447,7 +476,7 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    undoModificationStamp++
+    dropExistingUndoActions()
     updateAffectedChangeLists()
   }
 
@@ -514,11 +543,14 @@ class PartialLocalLineStatusTracker(project: Project,
   private class MyUndoableAction(
     project: Project,
     document: Document,
-    val undoModificationStamp: Int,
-    val states: List<RangeState>,
+    var states: List<RangeState>?,
     val undo: Boolean
   ) : BasicUndoableAction(document) {
     val projectRef: WeakReference<Project> = WeakReference(project)
+
+    fun drop() {
+      states = null
+    }
 
     override fun undo() {
       if (undo) restore()
@@ -531,11 +563,11 @@ class PartialLocalLineStatusTracker(project: Project,
     private fun restore() {
       val document = affectedDocuments!!.single().document
       val project = projectRef.get()
-      if (document != null && project != null) {
+      val rangeStates = states
+      if (document != null && project != null && rangeStates != null) {
         val tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
-        if (tracker is PartialLocalLineStatusTracker &&
-            tracker.undoModificationStamp == undoModificationStamp) {
-          tracker.restoreState(states)
+        if (tracker is PartialLocalLineStatusTracker) {
+          tracker.restoreState(rangeStates)
         }
       }
     }

@@ -89,13 +89,10 @@ class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider
       final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
       String toolTip = composite.getToolTip();
       MyRenderer myRenderer = new MyRenderer(toolTip == null ? null : UIUtil.convertSpace2Nbsp(toolTip), new Object[]{highlighters});
-      if (bigRenderer == null) {
-        bigRenderer = myRenderer;
-      }
-      else {
+      if (bigRenderer != null) {
         myRenderer.addBelow(bigRenderer.getText());
-        bigRenderer = myRenderer;
       }
+      bigRenderer = myRenderer;
     }
     return bigRenderer;
   }

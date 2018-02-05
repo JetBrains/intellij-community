@@ -176,7 +176,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     private final String myFusedSteps;
     private final boolean myStrictMode;
 
-    public FuseStreamOperationsFix(String fusedSteps, boolean strictMode) {
+    FuseStreamOperationsFix(String fusedSteps, boolean strictMode) {
       myFusedSteps = fusedSteps;
       myStrictMode = strictMode;
     }

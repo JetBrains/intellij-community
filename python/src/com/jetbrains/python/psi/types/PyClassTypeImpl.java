@@ -85,6 +85,13 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return myClass;
   }
 
+
+  @NotNull
+  @Override
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return getPyClass();
+  }
+
   /**
    * @return whether this type refers to an instance or a definition of the class.
    */
@@ -370,7 +377,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       );
     }
 
-    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+    if (LanguageLevel.forElement(myClass).isPython2() && !newStyleClass) {
       return classMembers;
     }
 
@@ -891,5 +898,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     public boolean value(final PsiElement target) {
       return (instance != target);
     }
+  }
+
+  @Override
+  public void accept(@NotNull PyTypeVisitor visitor) {
+    visitor.visitClassType(this);
   }
 }

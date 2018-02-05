@@ -25,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
  * @since 6.0
  */
 public interface RefParameter extends RefJavaElement {
+  Object VALUE_IS_NOT_CONST = new Object();
+  Object VALUE_UNDEFINED = new Object();
+
   /**
    * Checks if the parameter is used for reading.
    *
@@ -49,11 +52,11 @@ public interface RefParameter extends RefJavaElement {
   /**
    * If all invocations of the method pass the same value to the parameter, returns
    * that value (the name of a static final field or the text of a literal expression).
-   * Otherwise, returns null.
+   * Otherwise, returns {@link RefParameter#VALUE_IS_NOT_CONST}.
    *
    * @return the parameter value or null if it's different or impossible to determine.
    */
-  @Nullable String getActualValueIfSame();
+  @Nullable Object getActualValueIfSame();
 
   /**
    * Marks the parameter as referenced for reading or writing.

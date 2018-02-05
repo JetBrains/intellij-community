@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -20,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -524,7 +523,7 @@ public class CaptureConfigurable implements SearchableConfigurable {
           });
       }
     }
-    catch (IndexNotReadyException ignore) {
+    catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
     catch (Exception e) {
       LOG.error(e);

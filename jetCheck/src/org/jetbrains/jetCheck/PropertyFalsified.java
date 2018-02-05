@@ -26,12 +26,12 @@ public class PropertyFalsified extends RuntimeException {
 
   private String calcMessage() {
     StringBuilder traceBuilder = new StringBuilder();
-    
-    String msg = "Falsified on " + valueToString(failure.getMinimalCounterexample(), traceBuilder) + "\n" +
-                 getMinimizationStats() +
-                 failure.iteration.printToReproduce();
 
     Throwable failureReason = failure.getMinimalCounterexample().getExceptionCause();
+    String msg = "Falsified on " + valueToString(failure.getMinimalCounterexample(), traceBuilder) + "\n" +
+                 getMinimizationStats() +
+                 failure.iteration.printToReproduce(failureReason);
+
     if (failureReason != null) {
       Throwable rootCause = getRootCause(failureReason);
       appendTrace(traceBuilder, 
@@ -106,7 +106,7 @@ public class PropertyFalsified extends RuntimeException {
     List<String> result = new ArrayList<>();
     for (StackTraceElement element : e.getStackTrace()) {
       String s = element.toString();
-      if (s.startsWith("org.jetbrains.jetCheck.CounterExampleImpl.checkProperty")) {
+      if (s.startsWith("org.jetbrains.jetCheck.") && !s.contains("Test.")) {
         break;
       }
       result.add(s);

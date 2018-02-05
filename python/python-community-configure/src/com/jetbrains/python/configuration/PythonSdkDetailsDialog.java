@@ -53,6 +53,7 @@ import com.jetbrains.python.remote.PyRemoteSourceItem;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private Set<SdkModificator> myModifiedModificators = new HashSet<>();
   private final Project myProject;
 
-  private boolean myShowOtherProjectVirtualenvs = true;
+  private boolean myHideOtherProjectVirtualenvs = false;
   private final Module myModule;
   private Runnable mySdkSettingsWereModified;
   private NullableConsumer<Sdk> myShowMoreCallback;
@@ -237,12 +238,14 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   }
 
   private void refreshSdkList() {
-    final List<Sdk> pythonSdks = myInterpreterList.getAllPythonSdks(myProject);
+    final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     Sdk projectSdk = getSdk();
-    if (!myShowOtherProjectVirtualenvs) {
-      VirtualEnvProjectFilter.removeNotMatching(myProject, pythonSdks);
-    }
-    //noinspection unchecked
+    final List<Sdk> notAssociatedWithOtherProjects = StreamEx
+      .of(allPythonSdks)
+      .filter(sdk -> !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .toList();
+
+    final List<Sdk> pythonSdks = myHideOtherProjectVirtualenvs ? notAssociatedWithOtherProjects : allPythonSdks;
     mySdkList.setModel(new CollectionListModel<>(pythonSdks));
 
     mySdkListChanged = false;
@@ -418,17 +421,17 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private class ToggleVirtualEnvFilterButton extends ToggleActionButton implements DumbAware {
     public ToggleVirtualEnvFilterButton() {
-      super(PyBundle.message("sdk.details.dialog.show.all.virtual.envs"), AllIcons.General.Filter);
+      super(PyBundle.message("sdk.details.dialog.hide.all.virtual.envs"), AllIcons.General.Filter);
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myShowOtherProjectVirtualenvs;
+      return myHideOtherProjectVirtualenvs;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      myShowOtherProjectVirtualenvs = state;
+      myHideOtherProjectVirtualenvs = state;
       refreshSdkList();
       updateOkButton();
     }

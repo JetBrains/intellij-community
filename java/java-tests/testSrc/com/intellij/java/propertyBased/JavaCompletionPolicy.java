@@ -42,7 +42,7 @@ class JavaCompletionPolicy extends CompletionPolicy {
 
   // a language where there are bugs in completion which maintainers of this Java-specific tests can't or don't want to fix
   private static boolean isBuggyInjection(@NotNull PsiFile file) {
-    return Arrays.asList("XML", "HTML").contains(file.getLanguage().getID());
+    return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
   }
 
   @Override

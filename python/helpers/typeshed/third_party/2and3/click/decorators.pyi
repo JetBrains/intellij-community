@@ -174,6 +174,7 @@ def version_option(
     cls: Type[Option] = ...,
     # Option
     prog_name: Optional[str] = ...,
+    message: Optional[str] = ...,
     show_default: bool = ...,
     prompt: Union[bool, Text] = ...,
     confirmation_prompt: bool = ...,

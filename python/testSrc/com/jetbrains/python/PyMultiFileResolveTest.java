@@ -39,8 +39,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   private static void checkInitPyDir(PsiElement elt, String dirname) {
     assertTrue(elt instanceof PyFile);
     PyFile f = (PyFile)elt;
-    assertEquals(f.getName(), "__init__.py");
-    assertEquals(f.getContainingDirectory().getName(), dirname);
+    assertEquals("__init__.py", f.getName());
+    assertEquals(dirname, f.getContainingDirectory().getName());
   }
 
   public void testSimple() {
@@ -348,12 +348,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7156
   public void testPython33NamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PsiDirectory.class, "p1"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PsiDirectory.class, "p1"));
   }
 
   // PY-7156
   public void testFromPython33NamespacePackageImport() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PyFunction.class, "foo"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFunction.class, "foo"));
   }
 
   // PY-7775
@@ -392,7 +392,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7378
   public void testModuleInDeeplyNestedNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PyFile.class, "m1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFile.class, "m1.py"));
   }
 
   public void testKeywordArgument() {
@@ -532,5 +532,9 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
     final PyType type = typeEvalContext.getType((PyTypedElement) resolved);
     assertInstanceOf(type, PyClassType.class);
+  }
+
+  public void testImportAliasTargetReference() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
   }
 }

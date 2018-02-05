@@ -1420,7 +1420,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
 
-    if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && getMetaClassQName() == null) {
+    if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null) {
       final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
       final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
 
@@ -1493,7 +1493,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     final LanguageLevel level = LanguageLevel.forElement(this);
-    if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+    if (level.isPython2()) {
       final PsiFile file = getContainingFile();
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
@@ -1589,7 +1589,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyExpression getMetaClassExpression() {
     final LanguageLevel level = LanguageLevel.forElement(this);
-    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+    if (!level.isPython2()) {
       // Requires AST access
       for (PyExpression expression : getSuperClassExpressions()) {
         if (expression instanceof PyKeywordArgument) {

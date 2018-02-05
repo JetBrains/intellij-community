@@ -52,26 +52,24 @@ public abstract class AbstractOpeningExpander implements Expander {
     // then expanded
     myBrowser.expandNode(node);
 
-    if (ExpandVariants.EXPAND_AND_EXIT.equals(expandVariant)) {
-      removeSelf();
-    } else {
+    if (!ExpandVariants.EXPAND_AND_EXIT.equals(expandVariant)) {
       final Enumeration children = node.children();
       while (children.hasMoreElements()) {
-        final TreeNode treeNode = (TreeNode) children.nextElement();
+        final TreeNode treeNode = (TreeNode)children.nextElement();
         if (treeNode instanceof RepositoryTreeNode) {
-          final RepositoryTreeNode repositoryTreeNode = (RepositoryTreeNode) treeNode;
+          final RepositoryTreeNode repositoryTreeNode = (RepositoryTreeNode)treeNode;
           Url childUrl = repositoryTreeNode.getURL();
           if (checkChild(childUrl)) {
             if (mySelectionPath.equals(childUrl)) {
               myBrowser.setSelectedNode(repositoryTreeNode);
             }
-              repositoryTreeNode.reload(this, false);
+            repositoryTreeNode.reload(this, false);
             return;
           }
         }
       }
-      removeSelf();
     }
+    removeSelf();
   }
 
   private void removeSelf() {

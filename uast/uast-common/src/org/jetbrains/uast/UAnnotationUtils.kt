@@ -6,6 +6,7 @@ package org.jetbrains.uast
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -21,7 +22,7 @@ fun getNameElement(uElement: UElement?): PsiElement? =
   when (uElement) {
     is UAnnotation -> uElement.namePsiElement
     is USimpleNameReferenceExpression -> uElement.sourcePsi
-    is UCallExpression -> uElement.methodIdentifier?.sourcePsi?.firstChild
+    is UCallExpression -> uElement.methodIdentifier?.sourcePsi?.let { PsiTreeUtil.getDeepestFirst(it) }
     else -> null
   }
 
@@ -46,10 +47,14 @@ fun getIdentifierAnnotationOwner(identifier: PsiElement): UDeclaration? =
 fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
   val originalParent = getUParentForIdentifier(identifier) ?: return null
   when (originalParent) {
-    is UAnnotation -> return originalParent
-    is UReferenceExpression -> {
-      val resolve = originalParent.resolve()
-      if (resolve is PsiClass && resolve.isAnnotationType) {
+    is UAnnotation ->
+      return originalParent
+
+    is UCallExpression ->
+      return if (isResolvedToAnnotation(originalParent.classReference)) originalParent else null
+
+    is UReferenceExpression ->
+      if (isResolvedToAnnotation(originalParent)) {
         val parentAnyway = originalParent.parentAnyway ?: return null
         val annotationLikeParent = parentAnyway
                                      .withContainingElements
@@ -58,11 +63,12 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
         if (annotationLikeParent !is UAnnotation && annotationLikeParent.uastParent is UAnnotation)
           return annotationLikeParent.uastParent
         return annotationLikeParent
-      }
     }
   }
   return null
 }
+
+private fun isResolvedToAnnotation(reference: UReferenceExpression?) = (reference?.resolve() as? PsiClass)?.isAnnotationType == true
 
 private val UElement.parentAnyway
   get() = uastParent ?: generateSequence(sourcePsi?.parent, { it.parent }).mapNotNull { it.toUElement() }.firstOrNull()

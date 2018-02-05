@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2015 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -30,18 +33,20 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import com.siyeh.ig.ui.UiUtils;
@@ -75,14 +80,16 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
 
   public OrderedSet<String> myStopClassSet = new OrderedSet<>();
 
-
-  private final ListWrappingTableModel myStopClassesModel = new ListWrappingTableModel(myStopClassSet, InspectionGadgetsBundle
-    .message("inspection.type.may.be.weakened.add.stop.class.selection.table"));
+  private final ListWrappingTableModel myStopClassesModel =
+    new ListWrappingTableModel(myStopClassSet,
+                               InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.table"));
 
   class AddStopWordQuickfix implements LowPriorityAction, LocalQuickFix {
     private final List<String> myCandidates;
 
-    AddStopWordQuickfix(List<String> candidates) {myCandidates = candidates;}
+    AddStopWordQuickfix(List<String> candidates) {
+      myCandidates = candidates;
+    }
 
     @Nls
     @NotNull
@@ -103,17 +110,19 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-      if (editor == null) return;
       if (myCandidates.size() == 1) {
-        addClass(myCandidates.get(0), project);
+        addClass(myCandidates.get(0), descriptor.getPsiElement());
         return;
       }
+      Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+      if (editor == null) return;
       String hint = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stop.class.selection.popup");
       ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>(hint, myCandidates) {
         @Override
         public PopupStep onChosen(String selectedValue, boolean finalChoice) {
-          addClass(selectedValue, project);
+          CommandProcessor.getInstance().executeCommand(project, () -> {
+            addClass(selectedValue, descriptor.getPsiElement());
+          }, InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper"), null);
           return super.onChosen(selectedValue, finalChoice);
         }
       });
@@ -147,8 +156,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
 
   private static boolean readOrDefault(Map<String, String> options, String name) {
     String value = options.get(name);
-    if(value == null) return true;
-    return Boolean.parseBoolean(value);
+    return value == null || Boolean.parseBoolean(value);
   }
 
   private void readStopClasses(@NotNull Element node) {
@@ -185,10 +193,29 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     node.addContent(optionElement);
   }
 
-  void addClass(@NotNull String stopClass, @NotNull Project project) {
+  void addClass(@NotNull String stopClass, @NotNull PsiElement context) {
     if (myStopClassSet.add(stopClass)) {
-      myStopClassesModel.fireTableDataChanged();
+      final Project project = context.getProject();
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+      final VirtualFile vFile = PsiUtilCore.getVirtualFile(context);
+      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
+        @Override
+        public void undo() {
+          myStopClassSet.remove(stopClass);
+          ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+        }
+
+        @Override
+        public void redo() {
+          myStopClassSet.add(stopClass);
+          ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+        }
+
+        @Override
+        public boolean isGlobal() {
+          return true;
+        }
+      });
     }
   }
 
@@ -198,12 +225,9 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.display.name");
   }
 
-  private static String getClassName(PsiClass aClass) {
+  static String getClassName(PsiClass aClass) {
     final String qualifiedName = aClass.getQualifiedName();
-    if (qualifiedName == null) {
-      return aClass.getName();
-    }
-    return qualifiedName;
+    return qualifiedName == null ? aClass.getName() : qualifiedName;
   }
 
   @Override
@@ -312,21 +336,15 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new TypeMayBeWeakenedVisitor(holder, isOnTheFly);
   }
 
-  private static PsiClass tryReplaceWithParentStopper(@NotNull PsiClass fromIncl,
-                                                      @NotNull PsiClass toIncl,
-                                                      Collection<String> stopClasses) {
-    for (PsiClass cls : InheritanceUtil.getSuperClasses(fromIncl)) {
-      if (!cls.isInheritor(toIncl, true)) continue;
-      String name = getClassName(cls);
-      if (name == null) continue;
-      if (stopClasses.contains(name)) {
-        return cls;
+  static PsiClass tryReplaceWithParentStopper(@NotNull PsiClass fromIncl, @NotNull PsiClass toIncl, Collection<String> stopClasses) {
+    for (PsiClass superClass : InheritanceUtil.getSuperClasses(fromIncl)) {
+      if (!superClass.isInheritor(toIncl, true)) continue;
+      if (stopClasses.contains(getClassName(superClass))) {
+        return superClass;
       }
     }
     return toIncl;
@@ -336,7 +354,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 
-    private TypeMayBeWeakenedVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    TypeMayBeWeakenedVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
     }
@@ -420,14 +438,6 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
 
 
-    private void filterJavaLangObject(Collection<PsiClass> weakestClasses, Project project, GlobalSearchScope scope) {
-      if (doNotWeakenToJavaLangObject) {
-        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-        final PsiClass javaLangObjectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, scope);
-        weakestClasses.remove(javaLangObjectClass);
-      }
-    }
-
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
@@ -464,7 +474,9 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         WeakestTypeFinder.calculateWeakestClassesNecessary(element,
                                                            useRighthandTypeAsWeakestTypeInAssignments,
                                                            useParameterizedTypeForCollectionMethods);
-      filterJavaLangObject(weakestClasses, element.getProject(), element.getResolveScope());
+      if (doNotWeakenToJavaLangObject) {
+        weakestClasses.remove(ClassUtils.findObjectClass(element));
+      }
       if (onlyWeakentoInterface) {
         for (Iterator<PsiClass> iterator = weakestClasses.iterator(); iterator.hasNext(); ) {
           final PsiClass weakestClass = iterator.next();
@@ -475,8 +487,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       }
 
       weakestClasses = weakestClasses.stream()
-        .map(psiClass -> tryReplaceWithParentStopper(originClass, psiClass, myStopClassSet))
-        .collect(Collectors.toList());
+                                     .map(psiClass -> tryReplaceWithParentStopper(originClass, psiClass, myStopClassSet))
+                                     .collect(Collectors.toList());
       return weakestClasses;
     }
 
@@ -494,7 +506,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         fixes.add(new TypeMayBeWeakenedFix(className));
         List<String> candidates = getInheritors(originalClass, weakestClass);
         candidates.removeAll(myStopClassSet);
-        if (!candidates.isEmpty()) {
+        if (!candidates.isEmpty() && (myIsOnTheFly || candidates.size() == 1)) {
           fixes.add(new AddStopWordQuickfix(candidates)); // not this class name, but all superclass names excluding this
         }
       }
@@ -528,7 +540,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   }
 
   @NotNull
-  private static List<String> getInheritors(PsiClass from, PsiClass to) {
+  static List<String> getInheritors(PsiClass from, PsiClass to) {
     List<String> candidates = new ArrayList<>();
     String fromName = getClassName(from);
     if (fromName != null) {
