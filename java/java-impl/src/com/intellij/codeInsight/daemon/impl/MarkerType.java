@@ -261,9 +261,6 @@ public class MarkerType {
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
     PsiElementProcessor.CollectElementsWithLimit<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
     final boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
-    JComponent component = e != null ? (e.getComponent() instanceof JComponent
-                           ? (JComponent)e.getComponent()
-                           : null) : null;
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
       OverridingMethodsSearch.search(method, scope,true).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
@@ -273,7 +270,7 @@ public class MarkerType {
           FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
         }
       }
-    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), component)) {
+    }, SEARCHING_FOR_OVERRIDING_METHODS, true, method.getProject(), (JComponent)e.getComponent())) {
       return;
     }
 
@@ -344,13 +341,12 @@ public class MarkerType {
 
     final PsiElementProcessor.FindElement<PsiClass> collectProcessor = new PsiElementProcessor.FindElement<>();
     final PsiElementProcessor.FindElement<PsiFunctionalExpression> collectExprProcessor = new PsiElementProcessor.FindElement<>();
-    JComponent component = e == null ? null : (JComponent)e.getComponent();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ClassInheritorsSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectProcessor));
       if (collectProcessor.getFoundElement() == null) {
         FunctionalExpressionSearch.search(aClass).forEach(new PsiElementProcessorAdapter<>(collectExprProcessor));
       }
-    }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), component)) {
+    }, SEARCHING_FOR_OVERRIDDEN_METHODS, true, aClass.getProject(), (JComponent)e.getComponent())) {
       return;
     }
 
