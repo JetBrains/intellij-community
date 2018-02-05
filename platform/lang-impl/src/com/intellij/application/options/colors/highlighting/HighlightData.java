@@ -4,6 +4,7 @@ package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -23,21 +24,24 @@ public class HighlightData {
   private final int myStartOffset;
   private int myEndOffset;
   private final TextAttributesKey myHighlightType;
+  private final ColorKey myAdditionalColorKey;
 
-  public HighlightData(int startOffset, TextAttributesKey highlightType) {
+  public HighlightData(int startOffset, TextAttributesKey highlightType, ColorKey additionalColorKey) {
     myStartOffset = startOffset;
     myHighlightType = highlightType;
+    myAdditionalColorKey = additionalColorKey;
   }
 
-  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType) {
+  public HighlightData(int startOffset, int endOffset, TextAttributesKey highlightType, ColorKey additionalColorKey) {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myHighlightType = highlightType;
+    myAdditionalColorKey = additionalColorKey;
   }
 
   public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
     list.add(this);
-    if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES));
+    if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES, getAdditionalColorKey()));
   }
 
   public void addHighlToView(final Editor view, EditorColorsScheme scheme, final Map<TextAttributesKey,String> displayText) {
@@ -88,5 +92,9 @@ public class HighlightData {
 
   public TextAttributesKey getHighlightKey() {
     return myHighlightType;
+  }
+  
+  public ColorKey getAdditionalColorKey() {
+    return myAdditionalColorKey;
   }
 }

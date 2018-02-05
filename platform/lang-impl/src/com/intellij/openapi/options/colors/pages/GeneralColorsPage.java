@@ -12,6 +12,7 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -28,6 +29,7 @@ import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -174,6 +176,11 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     }
   }
 
+  private static final Map<String, ColorKey> ADDITIONAL_COLOR_KEY_MAPPING = new HashMap<>();
+  static {
+    ADDITIONAL_COLOR_KEY_MAPPING.put("folded_text_with_highlighting", EditorColors.FOLDED_TEXT_BORDER_COLOR);
+  }
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -212,6 +219,12 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
+  }
+
+  @Nullable
+  @Override
+  public Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() {
+    return ADDITIONAL_COLOR_KEY_MAPPING;
   }
 
   @Override
