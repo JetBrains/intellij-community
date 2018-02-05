@@ -151,7 +151,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Nullable
-  private static VirtualFile getVirtualFile(@NotNull Document document) {
+  protected static VirtualFile getVirtualFile(@NotNull Document document) {
     final VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null || !virtualFile.isValid()) return null;
     return virtualFile;
@@ -888,7 +888,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return info;
   }
 
-  private SmartPointerManagerImpl getSmartPointerManager() {
+  protected SmartPointerManagerImpl getSmartPointerManager() {
     return (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
   }
 
