@@ -207,10 +207,13 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void acceptWordAsCorrect(@NotNull String word, Project project) {
-    acceptWordAsCorrect(word, null, project, DictionaryLevel.PROJECT, true); // TODO: or default
+    acceptWordAsCorrect(word, null, project, DictionaryLevel.PROJECT); // TODO: or default
   }
 
-  public void acceptWordAsCorrect(@NotNull String word, @Nullable VirtualFile file, @NotNull Project project, @NotNull DictionaryLevel dictionaryLevel, boolean notify) {
+  public void acceptWordAsCorrect(@NotNull String word,
+                                  @Nullable VirtualFile file,
+                                  @NotNull Project project,
+                                  @NotNull DictionaryLevel dictionaryLevel) {
     if (DictionaryLevel.NOT_SPECIFIED == dictionaryLevel) return;
 
     final String transformed = spellChecker.getTransformation().transform(word);

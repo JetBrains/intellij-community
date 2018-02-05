@@ -2,7 +2,6 @@
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -75,7 +74,6 @@ public class SaveTo implements SpellCheckerQuickFix {
     final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
     asyncResult.doWhenDone((Consumer<DataContext>)context -> {
       final SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-      final boolean notify = myWord != null; // no notification in batch mode
       final String wordToSave = myWord != null ? myWord : extractHighlightedText(descriptor, descriptor.getPsiElement());
       final VirtualFile file = descriptor.getPsiElement().getContainingFile().getVirtualFile();
       if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
@@ -85,12 +83,12 @@ public class SaveTo implements SpellCheckerQuickFix {
           .createListPopupBuilder(dictList)
           .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
           .setItemChoosenCallback(
-            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, getLevelByName(dictList.getSelectedValue()), notify))
+            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, getLevelByName(dictList.getSelectedValue())))
           .createPopup()
           .showInBestPositionFor(context);
       }
       else {
-        spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, myLevel, notify);
+        spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, myLevel);
       }
     });
   }
