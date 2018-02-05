@@ -413,6 +413,7 @@
                                  id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title"
                                  bundle="messages.JavadocBundle"/>
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
 
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>

@@ -481,5 +481,14 @@
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>
+
+    <group id="AnnotationHintsContextMenu" popup="true">
+      <action id="ToggleExternalAnnotationsHintsAction"
+              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleExternalAnnotationsHintsAction"
+              text="Show External Annotations"/>
+      <action id="ToggleInferredAnnotationsHintsAction"
+              class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
+              text="Show Inferred Annotations"/>
+    </group>
   </actions>
 </idea-plugin>

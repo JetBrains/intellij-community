@@ -2,16 +2,18 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.daemon.impl.HintRenderer
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.SyntaxTraverser
@@ -27,34 +29,33 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
     assert(myDocument != null)
     hints.clear()
 
-    if (showAnnotations()) {
+    if (CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE ||
+        CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE) {
       traverser.forEach { process(it) }
     }
   }
 
-  private fun showAnnotations(): Boolean {
-    val value = Registry.get("java.annotations.show.inline")
-    if (value.isBoolean) return value.asBoolean()
-    return "internal" == value.asString() && ApplicationManager.getApplication().isInternal
-  }
-
   private fun process(element: PsiElement) {
-    if (element is PsiModifierListOwner && showAnnotations()) {
-      val externalAnnotations = ExternalAnnotationsManager.getInstance(element.project).findExternalAnnotations(element)
-      val inferredAnnotations = InferredAnnotationsManager.getInstance(element.project).findInferredAnnotations(element)
+    if (element is PsiModifierListOwner) {
+      var annotations = emptySequence<PsiAnnotation>()
+      if (CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE) {
+        annotations += ExternalAnnotationsManager.getInstance(element.project).findExternalAnnotations(element).orEmpty()
+      }
+      if (CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE) {
+        annotations += InferredAnnotationsManager.getInstance(element.project).findInferredAnnotations(element)
+      }
 
-      (externalAnnotations.orEmpty().asSequence() + inferredAnnotations.asSequence())
-        .forEach {
-          if (it.nameReferenceElement != null && element.modifierList != null) {
-            val offset = element.modifierList!!.textRange.startOffset
-            var hintList = hints.get(offset)
-            if (hintList == null) {
-              hintList = arrayListOf()
-              hints.put(offset, hintList)
-            }
-            hintList.add(HintData("@" + it.nameReferenceElement?.referenceName + it.parameterList.text))
+      annotations.forEach {
+        if (it.nameReferenceElement != null && element.modifierList != null) {
+          val offset = element.modifierList!!.textRange.startOffset
+          var hintList = hints.get(offset)
+          if (hintList == null) {
+            hintList = arrayListOf()
+            hints.put(offset, hintList)
           }
+          hintList.add(HintData("@" + it.nameReferenceElement?.referenceName + it.parameterList.text))
         }
+      }
     }
   }
 
@@ -68,7 +69,7 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
 
     hints.forEachEntry { offset, info ->
       info.forEach {
-        val inlay = inlayModel.addInlineElement(offset, HintRenderer(it.presentationText))
+        val inlay = inlayModel.addInlineElement(offset, AnnotationHintRenderer(it.presentationText))
         inlay.putUserData(ANNOTATION_INLAY_KEY, true)
       }
       true
@@ -81,5 +82,25 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
 
   companion object {
     private val ANNOTATION_INLAY_KEY = Key.create<Boolean>("ANNOTATION_INLAY_KEY")
+  }
+
+  private class AnnotationHintRenderer(text: String) : HintRenderer(text) {
+    override fun getContextMenuGroupId() = "AnnotationHintsContextMenu"
+  }
+
+  class ToggleExternalAnnotationsHintsAction : ToggleAction() {
+    override fun isSelected(e: AnActionEvent?): Boolean = CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE
+
+    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+      CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE = state
+    }
+  }
+
+  class ToggleInferredAnnotationsHintsAction : ToggleAction() {
+    override fun isSelected(e: AnActionEvent?): Boolean = CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE
+
+    override fun setSelected(e: AnActionEvent?, state: Boolean) {
+      CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE = state
+    }
   }
 }
