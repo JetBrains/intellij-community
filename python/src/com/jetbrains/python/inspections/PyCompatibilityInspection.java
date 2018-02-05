@@ -243,7 +243,7 @@ public class PyCompatibilityInspection extends PyInspection {
         }
       }
 
-      final QualifiedName qName = importElement.getImportedQName();
+      final QualifiedName qName = getImportedFullyQName(importElement);
       if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
         final String moduleName = qName.toString();
 
@@ -252,6 +252,19 @@ public class PyCompatibilityInspection extends PyInspection {
                                        importElement,
                                        null);
       }
+    }
+
+    @Nullable
+    private static QualifiedName getImportedFullyQName(@NotNull PyImportElement importElement) {
+      final QualifiedName importedQName = importElement.getImportedQName();
+      if (importedQName == null) return null;
+
+      final PyStatement containingImportStatement = importElement.getContainingImportStatement();
+      final QualifiedName importSourceQName = containingImportStatement instanceof PyFromImportStatement
+                                              ? ((PyFromImportStatement)containingImportStatement).getImportSourceQName()
+                                              : null;
+
+      return importSourceQName == null ? importedQName : importSourceQName.append(importedQName);
     }
 
     @Override
