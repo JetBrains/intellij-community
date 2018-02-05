@@ -12,7 +12,7 @@
 
     <change-notes><![CDATA[
         <ul>
-            <li>Fix PSI structure: inline tables are now values.</li>
+            <li>Detect <i>.cargo/config</i> as toml file.</li>
         </ul>
     ]]>
     </change-notes>
