@@ -670,7 +670,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (ApplicationManager.getApplication().isUnitTestMode()) return true;
 
 
-    if (ApplicationManager.getApplication().hasUI() && !myEditor.getContentComponent().isShowing() && !ApplicationManager.getApplication().isOnAir()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !myEditor.getContentComponent().isShowing()) {
       hideLookup(false);
       return false;
     }
@@ -680,7 +680,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myUi.setCalculating(myCalculating);
     myUi.show();
 
-    if (ApplicationManager.getApplication().hasUI() && (!isVisible() || !myList.isShowing()) && !ApplicationManager.getApplication().isOnAir()) {
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && (!isVisible() || !myList.isShowing())) {
       hideLookup(false);
       return false;
     }
