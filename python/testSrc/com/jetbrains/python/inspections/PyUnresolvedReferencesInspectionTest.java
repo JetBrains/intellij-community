@@ -670,6 +670,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

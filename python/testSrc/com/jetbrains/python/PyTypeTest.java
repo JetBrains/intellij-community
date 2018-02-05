@@ -2348,6 +2348,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-27913
+  public void testDunderClassGetItemFirstParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doTest("Type[Foo]",
+                   "class Foo:\n" +
+                   "    def __class_getitem__(cls, item):\n" +
+                   "        expr = cls")
+    );
+  }
+
   public void testNoneLiteral() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,

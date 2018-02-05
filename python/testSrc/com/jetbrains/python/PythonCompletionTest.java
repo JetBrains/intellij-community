@@ -1211,6 +1211,19 @@ public class PythonCompletionTest extends PyTestCase {
     );
   }
 
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final List<String> suggested = doTestByText("class A:\n" +
+                                                    "    def __<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, "__class_getitem__(cls, item)");
+      }
+    );
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
