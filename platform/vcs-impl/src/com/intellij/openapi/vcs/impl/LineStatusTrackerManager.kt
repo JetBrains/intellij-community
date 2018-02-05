@@ -88,6 +88,7 @@ class LineStatusTrackerManager(
   private val documentsInDefaultChangeList = HashSet<Document>()
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
+  private val fileStatesAwaitingRefresh = HashMap<VirtualFile, PartialLocalLineStatusTracker.State>()
 
   private val loader: SingleThreadLoader<RefreshRequest, RefreshData> = MyBaseRevisionLoader()
 
@@ -356,7 +357,7 @@ class LineStatusTrackerManager(
       trackers.put(document, TrackerData(tracker))
 
       registerTrackerInCLM(tracker)
-      refreshTracker(tracker, oldChangesChangelistId)
+      refreshTracker(tracker, changelistId = oldChangesChangelistId)
 
       log("Tracker installed", virtualFile)
     }
@@ -447,6 +448,25 @@ class LineStatusTrackerManager(
       val document = request.document
       when (result) {
         is Result.Canceled -> {
+          synchronized(LOCK) {
+            val virtualFile = fileDocumentManager.getFile(document)
+            if (virtualFile == null) return
+
+            val state = fileStatesAwaitingRefresh.remove(virtualFile)
+            if (state == null) return
+
+            edt {
+              synchronized(LOCK) {
+                val data = trackers[document]
+                if (data == null) return@edt
+
+                if (data.tracker is PartialLocalLineStatusTracker) {
+                  data.tracker.restoreState(state)
+                  log("Loading canceled: state restored", virtualFile)
+                }
+              }
+            }
+          }
         }
         is Result.Error -> {
           edt {
@@ -477,12 +497,20 @@ class LineStatusTrackerManager(
               }
 
               data.contentInfo = refreshData.info
-              if (data.tracker is PartialLocalLineStatusTracker) {
+
+              val tracker = data.tracker
+              if (tracker is PartialLocalLineStatusTracker) {
                 val changelist = request.changelistId ?: changeListManager.getChangeList(virtualFile)?.id
-                data.tracker.setBaseRevision(refreshData.text, changelist)
+                tracker.setBaseRevision(refreshData.text, changelist)
+
+                val state = fileStatesAwaitingRefresh.remove(tracker.virtualFile)
+                if (state != null) {
+                  tracker.restoreState(state)
+                  log("Loading finished: state restored", virtualFile)
+                }
               }
               else {
-                data.tracker.setBaseRevision(refreshData.text)
+                tracker.setBaseRevision(refreshData.text)
               }
               log("Loading finished: success", virtualFile)
             }
@@ -695,8 +723,8 @@ class LineStatusTrackerManager(
 
 
   @CalledInAwt
-  internal fun collectPartiallyChangedFilesStates(): List<PartialLocalLineStatusTracker.State> {
-    val result = mutableListOf<PartialLocalLineStatusTracker.State>()
+  internal fun collectPartiallyChangedFilesStates(): List<PartialLocalLineStatusTracker.FullState> {
+    val result = mutableListOf<PartialLocalLineStatusTracker.FullState>()
     synchronized(LOCK) {
       for (data in trackers.values) {
         val tracker = data.tracker
@@ -720,19 +748,56 @@ class LineStatusTrackerManager(
 
         if (!canCreatePartialTrackerFor(virtualFile)) continue
 
-        val tracker = PartialLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode(), state)
-        val oldTracker = trackers.put(document, TrackerData(tracker))
-
-        if (oldTracker != null) {
-          unregisterTrackerInCLM(oldTracker.tracker)
-          oldTracker.tracker.release()
+        val oldTracker = trackers[document]?.tracker
+        if (oldTracker is PartialLocalLineStatusTracker) {
+          val stateRestored = state is PartialLocalLineStatusTracker.FullState &&
+                              oldTracker.restoreState(state)
+          if (stateRestored) {
+            log("Tracker restore: reused, full restored", virtualFile)
+          }
+          else {
+            val isLoading = loader.hasRequest(RefreshRequest(document))
+            if (isLoading) {
+              fileStatesAwaitingRefresh.put(state.virtualFile, state)
+              log("Tracker restore: reused, restore scheduled", virtualFile)
+            }
+            else {
+              oldTracker.restoreState(state)
+              log("Tracker restore: reused, restored", virtualFile)
+            }
+          }
         }
+        else {
+          val tracker = PartialLocalLineStatusTracker.createTracker(project, document, virtualFile, getTrackingMode())
+          trackers.put(document, TrackerData(tracker))
 
-        registerTrackerInCLM(tracker)
-        refreshTracker(tracker)
+          if (oldTracker != null) {
+            unregisterTrackerInCLM(oldTracker)
+            oldTracker.release()
+            log("Tracker restore: removed existing", virtualFile)
+          }
 
-        log("Tracker restored from config", virtualFile)
+          registerTrackerInCLM(tracker)
+          refreshTracker(tracker)
+
+          val stateRestored = state is PartialLocalLineStatusTracker.FullState &&
+                              tracker.restoreState(state)
+          if (stateRestored) {
+            log("Tracker restore: created, full restored", virtualFile)
+          }
+          else {
+            fileStatesAwaitingRefresh.put(state.virtualFile, state)
+            log("Tracker restore: created, restore scheduled", virtualFile)
+          }
+        }
       }
+
+      loader.addAfterUpdateRunnable(Runnable {
+        synchronized(LOCK) {
+          log("Tracker restore: finished", null)
+          fileStatesAwaitingRefresh.clear()
+        }
+      })
     }
   }
 
@@ -796,7 +861,7 @@ class LineStatusTrackerManager(
  * - Allows to check whether request is scheduled or is waiting for completion.
  * - Notifies callbacks when queue is exhausted.
  */
-abstract private class SingleThreadLoader<Request, T>(private val project: Project) {
+private abstract class SingleThreadLoader<Request, T>(private val project: Project) {
   private val LOG = Logger.getInstance(SingleThreadLoader::class.java)
   private val LOCK: Any = Any()
 
