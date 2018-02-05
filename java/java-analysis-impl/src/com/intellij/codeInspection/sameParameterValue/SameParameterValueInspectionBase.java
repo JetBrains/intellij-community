@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -214,7 +215,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                   needFurtherProcess = true;
                 }
               } else if (value != VALUE_IS_NOT_CONST) {
-                if (!paramValues[i].equals(currentArg)) {
+                if (!Comparing.equal(paramValues[i], currentArg)) {
                   paramValues[i] = VALUE_IS_NOT_CONST;
                 } else {
                   needFurtherProcess = true;
