@@ -184,7 +184,7 @@ public class ChangelistConflictTracker {
     return changeList == null || changeList.isDefault();
   }
 
-  private boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
+  public boolean shouldDetectConflictsFor(@NotNull VirtualFile file) {
     return !LineStatusTrackerManager.getInstance(myProject).arePartialChangelistsEnabled(file);
   }
 
