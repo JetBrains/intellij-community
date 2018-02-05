@@ -54,3 +54,10 @@ internal fun swipe(panel: JPanel, stepContent: Component, swipeDirection: JBCard
   panel.add(stepContentName, stepContent)
   (panel.layout as JBCardLayout).swipe(panel, stepContentName, swipeDirection)
 }
+
+internal fun show(panel: JPanel, stepContent: Component) {
+  val stepContentName = stepContent.hashCode().toString()
+
+  panel.add(stepContentName, stepContent)
+  (panel.layout as CardLayout).show(panel, stepContentName)
+}

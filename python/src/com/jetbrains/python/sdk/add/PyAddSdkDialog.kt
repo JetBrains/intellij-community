@@ -146,7 +146,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
           panel.addStateListener(object : WizardView.StateListener {
             override fun onStateChanged() {
-              swipe(mainPanel, panel.component, JBCardLayout.SwipeDirection.FORWARD)
+              show(mainPanel, panel.component)
 
               selectedPanel?.let { updateWizardActionButtons(it) }
             }
