@@ -313,7 +313,7 @@ public class InspectionTree extends Tree {
     if (isGroupedBySeverity) {
       InspectionSeverityGroupNode severityGroupNode = mySeverityGroupNodes.get(level);
       if (severityGroupNode == null) {
-        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(myContext.getProject(), level);
+        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar(), level);
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = getRoot();
