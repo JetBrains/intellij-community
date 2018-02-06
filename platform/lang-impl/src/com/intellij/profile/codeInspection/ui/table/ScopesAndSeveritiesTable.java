@@ -23,7 +23,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -36,7 +35,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -103,6 +101,10 @@ public class ScopesAndSeveritiesTable extends JBTable {
 
   void setSelectedSeverity(HighlightSeverity severity) {
     getModel().setValueAt(severity, getSelectedRow(), SEVERITY_COLUMN);
+  }
+
+  public List<ScopeToolState> getSelectedStates() {
+    return ((MyTableModel)getModel()).getScopeToolState(getSelectedRow()).getExistedStates();
   }
 
   public abstract static class TableSettings {

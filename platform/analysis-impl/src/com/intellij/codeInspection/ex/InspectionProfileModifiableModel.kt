@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.openapi.project.Project
@@ -8,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.Consumer
 
 open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
@@ -68,6 +67,16 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
       val tools = myBaseProfile.getToolsOrNull(toolId, null)
       val currentTools = myTools.get(toolId)
       return tools != currentTools
+    }
+    return false
+  }
+
+  fun isProperSetting(toolId: String, scope: NamedScope, project: Project): Boolean {
+    if (myBaseProfile != null) {
+      val baseDefaultState = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool
+      val currentTools = myTools[toolId]?.tools
+      val state = currentTools?.first { s -> scope == s.getScope(project) }?.tool
+      return baseDefaultState != null && state != null && ScopeToolState.areSettingsEqual(baseDefaultState, state)
     }
     return false
   }
