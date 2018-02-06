@@ -11,11 +11,19 @@ export function connect(port: number = 63342, domains: { [domainName:string]: { 
   return server
 }
 
+export function close(server: JsonRpc) {
+  server.close()
+}
+
 export class SocketTransport implements Transport {
   opened: () => void
   messageReceived: (message: Array<any>) => void
 
   constructor(private socket: net.Socket = new net.Socket()) {
+  }
+
+  close(): void {
+    this.socket.end()
   }
 
   connect(port: number = 63342) {
