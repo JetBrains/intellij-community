@@ -41,7 +41,7 @@ import java.nio.file.Path;
 public class TestDiscoveryExtension extends RunConfigurationExtension {
   public static final String TEST_DISCOVERY_REGISTRY_KEY = "testDiscovery.enabled";
 
-  private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", false);
+  private static final boolean USE_SOCKET = SystemProperties.getBooleanProperty("test.discovery.use.socket", true);
   private static final Key<TestDiscoveryDataSocketListener> SOCKET_LISTENER_KEY = Key.create("test.discovery.socket.data.listener");
 
   private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
