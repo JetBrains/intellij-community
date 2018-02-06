@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.profile.codeInspection.ui;
 
@@ -100,10 +100,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private boolean myIsInRestore;
 
   private String[] myInitialScopesOrder;
-  private Disposable myDisposable = new Disposable() {
-    @Override
-    public void dispose() {}
-  };
+  private Disposable myDisposable = Disposer.newDisposable();
 
   public SingleInspectionProfilePanel(@NotNull ProjectInspectionProfileManager projectProfileManager,
                                       @NotNull InspectionProfileModifiableModel profile) {
@@ -130,6 +127,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     getProfile().resetToBase(myProjectProfileManager.getProject());
     loadDescriptorsConfigs(true);
     postProcessModification();
+    updateModificationMarker();
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
@@ -293,7 +291,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myProfile == null) return; //panel was disposed
           updateProperSettingsForSelection();
-          checkToolSettingsModified();
+          updateModificationMarker();
         });
       }
     });
@@ -329,7 +327,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
   }
 
-  private void checkToolSettingsModified() {
+  private void updateModificationMarker() {
     myModified = myInitialToolDescriptors.values().stream().flatMap(ToolDescriptors::getDescriptors).anyMatch(descriptor -> {
       Element oldConfig = descriptor.getConfig();
       if (oldConfig == null) return false;
@@ -382,7 +380,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void postProcessModification() {
-    checkToolSettingsModified();
+    updateModificationMarker();
     //resetup configs
     for (ScopeToolState state : myProfile.getAllTools()) {
       state.resetConfigPanel();
