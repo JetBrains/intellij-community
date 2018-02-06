@@ -128,6 +128,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     loadDescriptorsConfigs(true);
     postProcessModification();
     updateModificationMarker();
+    myRoot.dropCache();
   }
 
   private static VisibleTreeState getExpandedNodes(InspectionProfileImpl profile) {
