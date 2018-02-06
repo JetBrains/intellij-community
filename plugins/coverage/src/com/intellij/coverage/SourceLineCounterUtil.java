@@ -18,8 +18,8 @@ package com.intellij.coverage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
-import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.org.objectweb.asm.ClassReader;
+import org.jetbrains.coverage.gnu.trove.TIntObjectHashMap;
+import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
 
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +36,7 @@ public class SourceLineCounterUtil {
     SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
     reader.accept(counter, 0);
     Set<Object> descriptions = new HashSet<>();
-    TIntObjectHashMap<?> lines = counter.getSourceLines();
+    TIntObjectHashMap lines = counter.getSourceLines();
     lines.forEachEntry((line, description) -> {
       if (includeDescriptionCondition.value((String)description)) {
         classCoverageInfo.totalLineCount++;
@@ -65,7 +65,7 @@ public class SourceLineCounterUtil {
     
     String qualifiedName = reader.getClassName();
     Condition<String> includeDescriptionCondition = description -> !JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description);
-    TIntObjectHashMap<?> lines = collector.getSourceLines();
+    TIntObjectHashMap lines = collector.getSourceLines();
     lines.forEachEntry((line, description) -> {
       if (includeDescriptionCondition.value((String)description)) {
         line--;

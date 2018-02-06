@@ -86,7 +86,7 @@ public class TestDiscoverySearchHelper {
                   try {
                     if (classQualifiedName != null &&
                         (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                         position != null && !discoveryIndex.hasTestTrace(frameworkPrefix + classQualifiedName + "-" + changedMethodName))) {
+                         position != null && !discoveryIndex.hasTestTrace(classQualifiedName + "-" + changedMethodName))) {
                       patterns.add(classQualifiedName + "," + changedMethodName);
                     }
                   }
@@ -112,10 +112,10 @@ public class TestDiscoverySearchHelper {
                                       final String methodName,
                                       final String frameworkId) throws IOException {
     final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
-    final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName);
+    final Collection<String> testsByMethodName = discoveryIndex.getTestsByMethodName(classFQName, methodName, frameworkId);
     if (testsByMethodName != null) {
-      for (String pattern : ContainerUtil.filter(testsByMethodName, s -> s.startsWith(frameworkId))) {
-        patterns.add(pattern.substring(frameworkId.length()).replace('-', ','));
+      for (String pattern : testsByMethodName) {
+        patterns.add(pattern.replace('-', ','));
       }
     }
   }

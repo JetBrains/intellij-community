@@ -65,9 +65,8 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
       try {
         final Project project = configuration.getProject();
         final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
-        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null ||
-            ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
+        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getFrameworkPrefix());
+        if (ContainerUtil.isEmpty(testsByMethodName)) {
           return false;
         }
         setPosition(configuration, new PsiLocation<>(sourceMethod));

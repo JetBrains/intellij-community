@@ -22,8 +22,8 @@ public abstract class TestDiscoveryListener {
   public void testStarted(String className, String methodName) {
     try {
       final Object data = getData();
-      Method testStarted = data.getClass().getMethod("testDiscoveryStarted", new Class[] {String.class});
-      testStarted.invoke(data, new Object[] {className + "-" + methodName});
+      Method testStarted = data.getClass().getMethod("testDiscoveryStarted", new Class[] {String.class, String.class});
+      testStarted.invoke(data, new Object[] {className, methodName});
     } catch (Throwable t) {
       t.printStackTrace();
     }
@@ -33,8 +33,8 @@ public abstract class TestDiscoveryListener {
     if (succeed) {
       try {
         final Object data = getData();
-        Method testEnded = data.getClass().getMethod("testDiscoveryEnded", new Class[] {String.class});
-        testEnded.invoke(data, new Object[] {getFrameworkId() + className + "-" + methodName});
+        Method testEnded = data.getClass().getMethod("testDiscoveryEnded", new Class[] {String.class, String.class});
+        testEnded.invoke(data, new Object[] {className, methodName});
       } catch (Throwable t) {
         t.printStackTrace();
       }

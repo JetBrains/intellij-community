@@ -275,6 +275,7 @@ public class TestAll implements Test {
   }
 
   private static TestListener loadDiscoveryListener() {
+    // com.intellij.InternalTestDiscoveryListener
     final String discoveryListener = System.getProperty("test.discovery.listener");
     if (discoveryListener != null) {
       try {
