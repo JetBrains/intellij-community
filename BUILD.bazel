@@ -86,6 +86,8 @@ iml_project(
         "//tools/adt/idea/android-debuggers:android-debuggers-tests",
         "//tools/adt/idea/android-lang",
         "//tools/adt/idea/android-lang:android-lang-tests",
+        "//tools/adt/idea/android-layout-inspector",
+        "//tools/adt/idea/android-layout-inspector:android-layout-inspector-test",
         "//tools/adt/idea/android-plugin",
         "//tools/adt/idea/android-test-framework",
         "//tools/adt/idea/android-uitests",
