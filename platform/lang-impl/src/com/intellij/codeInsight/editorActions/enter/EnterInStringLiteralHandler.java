@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,14 +103,15 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
     return Result.Continue;
   }
 
-  protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(Editor editor, PsiElement psiAtOffset) {
-    PsiFile file = psiAtOffset instanceof PsiFile ? (PsiFile)psiAtOffset : psiAtOffset.getContainingFile();   
-    final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(file, editor);
+  @Nullable
+  protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(@NotNull Editor editor, @NotNull PsiElement psiAtOffset) {
+    final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
     return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler 
            ? (JavaLikeQuoteHandler)fileTypeQuoteHandler 
            : null;
   }
 
+  @Contract("_,null,_->false")
   private static boolean isInStringLiteral(@NotNull Editor editor, @Nullable JavaLikeQuoteHandler quoteHandler, int offset) {
     if (offset > 0 && quoteHandler != null) {
       EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
