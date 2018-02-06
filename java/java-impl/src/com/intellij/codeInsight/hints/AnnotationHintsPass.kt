@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -68,11 +69,17 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
   override fun doApplyInformationToEditor() {
     val keeper = CaretVisualPositionKeeper(myEditor)
 
-    DocumentUtil.executeInBulk(myEditor.document, hints.size() > 1000) {
-      val inlayModel = myEditor.inlayModel
-      inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
-        .filter { ANNOTATION_INLAY_KEY.isIn(it) }
-        .forEach { Disposer.dispose(it) }
+    val inlayModel = myEditor.inlayModel
+    val toRemove = inlayModel.getInlineElementsInRange(rootElement.textRange.startOffset + 1, rootElement.textRange.endOffset - 1)
+      .filter { ANNOTATION_INLAY_KEY.isIn(it) }
+      .filter { inlay: Inlay ->
+        val hintsList = hints.get(inlay.offset)
+        hintsList == null || !hintsList.removeAll { it.presentationText == (inlay.renderer as AnnotationHintRenderer).text }
+      }
+      .toList()
+
+    DocumentUtil.executeInBulk(myEditor.document, toRemove.size + hints.values.flatMap { it as MutableList<*> }.count() > 1000) {
+      toRemove.forEach { Disposer.dispose(it) }
 
       hints.forEachEntry { offset, info ->
         info.forEach {
@@ -90,7 +97,7 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
     }
   }
 
-  class HintData(val presentationText: String)
+  data class HintData(val presentationText: String)
 
   companion object {
     private val ANNOTATION_INLAY_KEY = Key.create<Boolean>("ANNOTATION_INLAY_KEY")
