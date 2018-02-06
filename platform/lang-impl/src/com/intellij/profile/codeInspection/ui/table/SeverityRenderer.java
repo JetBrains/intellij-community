@@ -50,7 +50,7 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   @NotNull
   public static HighlightSeverity[] getSeverities(InspectionProfileImpl inspectionProfile) {
     Stream<HighlightSeverity>
-      severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getOwnSeverityRegistrar()).stream();
+      severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getSeverityRegistrar()).stream();
     return Stream.concat(severities, Stream.of(EDIT_SEVERITIES)).toArray(HighlightSeverity[]::new);
   }
 

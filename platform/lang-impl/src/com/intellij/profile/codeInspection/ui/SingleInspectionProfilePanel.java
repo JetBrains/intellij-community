@@ -617,7 +617,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private JPopupMenu compoundPopup() {
     final DefaultActionGroup group = new DefaultActionGroup();
-    final SeverityRegistrar severityRegistrar = myProfile.getProfileManager().getOwnSeverityRegistrar();
+    final SeverityRegistrar severityRegistrar = myProfile.getProfileManager().getSeverityRegistrar();
     for (HighlightSeverity severity : LevelChooserAction.getSeverities(severityRegistrar, includeDoNotShow())) {
       final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
       group.add(new AnAction(renderSeverity(severity), renderSeverity(severity), level.getIcon()) {
@@ -751,7 +751,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       if (scopesNames.isEmpty()) {
 
         final LevelChooserAction severityLevelChooser =
-          new LevelChooserAction(myProfile.getProfileManager().getOwnSeverityRegistrar(),
+          new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
                                  includeDoNotShow(nodes)) {
             @Override
             protected void onChosen(final HighlightSeverity severity) {
