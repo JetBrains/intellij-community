@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.SubstitutorComputer2;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -42,7 +43,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
   private boolean myStopExecuting = false;
 
-  private final SubstitutorComputer mySubstitutorComputer;
+  private final SubstitutorComputer2 mySubstitutorComputer;
 
   public MethodResolverProcessor(@Nullable String name,
                                  @NotNull PsiElement place,
@@ -63,7 +64,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
     myThisType = thisType;
-    mySubstitutorComputer = new SubstitutorComputer(myThisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
+    mySubstitutorComputer = new SubstitutorComputer2(myThisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
     myArgumentTypes = argumentTypes == null ? null : Arrays.copyOf(argumentTypes, argumentTypes.length);
     if (myArgumentTypes != null) {
       for (int i = 0; i < myArgumentTypes.length; i++) {

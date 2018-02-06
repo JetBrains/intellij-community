@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.PropertyKind;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.SubstitutorComputer2;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,22 +49,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   protected final @Nullable PsiType myThisType;
   protected final @NotNull PsiType[] myTypeArguments;
-  private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypesNonErased;
   protected final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
-  private final NotNullLazyValue<SubstitutorComputer> myMethodSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
+  private final NotNullLazyValue<SubstitutorComputer2> myMethodSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer2>() {
     @NotNull
     @Override
-    protected SubstitutorComputer compute() {
-      return new SubstitutorComputer(myThisType, myArgumentTypesNonErased.getValue(), myTypeArguments, myRef, myRef.getParent());
-    }
-  };
-
-  private final NotNullLazyValue<SubstitutorComputer> myMethodErasedSubstitutorComputer = new NotNullLazyValue<SubstitutorComputer>() {
-    @NotNull
-    @Override
-    protected SubstitutorComputer compute() {
-      return new SubstitutorComputer(myThisType, myArgumentTypes.getValue(), myTypeArguments, myRef, myRef.getParent());
+    protected SubstitutorComputer2 compute() {
+      return new SubstitutorComputer2(myThisType, myArgumentTypes.getValue(), myTypeArguments, myRef, myRef.getParent());
     }
   };
 
@@ -85,12 +77,12 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     myThisType = PsiImplUtil.getQualifierType(ref);
     myTypeArguments = ref.getTypeArguments();
+
     if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
-      myArgumentTypesNonErased = NullableLazyValue.createValue(() -> PsiUtil.getArgumentTypes(ref, false, myUpToArgument));
-      myArgumentTypes = NullableLazyValue.createValue(() -> eraseTypes(myArgumentTypesNonErased.getValue()));
+      myArgumentTypes = NullableLazyValue.createValue(() -> PsiUtil.getArgumentTypes(ref, false, myUpToArgument));
     }
     else {
-      myArgumentTypes = myArgumentTypesNonErased = NullableLazyValue.createValue(() -> null);
+      myArgumentTypes = NullableLazyValue.createValue(() -> null);
     }
 
     myAccessorProcessors = calcAccessorProcessors();
@@ -157,10 +149,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     if (kind == GroovyResolveKind.METHOD) {
       final PsiMethod method = (PsiMethod)namedElement;
-      final PsiSubstitutor erasedSubstitutor = myMethodErasedSubstitutorComputer.getValue().obtainSubstitutor(
-        substitutor, method, resolveContext
-      );
-      final boolean isApplicable = isApplicable(myArgumentTypes.getValue(), method, erasedSubstitutor, myRef, true);
+      PsiSubstitutor resolveSubstitutor = calcResolveSubstitutor(substitutor, method, resolveContext);
+      final boolean isApplicable = isApplicable(myArgumentTypes.getValue(), method, resolveSubstitutor, myRef, true);
       candidate = new GroovyMethodResultImpl(
         method, resolveContext, spreadState,
         substitutor,
@@ -182,6 +172,15 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     }
 
     return true;
+  }
+
+  private PsiSubstitutor calcResolveSubstitutor(PsiSubstitutor substitutor, PsiMethod method, PsiElement resolveContext) {
+    NullableLazyValue<PsiType[]> argumentTypesErased = NullableLazyValue.createValue(() -> eraseTypes(myArgumentTypes.getValue()));
+
+    SubstitutorComputer applicableComputer =
+      new SubstitutorComputer(myThisType, argumentTypesErased.getValue(), myTypeArguments, myRef, myRef.getParent());
+
+    return applicableComputer.obtainSubstitutor(substitutor, method, resolveContext);
   }
 
   @SuppressWarnings("unchecked")
