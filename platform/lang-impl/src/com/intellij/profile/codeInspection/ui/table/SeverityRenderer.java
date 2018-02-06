@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -33,9 +19,6 @@ import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.List;
 
-/**
- * @author Dmitry Batkovich
- */
 public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   private final Runnable myOnClose;
   private final Icon myDisabledIcon;
@@ -49,7 +32,8 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
     final List<HighlightSeverity> severities;
     severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getOwnSeverityRegistrar());
-    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> new SeverityState(severity, true, false)), onClose);
+    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> new SeverityState(severity,
+                                                                                                                                        false)), onClose);
   }
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
@@ -62,7 +46,6 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   @Override
   protected void customizeComponent(SeverityState value, JTable table, boolean isSelected) {
     super.customizeComponent(value, table, isSelected);
-    setPaintArrow(value.isEnabledForEditing());
     setEnabled(!value.isDisabled());
     setDisabledIcon(myDisabledIcon);
   }

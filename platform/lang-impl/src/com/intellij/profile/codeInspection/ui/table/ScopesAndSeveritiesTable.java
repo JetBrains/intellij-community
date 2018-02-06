@@ -64,8 +64,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
     scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    severityColumn.setCellRenderer(SeverityRenderer.create(tableSettings.getInspectionProfile(), null));
-    severityColumn.setCellEditor(SeverityRenderer.create(tableSettings.getInspectionProfile(), () -> tableSettings.onSettingsChanged()));
+    SeverityRenderer renderer = SeverityRenderer.create(tableSettings.getInspectionProfile(), () -> tableSettings.onSettingsChanged());
+    severityColumn.setCellRenderer(renderer);
+    severityColumn.setCellEditor(renderer);
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);
@@ -263,9 +264,9 @@ public class ScopesAndSeveritiesTable extends JBTable {
       boolean disabled = Boolean.FALSE.equals(isEnabled(rowIndex));
       final ExistedScopesStatesAndNonExistNames existedScopesStatesAndNonExistNames = getScopeToolState(rowIndex);
       if (!existedScopesStatesAndNonExistNames.getNonExistNames().isEmpty()) {
-        return new SeverityState(MIXED_FAKE_SEVERITY, false, disabled);
+        return new SeverityState(MIXED_FAKE_SEVERITY, disabled);
       }
-      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), !disabled, disabled);
+      return new SeverityState(getSeverity(existedScopesStatesAndNonExistNames.getExistedStates()), disabled);
     }
 
     @Nullable
