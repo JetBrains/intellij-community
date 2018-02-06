@@ -284,7 +284,7 @@
     <projectService serviceInterface="com.intellij.analysis.AnalysisUIOptions"
                     serviceImplementation="com.intellij.analysis.AnalysisUIOptions"/>
 
-    <projectService serviceInterface="com.intellij.ide.actions.ChooseByNameFactory"
+    <projectService serviceInterface="com.intellij.ide.util.gotoByName.ChooseByNameFactory"
                     serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
@@ -888,10 +888,6 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.ex.FileTypeChooserDialogFactory"
                         serviceImplementation="com.intellij.openapi.fileTypes.ex.FileTypeChooserDialogFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.ide.util.FileStructurePopupFactory"
-                        serviceImplementation="com.intellij.ide.util.FileStructurePopupFactoryImpl"/>
-    <applicationService serviceInterface="com.intellij.refactoring.safeDelete.SafeDeleteDialogFactory"
-                        serviceImplementation="com.intellij.refactoring.safeDelete.SafeDeleteDialogFactoryImpl"/>
 
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
 
@@ -984,8 +980,7 @@
     <runDashboardGroupingRule implementation="com.intellij.execution.dashboard.tree.RunConfigurationDashboardGroupingRule"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
                     serviceImplementation="com.intellij.execution.ui.RunContentManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.execution.actions.RunListPopupFactory"
-                        serviceImplementation="com.intellij.execution.actions.RunListPopupFactoryImpl"/>
+
     <previewPanelProvider implementation="com.intellij.openapi.fileEditor.impl.FilePreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.codeInsight.documentation.DocumentationPreviewPanelProvider"/>
     <previewPanelProvider implementation="com.intellij.find.UsagesPreviewPanelProvider"/>
@@ -1002,17 +997,17 @@
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.refactoring.changeSignature.inplace.EscapeHandler" id="changeSignatureEscape" order="before hide-search"/>
 
     <schemeExporter
-        name="Intellij IDEA code style XML"
-        schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
-        implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
+      name="Intellij IDEA code style XML"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeExporter
       name="Intellij IDEA color scheme (.icls)"
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
       implementationClass="com.intellij.application.options.colors.ColorSchemeExporter"/>
     <schemeImporter
-        name="Intellij IDEA code style XML"
-        schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
-        implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
+      name="Intellij IDEA code style XML"
+      schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+      implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
     <schemeImporter
       name="Intellij IDEA color scheme (.icls)"
       schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
