@@ -305,10 +305,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void showDumbModeNotification(@NotNull final String message) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      final StatusBarEx statusBarEx = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-      if (statusBarEx != null) {
-        statusBarEx.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
-      }
+      final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
+      statusBar.notifyProgressByBalloon(MessageType.WARNING, message, null, null);
     });
   }
 
