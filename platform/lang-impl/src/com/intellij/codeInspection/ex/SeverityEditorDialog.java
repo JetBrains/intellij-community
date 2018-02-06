@@ -102,7 +102,7 @@ public class SeverityEditorDialog extends DialogWrapper {
         myCurrentSelection = myOptionsList.getSelectedValue();
         if (myCurrentSelection != null) {
           reset(myCurrentSelection);
-          myCard.show(myRightPanel, mySeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity()) ? DEFAULT : EDITABLE);
+          myCard.show(myRightPanel, SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity()) ? DEFAULT : EDITABLE);
         }
       }
     });
@@ -171,13 +171,13 @@ public class SeverityEditorDialog extends DialogWrapper {
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
         public boolean isEnabled(AnActionEvent e) {
-          return myCurrentSelection != null && !mySeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity());
+          return myCurrentSelection != null && !SeverityRegistrar.isDefaultSeverity(myCurrentSelection.getSeverity());
         }
       }).setEditActionName("Rename").createPanel();
     ToolbarDecorator.findRemoveButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
       @Override
       public boolean isEnabled(AnActionEvent e) {
-        return !mySeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity());
+        return !SeverityRegistrar.isDefaultSeverity(myOptionsList.getSelectedValue().getSeverity());
       }
     });
     ToolbarDecorator.findUpButton(leftPanel).addCustomUpdater(new AnActionButtonUpdater() {
@@ -187,10 +187,10 @@ public class SeverityEditorDialog extends DialogWrapper {
         if (canMove) {
           SeverityBasedTextAttributes pair =
             myOptionsList.getSelectedValue();
-          if (pair != null && mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+          if (pair != null && SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
             final int newPosition = myOptionsList.getSelectedIndex() - 1;
             pair = myOptionsList.getModel().getElementAt(newPosition);
-            if (mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+            if (SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
               canMove = false;
             }
           }
@@ -206,10 +206,10 @@ public class SeverityEditorDialog extends DialogWrapper {
         if (canMove) {
           SeverityBasedTextAttributes pair =
             myOptionsList.getSelectedValue();
-          if (pair != null && mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+          if (pair != null && SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
             final int newPosition = myOptionsList.getSelectedIndex() + 1;
             pair = myOptionsList.getModel().getElementAt(newPosition);
-            if (mySeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
+            if (SeverityRegistrar.isDefaultSeverity(pair.getSeverity())) {
               canMove = false;
             }
           }
@@ -339,7 +339,7 @@ public class SeverityEditorDialog extends DialogWrapper {
     for (int i = listModel.getSize() - 1; i >= 0; i--) {
       SeverityBasedTextAttributes info = (SeverityBasedTextAttributes)listModel.getElementAt(i);
       order.add(info.getSeverity());
-      if (!mySeverityRegistrar.isDefaultSeverity(info.getSeverity())) {
+      if (!SeverityRegistrar.isDefaultSeverity(info.getSeverity())) {
         infoTypes.remove(info);
         final Color stripeColor = info.getAttributes().getErrorStripeColor();
         final boolean exists = mySeverityRegistrar.getSeverity(info.getSeverity().getName()) != null;

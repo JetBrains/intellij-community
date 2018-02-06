@@ -335,7 +335,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     return getOrderMap().getOrder(severity, -1);
   }
 
-  public boolean isDefaultSeverity(@NotNull HighlightSeverity severity) {
+  public static boolean isDefaultSeverity(@NotNull HighlightSeverity severity) {
     return STANDARD_SEVERITIES.containsKey(severity.myName);
   }
 

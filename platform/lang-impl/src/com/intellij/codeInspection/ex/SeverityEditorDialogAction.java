@@ -24,7 +24,7 @@ public class SeverityEditorDialogAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      SeverityEditorDialog.show(project, null, SeverityRegistrar.getSeverityRegistrar(e.getProject()), false, null);
+      SeverityEditorDialog.show(project, null, SeverityRegistrar.getSeverityRegistrar(project), false, null);
     }
   }
 }

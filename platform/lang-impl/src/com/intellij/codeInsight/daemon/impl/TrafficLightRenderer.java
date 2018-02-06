@@ -251,7 +251,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @NotNull
   private Icon getIcon(@NotNull DaemonCodeAnalyzerStatus status) {
-    updatePanel(status, getProject());
+    updatePanel(status);
     Icon icon = this.icon;
     if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null || status.errorAnalyzingFinished) {
       return icon;
@@ -260,7 +260,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   // return true if panel needs to be rebuilt
-  boolean updatePanel(@NotNull DaemonCodeAnalyzerStatus status, Project project) {
+  boolean updatePanel(@NotNull DaemonCodeAnalyzerStatus status) {
     progressBarsEnabled = false;
     progressBarsCompleted = null;
     statistics = "";
@@ -301,13 +301,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     Icon icon = AllIcons.General.InspectionsOK;
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
       if (status.errorCount[i] > 0) {
-        icon = SeverityRegistrar.getSeverityRegistrar(project).getRendererIconByIndex(i);
+        icon = mySeverityRegistrar.getRendererIconByIndex(i);
         break;
       }
     }
 
     if (status.errorAnalyzingFinished) {
-      boolean isDumb = project != null && DumbService.isDumb(project);
+      boolean isDumb = myProject != null && DumbService.isDumb(myProject);
       if (isDumb) {
         statusLabel = "Shallow analysis completed";
         statusExtraLine = "Complete results will be available after indexing";
@@ -329,7 +329,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     String text = "";
     for (int i = status.errorCount.length - 1; i >= 0; i--) {
       if (status.errorCount[i] > 0) {
-        final HighlightSeverity severity = SeverityRegistrar.getSeverityRegistrar(project).getSeverityByIndex(i);
+        final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
         String name =
           status.errorCount[i] > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
         text += status.errorAnalyzingFinished
