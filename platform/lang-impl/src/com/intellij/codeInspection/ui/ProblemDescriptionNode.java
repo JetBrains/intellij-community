@@ -1,17 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.xml.util.XmlStringUtil;
@@ -45,9 +47,17 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myDescriptor = descriptor;
     final InspectionProfileImpl profile = presentation.getContext().getCurrentProfile();
     String shortName = presentation.getToolWrapper().getShortName();
-    myLevel = descriptor instanceof ProblemDescriptor
-              ? profile.getErrorLevel(HighlightDisplayKey.find(shortName), ((ProblemDescriptor)descriptor).getStartElement())
-              : profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    if (descriptor instanceof ProblemDescriptor) {
+      InspectionProfileManager inspectionProfileManager = profile.getProfileManager();
+      RefElement refElement = (RefElement)element;
+      SeverityRegistrar severityRegistrar = inspectionProfileManager.getSeverityRegistrar();
+      HighlightInfoType highlightInfoType = ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, presentation.getSeverity(refElement), severityRegistrar);
+      HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(refElement.getElement());
+      myLevel = HighlightDisplayLevel.find(highlightSeverity);
+    }
+    else {
+      myLevel = profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
+    }
     myLineNumber = myDescriptor instanceof ProblemDescriptor
                    ? ((ProblemDescriptor)myDescriptor).getLineNumber()
                    : lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt();
