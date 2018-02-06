@@ -3,6 +3,7 @@ package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -100,7 +101,9 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
         @Override
         public void actionPerformed(final AnActionEvent e) {
           for (final Descriptor defaultDescriptor : defaultDescriptors) {
-            inspectionProfile.addScope(defaultDescriptor.getToolWrapper().createCopy(), scope, defaultDescriptor.getLevel(), true, e.getProject());
+            InspectionToolWrapper wrapper = defaultDescriptor.getToolWrapper().createCopy();
+            wrapper.getTool().readSettings(Descriptor.createConfigElement(defaultDescriptor.getToolWrapper()));
+            inspectionProfile.addScope(wrapper, scope, defaultDescriptor.getLevel(), true, e.getProject());
           }
           onScopeAdded(scopeName);
         }
