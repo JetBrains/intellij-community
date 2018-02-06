@@ -16,9 +16,6 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
