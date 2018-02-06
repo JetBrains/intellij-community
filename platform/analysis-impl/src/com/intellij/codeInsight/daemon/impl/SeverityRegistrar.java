@@ -69,7 +69,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   public static SeverityRegistrar getSeverityRegistrar(@Nullable Project project) {
     return project == null
            ? InspectionProfileManager.getInstance().getSeverityRegistrar()
-           : InspectionProfileManager.getInstance(project).getSeverityRegistrar();
+           : InspectionProfileManager.getInstance(project).getCurrentProfile().getProfileManager().getSeverityRegistrar();
   }
 
   public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor) {
