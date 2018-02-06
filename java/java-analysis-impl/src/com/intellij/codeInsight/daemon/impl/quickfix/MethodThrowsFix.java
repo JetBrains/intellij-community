@@ -65,6 +65,24 @@ public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
     }
   }
 
+  public static class RemoveFirst extends MethodThrowsFix {
+    public RemoveFirst(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean showClassName) {
+      super(method, exceptionType, showClassName);
+    }
+
+    @NotNull
+    @Override
+    protected String getTextMessageKey() {
+      return "fix.throws.list.remove.exception";
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      PsiJavaCodeReferenceElement[] referenceElements = ((PsiMethod) startElement).getThrowsList().getReferenceElements();
+      Arrays.stream(referenceElements).filter(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText)).findFirst().ifPresent(PsiElement::delete);
+    }
+  }
+
   public static class Remove extends MethodThrowsFix {
     public Remove(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean showClassName) {
       super(method, exceptionType, showClassName);
