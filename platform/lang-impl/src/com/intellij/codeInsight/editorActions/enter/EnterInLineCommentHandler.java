@@ -46,7 +46,7 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
                                                       ? (CodeDocumentationAwareCommenter)languageCommenter : null;
     if (commenter == null) return Result.Continue;
     int caretOffset = caretOffsetRef.get().intValue();
-    if (isInLineComment(editor, caretOffset, commenter.getLineCommentTokenType())) {
+    if (isInLineComment(editor, caretOffset, commenter)) {
         Document document = editor.getDocument();
         CharSequence text = document.getText();
         final int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
@@ -74,10 +74,12 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
     return Result.Continue;
   }
   
-  private static boolean isInLineComment(@NotNull Editor editor, int offset, IElementType lineCommentType) {
+  private static boolean isInLineComment(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
     if (offset < 1) return false;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-    return iterator.getTokenType() == lineCommentType && iterator.getStart() < offset;
+    String prefix = commenter.getLineCommentPrefix();
+    return iterator.getTokenType() == commenter.getLineCommentTokenType() 
+           && (iterator.getStart() + (prefix == null ?  0 : prefix.length())) <= offset;
   }
 }
