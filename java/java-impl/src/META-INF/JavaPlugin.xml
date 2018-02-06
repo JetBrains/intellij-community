@@ -36,11 +36,6 @@
     </component>
   </project-components>
 
-  <actions>
-    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
-    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
-  </actions>
-
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
