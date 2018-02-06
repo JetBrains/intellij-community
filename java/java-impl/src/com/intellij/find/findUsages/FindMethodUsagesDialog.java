@@ -5,6 +5,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ImplicitToStringSearcher;
+import com.intellij.psi.search.searches.ImplicitToStringSearch;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public class FindMethodUsagesDialog extends JavaFindUsagesDialog<JavaMethodFindU
         addCheckboxToPanel(FindBundle.message("find.what.overriding.methods.checkbox"), getFindUsagesOptions().isOverridingMethods,
                            findWhatPanel, true);
     }
-    if (ImplicitToStringSearcher.isToStringMethod(method)) {
+    if (ImplicitToStringSearch.isToStringMethod(method)) {
       myCbImplicitToString =
         addCheckboxToPanel(FindBundle.message("find.what.implicit.to.string.checkbox"), getFindUsagesOptions().isImplicitToString,
                            findWhatPanel, true);
