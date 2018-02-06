@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -59,11 +61,28 @@ public class SeverityEditorDialog extends DialogWrapper {
   @NonNls private static final String DEFAULT = "DEFAULT";
   @NonNls private static final String EDITABLE = "EDITABLE";
 
-  public SeverityEditorDialog(final JComponent parent,
-                              final @Nullable HighlightSeverity selectedSeverity,
-                              final @NotNull SeverityRegistrar severityRegistrar,
-                              final boolean closeDialogWhenSettingsShown) {
-    super(parent, true);
+  public static void show(@NotNull Project project,
+                          @Nullable HighlightSeverity selectedSeverity,
+                          @NotNull SeverityRegistrar severityRegistrar,
+                          boolean closeDialogWhenSettingsShown,
+                          @Nullable Consumer<HighlightSeverity> chosenSeverityCallback) {
+    final SeverityEditorDialog dialog = new SeverityEditorDialog(project, selectedSeverity, severityRegistrar, closeDialogWhenSettingsShown);
+    if (dialog.showAndGet()) {
+      final HighlightInfoType type = dialog.getSelectedType();
+      if (type != null) {
+        final HighlightSeverity severity = type.getSeverity(null);
+        if (chosenSeverityCallback != null) {
+          chosenSeverityCallback.consume(severity);
+        }
+      }
+    }
+  }
+
+  private SeverityEditorDialog(@NotNull Project project,
+                               @Nullable HighlightSeverity selectedSeverity,
+                               @NotNull SeverityRegistrar severityRegistrar,
+                               boolean closeDialogWhenSettingsShown) {
+    super(project, true);
     mySeverityRegistrar = severityRegistrar;
     myCloseDialogWhenSettingsShown = closeDialogWhenSettingsShown;
     myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
