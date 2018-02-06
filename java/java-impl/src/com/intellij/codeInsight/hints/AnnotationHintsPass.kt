@@ -84,7 +84,7 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
       hints.forEachEntry { offset, info ->
         info.forEach {
           val inlay = inlayModel.addInlineElement(offset, AnnotationHintRenderer(it.presentationText))
-          inlay.putUserData(ANNOTATION_INLAY_KEY, true)
+          inlay?.putUserData(ANNOTATION_INLAY_KEY, true)
         }
         true
       }
