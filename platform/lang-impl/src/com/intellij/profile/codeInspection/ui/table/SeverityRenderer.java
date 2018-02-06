@@ -30,10 +30,10 @@ public class SeverityRenderer extends ComboBoxTableRenderer<SeverityState> {
   }
 
   public static SeverityRenderer create(final InspectionProfileImpl inspectionProfile, @Nullable final Runnable onClose) {
-    final List<HighlightSeverity> severities;
-    severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getOwnSeverityRegistrar());
-    return new SeverityRenderer(ContainerUtil.map2Array(severities, new SeverityState[severities.size()], severity -> new SeverityState(severity,
-                                                                                                                                        false)), onClose);
+    return new SeverityRenderer(LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getOwnSeverityRegistrar())
+                                                  .stream()
+                                                  .map(s -> new SeverityState(s, false))
+                                                  .toArray(SeverityState[]::new), onClose);
   }
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
