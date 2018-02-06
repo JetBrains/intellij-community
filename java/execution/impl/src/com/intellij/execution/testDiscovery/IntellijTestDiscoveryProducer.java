@@ -53,6 +53,11 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     return MultiMap.empty();
   }
 
+  @Override
+  public boolean isRemote() {
+    return true;
+  }
+
   @JsonInclude(JsonInclude.Include.NON_EMPTY)
   public static class TestsSearchResult {
     @Nullable

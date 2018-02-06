@@ -36,4 +36,9 @@ public class LocalTestDiscoveryProducer implements TestDiscoveryProducer {
     }
     return MultiMap.empty();
   }
+
+  @Override
+  public boolean isRemote() {
+    return false;
+  }
 }
