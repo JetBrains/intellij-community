@@ -35,6 +35,7 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 class DiscoveredTestsTree extends Tree implements DataProvider {
@@ -97,11 +98,12 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     myModel.addTest(testClass, testMethod);
   }
 
-  public List<Module> getContainingModules() {
+  @NotNull
+  public Set<Module> getContainingModules() {
     return myModel.getTestClasses().stream()
                   .map(element -> ModuleUtilCore.findModuleForPsiElement(element))
                   .filter(module -> module != null)
-                  .collect(Collectors.toList());
+                  .collect(Collectors.toSet());
   }
 
   public PsiMethod[] getTestMethods() {

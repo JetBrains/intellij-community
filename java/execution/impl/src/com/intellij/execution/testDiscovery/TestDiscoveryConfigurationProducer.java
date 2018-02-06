@@ -141,7 +141,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     };
   }
 
-  public static Module detectTargetModule(List<Module> survivedModules, Project project) {
+  public static Module detectTargetModule(Collection<Module> survivedModules, Project project) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
     survivedModules
