@@ -388,7 +388,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
     fillTreeData(myProfileFilter.getFilter(), true);
     repaintTableData();
-    updateOptionsAndDescriptionPanel(myTreeTable.getTree().getSelectionPaths());
+    updateOptionsAndDescriptionPanel();
   }
 
   public void setFilter(String filter) {
@@ -535,7 +535,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         if (myTreeTable.getTree().getSelectionPaths() != null) {
-          updateOptionsAndDescriptionPanel(myTreeTable.getTree().getSelectionPaths());
+          updateOptionsAndDescriptionPanel();
         }
         else {
           initOptionsAndDescriptionPanel();
@@ -640,10 +640,10 @@ public class SingleInspectionProfilePanel extends JPanel {
   private boolean includeDoNotShow() {
     final TreePath[] paths = myTreeTable.getTree().getSelectionPaths();
     if (paths == null) return true;
-    return includeDoNotShow(InspectionsAggregationUtil.getInspectionsNodes(paths));
+    return includeDoNotShow(myTreeTable.getSelectedToolNodes());
   }
 
-  private boolean includeDoNotShow(List<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
     final Project project = myProjectProfileManager.getProject();
     return nodes
       .stream()
@@ -702,13 +702,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     return HintUtil.prepareHintText(text, hintHint);
   }
 
-  private void updateOptionsAndDescriptionPanel(final TreePath... paths) {
-    if (myProfile == null || paths == null || paths.length == 0) {
+  private void updateOptionsAndDescriptionPanel() {
+    if (myProfile == null) {
       return;
     }
-    final List<InspectionConfigTreeNode.Tool> nodes = InspectionsAggregationUtil.getInspectionsNodes(paths);
+    Collection<InspectionConfigTreeNode.Tool> nodes = myTreeTable.getSelectedToolNodes();
     if (!nodes.isEmpty()) {
-      final InspectionConfigTreeNode.Tool singleNode = paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool ? ContainerUtil.getFirstItem(nodes) : null;
+      final InspectionConfigTreeNode.Tool singleNode = myTreeTable.getStrictlySelectedToolNode();
       if (singleNode != null) {
         final Descriptor descriptor = singleNode.getDefaultDescriptor();
         if (descriptor.loadDescription() != null) {
@@ -881,7 +881,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  private void updateRecursively(List<? extends InspectionConfigTreeNode> nodes, boolean updateOptionsAndDescriptionPanel) {
+  private void updateRecursively(Collection<? extends InspectionConfigTreeNode> nodes, boolean updateOptionsAndDescriptionPanel) {
     updateUpHierarchy(nodes);
     myTreeTable.repaint();
     if (updateOptionsAndDescriptionPanel) {
@@ -889,7 +889,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private boolean isThoughOneNodeEnabled(final List<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean isThoughOneNodeEnabled(Collection<InspectionConfigTreeNode.Tool> nodes) {
     final Project project = myProjectProfileManager.getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
       final String toolId = node.getKey().toString();
@@ -898,15 +898,6 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
     return false;
-  }
-
-  private void updateOptionsAndDescriptionPanel() {
-    final TreePath[] paths = myTreeTable.getTree().getSelectionPaths();
-    if (paths != null) {
-      updateOptionsAndDescriptionPanel(paths);
-    } else {
-      initOptionsAndDescriptionPanel();
-    }
   }
 
   private void initOptionsAndDescriptionPanel() {
@@ -1126,52 +1117,23 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private void setNewHighlightingLevel(@NotNull HighlightDisplayLevel level) {
-    final int[] rows = myTreeTable.getTree().getSelectionRows();
-    if (rows != null) {
-      final boolean showOptionsAndDescriptorPanels = rows.length == 1;
-      for (int row : rows) {
-        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)myTreeTable.getTree().getPathForRow(row).getLastPathComponent();
-        final InspectionConfigTreeNode parent = (InspectionConfigTreeNode)node.getParent();
-        if (node instanceof InspectionConfigTreeNode.Tool &&
-            (((InspectionConfigTreeNode.Tool)node).getScopeName() != null || node.isLeaf())) {
-          updateErrorLevel((InspectionConfigTreeNode.Tool)node, showOptionsAndDescriptorPanels, level);
-        }
-        else {
-          updateErrorLevelUpInHierarchy(node, level, showOptionsAndDescriptorPanels);
-        }
-        updateUpHierarchy(parent);
+    Collection<InspectionConfigTreeNode.Tool> tools = myTreeTable.getSelectedToolNodes();
+    if (!tools.isEmpty()) {
+      for (InspectionConfigTreeNode.Tool tool : tools) {
+        updateErrorLevel(tool, level);
       }
-      updateOptionsAndDescriptionPanel(myTreeTable.getTree().getSelectionPaths());
+      updateOptionsAndDescriptionPanel();
     } else {
       initOptionsAndDescriptionPanel();
     }
     repaintTableData();
   }
 
-  private void updateErrorLevelUpInHierarchy(@NotNull InspectionConfigTreeNode node,
-                                             @NotNull HighlightDisplayLevel level,
-                                             boolean showOptionsAndDescriptorPanels) {
-    node.dropCache();
-    for (int j = 0; j < node.getChildCount(); j++) {
-      final InspectionConfigTreeNode child = (InspectionConfigTreeNode)node.getChildAt(j);
-      if (child instanceof InspectionConfigTreeNode.Tool && (((InspectionConfigTreeNode.Tool)child).getScopeName() != null || child.isLeaf())) {
-        updateErrorLevel((InspectionConfigTreeNode.Tool)child, showOptionsAndDescriptorPanels, level);
-      }
-      else {
-        updateErrorLevelUpInHierarchy(child, level, showOptionsAndDescriptorPanels);
-      }
-    }
-  }
-
   private void updateErrorLevel(final InspectionConfigTreeNode.Tool child,
-                                final boolean showOptionsAndDescriptorPanels,
                                 @NotNull HighlightDisplayLevel level) {
     final HighlightDisplayKey key = child.getKey();
     myProfile.setErrorLevel(key, level, null, myProjectProfileManager.getProject());
     child.dropCache();
-    if (showOptionsAndDescriptorPanels) {
-      updateOptionsAndDescriptionPanel(new TreePath(child.getPath()));
-    }
   }
 
   public JComponent getPreferredFocusedComponent() {

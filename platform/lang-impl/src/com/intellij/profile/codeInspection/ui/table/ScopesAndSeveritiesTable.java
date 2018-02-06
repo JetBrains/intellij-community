@@ -23,6 +23,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -35,6 +36,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -104,13 +106,13 @@ public class ScopesAndSeveritiesTable extends JBTable {
   }
 
   public abstract static class TableSettings {
-    private final List<InspectionConfigTreeNode.Tool> myNodes;
+    private final Collection<InspectionConfigTreeNode.Tool> myNodes;
     private final List<String> myKeyNames;
     private final List<HighlightDisplayKey> myKeys;
     private final InspectionProfileImpl myInspectionProfile;
     private final Project myProject;
 
-    protected TableSettings(final List<InspectionConfigTreeNode.Tool> nodes,
+    protected TableSettings(final Collection<InspectionConfigTreeNode.Tool> nodes,
                             final InspectionProfileImpl inspectionProfile,
                             final Project project) {
       myNodes = nodes;
@@ -134,7 +136,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
       return myKeyNames;
     }
 
-    public List<InspectionConfigTreeNode.Tool> getNodes() {
+    public Collection<InspectionConfigTreeNode.Tool> getNodes() {
       return myNodes;
     }
 
