@@ -57,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,7 +92,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     myLogData = logData;
     myColorManager = colorManager;
 
-    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myMainContentPanel = new MyMainContentPanel();
     myEmptyText = new StatusText(myMainContentPanel) {
       @Override
@@ -341,15 +342,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
 
   private class MyMainContentPanel extends ScrollablePanel {
     @Override
-    public boolean getScrollableTracksViewportWidth() {
-      return true;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      Dimension preferredSize = super.getPreferredSize();
-      int height = Math.max(preferredSize.height, myScrollPane.getViewport().getHeight());
-      return new Dimension(preferredSize.width, height);
+    public Insets getInsets() {
+      // to fight ViewBorder
+      return JBUI.emptyInsets();
     }
 
     @Override
