@@ -121,24 +121,8 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     else {
       configuration.setSearchScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     }
-    return new RunProfile() {
-      @Nullable
-      @Override
-      public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
-        return createProfile(testMethods, module, configuration, environment);
-      }
-
-      @Override
-      public String getName() {
-        return configurationName;
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon() {
-        return configuration.getIcon();
-      }
-    };
+    configuration.setShortenCommandLine(ShortenCommandLine.MANIFEST);
+    return new MyRunProfile(testMethods, module, configuration, configurationName);
   }
 
   public static Module detectTargetModule(Collection<Module> survivedModules, Project project) {
@@ -202,5 +186,52 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   public boolean isConfigurationFromContext(JavaTestConfigurationBase configuration, ConfigurationContext configurationContext) {
     final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
     return position != null && position.equals(getPosition(configuration));
+  }
+
+  private class MyRunProfile implements RunProfile, ConfigurationWithCommandLineShortener {
+    private final PsiMethod[] myTestMethods;
+    private final Module myModule;
+    private final JavaTestConfigurationBase myConfiguration;
+    private final String myConfigurationName;
+
+    public MyRunProfile(PsiMethod[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
+      myTestMethods = testMethods;
+      myModule = module;
+      myConfiguration = configuration;
+      myConfigurationName = configurationName;
+    }
+
+    @Nullable
+    @Override
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+      return createProfile(myTestMethods, myModule, myConfiguration, environment);
+    }
+
+    @Override
+    public String getName() {
+      return myConfigurationName;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return myConfiguration.getIcon();
+    }
+
+    @Nullable
+    @Override
+    public ShortenCommandLine getShortenCommandLine() {
+      return myConfiguration.getShortenCommandLine();
+    }
+
+    @Override
+    public void setShortenCommandLine(ShortenCommandLine mode) {
+      myConfiguration.setShortenCommandLine(mode);
+    }
+
+    @Override
+    public Project getProject() {
+      return myConfiguration.getProject();
+    }
   }
 }
