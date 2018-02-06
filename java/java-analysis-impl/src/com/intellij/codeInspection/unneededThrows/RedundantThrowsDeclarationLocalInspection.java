@@ -82,22 +82,18 @@ public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaL
 
     if (candidates.isEmpty()) return null;
     if (needCheckOverridingMethods) {
-
-      Set<String> thrownExceptionShortNames = candidates.stream().map(refAndType -> refAndType.type.getClassName()).collect(Collectors.toSet());
-      Predicate<PsiMethod> methodContainsThrownExceptions = m -> Arrays.stream(m.getThrowsList().getReferencedTypes())
-        .map(PsiClassType::getClassName)
-        .anyMatch(thrownExceptionShortNames::contains);
+      Predicate<PsiMethod> methodContainsThrownExceptions = m -> m.getThrowsList().getReferencedTypes().length != 0;
       Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, null, methodContainsThrownExceptions);
       if (overridingMethods == null) return null;
 
       Iterator<PsiMethod> overridingMethodIt = overridingMethods.iterator();
       while (overridingMethodIt.hasNext()) {
         PsiMethod m = overridingMethodIt.next();
-        PsiClassType[] overridingMethodThrownException = m.getThrowsList().getReferencedTypes();
+        PsiClassType[] overridingMethodThrownExceptions = m.getThrowsList().getReferencedTypes();
 
         candidates.removeIf(refAndType -> {
           PsiClassType type = refAndType.type;
-          return ArrayUtil.contains(type, overridingMethodThrownException);
+          return Arrays.stream(overridingMethodThrownExceptions).anyMatch(type::isAssignableFrom);
         });
 
         if (candidates.isEmpty()) return null;
