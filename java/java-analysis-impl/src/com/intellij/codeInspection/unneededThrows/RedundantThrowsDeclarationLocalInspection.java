@@ -19,11 +19,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author anna
- * @since 15-Nov-2005
- */
-public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final RedundantThrowsDeclarationInspection myGlobalTool;
 
   @TestOnly
