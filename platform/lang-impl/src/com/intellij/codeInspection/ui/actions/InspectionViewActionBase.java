@@ -2,17 +2,21 @@
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Dmitry Batkovich
- */
 public abstract class InspectionViewActionBase extends AnAction {
   public InspectionViewActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
