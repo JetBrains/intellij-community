@@ -68,9 +68,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
     final String agentPath = PathUtil.getJarPathForClass(ProjectData.class);
     final String parentPath = handleSpacesInPath(agentPath, file -> {
       final String fileName = file.getName();
-      return fileName.startsWith("coverage-") ||
-             fileName.startsWith("asm-all") ||
-             fileName.startsWith("trove4j");
+      return fileName.startsWith("intellij-coverage-");
     });
     //todo
     argument.append(parentPath).append(File.separator).append(new File("intellij-coverage-1.0.369.jar").getName());
