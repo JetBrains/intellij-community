@@ -281,8 +281,6 @@ public class SeverityEditorDialog extends DialogWrapper {
     DefaultListModel<SeverityBasedTextAttributes> model = new DefaultListModel<>();
     final List<SeverityBasedTextAttributes> infoTypes =
       new ArrayList<>(SeverityUtil.getRegisteredHighlightingInfoTypes(mySeverityRegistrar));
-    Collections.sort(infoTypes,
-                     (attributes1, attributes2) -> -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity()));
     SeverityBasedTextAttributes preselection = null;
     for (SeverityBasedTextAttributes type : infoTypes) {
       model.addElement(type);

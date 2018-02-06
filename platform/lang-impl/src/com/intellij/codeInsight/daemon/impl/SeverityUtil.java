@@ -6,17 +6,17 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 
 public class SeverityUtil {
   @NotNull
   public static Collection<SeverityRegistrar.SeverityBasedTextAttributes> getRegisteredHighlightingInfoTypes(@NotNull SeverityRegistrar registrar) {
-    Collection<SeverityRegistrar.SeverityBasedTextAttributes> collection = new ArrayList<>(registrar.allRegisteredAttributes());
+    List<SeverityRegistrar.SeverityBasedTextAttributes> collection = new ArrayList<>(registrar.allRegisteredAttributes());
     for (HighlightInfoType type : registrar.standardSeverities()) {
       if (HighlightInfoType.INFORMATION.equals(type) || HighlightInfoType.INFO.equals(type)) continue;
       collection.add(getSeverityBasedTextAttributes(registrar, type));
     }
+    collection.sort(Comparator.comparing(SeverityRegistrar.SeverityBasedTextAttributes::getSeverity, registrar.reversed()));
     return collection;
   }
 
