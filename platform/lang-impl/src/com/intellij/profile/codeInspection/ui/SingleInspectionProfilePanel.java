@@ -781,7 +781,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
 
           @Override
-          protected void onScopeAdded() {
+          protected void onScopeAdded(@NotNull String scopeName) {
             updateRecursively(nodes, true);
           }
         };
@@ -831,7 +831,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
             @Override
             protected void onScopeAdded() {
-              updateRecursively(nodes, true);
+              updateRecursively(nodes, false);
             }
 
             @Override

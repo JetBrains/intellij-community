@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -396,9 +396,15 @@ public class ScopesAndSeveritiesTable extends JBTable {
       final List<Descriptor> descriptors = ContainerUtil.map(myTableSettings.getNodes(), inspectionConfigTreeNode -> inspectionConfigTreeNode.getDefaultDescriptor());
       final ScopesChooser scopesChooser = new ScopesChooser(descriptors, myInspectionProfile, myProject, myScopeNames) {
         @Override
-        protected void onScopeAdded() {
+        protected void onScopeAdded(@NotNull String scopeName) {
           myTableSettings.onScopeAdded();
           refreshAggregatedScopes();
+          for (int i = 0; i < getRowCount(); i++) {
+            if (getScopeName(i).equals(scopeName)) {
+              myTable.clearSelection();
+              myTable.setRowSelectionInterval(i, i);
+            }
+          }
         }
 
         @Override
