@@ -285,7 +285,6 @@ public class SeverityEditorDialog extends DialogWrapper {
                      (attributes1, attributes2) -> -mySeverityRegistrar.compare(attributes1.getSeverity(), attributes2.getSeverity()));
     SeverityBasedTextAttributes preselection = null;
     for (SeverityBasedTextAttributes type : infoTypes) {
-      if (HighlightSeverity.INFO.equals(type.getSeverity())) continue;
       model.addElement(type);
       if (type.getSeverity().equals(severity)) {
         preselection = type;

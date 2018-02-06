@@ -80,7 +80,6 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     if (includeDoNotShow) {
       severities.add(HighlightSeverity.INFORMATION);
     }
-    severities.remove(HighlightSeverity.INFO);
     Collections.sort(severities, severityRegistrar.reversed());
     return severities;
   }
