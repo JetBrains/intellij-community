@@ -489,6 +489,8 @@
       <action id="ToggleInferredAnnotationsHintsAction"
               class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
               text="Show Inferred Annotations"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
     </group>
   </actions>
 </idea-plugin>
