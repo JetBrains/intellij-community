@@ -26,6 +26,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   /**
@@ -150,7 +151,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
     }
     else {
       //enforce include all known
-      List<HighlightSeverity> list = getOrderAsList(orderMap);
+      List<HighlightSeverity> list = getAllSeverities();
       for (HighlightSeverity stdSeverity : knownSeverities) {
         if (!list.contains(stdSeverity)) {
           for (int oIdx = 0; oIdx < list.size(); oIdx++) {
@@ -169,7 +170,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   public void writeExternal(Element element) {
-    List<HighlightSeverity> list = getOrderAsList(getOrderMap());
+    List<HighlightSeverity> list = getAllSeverities();
     for (HighlightSeverity severity : list) {
       Element info = new Element(INFO_TAG);
       String severityName = severity.getName();
@@ -198,18 +199,11 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   @NotNull
-  private static List<HighlightSeverity> getOrderAsList(@NotNull final OrderMap orderMap) {
-    List<HighlightSeverity> list = new ArrayList<>();
-    for (Object o : orderMap.keys()) {
-      list.add((HighlightSeverity)o);
-    }
-    Collections.sort(list, (o1, o2) -> compare(o1, o2, orderMap));
-    return list;
-  }
-
-  @NotNull
   public List<HighlightSeverity> getAllSeverities() {
-    return getOrderAsList(getOrderMap());
+    return Arrays.stream(getOrderMap().keys())
+                 .map(o -> (HighlightSeverity)o)
+                 .sorted(this)
+                 .collect(Collectors.toList());
   }
 
   int getSeveritiesCount() {
@@ -270,10 +264,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
 
   @Override
   public int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2) {
-    return compare(s1, s2, getOrderMap());
-  }
-
-  private static int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2, @NotNull OrderMap orderMap) {
+    OrderMap orderMap = getOrderMap();
     int o1 = orderMap.getOrder(s1);
     int o2 = orderMap.getOrder(s2);
     return o1 - o2;
