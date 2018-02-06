@@ -27,7 +27,7 @@ abstract class PropertyCheckerTestCase extends TestCase {
   }
 
   protected <T> PropertyFailure<T> checkFalsified(Generator<T> generator, Predicate<T> predicate, int minimizationSteps) {
-    PropertyFalsified e = checkFails(forAllStable(generator).withIterationCount(1000), predicate);
+    PropertyFalsified e = checkFails(forAllStable(generator), predicate);
     //noinspection unchecked
     PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
 
