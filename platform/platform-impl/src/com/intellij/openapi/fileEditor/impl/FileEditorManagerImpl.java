@@ -1682,9 +1682,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         updateFileIcon(file);
         if (file.equals(getSelectedFiles()[0])) { // update "write" status
           final StatusBarEx statusBar = (StatusBarEx)WindowManager.getInstance().getStatusBar(myProject);
-          if (statusBar != null) {
-            statusBar.updateWidgets();
-          }
+          assert statusBar != null;
+          statusBar.updateWidgets();
         }
       }
     }
