@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
@@ -122,6 +123,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     String version = element.getAttributeValue(VERSION_TAG);
+
     if (!VALID_VERSION.equals(version)) {
       InspectionToolWrapper[] tools = getInspectionTools(null);
       for (Element toolElement : element.getChildren("inspection_tool")) {
