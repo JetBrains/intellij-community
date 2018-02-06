@@ -182,7 +182,7 @@ public class JavaFindUsagesHelper {
         FunctionalExpressionSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(
           expression -> addResult(expression, options, processor)));
       }
-      if (methodOptions.isImplicitToString) {
+      if (ImplicitToStringSearch.isToStringMethod(psiMethod) && methodOptions.isImplicitToString) {
         ImplicitToStringSearch.search(psiMethod, methodOptions.searchScope).forEach(new PsiElementProcessorAdapter<>(ref -> addResult(ref, options, processor)));
       }
     }

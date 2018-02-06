@@ -68,21 +68,6 @@ public class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpression, I
     }
   }
 
-  public static boolean isToStringMethod(@NotNull PsiElement element) {
-    if (!(element instanceof PsiMethod)) {
-      return false;
-    }
-    PsiMethod method = (PsiMethod)element;
-    if (!"toString".equals(method.getName())) {
-      return false;
-    }
-    if (method.getParameters().length != 0) {
-      return false;
-    }
-    PsiType returnType = method.getReturnType();
-    return returnType != null && returnType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
-  }
-
   private static boolean processFile(VirtualFile file,
                                      int[] offsets,
                                      PsiManager manager,
