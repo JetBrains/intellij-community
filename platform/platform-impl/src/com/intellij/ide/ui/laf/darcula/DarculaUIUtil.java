@@ -75,7 +75,10 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  private static final Color REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x395d82));
+  private static final Color MAC_REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x395d82));
+  private static final Color DEFAULT_REGULAR_COLOR = new JBColor(new Color(0x8ab2eb), new Color(0x395d82));
+
+  private static final Color REGULAR_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_REGULAR_COLOR : DEFAULT_REGULAR_COLOR);
   private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
   public enum Outline {
