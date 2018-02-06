@@ -378,7 +378,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "xpp3", libraryName: "xpp3", version: "1.1.4", license: "Apache 2.0",
                        url: "https://www.extreme.indiana.edu/xgws/xsoap/xpp/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
 
-    jetbrainsLibrary("Coverage"),
+    jetbrainsLibrary("intellij-coverage"),
+    jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("CoverageReport"),
     jetbrainsLibrary("intellij-markdown.jar"),
     jetbrainsLibrary("JPS"),
