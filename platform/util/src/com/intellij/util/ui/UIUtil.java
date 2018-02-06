@@ -4257,7 +4257,8 @@ public class UIUtil {
     Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
     try {
       if (enqueueKeyEventsMethod != null) {
-        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(), event.getWhen(), component);
+        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
+                                      event != null ? event.getWhen() : System.currentTimeMillis(), component);
       }
     }
     catch (IllegalAccessException e) {
