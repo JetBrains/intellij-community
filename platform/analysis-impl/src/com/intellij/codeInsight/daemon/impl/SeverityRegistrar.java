@@ -274,8 +274,8 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   private static int compare(@NotNull HighlightSeverity s1, @NotNull HighlightSeverity s2, @NotNull OrderMap orderMap) {
-    int o1 = orderMap.getOrder(s1, -1);
-    int o2 = orderMap.getOrder(s2, -1);
+    int o1 = orderMap.getOrder(s1);
+    int o2 = orderMap.getOrder(s2);
     return o1 - o2;
   }
 
@@ -332,7 +332,7 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
   }
 
   int getSeverityIdx(@NotNull HighlightSeverity severity) {
-    return getOrderMap().getOrder(severity, -1);
+    return getOrderMap().getOrder(severity);
   }
 
   public static boolean isDefaultSeverity(@NotNull HighlightSeverity severity) {
@@ -356,9 +356,9 @@ public class SeverityRegistrar implements Comparator<HighlightSeverity> {
       trimToSize();
     }
 
-    private int getOrder(@NotNull HighlightSeverity severity, int defaultOrder) {
+    private int getOrder(@NotNull HighlightSeverity severity) {
       int index = index(severity);
-      return index < 0 ? defaultOrder : _values[index];
+      return index < 0 ? -1 : _values[index];
     }
 
 
