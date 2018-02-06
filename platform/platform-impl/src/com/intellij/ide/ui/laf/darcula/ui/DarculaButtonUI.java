@@ -205,18 +205,21 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    Dimension size = super.getPreferredSize(c);
+  protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     float bw = DarculaUIUtil.bw();
 
     Insets i = c.getInsets();
     int helpDiam = JBUI.scale(HELP_BUTTON_DIAMETER);
     return UIUtil.isHelpButton(c) ?
-      new Dimension(Math.max(size.width, helpDiam + i.left + i.right),
-                    Math.max(size.height, helpDiam + i.top + i.bottom)):
-      new Dimension(Math.max(size.width, (int)(JBUI.scale(74) + bw * 2)),
-                    Math.max(size.height, (int)(JBUI.scale(26) + bw * 2)));
+           new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
+                         Math.max(prefSize.height, helpDiam + i.top + i.bottom)):
+           new Dimension(Math.max(prefSize.width, (int)(JBUI.scale(74) + bw * 2)),
+                         Math.max(prefSize.height, (int)(JBUI.scale(26) + bw * 2)));
+  }
+
+  @Override
+  public final Dimension getPreferredSize(JComponent c) {
+    return getDarculaButtonSize(c, super.getPreferredSize(c));
   }
 
   @Override
