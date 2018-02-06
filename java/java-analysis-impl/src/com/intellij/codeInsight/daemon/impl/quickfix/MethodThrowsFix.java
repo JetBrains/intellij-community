@@ -18,87 +18,95 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
-  private static final Logger LOG = Logger.getInstance(MethodThrowsFix.class);
-
-  private final String myThrowsCanonicalText;
-  private final boolean myAddThrow;
+public abstract class MethodThrowsFix extends LocalQuickFixOnPsiElement {
+  protected final String myThrowsCanonicalText;
   private final String myMethodName;
 
-  public MethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean addThrow, boolean showClassName) {
+  protected MethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean showClassName) {
     super(method);
     myThrowsCanonicalText = exceptionType.getCanonicalText();
-    myAddThrow = addThrow;
     myMethodName = PsiFormatUtil.formatMethod(method,
                                               PsiSubstitutor.EMPTY,
-                                              PsiFormatUtilBase.SHOW_NAME | (showClassName ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS
-                                                                                                   : 0),
-                                              0);
+                                              PsiFormatUtilBase.SHOW_NAME | (showClassName ? PsiFormatUtilBase.SHOW_CONTAINING_CLASS : 0), 0);
+  }
+
+  public static class Add extends MethodThrowsFix {
+    public Add(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean showClassName) {
+      super(method, exceptionType, showClassName);
+    }
+
+
+    @NotNull
+    @Override
+    protected String getTextMessageKey() {
+      return "fix.throws.list.add.exception";
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      final PsiMethod myMethod = (PsiMethod)startElement;
+      PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
+      boolean alreadyThrows = Arrays.stream(referenceElements).anyMatch(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText));
+      if (!alreadyThrows) {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+        final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
+        PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
+        ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
+        myMethod.getThrowsList().add(ref);
+      }
+    }
+  }
+
+  public static class Remove extends MethodThrowsFix {
+    public Remove(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean showClassName) {
+      super(method, exceptionType, showClassName);
+    }
+
+    @NotNull
+    @Override
+    protected String getTextMessageKey() {
+      return "fix.throws.list.remove.exception";
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      final PsiMethod myMethod = (PsiMethod)startElement;
+      PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
+      Arrays.stream(referenceElements).filter(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText)).forEach(PsiElement::delete);
+      PsiDocComment comment = myMethod.getDocComment();
+      if (comment != null) {
+        Arrays
+          .stream(comment.getTags())
+          .filter(tag -> "throws".equals(tag.getName()))
+          .filter(tag -> {
+            PsiClass tagValueClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
+            return tagValueClass != null && myThrowsCanonicalText.equals(tagValueClass.getQualifiedName());
+          })
+          .forEach(tag -> tag.delete());
+      }
+    }
   }
 
   @NotNull
+  protected abstract String getTextMessageKey();
+
+  @NotNull
   @Override
-  public String getText() {
-    return QuickFixBundle.message(myAddThrow ? "fix.throws.list.add.exception" : "fix.throws.list.remove.exception",
-                                  StringUtil.getShortName(myThrowsCanonicalText),
-                                  myMethodName);
+  public final String getText() {
+    return QuickFixBundle.message(getTextMessageKey(), StringUtil.getShortName(myThrowsCanonicalText), myMethodName);
   }
 
   @Override
   @NotNull
-  public String getFamilyName() {
+  public final String getFamilyName() {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
+  public final boolean isAvailable(@NotNull Project project,
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return !(((PsiMethod)startElement).getThrowsList() instanceof PsiCompiledElement); // can happen in Kotlin
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final PsiMethod myMethod = (PsiMethod)startElement;
-    PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
-    try {
-      boolean alreadyThrows = false;
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        if (referenceElement.getCanonicalText().equals(myThrowsCanonicalText)) {
-          alreadyThrows = true;
-          if (!myAddThrow) {
-            referenceElement.delete();
-            break;
-          }
-        }
-      }
-      if (myAddThrow) {
-        if (!alreadyThrows) {
-          final PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
-          final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
-          PsiJavaCodeReferenceElement ref = factory.createReferenceElementByType(type);
-          ref = (PsiJavaCodeReferenceElement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(ref);
-          myMethod.getThrowsList().add(ref);
-        }
-      } else {
-        PsiDocComment comment = myMethod.getDocComment();
-        if (comment != null) {
-          Arrays
-            .stream(comment.getTags())
-            .filter(tag -> "throws".equals(tag.getName()))
-            .filter(tag -> {
-              PsiClass tagValueClass = JavaDocUtil.resolveClassInTagValue(tag.getValueElement());
-              return tagValueClass != null && myThrowsCanonicalText.equals(tagValueClass.getQualifiedName());
-            })
-            .forEach(tag -> tag.delete());
-        }
-
-      }
-      UndoUtil.markPsiFileForUndo(file);
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
   }
 }
