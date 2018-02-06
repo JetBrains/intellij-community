@@ -30,7 +30,12 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
     assert(myDocument != null)
     hints.clear()
 
-    if (CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE ||
+    val virtualFile = rootElement.containingFile?.originalFile?.virtualFile
+
+    if ((CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE &&
+         virtualFile != null &&
+         ExternalAnnotationsManager.getInstance(myProject).hasAnnotationRootsForFile(virtualFile))
+        ||
         CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE) {
       traverser.forEach { process(it) }
     }
@@ -40,10 +45,10 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
     if (element is PsiModifierListOwner) {
       var annotations = emptySequence<PsiAnnotation>()
       if (CodeInsightSettings.getInstance().SHOW_EXTERNAL_ANNOTATIONS_INLINE) {
-        annotations += ExternalAnnotationsManager.getInstance(element.project).findExternalAnnotations(element).orEmpty()
+        annotations += ExternalAnnotationsManager.getInstance(myProject).findExternalAnnotations(element).orEmpty()
       }
       if (CodeInsightSettings.getInstance().SHOW_INFERRED_ANNOTATIONS_INLINE) {
-        annotations += InferredAnnotationsManager.getInstance(element.project).findInferredAnnotations(element)
+        annotations += InferredAnnotationsManager.getInstance(myProject).findInferredAnnotations(element)
       }
 
       annotations.forEach {
