@@ -68,14 +68,12 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
           if (testsRoot.getHandler() != handler) return;
           if (listener == null) {
             processTracesAlarm.cancelAllRequests();
-            processTracesAlarm.addRequest(() -> {
-              processTracesFile((JavaTestConfigurationBase)configuration);
-              Disposer.dispose(disposable);
-            }, 0);
+            processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationBase)configuration), 0);
             connection.disconnect();
           } else {
             listener.closeForcibly();
           }
+          Disposer.dispose(disposable);
         }
       });
     }
