@@ -61,7 +61,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   private var panels: List<PyAddSdkView> = emptyList()
 
   init {
-    title = "Add Local Python Interpreter"
+    title = "Add Python Interpreter"
   }
 
   override fun createCenterPanel(): JComponent {
@@ -71,11 +71,10 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     val panels = arrayListOf<PyAddSdkView>(createVirtualEnvPanel(project, sdks, newProjectPath),
                                            createAnacondaPanel(project),
                                            PyAddSystemWideInterpreterPanel(existingSdks))
-    // TODO extended panels should be enabled when all remote SDK panels will be implemented
-/*
-    val extendedPanels = PyAddSdkProvider.EP_NAME.extensions.map { it.createView(existingSdks) }
+    val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
+      .map { it.createView(project = project, existingSdks = existingSdks) }
+      .mapNotNull { it }
     panels.addAll(extendedPanels)
-*/
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
     return mainPanel
   }
