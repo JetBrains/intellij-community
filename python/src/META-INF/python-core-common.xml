@@ -727,7 +727,7 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
-    <pyReferenceResolveProvider implementation="com.jetbrains.python.pyi.PyiReferenceResolveProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyForwardReferenceResolveProvider"/>
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
