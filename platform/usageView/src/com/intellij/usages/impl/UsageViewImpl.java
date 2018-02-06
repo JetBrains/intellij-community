@@ -176,7 +176,8 @@ public class UsageViewImpl implements UsageView {
     myTargets = targets;
     myUsageSearcherFactory = usageSearcherFactory;
     myProject = project;
-myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
+
+    myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
 
     UsageModelTracker myModelTracker = new UsageModelTracker(project);
@@ -196,23 +197,24 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
           myTree = new Tree(myModel) {
             {
               ToolTipManager.sharedInstance().registerComponent(this);
-            setHorizontalAutoScrollingEnabled(false);}
+              setHorizontalAutoScrollingEnabled(false);
+            }
 
             @Override
             public boolean isRootVisible() {
               return false;  // to avoid re-building model when it calls setRootVisible(true)
             }
 
-      @Override
-      public String getToolTipText(MouseEvent e) {
-        TreePath path = getPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
-            return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
-          }
-        }
-        return null;
-      }
+            @Override
+            public String getToolTipText(MouseEvent e) {
+              TreePath path = getPathForLocation(e.getX(), e.getY());
+              if (path != null) {
+                if (getCellRenderer() instanceof UsageViewTreeCellRenderer) {
+                  return UsageViewTreeCellRenderer.getTooltipFromPresentation(path.getLastPathComponent());
+                }
+              }
+              return null;
+            }
 
             @Override
             public boolean isPathEditable(final TreePath path) {
@@ -417,13 +419,16 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     }
   }
 
-  @Override
+  public void searchFinished() {
+    drainQueuedUsageNodes();
+    setSearchInProgress(false);
+  }
+
   public boolean searchHasBeenCancelled() {
     ProgressIndicator progress = associatedProgress;
     return progress != null && progress.isCanceled();
   }
 
-  @Override
   public void cancelCurrentSearch() {
     ProgressIndicator progress = associatedProgress;
     if (progress != null) {
@@ -540,7 +545,7 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
   }
 
   @NotNull
-  public static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
+  private static UsageFilteringRule[] getActiveFilteringRules(final Project project) {
     final UsageFilteringRuleProvider[] providers = Extensions.getExtensions(UsageFilteringRuleProvider.EP_NAME);
     List<UsageFilteringRule> list = new ArrayList<>(providers.length);
     for (UsageFilteringRuleProvider provider : providers) {
@@ -550,7 +555,7 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
   }
 
   @NotNull
-  public static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
+  private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
@@ -979,7 +984,6 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     return configurableTarget == null ? getShowUsagesWithSettingsShortcut() : configurableTarget.getShortcut();
   }
 
-  @Override
   public void associateProgress(@NotNull ProgressIndicator indicator) {
     associatedProgress = indicator;
   }
@@ -1108,12 +1112,6 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
         treeModel.reload();
       });
     }
-  }
-
-  @Override
-  public void searchFinished() {
-    drainQueuedUsageNodes();
-    setSearchInProgress(false);
   }
 
   @Override
