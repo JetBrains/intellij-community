@@ -315,12 +315,6 @@ public class AllIcons {
     public static final Icon ShowCurrentFrame = IconLoader.getIcon("/debugger/showCurrentFrame.png"); // 16x16
     public static final Icon SmartStepInto = IconLoader.getIcon("/debugger/smartStepInto.png"); // 16x16
     public static final Icon StackFrame = IconLoader.getIcon("/debugger/stackFrame.png"); // 16x16
-    
-    public static class StreamDebugger {
-      public static final Icon Stream_debugger = IconLoader.getIcon("/debugger/streamDebugger/stream_debugger.png"); // 16x16
-      public static final Icon Tab = IconLoader.getIcon("/debugger/streamDebugger/tab.png"); // 16x16
-
-    }
     public static final Icon ThreadAtBreakpoint = IconLoader.getIcon("/debugger/threadAtBreakpoint.png"); // 16x16
     public static final Icon ThreadCurrent = IconLoader.getIcon("/debugger/threadCurrent.png"); // 16x16
     public static final Icon ThreadFrozen = IconLoader.getIcon("/debugger/threadFrozen.png"); // 16x16
