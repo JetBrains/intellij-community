@@ -75,6 +75,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -513,33 +514,37 @@ public class CreateTestDialog extends DialogWrapper {
     final String packageName = getPackageName();
     final PackageWrapper targetPackage = new PackageWrapper(PsiManager.getInstance(myProject), packageName);
 
-    final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        final List<VirtualFile> testFolders = CreateTestAction.computeTestRoots(myTargetModule);
-        List<VirtualFile> roots;
-        if (testFolders.isEmpty()) {
-          roots = new ArrayList<>();
-          List<String> urls = CreateTestAction.computeSuitableTestRootUrls(myTargetModule);
-          for (String url : urls) {
+    final VirtualFile selectedRoot = ReadAction.compute(() -> {
+      final List<VirtualFile> testFolders = CreateTestAction.computeTestRoots(myTargetModule);
+      List<VirtualFile> roots;
+      if (testFolders.isEmpty()) {
+        roots = new ArrayList<>();
+        List<String> urls = CreateTestAction.computeSuitableTestRootUrls(myTargetModule);
+        for (String url : urls) {
+          try {
             ContainerUtil.addIfNotNull(roots, VfsUtil.createDirectories(VfsUtilCore.urlToPath(url)));
           }
-          if (roots.isEmpty()) {
-            JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(myTargetModule, roots);
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
-          if (roots.isEmpty()) return;
-        } else {
-          roots = new ArrayList<>(testFolders);
         }
-
-        if (roots.size() == 1) {
-          result.setResult(roots.get(0));
+        if (roots.isEmpty()) {
+          JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(myTargetModule, roots);
         }
-        else {
-          PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
-          result.setResult(MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
-        }
+        if (roots.isEmpty()) return null;
       }
-    }.execute().getResultObject();
+      else {
+        roots = new ArrayList<>(testFolders);
+      }
+
+      if (roots.size() == 1) {
+        return (roots.get(0));
+      }
+      else {
+        PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
+        return (MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
+      }
+    });
 
     if (selectedRoot == null) return null;
 

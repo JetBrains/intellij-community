@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -98,12 +97,7 @@ public class FormatChangedTextUtil {
   }
 
   public static boolean hasChanges(@NotNull final Project project) {
-    final ModifiableModuleModel moduleModel = new ReadAction<ModifiableModuleModel>() {
-      @Override
-      protected void run(@NotNull Result<ModifiableModuleModel> result) throws Throwable {
-        result.setResult(ModuleManager.getInstance(project).getModifiableModel());
-      }
-    }.execute().getResultObject();
+    final ModifiableModuleModel moduleModel = ReadAction.compute(() -> ModuleManager.getInstance(project).getModifiableModel());
     try {
       for (Module module : moduleModel.getModules()) {
         if (hasChanges(module)) {

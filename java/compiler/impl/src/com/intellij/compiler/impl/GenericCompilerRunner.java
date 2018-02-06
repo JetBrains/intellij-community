@@ -94,7 +94,8 @@ public class GenericCompilerRunner {
   private <T extends BuildTarget, Item extends CompileItem<Key, SourceState, OutputState>, Key, SourceState, OutputState>
   boolean invokeCompiler(GenericCompiler<Key, SourceState, OutputState> compiler, final GenericCompilerInstance<T, Item, Key, SourceState, OutputState> instance) throws IOException,
                                                                                                                                                                          ExitException {
-    final GenericCompilerCache<Key, SourceState, OutputState> cache = CompilerCacheManager.getInstance(myProject).getGenericCompilerCache(compiler);
+    final GenericCompilerCache<Key, SourceState, OutputState> cache =
+      CompilerCacheManager.getInstance(myProject).getGenericCompilerCache(compiler);
     GenericCompilerPersistentData
       data = new GenericCompilerPersistentData(getGenericCompilerCacheDir(myProject, compiler), compiler.getVersion());
     if (data.isVersionChanged()) {
@@ -104,13 +105,11 @@ public class GenericCompilerRunner {
     }
 
     final Set<String> targetsToRemove = new HashSet<>(data.getAllTargets());
-    new ReadAction() {
-      protected void run(@NotNull final Result result) {
-        for (T target : instance.getAllTargets()) {
-          targetsToRemove.remove(target.getId());
-        }
+    ReadAction.run(() -> {
+      for (T target : instance.getAllTargets()) {
+        targetsToRemove.remove(target.getId());
       }
-    }.execute();
+    });
 
     if (!myOnlyCheckStatus) {
       for (final String target : targetsToRemove) {
@@ -136,11 +135,7 @@ public class GenericCompilerRunner {
       }
     }
 
-    final List<T> selectedTargets = new ReadAction<List<T>>() {
-      protected void run(@NotNull final Result<List<T>> result) {
-        result.setResult(instance.getSelectedTargets());
-      }
-    }.execute().getResultObject();
+    final List<T> selectedTargets = ReadAction.compute(() -> instance.getSelectedTargets());
 
     boolean didSomething = false;
     for (T target : selectedTargets) {
