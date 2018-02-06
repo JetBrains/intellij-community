@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.codeInsight.daemon.impl.HintRenderer
+import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.Editor
@@ -52,15 +53,18 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
         annotations += InferredAnnotationsManager.getInstance(myProject).findInferredAnnotations(element)
       }
 
+      val shownAnnotations = mutableSetOf<String>()
       annotations.forEach {
-        if (it.nameReferenceElement != null && element.modifierList != null) {
+        val nameReferenceElement = it.nameReferenceElement
+        if (nameReferenceElement != null && element.modifierList != null &&
+            !(shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(it))) {
           val offset = element.modifierList!!.textRange.startOffset
           var hintList = hints.get(offset)
           if (hintList == null) {
             hintList = arrayListOf()
             hints.put(offset, hintList)
           }
-          hintList.add(HintData("@" + it.nameReferenceElement?.referenceName + it.parameterList.text))
+          hintList.add(HintData("@" + nameReferenceElement.referenceName + it.parameterList.text))
         }
       }
     }
