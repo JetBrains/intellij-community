@@ -678,7 +678,7 @@ public class FSRecords {
   @NotNull
   @TestOnly
   static int[] listRoots() {
-    return writeAndHandleErrors(() -> {
+    return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
         TIntArrayList result = new TIntArrayList();
 
