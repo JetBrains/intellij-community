@@ -8,6 +8,7 @@ import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testDiscovery.TestDiscoveryProducer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.FindUtil;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
@@ -63,7 +65,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(ApplicationManager.getApplication().isInternal() && e.getProject() != null && findMethodAtCaret(e) != null);
+    e.getPresentation().setEnabledAndVisible(isEnabledForProject(e) && findMethodAtCaret(e) != null);
   }
 
   @Override
@@ -84,6 +86,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
     showDiscoveredTests(project, dataContext, methodPresentationName, method);
+  }
+
+  static boolean isEnabledForProject(AnActionEvent e) {
+    return (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal()) && e.getProject() != null;
   }
 
   @Nullable

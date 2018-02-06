@@ -6,7 +6,6 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -32,7 +31,7 @@ import java.util.Objects;
 public class ShowDiscoveredTestsFromChangesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(ApplicationManager.getApplication().isInternal() && e.getProject() != null && e.getData(VcsDataKeys.CHANGES) != null);
+    e.getPresentation().setEnabledAndVisible(ShowDiscoveredTestsAction.isEnabledForProject(e) && e.getData(VcsDataKeys.CHANGES) != null);
   }
 
   @Override
