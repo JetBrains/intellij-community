@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
@@ -51,7 +51,7 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
   }
 
   @Override
-  public void loadState(final Element state) {
+  public void loadState(@NotNull final Element state) {
     myTemplates.clear();
     List<Element> templatesElement = state.getChildren(TEMPLATE_TAG);
     for (Element templateElement : templatesElement) {

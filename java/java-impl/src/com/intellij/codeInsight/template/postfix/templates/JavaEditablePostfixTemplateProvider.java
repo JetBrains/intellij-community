@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
@@ -13,10 +13,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProvider
@@ -65,7 +65,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
     String languageLevelAttributeValue = template.getAttributeValue(LANGUAGE_LEVEL_ATTR);
     LanguageLevel languageLevel = ObjectUtils.notNull(LanguageLevel.parse(languageLevelAttributeValue), LanguageLevel.JDK_1_6);
 
-    List<JavaPostfixTemplateExpressionCondition> conditions = new ArrayList<>();
+    Set<JavaPostfixTemplateExpressionCondition> conditions = new LinkedHashSet<>();
     Element conditionsElement = template.getChild(CONDITIONS_TAG);
     if (conditionsElement != null) {
       for (Element conditionElement : conditionsElement.getChildren(CONDITION_TAG)) {
@@ -82,7 +82,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
       parentElement.setAttribute("topmost", String.valueOf(((JavaEditablePostfixTemplate)template).isUseTopmostExpression()));
 
       LanguageLevel languageLevel = ((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel();
-      parentElement.setAttribute(LANGUAGE_LEVEL_ATTR, languageLevel.getCompilerComplianceDefaultOption());
+      parentElement.setAttribute(LANGUAGE_LEVEL_ATTR, JpsJavaSdkType.complianceOption(languageLevel.toJavaVersion()));
       Element conditions = parentElement.addContent(CONDITIONS_TAG);
       for (JavaPostfixTemplateExpressionCondition condition : ((JavaEditablePostfixTemplate)template).getExpressionConditions()) {
         writeExternal(condition, conditions);
@@ -102,6 +102,9 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
     }
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateVoidExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateVoidExpressionCondition();
+    }
+    if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition.ID.equals(id)) {
+      return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition();
     }
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition.ID.equals(id)) {
       String fqn = condition.getAttributeValue(FQN_ATTR);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
@@ -124,6 +124,35 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
     }
   }
 
+  class JavaPostfixTemplateBooleanExpressionCondition implements JavaPostfixTemplateExpressionCondition {
+    public static final String ID = "boolean";
+
+    @Override
+    public boolean value(PsiExpression element) {
+      return JavaPostfixTemplatesUtils.isBoolean(element.getType());
+    }
+
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @Override
+    public String getPresentableName() {
+      return "boolean";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+  }
 
   class JavaPostfixTemplateArrayExpressionCondition implements JavaPostfixTemplateExpressionCondition {
     public static final String ID = "array";

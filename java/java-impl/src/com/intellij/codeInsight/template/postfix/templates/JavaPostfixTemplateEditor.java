@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,6 +36,8 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,11 +46,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEditablePostfixTemplate> {
-
   @Nullable private final Project myProject;
   @NotNull private final Editor myTemplateEditor;
-  private final JBList<JavaPostfixTemplateExpressionCondition> myExpressionTypesList;
-  private final DefaultListModel<JavaPostfixTemplateExpressionCondition> myExpressionTypesListModel;
+  @NotNull private final JBList<JavaPostfixTemplateExpressionCondition> myExpressionTypesList;
+  @NotNull private final DefaultListModel<JavaPostfixTemplateExpressionCondition> myExpressionTypesListModel;
 
   private JPanel myPanel;
   private JBCheckBox myApplyToTheTopmostJBCheckBox;
@@ -75,14 +77,17 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
     });
     myExpressionTypesPanel.setLayout(new BorderLayout());
     myExpressionTypesPanel.add(ToolbarDecorator.createDecorator(myExpressionTypesList)
-                                 .setAddAction(button -> addExpressionType(button))
-                                 .setRemoveAction(button -> ListUtil.removeSelectedItems(myExpressionTypesList))
-                                 .createPanel());
+                                               .setAddAction(button -> addExpressionType(button))
+                                               .setRemoveAction(button -> ListUtil.removeSelectedItems(myExpressionTypesList))
+                                               .disableUpDownActions()
+                                               .createPanel());
 
     myTemplateEditorPanel.setLayout(new BorderLayout());
     myTemplateEditorPanel.add(myTemplateEditor.getComponent());
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myExpressionVariableHint);
     myExpressionVariableHint.setFontColor(UIUtil.FontColor.BRIGHTER);
+
+    //todo: title for editing
   }
 
   private void createUIComponents() {
@@ -102,10 +107,15 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
 
   @Override
   public void reset(@NotNull JavaEditablePostfixTemplate template) {
+    myExpressionTypesListModel.clear();
+    for (JavaPostfixTemplateExpressionCondition condition : template.getExpressionConditions()) {
+      myExpressionTypesListModel.addElement(condition);
+    }
+    myKeyTextField.setEditable(!template.isBuiltin());
     myLanguageLevelCombo.setSelectedItem(template.getMinimumLanguageLevel());
     myApplyToTheTopmostJBCheckBox.setSelected(template.isUseTopmostExpression());
     ApplicationManager.getApplication().runWriteAction(() -> myTemplateEditor.getDocument().setText(template.getTemplateText()));
-    myKeyTextField.setText(template.getKey());
+    myKeyTextField.setText(StringUtil.trimStart(template.getKey(), "."));
   }
 
   @Override
@@ -113,7 +123,8 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
     return !template.getMinimumLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem()) ||
            template.isUseTopmostExpression() != myApplyToTheTopmostJBCheckBox.isSelected() ||
            !myTemplateEditor.getDocument().getText().equals(template.getTemplateText()) ||
-           !myKeyTextField.getText().equals(template.getKey());
+           !myKeyTextField.getText().equals(StringUtil.trimStart(template.getKey(), ".")) ||
+           !ContainerUtil.newHashSet(myExpressionTypesListModel.elements()).equals(template.getExpressionConditions());
   }
 
   @Override
@@ -140,15 +151,15 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
 
   private void addExpressionType(@NotNull AnActionButton button) {
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition()));
-    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()));
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateVoidExpressionCondition()));
+    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()));
+    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()));
+    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition()));
     group.add(new ChooseClassAction());
     DataContext context = DataManager.getInstance().getDataContext(button.getContextComponent());
-    ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
-    //noinspection ConstantConditions
-    popup.show(button.getPreferredPopupPoint());
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
+                                                                          JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
+    popup.show(ObjectUtils.assertNotNull(button.getPreferredPopupPoint()));
   }
 
   private class AddConditionAction extends DumbAwareAction {
@@ -188,13 +199,15 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
 
     private String getFqn() {
       String title = "Choose Class";
-      if (myProject == null) {
+      if (myProject == null || myProject.isDefault()) {
         return Messages.showInputDialog(myPanel, title, title, null);
       }
       GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
-      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(title, scope, FILTER, null);
+      TreeClassChooser chooser =
+        TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(title, scope, FILTER, null);
       chooser.showDialog();
       PsiClass selectedClass = chooser.getSelected();
-      return selectedClass != null ? selectedClass.getQualifiedName() : null; }
+      return selectedClass != null ? selectedClass.getQualifiedName() : null;
+    }
   }
 }

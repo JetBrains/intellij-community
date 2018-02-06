@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
@@ -19,16 +19,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   private static final Condition<PsiElement> PSI_ERROR_FILTER = element -> !PsiTreeUtil.hasErrorElements(element);
 
-  @NotNull private final List<JavaPostfixTemplateExpressionCondition> myExpressionConditions;
+  @NotNull private final Set<JavaPostfixTemplateExpressionCondition> myExpressionConditions;
   @NotNull private final LanguageLevel myMinimumLanguageLevel;
   private final boolean myUseTopmostExpression;
 
   public JavaEditablePostfixTemplate(@NotNull String key,
-                                     @NotNull List<JavaPostfixTemplateExpressionCondition> expressionConditions,
+                                     @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull String templateText,
@@ -40,7 +41,7 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   }
 
   @NotNull
-  public List<JavaPostfixTemplateExpressionCondition> getExpressionConditions() {
+  public Set<JavaPostfixTemplateExpressionCondition> getExpressionConditions() {
     return myExpressionConditions;
   }
 
