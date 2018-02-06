@@ -73,7 +73,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
              fileName.startsWith("trove4j");
     });
     //todo
-    argument.append(parentPath).append(File.separator).append(new File("intellij-coverage.jar").getName());
+    argument.append(parentPath).append(File.separator).append(new File("intellij-coverage-1.0.369.jar").getName());
     argument.append("=");
     try {
       final File tempFile = createTempFile();
