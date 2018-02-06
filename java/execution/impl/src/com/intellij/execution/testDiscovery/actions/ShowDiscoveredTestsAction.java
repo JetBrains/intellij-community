@@ -120,6 +120,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
             runAllDiscoveredTests(project, tree, ref, context, methods);
           }
         });
+        view.getPresentation().setUsagesWord("test");
+        view.getPresentation().setMergeDupLinesAvailable(false);
+        view.getPresentation().setUsageTypeFilteringAvailable(false);
+        view.getPresentation().setExcludeAvailable(false);
       }
       JBPopup popup = ref.get();
       if (popup != null) {
