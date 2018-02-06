@@ -316,7 +316,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   }
 
   public void save(boolean isForce) {
-    if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
+    if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
     }
