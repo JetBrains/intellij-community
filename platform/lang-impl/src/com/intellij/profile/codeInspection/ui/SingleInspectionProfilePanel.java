@@ -1199,7 +1199,13 @@ public class SingleInspectionProfilePanel extends JPanel {
       });
       userActivityWatcher.register(options);
       myResetLink = LinkLabel.create("Reset", () -> {
-        //TODO
+        ScopeToolState state = getSelectedState();
+        if (state != null) {
+          state.resetConfigPanel();
+          Project project = myProjectProfileManager.getProject();
+          myProfile.resetToBase(state.getTool().getTool().getShortName(), state.getScope(project), project);
+          updateOptionsAndDescriptionPanel();
+        }
       });
       add(myResetLink, resetLabelConstraints);
       setupResetLinkVisibility();

@@ -73,10 +73,9 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
 
   fun isProperSetting(toolId: String, scope: NamedScope, project: Project): Boolean {
     if (myBaseProfile != null) {
-      val baseDefaultState = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool
-      val currentTools = myTools[toolId]?.tools
-      val state = currentTools?.first { s -> scope == s.getScope(project) }?.tool
-      return baseDefaultState != null && state != null && ScopeToolState.areSettingsEqual(baseDefaultState, state)
+      val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool
+      val actualWrapper = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }?.tool
+      return baseDefaultWrapper != null && actualWrapper != null && ScopeToolState.areSettingsEqual(baseDefaultWrapper, actualWrapper)
     }
     return false
   }
@@ -87,6 +86,12 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     copyToolsConfigurations(myBaseProfile, project)
     myChangedToolNames = null
     myUninitializedSettings.clear()
+  }
+
+  fun resetToBase(toolId: String, scope: NamedScope, project: Project?) {
+    val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool!!
+    val state = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }!!
+    state.tool = copyToolSettings(baseDefaultWrapper)
   }
 
   //invoke when isChanged() == true
