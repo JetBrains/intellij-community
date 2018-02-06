@@ -58,24 +58,23 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
                                  @Nullable RunnerSettings runnerSettings) {
     if (runnerSettings == null && isApplicableFor(configuration)) {
       Disposable disposable = Disposer.newDisposable();
-      final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
       final MessageBusConnection connection = configuration.getProject().getMessageBus().connect();
-
       TestDiscoveryDataSocketListener listener = SOCKET_LISTENER_KEY.get(configuration);
-      connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
-        @Override
-        public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
-          if (testsRoot.getHandler() != handler) return;
-          if (listener == null) {
+      if (listener == null) {
+        final Alarm processTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
+        connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, new SMTRunnerEventsAdapter() {
+          @Override
+          public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
+            if (testsRoot.getHandler() != handler) return;
             processTracesAlarm.cancelAllRequests();
             processTracesAlarm.addRequest(() -> processTracesFile((JavaTestConfigurationBase)configuration), 0);
             connection.disconnect();
-          } else {
-            listener.closeForcibly();
+            Disposer.dispose(disposable);
           }
-          Disposer.dispose(disposable);
-        }
-      });
+        });
+      } else {
+        listener.attach(handler);
+      }
     }
   }
 
@@ -131,11 +130,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @Override
   public void cleanUserData(RunConfigurationBase runConfigurationBase) {
-    TestDiscoveryDataSocketListener listener = runConfigurationBase.getUserData(SOCKET_LISTENER_KEY);
-    if (listener != null) {
-      listener.closeForcibly();
-      runConfigurationBase.putUserData(SOCKET_LISTENER_KEY, null);
-    }
+    runConfigurationBase.putUserData(SOCKET_LISTENER_KEY, null);
   }
 
   private static final Object ourTracesLock = new Object();
@@ -177,7 +172,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     if (USE_SOCKET) {
       try {
         JavaTestConfigurationBase javaTestConfigurationBase = (JavaTestConfigurationBase)configuration;
-        listener = new TestDiscoveryDataSocketListener(configuration.getProject(), getConfigurationModuleName(javaTestConfigurationBase), javaTestConfigurationBase.getFrameworkPrefix());
+        listener = new TestDiscoveryDataSocketListener(configuration.getProject(),
+                                                       getConfigurationModuleName(javaTestConfigurationBase),
+                                                       javaTestConfigurationBase.getFrameworkPrefix());
         configuration.putUserData(SOCKET_LISTENER_KEY, listener);
       } catch (IOException e) {
         LOG.error(e);

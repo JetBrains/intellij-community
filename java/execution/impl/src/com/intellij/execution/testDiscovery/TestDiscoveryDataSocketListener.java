@@ -1,12 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolUtil;
 import com.intellij.util.TimeoutUtil;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,16 +17,17 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public class TestDiscoveryDataSocketListener {
+class TestDiscoveryDataSocketListener {
   private static final Logger LOG = Logger.getInstance(TestDiscoveryDataSocketListener.class);
 
-  private final @Nullable String myModuleName;
-  private final @NotNull String myFrameworkPrefix;
+  @Nullable
+  private final String myModuleName;
+  @NotNull
+  private final String myFrameworkPrefix;
+  private volatile boolean myClosed;
   private final ServerSocket myServer;
   private final int myPort;
   private final TestDiscoveryIndex myTestDiscoveryIndex;
-  private volatile boolean myCloseForcibly;
-  private volatile boolean myStarted;
 
   public TestDiscoveryDataSocketListener(@NotNull Project project,
                                          @Nullable String moduleName,
@@ -37,9 +40,8 @@ public class TestDiscoveryDataSocketListener {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Socket socket;
-      myStarted = true;
       while (true) {
-        if (myCloseForcibly) {
+        if (myClosed) {
           return;
         }
         try {
@@ -61,7 +63,9 @@ public class TestDiscoveryDataSocketListener {
         TestDiscoveryProtocolUtil.readSequentially(testDataStream, protocolReader);
       }
       catch (IOException e) {
-        LOG.error(e);
+        if (!myClosed) {
+          LOG.error(e);
+        }
       } finally {
         try {
           socket.close();
@@ -71,17 +75,23 @@ public class TestDiscoveryDataSocketListener {
         }
       }
     });
-
-    while (!myStarted) {
-      TimeoutUtil.sleep(10);
-    }
   }
 
   public int getPort() {
     return myPort;
   }
 
-  public void closeForcibly() {
-    //myCloseForcibly = true;
+  void attach(ProcessHandler handler) {
+    handler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        myClosed = true;
+      }
+
+      @Override
+      public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
+        myClosed = true;
+      }
+    });
   }
 }
