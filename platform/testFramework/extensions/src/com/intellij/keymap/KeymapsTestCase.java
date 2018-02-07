@@ -34,7 +34,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control ADD",              "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
     { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
     { "control DOWN",             "EditorScrollDown", "EditorLookupDown", "MethodOverloadSwitchDown"},
-    { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource"},
+    { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource", "PyExecuteCellAction"},
     { "control EQUALS",           "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
     { "control F5",               "Refresh", "Rerun"},
     { "control D",                "EditorDuplicate", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop"},
