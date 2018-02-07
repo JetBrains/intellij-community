@@ -650,7 +650,9 @@ public class AbstractPopup implements JBPopup {
         myState = State.SHOWN;
         return;
       }
-      storeDimensionSize(myContent.getSize());
+      Dimension size = (Dimension)myContent.getSize().clone();
+      JBInsets.removeFrom(size, myContent.getInsets());
+      storeDimensionSize(size);
       if (myUseDimServiceForXYLocation) {
         final JRootPane root = myComponent.getRootPane();
         if (root != null) {
@@ -777,6 +779,8 @@ public class AbstractPopup implements JBPopup {
     if (sizeToSet != null) {
       sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
       sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
+
+      JBInsets.addTo(sizeToSet, myContent.getInsets());
 
       myContent.setSize(sizeToSet);
       myContent.setPreferredSize(sizeToSet);
