@@ -11,42 +11,7 @@ public interface ViewSettings extends NodeOptions {
   /**
    * The default view settings for the project view.
    */
-  ViewSettings DEFAULT = new ViewSettings() {
-    @Override
-    public boolean isShowMembers() {
-      return false;
-    }
-
-    @Override
-    public boolean isAbbreviatePackageNames() {
-      return false;
-    }
-
-    @Override
-    public boolean isFlattenPackages() {
-      return false;
-    }
-
-    @Override
-    public boolean isHideEmptyMiddlePackages() {
-      return false;
-    }
-
-    @Override
-    public boolean isShowLibraryContents() {
-      return false;
-    }
-
-    @Override
-    public boolean isStructureView() {
-      return false;
-    }
-
-    @Override
-    public boolean isShowModules() {
-      return true;
-    }
-  };
+  ViewSettings DEFAULT = Immutable.DEFAULT;
 
   /**
    * Checks if the project view displays members of classes.
@@ -86,6 +51,8 @@ public interface ViewSettings extends NodeOptions {
   }
 
   class Immutable extends NodeOptions.Immutable implements ViewSettings {
+    public static final ViewSettings DEFAULT = new ViewSettings.Immutable(null);
+
     private final boolean myShowMembers;
     private final boolean myStructureView;
     private final boolean myShowModules;
@@ -96,7 +63,7 @@ public interface ViewSettings extends NodeOptions {
       super(settings);
       myShowMembers = settings != null && settings.isShowMembers();
       myStructureView = settings != null && settings.isStructureView();
-      myShowModules = settings != null && settings.isShowModules();
+      myShowModules = settings == null || settings.isShowModules();
       myFlattenModules = settings != null && settings.isFlattenModules();
       myShowURL = settings == null || settings.isShowURL();
     }
@@ -131,10 +98,10 @@ public interface ViewSettings extends NodeOptions {
       if (object == this) return true;
       if (!super.equals(object)) return false;
       ViewSettings settings = (ViewSettings)object;
-      return settings.isShowMembers() == isShowMembers() ||
-             settings.isStructureView() == isStructureView() ||
-             settings.isShowModules() == isShowModules() ||
-             settings.isFlattenModules() == isFlattenModules() ||
+      return settings.isShowMembers() == isShowMembers() &&
+             settings.isStructureView() == isStructureView() &&
+             settings.isShowModules() == isShowModules() &&
+             settings.isFlattenModules() == isFlattenModules() &&
              settings.isShowURL() == isShowURL();
     }
 

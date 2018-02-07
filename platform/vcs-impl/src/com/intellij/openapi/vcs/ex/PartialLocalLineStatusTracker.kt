@@ -451,31 +451,36 @@ class PartialLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   fun moveToChangelist(range: Range, changelist: LocalChangeList) {
-    documentTracker.writeLock {
-      val block = findBlock(range)
-      if (block != null) moveToChangelist(listOf(block), changelist)
+    val newRange = findBlock(range)
+    if (newRange != null) {
+      moveToChangelist({ it == newRange }, changelist)
     }
   }
 
   @CalledInAwt
   fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
-    documentTracker.writeLock {
-      moveToChangelist(blocks.filter { it.isSelectedByLine(lines) }, changelist)
-    }
+    moveToChangelist({ it.isSelectedByLine(lines) }, changelist)
   }
 
   @CalledInAwt
-  private fun moveToChangelist(blocks: List<Block>, changelist: LocalChangeList) {
-    val newMarker = ChangeListMarker(changelist)
-    for (block in blocks) {
-      if (block.marker != newMarker) {
-        block.marker = newMarker
-        updateHighlighter(block)
+  private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
+    changeListManager.executeUnderDataLock {
+      if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+      val newMarker = ChangeListMarker(changelist)
+
+      documentTracker.writeLock {
+        for (block in blocks) {
+          if (condition(block) &&
+              block.marker != newMarker) {
+            block.marker = newMarker
+            updateHighlighter(block)
+          }
+        }
+
+        dropExistingUndoActions()
+        updateAffectedChangeLists()
       }
     }
-
-    dropExistingUndoActions()
-    updateAffectedChangeLists()
   }
 
 

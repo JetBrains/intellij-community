@@ -36,32 +36,9 @@ public interface NodeOptions {
    */
   boolean isShowLibraryContents();
 
-  /**
-   * The default tree view settings.
-   */
-  NodeOptions DEFAULT_OPTIONS = new NodeOptions() {
-    @Override
-    public boolean isFlattenPackages() {
-      return false;
-    }
-
-    @Override
-    public boolean isAbbreviatePackageNames() {
-      return false;
-    }
-
-    @Override
-    public boolean isHideEmptyMiddlePackages() {
-      return false;
-    }
-
-    @Override
-    public boolean isShowLibraryContents() {
-      return false;
-    }
-  };
-
   class Immutable implements NodeOptions {
+    public static final NodeOptions DEFAULT = new Immutable(null);
+
     private final boolean myFlattenPackages;
     private final boolean myAbbreviatePackageNames;
     private final boolean myHideEmptyMiddlePackages;
@@ -99,9 +76,9 @@ public interface NodeOptions {
       if (object == this) return true;
       if (object == null || !object.getClass().equals(getClass())) return false;
       NodeOptions options = (NodeOptions)object;
-      return options.isFlattenPackages() == isFlattenPackages() ||
-             options.isAbbreviatePackageNames() == isAbbreviatePackageNames() ||
-             options.isHideEmptyMiddlePackages() == isHideEmptyMiddlePackages() ||
+      return options.isFlattenPackages() == isFlattenPackages() &&
+             options.isAbbreviatePackageNames() == isAbbreviatePackageNames() &&
+             options.isHideEmptyMiddlePackages() == isHideEmptyMiddlePackages() &&
              options.isShowLibraryContents() == isShowLibraryContents();
     }
 

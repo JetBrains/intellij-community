@@ -19,8 +19,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -111,7 +111,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     RendererComponent panel = UIUtil.getClientProperty(table, MY_PANEL_PROPERTY);
     if (panel != null) {
       DelegateColorScheme scheme = (DelegateColorScheme)panel.getEditor().getColorsScheme();
-      scheme.setDelegate(EditorColorsManager.getInstance().getGlobalScheme());
+      scheme.setDelegate(EditorColorsUtil.getGlobalOrDefaultColorScheme());
       return panel;
     }
 

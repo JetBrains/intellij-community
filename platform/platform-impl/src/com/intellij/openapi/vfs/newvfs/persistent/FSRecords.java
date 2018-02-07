@@ -857,7 +857,7 @@ public class FSRecords {
 
   @NotNull
   static int[] list(int id) {
-    return writeAndHandleErrors(() -> {
+    return readAndHandleErrors(() -> {
       try (final DataInputStream input = readAttribute(id, ourChildrenAttr)) {
         if (input == null) return ArrayUtil.EMPTY_INT_ARRAY;
         final int count = DataInputOutputUtil.readINT(input);
