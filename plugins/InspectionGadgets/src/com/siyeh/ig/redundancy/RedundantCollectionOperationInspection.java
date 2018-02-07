@@ -413,14 +413,17 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       if (parent instanceof PsiLocalVariable) {
         PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
         if (!typeElement.isInferredType()) {
-          PsiType type = args[0].getType();
-          if (type == null) return;
-          if(type instanceof PsiEllipsisType) {
-            type = ((PsiEllipsisType)type).toArrayType();
+          PsiType varType = ((PsiLocalVariable)parent).getType();
+          PsiType elementType = PsiUtil.substituteTypeParameter(varType, CommonClassNames.JAVA_LANG_ITERABLE, 0, false);
+          if (elementType == null) {
+            PsiType type = args[0].getType();
+            if (!(type instanceof PsiArrayType)) return;
+            elementType = ((PsiArrayType)type).getComponentType();
           }
-          if (!typeElement.isInferredType()) {
-            typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(type));
+          if (elementType instanceof PsiWildcardType) {
+            elementType = ((PsiWildcardType)elementType).getExtendsBound();
           }
+          typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(elementType.createArrayType()));
         }
       }
       ct.replaceAndRestoreComments(call, ct.markUnchanged(args[0]));
