@@ -55,7 +55,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   @Nullable
   @Override
   public PostfixTemplateEditor<JavaEditablePostfixTemplate> createEditor(@Nullable Project project) {
-    return new JavaPostfixTemplateEditor(project);
+    return new JavaPostfixTemplateEditor(this, project);
   }
 
   @NotNull

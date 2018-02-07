@@ -3,7 +3,15 @@ package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.options.ConfigurableUi;
+import org.jetbrains.annotations.NotNull;
 
-public interface PostfixTemplateEditor<T extends PostfixTemplate> extends ConfigurableUi<T>, Disposable {
+import javax.swing.*;
+
+public interface PostfixTemplateEditor<T extends PostfixTemplate> extends Disposable {
+  T createTemplate(@NotNull String templateId);
+  
+  void setTemplate(T template);
+
+  @NotNull
+  JComponent getComponent();
 }

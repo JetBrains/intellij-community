@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -25,7 +24,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,8 +42,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Set;
 
 public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEditablePostfixTemplate> {
+  @NotNull private final JavaEditablePostfixTemplateProvider myProvider;
   @Nullable private final Project myProject;
   @NotNull private final Editor myTemplateEditor;
   @NotNull private final JBList<JavaPostfixTemplateExpressionCondition> myExpressionTypesList;
@@ -56,10 +56,10 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
   private ComboBox<LanguageLevel> myLanguageLevelCombo;
   private JBLabel myExpressionVariableHint;
   private JPanel myExpressionTypesPanel;
-  private JTextField myKeyTextField;
   private JPanel myTemplateEditorPanel;
 
-  public JavaPostfixTemplateEditor(@Nullable Project project) {
+  public JavaPostfixTemplateEditor(@NotNull JavaEditablePostfixTemplateProvider provider, @Nullable Project project) {
+    myProvider = provider;
     myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
     myTemplateEditor = TemplateEditorUtil.createEditor(false, createDocument(myProject), myProject);
 
@@ -81,13 +81,11 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
                                                .setRemoveAction(button -> ListUtil.removeSelectedItems(myExpressionTypesList))
                                                .disableUpDownActions()
                                                .createPanel());
-
+    myExpressionTypesPanel.setMinimumSize(new Dimension(-1, 100));
     myTemplateEditorPanel.setLayout(new BorderLayout());
     myTemplateEditorPanel.add(myTemplateEditor.getComponent());
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myExpressionVariableHint);
     myExpressionVariableHint.setFontColor(UIUtil.FontColor.BRIGHTER);
-
-    //todo: title for editing
   }
 
   private void createUIComponents() {
@@ -106,30 +104,26 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
   }
 
   @Override
-  public void reset(@NotNull JavaEditablePostfixTemplate template) {
+  public JavaEditablePostfixTemplate createTemplate(@NotNull String templateId) {
+    String key = "." + templateId;
+    LanguageLevel selectedLanguageLevel = ObjectUtils.tryCast(myLanguageLevelCombo.getSelectedItem(), LanguageLevel.class);
+    LanguageLevel languageLevel = ObjectUtils.notNull(selectedLanguageLevel, LanguageLevel.JDK_1_3);
+    Set<JavaPostfixTemplateExpressionCondition> conditions = ContainerUtil.newLinkedHashSet();
+    ContainerUtil.addAll(conditions, myExpressionTypesListModel.elements());
+    String templateText = myTemplateEditor.getDocument().getText();
+    boolean useTopmostExpression = myApplyToTheTopmostJBCheckBox.isSelected();
+    return new JavaEditablePostfixTemplate(key, conditions, languageLevel, useTopmostExpression, templateText, myProvider);
+  }
+
+  @Override
+  public void setTemplate(@NotNull JavaEditablePostfixTemplate template) {
     myExpressionTypesListModel.clear();
     for (JavaPostfixTemplateExpressionCondition condition : template.getExpressionConditions()) {
       myExpressionTypesListModel.addElement(condition);
     }
-    myKeyTextField.setEditable(!template.isBuiltin());
     myLanguageLevelCombo.setSelectedItem(template.getMinimumLanguageLevel());
     myApplyToTheTopmostJBCheckBox.setSelected(template.isUseTopmostExpression());
     ApplicationManager.getApplication().runWriteAction(() -> myTemplateEditor.getDocument().setText(template.getTemplateText()));
-    myKeyTextField.setText(StringUtil.trimStart(template.getKey(), "."));
-  }
-
-  @Override
-  public boolean isModified(@NotNull JavaEditablePostfixTemplate template) {
-    return !template.getMinimumLanguageLevel().equals(myLanguageLevelCombo.getSelectedItem()) ||
-           template.isUseTopmostExpression() != myApplyToTheTopmostJBCheckBox.isSelected() ||
-           !myTemplateEditor.getDocument().getText().equals(template.getTemplateText()) ||
-           !myKeyTextField.getText().equals(StringUtil.trimStart(template.getKey(), ".")) ||
-           !ContainerUtil.newHashSet(myExpressionTypesListModel.elements()).equals(template.getExpressionConditions());
-  }
-
-  @Override
-  public void apply(@NotNull JavaEditablePostfixTemplate template) throws ConfigurationException {
-
   }
 
   @NotNull

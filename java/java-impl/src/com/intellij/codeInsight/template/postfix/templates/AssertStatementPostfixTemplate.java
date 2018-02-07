@@ -12,7 +12,7 @@ import java.util.Collections;
 public class AssertStatementPostfixTemplate extends JavaEditablePostfixTemplate {
   public AssertStatementPostfixTemplate(@NotNull PostfixEditableTemplateProvider provider) {
     super("assert", Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()),
-          LanguageLevel.JDK_1_3, true, "assert $EXPR$;$END$", provider);
+          LanguageLevel.JDK_1_4, true, "assert $EXPR$;$END$", provider);
   }
 
   @Override

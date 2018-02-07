@@ -85,7 +85,7 @@ public class PostfixTemplatesSettings implements PersistentStateComponent<Elemen
     myShortcut = shortcut;
   }
 
-  @Nullable
+  @NotNull
   public static PostfixTemplatesSettings getInstance() {
     return ServiceManager.getService(PostfixTemplatesSettings.class);
   }
