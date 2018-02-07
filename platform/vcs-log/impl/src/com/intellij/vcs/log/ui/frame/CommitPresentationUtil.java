@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.codeInspection.ex.Tools;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
@@ -11,7 +12,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.commit.BaseCommitMessageInspection;
 import com.intellij.vcs.commit.CommitMessageInspectionProfile;
+import com.intellij.vcs.commit.SubjectLimitInspection;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
@@ -112,17 +115,31 @@ public class CommitPresentationUtil {
       return formatText(project, fullMessage, font, font.getStyle(), convertor);
     }
 
-    int margin = CommitMessageInspectionProfile.getSubjectRightMargin(project);
-    if (subject.length() > margin) {
-      String tail = subject.substring(margin - ELLIPSIS.length());
-      subject = subject.substring(0, margin - ELLIPSIS.length()) + ELLIPSIS;
-      description = "\n\n" + ELLIPSIS + tail + description;
+    if (isSubjectMarginEnabled(project)) {
+      int margin = CommitMessageInspectionProfile.getSubjectRightMargin(project);
+      if (subject.length() > margin) {
+        String tail = subject.substring(margin - ELLIPSIS.length());
+        subject = subject.substring(0, margin - ELLIPSIS.length()) + ELLIPSIS;
+        description = "\n\n" + ELLIPSIS + tail + description;
+      }
     }
 
     return "<b>" +
            formatText(project, subject, font, Font.BOLD, convertor) +
            "</b>" +
            formatText(project, description, font, font.getStyle(), convertor);
+  }
+
+  public static boolean isSubjectMarginEnabled(@NotNull Project project) {
+    return isInspectionEnabled(project, SubjectLimitInspection.class);
+  }
+
+  private static <T extends BaseCommitMessageInspection> boolean isInspectionEnabled(@NotNull Project project,
+                                                                                     @NotNull Class<T> inspectionClass) {
+    CommitMessageInspectionProfile inspectionProfile = CommitMessageInspectionProfile.getInstance(project);
+    List<Tools> tools = inspectionProfile.getAllEnabledInspectionTools(project);
+    T inspection = inspectionProfile.getTool(inspectionClass);
+    return ContainerUtil.find(tools, tool -> tool.getTool().getTool().equals(inspection)) != null;
   }
 
   @NotNull

@@ -77,7 +77,7 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return getTool(SubjectLimitInspection.class).RIGHT_MARGIN;
   }
 
-  private <T extends LocalInspectionTool> T getTool(Class<T> aClass) {
+  public <T extends LocalInspectionTool> T getTool(Class<T> aClass) {
     InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
     //noinspection unchecked
     return (T)ObjectUtils.notNull(tool).getTool();
