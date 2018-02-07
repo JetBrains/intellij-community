@@ -59,6 +59,7 @@ import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -896,7 +897,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     views.remove(getCurrentProjectViewPane());
     Collections.sort(views, PANE_WEIGHT_COMPARATOR);
 
-    JBPopupFactory.getInstance()
+    IPopupChooserBuilder<AbstractProjectViewPane> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(views)
       .setRenderer(new DefaultListCellRenderer() {
         @Override
@@ -908,8 +909,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       })
       .setTitle(IdeBundle.message("title.popup.views"))
-      .setItemChoosenCallback(pane -> {if (pane != null) changeView(pane.getId());})
-      .createPopup().showInCenterOf(getComponent());
+      .setItemChoosenCallback(pane -> {
+        if (pane != null) changeView(pane.getId());
+      });
+    if (!views.isEmpty()) {
+      builder = builder.setSelectedValue(views.get(0), true);
+    }
+    builder
+      .createPopup()
+      .showInCenterOf(getComponent());
   }
 
   @Override
