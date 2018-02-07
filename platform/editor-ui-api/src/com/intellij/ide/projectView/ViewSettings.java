@@ -131,10 +131,10 @@ public interface ViewSettings extends NodeOptions {
       if (object == this) return true;
       if (!super.equals(object)) return false;
       ViewSettings settings = (ViewSettings)object;
-      return settings.isShowMembers() == isShowMembers() ||
-             settings.isStructureView() == isStructureView() ||
-             settings.isShowModules() == isShowModules() ||
-             settings.isFlattenModules() == isFlattenModules() ||
+      return settings.isShowMembers() == isShowMembers() &&
+             settings.isStructureView() == isStructureView() &&
+             settings.isShowModules() == isShowModules() &&
+             settings.isFlattenModules() == isFlattenModules() &&
              settings.isShowURL() == isShowURL();
     }
 

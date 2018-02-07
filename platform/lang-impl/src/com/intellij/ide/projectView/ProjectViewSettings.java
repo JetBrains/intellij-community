@@ -40,7 +40,7 @@ public interface ProjectViewSettings extends ViewSettings {
       if (object == this) return true;
       if (!super.equals(object)) return false;
       ProjectViewSettings settings = (ProjectViewSettings)object;
-      return settings.isShowExcludedFiles() == isShowExcludedFiles() ||
+      return settings.isShowExcludedFiles() == isShowExcludedFiles() &&
              settings.isUseFileNestingRules() == isUseFileNestingRules();
     }
 

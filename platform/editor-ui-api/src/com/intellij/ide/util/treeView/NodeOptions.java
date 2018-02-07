@@ -99,9 +99,9 @@ public interface NodeOptions {
       if (object == this) return true;
       if (object == null || !object.getClass().equals(getClass())) return false;
       NodeOptions options = (NodeOptions)object;
-      return options.isFlattenPackages() == isFlattenPackages() ||
-             options.isAbbreviatePackageNames() == isAbbreviatePackageNames() ||
-             options.isHideEmptyMiddlePackages() == isHideEmptyMiddlePackages() ||
+      return options.isFlattenPackages() == isFlattenPackages() &&
+             options.isAbbreviatePackageNames() == isAbbreviatePackageNames() &&
+             options.isHideEmptyMiddlePackages() == isHideEmptyMiddlePackages() &&
              options.isShowLibraryContents() == isShowLibraryContents();
     }
 
