@@ -572,11 +572,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
 
     @Override
     protected void processMouseEvent(MouseEvent e) {
-      //if (!isMultiSelectionEnabled() &&
-      //    (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0) {
-      //  // do not toggle selection with ctrl+click event in single-selection mode
-      //  e.consume();
-      //}
+      if (!isMultiSelectionEnabled() &&
+          (e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0) {
+        // do not toggle selection with ctrl+click event in single-selection mode
+        e.consume();
+      }
       if (UIUtil.isActionClick(e, MouseEvent.MOUSE_PRESSED) && isOnNextStepButton(e)) {
         e.consume();
       }
