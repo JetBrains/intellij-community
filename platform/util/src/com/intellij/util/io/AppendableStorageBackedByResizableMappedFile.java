@@ -114,10 +114,11 @@ public class AppendableStorageBackedByResizableMappedFile extends ResizeableMapp
       }
     }
 
+    if (myFileLength == 0) return true;
     DataInputStream keysStream = new DataInputStream(new BufferedInputStream(new LimitedInputStream(new FileInputStream(getPagedFileStorage().getFile()),
                                                                                                     myFileLength) {
       @Override
-      public int available() throws IOException {
+      public int available() {
         return remainingLimit();
       }
     }, 32768));

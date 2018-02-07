@@ -368,7 +368,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
 
         updatePluginDependencies();
-        hideNotApplicablePlugins(newVal, pluginDependencies.toArray(new IdeaPluginDescriptor[pluginDependencies.size()]));
+        hideNotApplicablePlugins(newVal, pluginDependencies.toArray(new IdeaPluginDescriptor[0]));
       }
     }
   }
@@ -441,11 +441,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         }
         return comparator.compare(o1, o2);
       };
-    }
-
-    @Override
-    public int getWidth(JTable table) {
-      return super.getWidth(table);
     }
   }
 }

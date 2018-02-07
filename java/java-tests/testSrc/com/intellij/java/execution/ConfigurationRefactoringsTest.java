@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.execution;
 
@@ -25,7 +13,10 @@ import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor;
@@ -34,10 +25,11 @@ import com.intellij.refactoring.move.moveMembers.MockMoveMembersOptions;
 import com.intellij.refactoring.move.moveMembers.MoveMembersProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.MapDataContext;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 
 public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   private static final String APPLICATION_CODE = "public class Application {" +
@@ -63,9 +55,9 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertTrue("Unexpected ConfigurationException: " + e ,false);
+      fail("Unexpected ConfigurationException: " + e);
     }
-    assertEquals("NewName", configuration.MAIN_CLASS_NAME);
+    assertEquals("NewName", configuration.getMainClassName());
   }
 
   public void testMoveApplication() throws IOException {
@@ -77,12 +69,12 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertTrue("Unexpected ConfigurationException: " + e ,false);
+      fail("Unexpected ConfigurationException: " + e);
     }
 
-    assertEquals("pkg.Application", configuration.MAIN_CLASS_NAME);
+    assertEquals("pkg.Application", configuration.getMainClassName());
     rename(JavaPsiFacade.getInstance(myProject).findPackage("pkg"), "pkg2");
-    assertEquals("pkg2.Application", configuration.MAIN_CLASS_NAME);
+    assertEquals("pkg2.Application", configuration.getMainClassName());
   }
 
   public void testRenameJUnitPackage() {
@@ -178,7 +170,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       assertEquals(expectedExceptionMessage, e.getLocalizedMessage());
       return;
     }
-    assertTrue("ConfigurationException expected", false);
+    fail("ConfigurationException expected");
   }
 
   public void testRefactorOtherClass() throws IOException {
@@ -206,7 +198,12 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   private void initModule() {
     mySource.initModule();
     mySource.copyJdkFrom(myModule);
-    mySource.addLibrary(findFile(MOCK_JUNIT));
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    for (File file : junit4Library.getClasses()) {
+      VirtualFile libFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+      assertNotNull(libFile);
+      mySource.addLibrary(JarFileSystem.getInstance().getJarRootForLocalFile(libFile));
+    }
   }
 
   private void move(final PsiElement psiElement, String packageName) {

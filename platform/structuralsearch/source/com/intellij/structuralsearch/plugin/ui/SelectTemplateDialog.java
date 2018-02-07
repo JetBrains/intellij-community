@@ -43,8 +43,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- * Date: Apr 23, 2004
- * Time: 5:03:52 PM
  */
 public class SelectTemplateDialog extends DialogWrapper {
   private final boolean showHistory;
@@ -285,7 +283,7 @@ public class SelectTemplateDialog extends DialogWrapper {
           configurations.add((Configuration)userObject);
         }
       }
-      return configurations.toArray(new Configuration[configurations.size()]);
+      return configurations.toArray(new Configuration[0]);
     }
   }
 

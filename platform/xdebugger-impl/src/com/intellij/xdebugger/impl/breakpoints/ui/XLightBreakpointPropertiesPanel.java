@@ -127,7 +127,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     if (debuggerEditorsProvider != null) {
       myConditionEnabledCheckbox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
       myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID,
-                                                            myBreakpoint.getSourcePosition(), true, true);
+                                                            myBreakpoint.getSourcePosition(), true, false);
       myLanguageChooserPanel.add(myConditionComboBox.getLanguageChooser(), BorderLayout.CENTER);
       myConditionExpressionPanel.add(myConditionComboBox.getComponent(), BorderLayout.CENTER);
       myConditionEnabledCheckbox.addActionListener(e -> onCheckboxChanged());

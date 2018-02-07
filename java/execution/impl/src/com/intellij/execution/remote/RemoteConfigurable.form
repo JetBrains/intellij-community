@@ -51,7 +51,7 @@
                   <text resource-bundle="messages/ExecutionBundle" key="remote.configuration.port.label"/>
                 </properties>
               </component>
-              <component id="11a97" class="javax.swing.JTextField" binding="myPortField">
+              <component id="11a97" class="com.intellij.ui.components.fields.IntegerField" binding="myPortField" custom-create="true">
                 <constraints>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
                     <preferred-size width="150" height="-1"/>

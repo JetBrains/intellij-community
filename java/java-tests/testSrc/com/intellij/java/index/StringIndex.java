@@ -40,7 +40,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 12, 2007
  */
 public class StringIndex {
   private final MapReduceIndex<String, String, PathContentPair> myIndex;

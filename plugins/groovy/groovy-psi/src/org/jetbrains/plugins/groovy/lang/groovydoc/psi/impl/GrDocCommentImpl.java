@@ -105,7 +105,7 @@ public class GrDocCommentImpl extends LazyParseablePsiElement implements GrDocCo
         list.add((GrDocTag)e);
       }
     }
-    return list.toArray(new GrDocTag[list.size()]);
+    return list.toArray(GrDocTag.EMPTY_ARRAY);
   }
 
   @Override

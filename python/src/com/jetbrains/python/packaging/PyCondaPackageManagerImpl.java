@@ -172,7 +172,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.fromText(requiresSpec));
+        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, "", requirements));
@@ -204,8 +204,8 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @NotNull
-  public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
-    final String condaExecutable = PyCondaPackageService.getSystemCondaExecutable();
+  public static String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
+                                        @NotNull String version) throws ExecutionException {
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir, "-y",

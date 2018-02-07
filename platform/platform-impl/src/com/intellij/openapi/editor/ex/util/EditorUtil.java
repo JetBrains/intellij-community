@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.diagnostic.Dumpable;
@@ -27,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
@@ -48,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -373,6 +361,16 @@ public final class EditorUtil {
     return (nTabs + 1) * tabSize;
   }
 
+  public static float nextTabStop(float x, float plainSpaceWidth, int tabSize) {
+    if (tabSize <= 0) {
+      return x + plainSpaceWidth;
+    }
+    tabSize *= plainSpaceWidth;
+
+    int nTabs = (int) (x / tabSize);
+    return (nTabs + 1) * tabSize;
+  }
+
   public static int textWidthInColumns(@NotNull Editor editor, @NotNull CharSequence text, int start, int end, int x) {
     int startToUse = start;
     int lastTabSymbolIndex = -1;
@@ -431,6 +429,10 @@ public final class EditorUtil {
       result++;
     }
     return result;
+  }
+
+  public static int columnsNumber(float width, float plainSpaceSize) {
+    return (int)Math.ceil(width / plainSpaceSize);
   }
 
   /**
@@ -596,14 +598,34 @@ public final class EditorUtil {
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {
+    scrollToTheEnd(editor, false);
+  }
+
+  public static void scrollToTheEnd(@NotNull Editor editor, boolean preferVerticalScroll) {
     editor.getSelectionModel().removeSelection();
-    int lastLine = Math.max(0, editor.getDocument().getLineCount() - 1);
+    Document document = editor.getDocument();
+    int lastLine = Math.max(0, document.getLineCount() - 1);
     if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
-      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+      editor.getCaretModel().moveToOffset(document.getTextLength());
     } else {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
     }
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
+      // don't move 'focus' to empty last line
+      int scrollOffset;
+      if (editor instanceof EditorEx) {
+        JScrollBar verticalScrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();
+        scrollOffset = verticalScrollBar.getMaximum() - verticalScrollBar.getModel().getExtent();
+      }
+      else {
+        scrollOffset = editor.getContentComponent().getHeight() - scrollingModel.getVisibleArea().height;
+      }
+      scrollingModel.scrollVertically(scrollOffset);
+    }
+    else {
+      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
@@ -680,11 +702,17 @@ public final class EditorUtil {
     editor.getSelectionModel().setSelection(startOffset, endOffset);
   }
 
+  /**
+   * This returns a {@link java.awt.Font#PLAIN} font from family, used in editor, with size matching editor font size (except in
+   * presentation mode, when adjusted presentation mode font size is used). Returned font has fallback variants (i.e. if main font doesn't
+   * support certain Unicode characters, some other font may be used to display them), but fallback mechanism differs from the one used in
+   * editor.
+   */
   public static Font getEditorFont() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     int size = UISettings.getInstance().getPresentationMode()
                ? UISettings.getInstance().getPresentationModeFontSize() - 4 : scheme.getEditorFontSize();
-    return new Font(scheme.getEditorFontName(), Font.PLAIN, size);
+    return UIUtil.getFontWithFallback(scheme.getEditorFontName(), Font.PLAIN, size);
   }
 
   /**
@@ -766,5 +794,19 @@ public final class EditorUtil {
         if (animationWasEnabled) scrollingModel.enableAnimation();
       }
     }
+  }
+
+  @NotNull
+  public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
+    int codePoint = (int)c;
+    if (!Character.isValidCodePoint(codePoint)) {
+      return fallback;
+    }
+
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
+    int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
+    FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay((int)c, style, scheme.getFontPreferences(), null);
+    return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
   }
 }

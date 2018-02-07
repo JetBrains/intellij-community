@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,15 +29,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 
 import java.io.IOException;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class FileWithBranchComparer extends ElementWithBranchComparer {
 
   @NotNull private final Ref<byte[]> content = new Ref<>();
@@ -62,7 +58,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
   @Override
   protected void compare() throws VcsException {
     remoteTitleBuilder.append(myElementUrl);
-    content.set(SvnUtil.getFileContents(myVcs, SvnTarget.fromURL(myElementUrl), SVNRevision.HEAD, SVNRevision.UNDEFINED));
+    content.set(SvnUtil.getFileContents(myVcs, Target.on(myElementUrl), Revision.HEAD, Revision.UNDEFINED));
     success.set(true);
   }
 

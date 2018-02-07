@@ -63,8 +63,6 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 25, 2004
- * Time: 1:52:18 PM
  */
 class EditVarConstraintsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog");

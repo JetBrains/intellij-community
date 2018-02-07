@@ -29,6 +29,7 @@ public class DataFlowInspectionTestSuite {
 
     suite.addTestSuite(DataFlowInspectionTest.class);
     suite.addTestSuite(DataFlowInspection8Test.class);
+    suite.addTestSuite(DataFlowInspection9Test.class);
     suite.addTestSuite(DataFlowInspectionHeavyTest.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
@@ -59,6 +60,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
     suite.addTestSuite(UnwrapIfStatementFixTest.class);
     suite.addTestSuite(StreamFilterNotNullFixTest.class);
+    suite.addTestSuite(RedundantInstanceofFixTest.class);
     return suite;
   }
 }

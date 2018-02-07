@@ -1,26 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class JavaWrapOnTypingTest extends LightCodeInsightFixtureTestCase {
-
-
   public void testWrapInsideTags() {
     myFixture.configureByText(JavaFileType.INSTANCE,
       "public class Hw {\n"                                                                                                      +
@@ -50,5 +34,33 @@ public class JavaWrapOnTypingTest extends LightCodeInsightFixtureTestCase {
       "    public static void test() {\n"                                                                                        +
       "    }\n"                                                                                                                  +
       "}\n");
+  }
+
+  public void testWrapAtLineWithParameterHints() {
+    myFixture.configureByText(JavaFileType.INSTANCE,
+                              "public class C {\n" +
+                              "    void m(int a, int b) {}\n" +
+                              "    void other() { m(1, 2<caret>); }\n" +
+                              "}");
+    myFixture.doHighlighting();
+    myFixture.checkResultWithInlays("public class C {\n" +
+                                    "    void m(int a, int b) {}\n" +
+                                    "    void other() { m(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2<caret>); }\n" +
+                                    "}");
+
+    myFixture.getEditor().getSettings().setWrapWhenTypingReachesRightMargin(true);
+    myFixture.getEditor().getSettings().setRightMargin(30);
+
+    myFixture.type(" ");
+    myFixture.checkResultWithInlays("public class C {\n" +
+                                    "    void m(int a, int b) {}\n" +
+                                    "    void other() { m(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2 <caret>); }\n" +
+                                    "}");
+    myFixture.type(" ");
+    myFixture.checkResultWithInlays("public class C {\n" +
+                                    "    void m(int a, int b) {}\n" +
+                                    "    void other() { m(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2  <caret>\n" +
+                                    "    ); }\n" +
+                                    "}");
   }
 }

@@ -17,7 +17,6 @@ package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -26,10 +25,9 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This will work only in presence of IntelliLang plugin.
+ * This will work only in presence of intellij.platform.langInjection plugin.
  *
  * @author Dmitry Avdeev
- *         Date: 01.08.13
  */
 public abstract class ReferenceInjector extends Injectable {
 

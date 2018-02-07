@@ -66,7 +66,7 @@ public class UncheckedWarningLocalInspectionBase extends AbstractBaseJavaLocalIn
     if (generifyFixes.length > 0) {
       Collections.addAll(result, generifyFixes);
     }
-    return result.toArray(new LocalQuickFix[result.size()]);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

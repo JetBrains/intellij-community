@@ -10,7 +10,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 04-Oct-17
  */
 class ClassFileReprExternalizer implements DataExternalizer<ClassFileRepr> {
 

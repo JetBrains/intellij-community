@@ -21,6 +21,10 @@
       <action id="HideCoverage" class="com.intellij.coverage.actions.HideCoverageInfoAction"/>
       <separator/>
     </group>
+    <group id="CoveragePlatformMenu" popup="false">
+      <separator/>
+      <reference ref="CoverageMenu"/>
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
+    </group>
   </actions>
-
 </idea-plugin>

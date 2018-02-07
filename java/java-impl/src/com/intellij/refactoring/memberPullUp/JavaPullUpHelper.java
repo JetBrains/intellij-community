@@ -39,7 +39,6 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -174,9 +173,11 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
     else {
-      RefactoringUtil.replaceMovedMemberTypeParameters(aClass, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
-      fixReferencesToStatic(aClass);
-      final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(convertClassToLanguage(aClass, myTargetSuperClass.getLanguage()));
+      PsiClass copy = (PsiClass)aClass.copy();
+      RefactoringUtil.renameConflictingTypeParameters(copy, myTargetSuperClass);
+      RefactoringUtil.replaceMovedMemberTypeParameters(copy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
+      fixReferencesToStatic(copy);
+      final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(copy);
       myMembersAfterMove.add(movedElement);
       aClass.delete();
     }
@@ -213,6 +214,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
     }
     PsiMethod methodCopy = (PsiMethod)method.copy();
+    RefactoringUtil.renameConflictingTypeParameters(methodCopy, myTargetSuperClass);
     RefactoringUtil.replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
     Language language = myTargetSuperClass.getLanguage();
@@ -295,14 +297,6 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       return field;
     }
     return JVMElementFactories.getFactory(language, field.getProject()).createField(field.getName(), field.getType());
-  }
-
-  private static PsiClass convertClassToLanguage(PsiClass clazz, Language language) {
-    //if (clazz.getLanguage().equals(language)) {
-    //  return clazz;
-    //}
-    //PsiClass newClass = JVMElementFactories.getFactory(language, clazz.getProject()).createClass(clazz.getName());
-    return clazz;
   }
 
   private static void deleteOverrideAnnotationIfFound(PsiMethod oMethod) {
@@ -660,7 +654,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       }
 
       // check default constructor
-      if (constructor == null || constructor.getParameterList().getParametersCount() == 0) {
+      if (constructor == null || constructor.getParameterList().isEmpty()) {
         RefactoringUtil.visitImplicitSuperConstructorUsages(mySourceClass, new RefactoringUtil.ImplicitConstructorUsageVisitor() {
           public void visitConstructor(PsiMethod constructor, PsiMethod baseConstructor) {
             referencingSubConstructors.add(constructor);

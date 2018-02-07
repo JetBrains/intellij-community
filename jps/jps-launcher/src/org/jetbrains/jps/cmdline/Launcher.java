@@ -28,7 +28,6 @@ import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/27/13
  */
 public class Launcher {
 
@@ -44,7 +43,7 @@ public class Launcher {
       final String path = tokenizer.nextToken();
       urls.add(new File(path).toURI().toURL());
     }
-    final URLClassLoader jpsLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), Launcher.class.getClassLoader());
+    final URLClassLoader jpsLoader = new URLClassLoader(urls.toArray(new URL[0]), Launcher.class.getClassLoader());
     
     // IDEA-120811; speeding up DefaultChannelIDd calculation for netty
     //if (Boolean.parseBoolean(System.getProperty("io.netty.random.id"))) {

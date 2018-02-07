@@ -172,7 +172,7 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
     @NotNull
     @Override
     public Library[] getLibraries() {
-      return myLibraries.toArray(new Library[myLibraries.size()]);
+      return myLibraries.toArray(Library.EMPTY_ARRAY);
     }
 
     @Override

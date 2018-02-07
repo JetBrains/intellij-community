@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Constructor;
 
 public interface JavaElementType {
-  @SuppressWarnings("deprecation")
   class JavaCompositeElementType extends IJavaElementType implements ICompositeElementType {
     private final Constructor<? extends ASTNode> myConstructor;
 
@@ -164,7 +163,7 @@ public interface JavaElementType {
     }
 
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       final PsiBuilder builder = JavaParserUtil.createBuilder(chameleon);
       JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true);
       return builder.getTreeBuilt().getFirstChildNode();
@@ -195,7 +194,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
@@ -210,7 +209,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
@@ -225,7 +224,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   };
@@ -251,7 +250,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
   }
@@ -269,7 +268,7 @@ public interface JavaElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       assert chameleon instanceof JavaDummyElement : chameleon;
       final JavaDummyElement dummyElement = (JavaDummyElement)chameleon;
       return JavaParserUtil.parseFragment(chameleon, dummyElement.getParser(), dummyElement.consumeAll(), dummyElement.getLanguageLevel());

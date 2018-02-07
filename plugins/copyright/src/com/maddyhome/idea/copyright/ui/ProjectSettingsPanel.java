@@ -139,10 +139,11 @@ public class ProjectSettingsPanel {
 
       @Override
       public boolean canCreateElement() {
-        return !myProfilesModel.getAllProfiles().isEmpty();
+        return true;
       }
     };
-    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myScopeMappingTable, producer);
+    ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myScopeMappingTable, producer)
+                                                 .setAddActionUpdater(e -> !myProfilesModel.getAllProfiles().isEmpty());
     return JBUI.Panels.simplePanel(0, 10)
       .addToTop(component)
       .addToCenter(decorator.createPanel())
@@ -333,7 +334,7 @@ public class ProjectSettingsPanel {
               final NamedScope[] model = super.createModel();
               final ArrayList<NamedScope> filteredScopes = new ArrayList<>(Arrays.asList(model));
               CustomScopesProviderEx.filterNoSettingsScopes(myProject, filteredScopes);
-              return filteredScopes.toArray(new NamedScope[filteredScopes.size()]);
+              return filteredScopes.toArray(new NamedScope[0]);
             }
           };
           

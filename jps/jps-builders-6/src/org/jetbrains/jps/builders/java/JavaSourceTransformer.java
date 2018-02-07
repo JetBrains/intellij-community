@@ -8,7 +8,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/7/13
  */
 public abstract class JavaSourceTransformer {
   

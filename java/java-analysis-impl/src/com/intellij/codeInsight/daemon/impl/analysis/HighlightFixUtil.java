@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceAssignmentFromVoidWithStatementIntentionAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceGetClassWithClassLiteralFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.PriorityActionWrapper;
@@ -211,6 +212,9 @@ public class HighlightFixUtil {
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place));
     }
+    if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
+      ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), errorResult);
+    }
   }
 
   private static boolean isInstanceReference(@NotNull PsiJavaCodeReferenceElement place) {
@@ -253,13 +257,26 @@ public class HighlightFixUtil {
   public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();
     List<IntentionAction> result = new ArrayList<>();
-    if (itemType != null) {
+    if (itemType != null && PsiTypesUtil.allTypeParametersResolved(variable, itemType)) {
       for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
         Collections.addAll(result, fixProvider.getFixes(variable, itemType));
       }
+      IntentionAction changeFix = getChangeParameterClassFix(variable.getType(), itemType);
+      if (changeFix != null) result.add(changeFix);
     }
-    IntentionAction changeFix = getChangeParameterClassFix(variable.getType(), itemType);
-    if (changeFix != null) result.add(changeFix);
+    else if (itemType instanceof PsiArrayType) {
+      PsiType type = variable.getType();
+      if (type instanceof PsiArrayType && type.getArrayDimensions() == itemType.getArrayDimensions()) {
+        PsiType componentType = type.getDeepComponentType();
+        if (componentType instanceof PsiPrimitiveType) {
+          PsiClassType boxedType = ((PsiPrimitiveType)componentType).getBoxedType(variable);
+          if (boxedType != null) {
+            return getChangeVariableTypeFixes(variable, PsiTypesUtil.createArrayType(boxedType, type.getArrayDimensions()));
+          }
+        }
+      }
+    }
+
     return result;
   }
 

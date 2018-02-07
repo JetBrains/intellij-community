@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * This SHOULD NOT be subclassed!
  *
  * @author Dmitry Avdeev
- *         Date: 6/7/12
  */
 public final class DomStructureViewBuilderProvider implements XmlStructureViewBuilderProvider {
 

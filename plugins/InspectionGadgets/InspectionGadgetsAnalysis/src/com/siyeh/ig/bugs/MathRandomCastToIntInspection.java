@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,7 +72,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element.getParent();
       while (parent instanceof PsiPrefixExpression) {
@@ -96,6 +96,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       @NonNls final StringBuilder newExpression = new StringBuilder();
+      CommentTracker commentTracker = new CommentTracker();
       newExpression.append("(").append(type.getCanonicalText()).append(")(");
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (final PsiExpression expression : operands) {
@@ -104,14 +105,14 @@ public class MathRandomCastToIntInspection extends BaseInspection {
           newExpression.append(token.getText());
         }
         if (typeCastExpression.equals(expression)) {
-          newExpression.append(operand.getText());
+          newExpression.append(commentTracker.text(operand));
         }
         else {
-          newExpression.append(expression.getText());
+          newExpression.append(commentTracker.text(expression));
         }
       }
       newExpression.append(')');
-      PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), commentTracker);
     }
   }
 

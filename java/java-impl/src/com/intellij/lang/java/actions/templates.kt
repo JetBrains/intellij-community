@@ -9,7 +9,7 @@ import com.intellij.lang.jvm.actions.ExpectedTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
-import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiUtil
 
 internal class TemplateContext(
@@ -23,7 +23,7 @@ internal class TemplateContext(
 
 internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: ExpectedParameters) {
   if (parameters.isEmpty()) return
-  val codeStyleManager = CodeStyleManager.getInstance(project)!!
+  val postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project)
   val parameterList = method.parameterList
   val isInterface = targetClass.isInterface
 
@@ -35,7 +35,7 @@ internal fun TemplateContext.setupParameters(method: PsiMethod, parameters: Expe
     if (isInterface) {
       PsiUtil.setModifierProperty(dummyParameter, PsiModifier.FINAL, false)
     }
-    val parameter = codeStyleManager.performActionWithFormatterDisabled(Computable {
+    val parameter = postprocessReformattingAspect.postponeFormattingInside(Computable {
       parameterList.add(dummyParameter)
     }) as PsiParameter
     setupTypeElement(parameter.typeElement, parameterInfo.second)

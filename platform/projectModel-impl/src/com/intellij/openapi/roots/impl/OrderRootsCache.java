@@ -22,18 +22,20 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
  */
 class OrderRootsCache {
-  private final Map<CacheKey, VirtualFilePointerContainer> myRoots = ContainerUtil.newConcurrentMap();
+  private final AtomicReference<Map<CacheKey, VirtualFilePointerContainer>> myRoots = new AtomicReference<>();
   private final Disposable myParentDisposable;
   private Disposable myRootsDisposable; // accessed in EDT
 
@@ -56,26 +58,30 @@ class OrderRootsCache {
     for (String url : urls) {
       container.add(url);
     }
-    myRoots.put(new CacheKey(rootType, flags), container);
+    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(myRoots, ContainerUtil.newConcurrentMap());
+    map.put(new CacheKey(rootType, flags), container);
     return container;
   }
 
   @Nullable
   public VirtualFile[] getCachedRoots(@NotNull OrderRootType rootType, int flags) {
-    final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
+    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+    final VirtualFilePointerContainer cached = map == null ? null : map.get(new CacheKey(rootType, flags));
     return cached == null ? null : cached.getFiles();
   }
 
   @Nullable
   public String[] getCachedUrls(@NotNull OrderRootType rootType, int flags) {
-    final VirtualFilePointerContainer cached = myRoots.get(new CacheKey(rootType, flags));
+    Map<CacheKey, VirtualFilePointerContainer> map = myRoots.get();
+    final VirtualFilePointerContainer cached = map == null ? null : map.get(new CacheKey(rootType, flags));
     return cached != null ? cached.getUrls() : null;
   }
 
   public void clearCache() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     disposePointers();
-    myRoots.clear();
+    myRoots.set(null);
   }
 
   private static final class CacheKey {

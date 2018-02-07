@@ -42,7 +42,7 @@ public class ConvertToJBBorderQuickFix extends LocalQuickFixBase {
     final PsiCall newExpression = (PsiCall)descriptor.getPsiElement();
     PsiExpressionList list = newExpression.getArgumentList();
     String text;
-    if (list != null && list.getExpressions().length == 4) {
+    if (list != null && list.getExpressionCount() == 4) {
       String top = list.getExpressions()[0].getText();
       String left = list.getExpressions()[1].getText();
       String bottom = list.getExpressions()[2].getText();

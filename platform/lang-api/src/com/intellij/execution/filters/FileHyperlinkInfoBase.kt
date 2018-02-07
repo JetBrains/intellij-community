@@ -51,7 +51,7 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
   override fun navigate(project: Project?) {
     project ?: return
     descriptor?.let {
-      FileEditorManager.getInstance(project).openTextEditor(it, true)
+      FileEditorManager.getInstance(project).navigateToTextEditor(it, true)
     }
   }
 

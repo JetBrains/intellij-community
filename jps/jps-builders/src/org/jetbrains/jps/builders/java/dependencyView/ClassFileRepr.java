@@ -14,7 +14,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 30-Sep-17
  */
 public abstract class ClassFileRepr extends Proto {
   protected final DependencyContext myContext;

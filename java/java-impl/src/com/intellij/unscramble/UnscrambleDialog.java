@@ -312,6 +312,7 @@ public class UnscrambleDialog extends DialogWrapper {
     StringBuilder builder = new StringBuilder(text.length());
 
     text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
+    text = text.replaceAll("(\\\\n|\\\\r|\\\\t)+(at\\s+)", "\n$2");
     String[] lines = text.split("\n");
 
     boolean first = true;

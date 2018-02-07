@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -44,7 +45,7 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -56,6 +57,7 @@ import java.util.Map;
  * @author mike
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
+  private static final Logger LOG = Logger.getInstance(FileStatusManagerImpl.class);
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
   private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged =
     Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
@@ -134,15 +136,26 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     for (FileStatusProvider extension : myExtensions.getValue()) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("File status for file [%s] from provider %s: %s", virtualFile, extension.getClass().getName(), status));
+        }
         return status;
       }
     }
 
     if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
-      return myFileStatusProvider.getFileStatus(virtualFile);
+      FileStatus status = myFileStatusProvider.getFileStatus(virtualFile);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("File status for file [%s] from default provider %s: %s", virtualFile, myFileStatusProvider, status));
+      }
+      return status;
     }
 
-    return getDefaultStatus(virtualFile);
+    FileStatus defaultStatus = getDefaultStatus(virtualFile);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Default status for file [%s]: %s", virtualFile, defaultStatus));
+    }
+    return defaultStatus;
   }
 
   @NotNull
@@ -244,6 +257,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
 
     FileStatus status = getCachedStatus(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Cached status for file [" + file + "] is " + status);
+    }
     if (status == null || status == FileStatusNull.INSTANCE) {
       status = calcStatus(file);
       cacheChangedFileStatus(file, status);

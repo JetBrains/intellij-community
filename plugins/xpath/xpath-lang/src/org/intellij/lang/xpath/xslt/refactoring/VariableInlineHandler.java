@@ -42,7 +42,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
@@ -146,7 +145,7 @@ public class VariableInlineHandler extends InlineActionHandler {
 
     final HighlightManager highlighter = HighlightManager.getInstance(project);
     final ArrayList<RangeHighlighter> highlighters = new ArrayList<>();
-    final PsiReference[] psiReferences = references.toArray(new PsiReference[references.size()]);
+    final PsiReference[] psiReferences = references.toArray(PsiReference.EMPTY_ARRAY);
     TextRange[] ranges = ContainerUtil.map2Array(psiReferences, TextRange.class, s -> {
       final PsiElement psiElement = s.getElement();
       final XmlAttributeValue context = PsiTreeUtil.getContextOfType(psiElement, XmlAttributeValue.class, true);

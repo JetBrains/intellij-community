@@ -92,8 +92,8 @@ public class JavaCompletionSorting {
     }
     Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
 
-    sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[afterStats.size()]));
-    sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
+    sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
+    sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
     return result.withRelevanceSorter(sorter);
   }
 
@@ -457,7 +457,7 @@ public class JavaCompletionSorting {
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod && FunctionalExpressionCompletionProvider.FUNCTIONAL_EXPR_ITEM.get(element) == null) {
+      if (object instanceof PsiMethod && !FunctionalExpressionCompletionProvider.isFunExprItem(element)) {
         PsiType type = ((PsiMethod)object).getReturnType();
         final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (callItem != null) {
@@ -621,7 +621,11 @@ public class JavaCompletionSorting {
         @Override
         public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
           Object object = shorterElement.getObject();
-          if (object instanceof PsiClass && longerElement.getObject() instanceof PsiClass) {
+          if (!(object instanceof PsiClass)) return false;
+
+          if (longerElement.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) return true;
+          
+          if (longerElement.getObject() instanceof PsiClass) {
             PsiClass psiClass = (PsiClass)object;
             PsiFile file = psiClass.getContainingFile();
             if (file != null) {

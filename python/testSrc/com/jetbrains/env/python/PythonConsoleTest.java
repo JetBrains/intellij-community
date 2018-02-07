@@ -26,6 +26,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         exec("x = 96");
+        exec("print(2)");
         exec("x += 1");
         exec("print(1)");
         exec("print(x)");
@@ -97,6 +98,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
 
   @Test
+  @Staging
   public void testVariablesView() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -112,6 +114,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging //Thread leak
   public void testCompoundVariable() {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -127,6 +130,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Staging
   @Test
   public void testChangeVariable() {
     runPythonTest(new PyConsoleTask() {

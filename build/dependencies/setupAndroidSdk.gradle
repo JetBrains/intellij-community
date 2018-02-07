@@ -16,7 +16,9 @@
 
 buildscript {
   repositories {
-    maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
+    if (project.ext.inJetBrainsNetwork) {
+      maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
+    }
     maven { url "https://plugins.gradle.org/m2/" }
   }
   dependencies {
@@ -30,14 +32,21 @@ import de.undercouch.gradle.tasks.download.Download
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
 task downloadGradleDistribution(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-3.3-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-3.3-bin.zip"
+  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-4.1-bin.zip"
+  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.1-bin.zip"
+  onlyIfNewer true
+  onlyIf { inJetBrainsNetwork }
+}
+
+task downloadGradleDistribution2(type: Download) {
+  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-2.2.1-bin.zip"
+  dest "$buildDir/android-sdk/tools/external/gradle/gradle-2.2.1-bin.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
 }
 
 task downloadOfflineRepo(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_04.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_0_03.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
@@ -50,14 +59,14 @@ task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.zip"
-  dest "$buildDir/android-sdk/${osFamily}.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.tar.gz"
+  dest "$buildDir/android-sdk/${osFamily}.tar.gz"
   onlyIfNewer true
   onlyIf { !currentOs.isMacOsX() && inJetBrainsNetwork }
 }
 
-task setupAndroidSdk(dependsOn: [downloadAndroidSdk, downloadGradleDistribution, setupOfflineRepo], type: Copy) {
-  from zipTree(downloadAndroidSdk.outputs.files.singleFile)
+task setupAndroidSdk(dependsOn: [downloadAndroidSdk, downloadGradleDistribution, downloadGradleDistribution2, setupOfflineRepo], type: Copy) {
+  from tarTree(downloadAndroidSdk.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
   onlyIf { !currentOs.isMacOsX() }
   outputs.dir("$buildDir/android-sdk/prebuilts/tools/common")

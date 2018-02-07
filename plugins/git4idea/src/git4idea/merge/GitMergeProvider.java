@@ -39,10 +39,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -169,12 +166,12 @@ public class GitMergeProvider implements MergeProvider2 {
   @NotNull
   private Trinity<String, String, String> getAffectedBlobs(@NotNull VirtualFile root, @NotNull VirtualFile file) {
     try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
+      GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LS_FILES);
       h.addParameters("--exclude-standard", "--unmerged", "-z");
       h.endOptions();
       h.addRelativeFiles(Collections.singleton(file));
 
-      String output = h.run();
+      String output = Git.getInstance().runCommand(h).getOutputOrThrow();
       StringScanner s = new StringScanner(output);
 
       String lastBlob = null;
@@ -273,7 +270,7 @@ public class GitMergeProvider implements MergeProvider2 {
         }
       }
     });
-    h.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(h);
 
     if (pathAmbiguous[0]) return null;
     return result[0];
@@ -442,12 +439,12 @@ public class GitMergeProvider implements MergeProvider2 {
           Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
-          GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LS_FILES);
+          GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LS_FILES);
           h.setStdoutSuppressed(true);
           h.setSilent(true);
           h.addParameters("--exclude-standard", "--unmerged", "-t", "-z");
           h.endOptions();
-          String output = h.run();
+          String output = Git.getInstance().runCommand(h).getOutputOrThrow();
           StringScanner s = new StringScanner(output);
           while (s.hasMoreData()) {
             if (!"M".equals(s.spaceToken())) {
@@ -546,6 +543,36 @@ public class GitMergeProvider implements MergeProvider2 {
       catch (VcsException e) {
         LOG.error("Unexpected exception during the git operation (" + file.getPath() + ")", e);
       }
+    }
+
+    @Override
+    public boolean acceptFileRevision(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) throws VcsException {
+      if (resolution != Resolution.AcceptedYours && resolution != Resolution.AcceptedTheirs) return false;
+      boolean isCurrent = resolution == Resolution.AcceptedYours;
+
+      Conflict c = myConflicts.get(file);
+      if (c == null) {
+        LOG.error("Conflict was not loaded for the file: " + file.getPath());
+        return false;
+      }
+
+      Conflict.Status status = isCurrent ? c.myStatusYours : c.myStatusTheirs;
+      switch (status) {
+        case MODIFIED:
+          GitLineHandler handler = new GitLineHandler(myProject, c.myRoot, GitCommand.CHECKOUT);
+          handler.addParameters(isCurrent ? "--ours" : "--theirs");
+          handler.endOptions();
+          handler.addRelativeFiles(Collections.singletonList(c.myFile));
+          GitCommandResult result = Git.getInstance().runCommand(handler);
+          if (!result.success()) throw new VcsException(result.getErrorOutputAsJoinedString());
+          break;
+        case DELETED:
+          break;
+        default:
+          throw new IllegalArgumentException("Unsupported status(" + file.getPath() + "): " + status);
+      }
+
+      return true;
     }
 
     /**

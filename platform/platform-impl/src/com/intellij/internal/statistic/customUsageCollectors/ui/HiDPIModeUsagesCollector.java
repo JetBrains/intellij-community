@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.customUsageCollectors.ui;
 import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
-import org.jdesktop.swingx.util.OS;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -19,7 +19,7 @@ public class HiDPIModeUsagesCollector extends UsagesCollector {
   @Override
   public Set<UsageDescriptor> getUsages() {
     String mode = UIUtil.isJreHiDPIEnabled() ? "per-monitor-dpi" : "system-dpi";
-    String os = OS.isWindows() ? "Windows" : OS.isLinux() ? "Linux" : OS.isMacOSX() ? "Mac" : "Unknown OS";
+    String os = SystemInfo.isWindows ? "Windows" : SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac" : "Unknown OS";
     return Collections.singleton(new UsageDescriptor(os + " " + mode, 1));
   }
 

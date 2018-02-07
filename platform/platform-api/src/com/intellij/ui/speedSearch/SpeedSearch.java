@@ -64,7 +64,7 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener {
   }
 
   public void processKeyEvent(KeyEvent e) {
-    if (e.isConsumed()) return;
+    if (e.isConsumed() || !myEnabled) return;
 
     String old = myString;
     if (e.getID() == KeyEvent.KEY_PRESSED) {

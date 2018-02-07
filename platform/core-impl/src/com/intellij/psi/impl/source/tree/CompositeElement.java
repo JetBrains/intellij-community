@@ -784,22 +784,26 @@ public class CompositeElement extends TreeElement {
 
     final TreeElement last = getLastChildNode();
     if (last == null){
-      first.rawRemoveUpToWithoutNotifications(null, false);
+      TreeElement chainLast = rawSetParents(first, this);
       setFirstChildNode(first);
-      while(true){
-        final TreeElement treeNext = first.getTreeNext();
-        first.setTreeParent(this);
-        if(treeNext == null) break;
-        first = treeNext;
-      }
-      setLastChildNode(first);
-      first.setTreeParent(this);
+      setLastChildNode(chainLast);
     }
     else {
       last.rawInsertAfterMeWithoutNotifications(first);
     }
 
     DebugUtil.checkTreeStructure(this);
+  }
+
+  @NotNull
+  static TreeElement rawSetParents(@NotNull TreeElement child, CompositeElement parent) {
+    child.rawRemoveUpToWithoutNotifications(null, false);
+    while (true) {
+      child.setTreeParent(parent);
+      TreeElement treeNext = child.getTreeNext();
+      if (treeNext == null) return child;
+      child = treeNext;
+    }
   }
 
   public void rawRemoveAllChildren() {

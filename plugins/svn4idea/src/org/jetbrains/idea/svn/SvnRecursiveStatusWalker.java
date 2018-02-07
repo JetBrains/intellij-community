@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ReadAction;
@@ -27,22 +13,16 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressEvent;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusConsumer;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.LinkedList;
@@ -63,7 +43,7 @@ public class SvnRecursiveStatusWalker {
   @NotNull private final StatusReceiver myReceiver;
   @NotNull private final LinkedList<MyItem> myQueue;
   @NotNull private final MyHandler myHandler;
-  @Nullable private ISVNStatusFileProvider myFileProvider;
+  @Nullable private MultiMap<FilePath, FilePath> myNonRecursiveScope;
 
   public SvnRecursiveStatusWalker(@NotNull SvnVcs vcs, @NotNull StatusReceiver receiver, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
@@ -76,8 +56,8 @@ public class SvnRecursiveStatusWalker {
     myHandler = new MyHandler();
   }
 
-  public void setFileProvider(@Nullable ISVNStatusFileProvider fileProvider) {
-    myFileProvider = fileProvider;
+  public void setNonRecursiveScope(@Nullable MultiMap<FilePath, FilePath> nonRecursiveScope) {
+    myNonRecursiveScope = nonRecursiveScope;
   }
 
   public void go(@NotNull FilePath rootPath, @NotNull Depth depth) throws SvnBindException {
@@ -105,7 +85,7 @@ public class SvnRecursiveStatusWalker {
     File ioFile = item.getPath().getIOFile();
 
     myHandler.setCurrentItem(item);
-    item.getClient().doStatus(ioFile, SVNRevision.WORKING, item.getDepth(), false, false, true, true, myHandler);
+    item.getClient().doStatus(ioFile, Revision.WORKING, item.getDepth(), false, false, true, true, myHandler);
 
     // check if current item was already processed - not to request its status once again
     if (!myHandler.myMetCurrentItem) {
@@ -135,7 +115,7 @@ public class SvnRecursiveStatusWalker {
   }
 
   private void handleStatusException(@NotNull MyItem item, @NotNull SvnBindException e) throws SvnBindException {
-    if (e.contains(SVNErrorCode.WC_NOT_DIRECTORY) || e.contains(SVNErrorCode.WC_NOT_FILE) || e.contains(SVNErrorCode.WC_PATH_NOT_FOUND)) {
+    if (e.contains(ErrorCode.WC_NOT_WORKING_COPY) || e.contains(ErrorCode.WC_NOT_FILE) || e.contains(ErrorCode.WC_PATH_NOT_FOUND)) {
       final VirtualFile virtualFile = item.getPath().getVirtualFile();
       if (virtualFile != null && !isIgnoredByVcs(virtualFile)) {
         // self is unversioned
@@ -216,7 +196,7 @@ public class SvnRecursiveStatusWalker {
 
   @NotNull
   private MyItem createItem(@NotNull FilePath path, @NotNull Depth depth, boolean isInnerCopyRoot) {
-    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myFileProvider, createEventHandler());
+    StatusClient statusClient = myVcs.getFactory(path.getIOFile()).createStatusClient(myNonRecursiveScope, createEventHandler());
 
     return new MyItem(path, depth, isInnerCopyRoot, statusClient);
   }
@@ -229,7 +209,7 @@ public class SvnRecursiveStatusWalker {
       }
 
       @Override
-      public void checkCancelled() {
+      public void checkCancelled() throws ProcessCanceledException {
         SvnRecursiveStatusWalker.this.checkCanceled();
       }
     };

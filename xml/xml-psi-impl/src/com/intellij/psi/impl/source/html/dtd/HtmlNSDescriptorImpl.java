@@ -90,7 +90,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Nullable
-  private static XmlElementDescriptor guessTagForCommonAttributes(@Nullable final XmlTag context) {
+  public static XmlElementDescriptor guessTagForCommonAttributes(@Nullable final XmlTag context) {
     if (context == null) return null;
     final XmlNSDescriptor nsDescriptor = context.getNSDescriptor(context.getNamespace(), false);
     if (nsDescriptor instanceof HtmlNSDescriptorImpl) {

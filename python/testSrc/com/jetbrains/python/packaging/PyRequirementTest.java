@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.python.packaging.PyPackageUtil.fix;
+
 /**
  * @author vlan
  */
@@ -1908,6 +1910,43 @@ public class PyRequirementTest extends PyTestCase {
     doTest("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev");
   }
 
+  // PY-26844
+  public void testExtrasInRequirementEggName() {
+    final String line1 = "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect]";
+    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line1), "[openidconnect]"),
+                 PyRequirement.fromLine(line1));
+
+    final String line2 = "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect,security]";
+    assertEquals(
+      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line2), "[openidconnect,security]"),
+      PyRequirement.fromLine(line2)
+    );
+
+    final String line3 =
+      "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect]&subdirectory=clients/python";
+    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line3), "[openidconnect]"),
+                 PyRequirement.fromLine(line3));
+
+    final String line4 =
+      "git://github.com/python-social-auth/social-core.git#egg=social-auth-core[openidconnect,security]&subdirectory=clients/python";
+    assertEquals(
+      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line4), "[openidconnect,security]"),
+      PyRequirement.fromLine(line4)
+    );
+
+    final String line5 =
+      "git://github.com/python-social-auth/social-core.git#subdirectory=clients/python&egg=social-auth-core[openidconnect]";
+    assertEquals(new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line5), "[openidconnect]"),
+                 PyRequirement.fromLine(line5));
+
+    final String line6 =
+      "git://github.com/python-social-auth/social-core.git#subdirectory=clients/python&egg=social-auth-core[openidconnect,security]";
+    assertEquals(
+      new PyRequirement("social-auth-core", Collections.emptyList(), Collections.singletonList(line6), "[openidconnect,security]"),
+      PyRequirement.fromLine(line6)
+    );
+  }
+
   // LOCAL DIR
   // TODO: which must contain a setup.py
 
@@ -2244,7 +2283,7 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-6355
   public void testTrailingZeroesInVersion() {
-    final PyRequirement req = PyRequirement.fromLine("foo==0.8.0");
+    final PyRequirement req = fix(PyRequirement.fromLine("foo==0.8.0"));
     final PyPackage pkg = new PyPackage("foo", "0.8", null, Collections.emptyList());
     assertNotNull(req);
     assertEquals(pkg, req.match(Collections.singletonList(pkg)));
@@ -2252,7 +2291,7 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-6438
   public void testUnderscoreMatchesDash() {
-    final PyRequirement req = PyRequirement.fromLine("pyramid_zcml");
+    final PyRequirement req = fix(PyRequirement.fromLine("pyramid_zcml"));
     final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.emptyList());
     assertNotNull(req);
     assertEquals(pkg, req.match(Collections.singletonList(pkg)));
@@ -2260,7 +2299,7 @@ public class PyRequirementTest extends PyTestCase {
 
   // PY-20242
   public void testVersionInterpretedAsString() {
-    final PyRequirement req = PyRequirement.fromLine("foo===version");
+    final PyRequirement req = fix(PyRequirement.fromLine("foo===version"));
     final PyPackage pkg = new PyPackage("foo", "version", null, Collections.emptyList());
     assertNotNull(req);
     assertEquals(pkg, req.match(Collections.singletonList(pkg)));
@@ -2271,11 +2310,11 @@ public class PyRequirementTest extends PyTestCase {
     final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100", null, Collections.emptyList());
     final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101", null, Collections.emptyList());
 
-    final PyRequirement requirement = PyRequirement.fromLine("foo==1.0");
+    final PyRequirement requirement = fix(PyRequirement.fromLine("foo==1.0"));
     assertEquals(firstPackageWithLocalVersion, requirement.match(Collections.singletonList(firstPackageWithLocalVersion)));
     assertEquals(secondPackageWithLocalVersion, requirement.match(Collections.singletonList(secondPackageWithLocalVersion)));
 
-    final PyRequirement requirementWithLocalVersion = PyRequirement.fromLine("foo==1.0+foo0100");
+    final PyRequirement requirementWithLocalVersion = fix(PyRequirement.fromLine("foo==1.0+foo0100"));
     assertEquals(firstPackageWithLocalVersion, requirementWithLocalVersion.match(Collections.singletonList(firstPackageWithLocalVersion)));
     assertNull(requirementWithLocalVersion.match(Collections.singletonList(secondPackageWithLocalVersion)));
   }
@@ -2283,7 +2322,7 @@ public class PyRequirementTest extends PyTestCase {
   // https://www.python.org/dev/peps/pep-0440/#version-matching
   // PY-22275
   public void testMatchingStar() {
-    final PyRequirement requirement = PyRequirement.fromLine("foo==1.1.*");
+    final PyRequirement requirement = fix(PyRequirement.fromLine("foo==1.1.*"));
     final PyPackage release = new PyPackage("foo", "1.1.2", null, Collections.emptyList());
     final PyPackage pre = new PyPackage("foo", "1.1.2a1", null, Collections.emptyList());
     final PyPackage post = new PyPackage("foo", "1.1.2.post1", null, Collections.emptyList());
@@ -2296,7 +2335,7 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(dev, requirement.match(Collections.singletonList(dev)));
     assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
 
-    final PyRequirement negativeRequirement = PyRequirement.fromLine("foo!=1.1.*");
+    final PyRequirement negativeRequirement = fix(PyRequirement.fromLine("foo!=1.1.*"));
     final PyPackage negativeRelease = new PyPackage("foo", "1.2.2", null, Collections.emptyList());
     final PyPackage negativePre = new PyPackage("foo", "1.2.2a1", null, Collections.emptyList());
     final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1", null, Collections.emptyList());
@@ -2314,7 +2353,7 @@ public class PyRequirementTest extends PyTestCase {
   // https://www.python.org/dev/peps/pep-0440/#compatible-release
   // PY-20522
   public void testMatchingCompatible() {
-    final PyRequirement requirement = PyRequirement.fromLine("foo~=2.2");
+    final PyRequirement requirement = fix(PyRequirement.fromLine("foo~=2.2"));
     final PyPackage release = new PyPackage("foo", "2.3", null, Collections.emptyList());
     final PyPackage pre = new PyPackage("foo", "2.3a1", null, Collections.emptyList());
     final PyPackage post = new PyPackage("foo", "2.3.post1", null, Collections.emptyList());
@@ -2327,14 +2366,14 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(dev, requirement.match(Collections.singletonList(dev)));
     assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
 
-    final PyRequirement moreModernRequirement = PyRequirement.fromLine("foo~=2.4");
+    final PyRequirement moreModernRequirement = fix(PyRequirement.fromLine("foo~=2.4"));
     assertNull(moreModernRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
   }
 
   // https://www.python.org/dev/peps/pep-0440/#compatible-release
   // PY-20522
   public void testMatchingCompatibleWithTrailingZero() {
-    final PyRequirement requirement = PyRequirement.fromLine("foo~=2.20.0");
+    final PyRequirement requirement = fix(PyRequirement.fromLine("foo~=2.20.0"));
     final PyPackage release = new PyPackage("foo", "2.20.3", null, Collections.emptyList());
     final PyPackage pre = new PyPackage("foo", "2.20.3a1", null, Collections.emptyList());
     final PyPackage post = new PyPackage("foo", "2.20.3.post1", null, Collections.emptyList());
@@ -2347,8 +2386,19 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(dev, requirement.match(Collections.singletonList(dev)));
     assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
 
-    final PyRequirement moreModernRequirement = PyRequirement.fromLine("foo~=2.21.0");
+    final PyRequirement moreModernRequirement = fix(PyRequirement.fromLine("foo~=2.21.0"));
     assertNull(moreModernRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
+  }
+
+  // PY-27076
+  public void testMatchingAsteriskAndCompatibleWithTwoTrailingZeros() {
+    final PyRequirement requirement1 = fix(PyRequirement.fromLine("social-auth-app-django==2.0.*"));
+    final PyRequirement requirement2 = fix(PyRequirement.fromLine("social-auth-app-django~=2.0.0"));
+
+    final PyPackage pkg = new PyPackage("social-auth-app-django", "2.0.0", null, Collections.emptyList());
+
+    assertEquals(pkg, requirement1.match(Collections.singletonList(pkg)));
+    assertEquals(pkg, requirement2.match(Collections.singletonList(pkg)));
   }
 
   // OPTIONS

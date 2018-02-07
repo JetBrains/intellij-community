@@ -51,7 +51,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
     @Override
     public void visitNamedArgument(@NotNull GrNamedArgument namedArgument) {
       PsiElement parent = namedArgument.getParent();
-      if (parent == null || ! (parent instanceof  GrListOrMap) || !((GrListOrMap)parent).isMap()) return;
+      if (!(parent instanceof GrListOrMap) || !((GrListOrMap)parent).isMap()) return;
 
       final GrArgumentLabel argumentLabel = namedArgument.getLabel();
       if (argumentLabel == null) return;
@@ -65,13 +65,13 @@ public class GroovyGStringKeyInspection extends BaseInspection {
     @Override
     public void visitExpression(@NotNull GrExpression grExpression) {
       final PsiElement gstringParent = grExpression.getParent();
-      if (gstringParent == null || !(gstringParent instanceof GrArgumentList)) return;
+      if (!(gstringParent instanceof GrArgumentList)) return;
 
       GrExpression[] arguments = ((GrArgumentList)gstringParent).getExpressionArguments();
       if (arguments.length != 2 || !arguments[0].equals(grExpression)) return;
 
       final PsiElement grandparent = gstringParent.getParent();
-      if (grandparent == null || !(grandparent instanceof GrMethodCall)) {
+      if (!(grandparent instanceof GrMethodCall)) {
         return;
       }
 

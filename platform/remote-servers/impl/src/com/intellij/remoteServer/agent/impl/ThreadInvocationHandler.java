@@ -24,10 +24,7 @@ import com.intellij.remoteServer.agent.annotation.ImmediateCall;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 /**
  * @author michael.golubev
@@ -122,6 +119,9 @@ public class ThreadInvocationHandler implements InvocationHandler {
     Future<Object> future = myTaskExecutor.submit(taskCallable);
     try {
       child = future.get();
+    }
+    catch (InterruptedException e) {
+      throw new CancellationException("Operation cancelled");
     }
     catch (ExecutionException e) {
       Throwable cause = e.getCause();

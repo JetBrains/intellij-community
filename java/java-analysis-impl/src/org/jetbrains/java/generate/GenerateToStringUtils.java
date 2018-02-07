@@ -62,7 +62,7 @@ public class GenerateToStringUtils {
         if (log.isDebugEnabled()) log.debug("Filtering fields using the pattern: " + pattern);
         List<PsiField> availableFields = new ArrayList<>();
         collectAvailableFields(clazz, includeSuperClass, pattern, availableFields, new HashSet<>());
-        return availableFields.toArray(new PsiField[availableFields.size()]);
+        return availableFields.toArray(PsiField.EMPTY_ARRAY);
     }
 
     private static void collectAvailableFields(PsiClass clazz,
@@ -111,7 +111,7 @@ public class GenerateToStringUtils {
         if (log.isDebugEnabled()) log.debug("Filtering methods using the pattern: " + pattern);
         List<PsiMethod> availableMethods = new ArrayList<>();
         collectAvailableMethods(clazz, pattern, availableMethods, new HashSet<>());
-        return availableMethods.toArray(new PsiMethod[availableMethods.size()]);
+        return availableMethods.toArray(PsiMethod.EMPTY_ARRAY);
     }
 
     private static void collectAvailableMethods(PsiClass clazz, @NotNull FilterPattern pattern,

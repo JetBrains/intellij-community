@@ -7,8 +7,6 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -26,7 +24,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,22 +34,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private final NotNullLazyValue<PsiClass> myArrayClass = new AtomicNotNullLazyValue<PsiClass>() {
-    @NotNull
-    @Override
-    protected PsiClass compute() {
-      return createArrayClass("public class __Array__{\n public final int length;\n public Object clone() {}\n}", LanguageLevel.JDK_1_3);
-    }
-  };
-
-  private final NotNullLazyValue<PsiClass> myArrayClass15 = new AtomicNotNullLazyValue<PsiClass>() {
-    @NotNull
-    @Override
-    protected PsiClass compute() {
-      return createArrayClass("public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}", LanguageLevel.JDK_1_5);
-    }
-  };
-
+  private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.newConcurrentMap();
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
@@ -62,10 +45,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiClass getArrayClass(@NotNull LanguageLevel languageLevel) {
-    return (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) ? myArrayClass15 : myArrayClass).getValue();
+    return myArrayClasses.computeIfAbsent(languageLevel, this::createArrayClass);
   }
 
-  private PsiClass createArrayClass(String text, LanguageLevel level) {
+  private PsiClass createArrayClass(LanguageLevel level) {
+    String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
+                  "public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
+                  "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
     ensureNonWritable(psiClass);
     PsiFile file = psiClass.getContainingFile();

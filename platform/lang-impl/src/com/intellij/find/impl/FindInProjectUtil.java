@@ -203,7 +203,7 @@ public class FindInProjectUtil {
    * @deprecated to be removed in IDEA 16
    */
   @Nullable
-  public static Pattern createFileMaskRegExp(@Nullable String filter) {
+  public static Pattern createFileMaskRegExp(@Nullable String filter) throws PatternSyntaxException {
     if (filter == null) {
       return null;
     }
@@ -448,7 +448,7 @@ public class FindInProjectUtil {
 
     public StringUsageTarget(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;
-      myFindModel = findModel;
+      myFindModel = findModel.clone();
     }
 
     @Override
@@ -534,7 +534,7 @@ public class FindInProjectUtil {
       Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
-      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
 
     @Override
@@ -614,7 +614,7 @@ public class FindInProjectUtil {
     Set<VirtualFile> result = new LinkedHashSet<>();
     result.add(directory);
     addSourceDirectoriesFromLibraries(project, directory, result);
-    VirtualFile[] array = result.toArray(new VirtualFile[result.size()]);
+    VirtualFile[] array = result.toArray(VirtualFile.EMPTY_ARRAY);
     return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
   }
 }

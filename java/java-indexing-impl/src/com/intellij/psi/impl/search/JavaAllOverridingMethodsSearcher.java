@@ -53,7 +53,7 @@ public class JavaAllOverridingMethodsSearcher implements QueryExecutor<Pair<PsiM
         if (superMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
             !JavaPsiFacade.getInstance(project).arePackagesTheSame(psiClass, inheritor)) continue;
 
-        PsiMethod inInheritor = JavaOverridingMethodsSearcher.findOverridingMethod(project, inheritor, superMethod, psiClass);
+        PsiMethod inInheritor = JavaOverridingMethodsSearcher.findOverridingMethod(inheritor, superMethod, psiClass);
         if (inInheritor != null && !consumer.process(Pair.create(superMethod, inInheritor))) return false;
       }
 

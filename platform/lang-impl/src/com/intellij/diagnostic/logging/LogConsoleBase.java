@@ -547,7 +547,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Override
   public JComponent getSearchComponent() {
-    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[myFilters.size()])));
+    myLogFilterCombo.setModel(new DefaultComboBoxModel(myFilters.toArray(new LogFilter[0])));
     resetLogFilter();
     myLogFilterCombo.addActionListener(new ActionListener() {
       @Override

@@ -514,7 +514,7 @@ public class CommanderPanel extends JPanel {
       }
     }
 
-    return elements.toArray(new Navigatable[elements.size()]);
+    return elements.toArray(new Navigatable[0]);
   }
 
   @Nullable

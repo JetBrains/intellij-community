@@ -18,7 +18,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -140,7 +140,7 @@ public class InspectionDiff {
     String fileName = problem.getChildText(FILE_ELEMENT);
     ArrayList<Element> problemList = ourFileToProblem.get(fileName);
     if (problemList != null) {
-      Element[] problems = problemList.toArray(new Element[problemList.size()]);
+      Element[] problems = problemList.toArray(new Element[0]);
       for (Element toCheck : problems) {
         if (equals(problem, toCheck)) return problemList.remove(toCheck);
       }

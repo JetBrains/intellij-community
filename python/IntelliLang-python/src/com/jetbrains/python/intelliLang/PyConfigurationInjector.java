@@ -37,7 +37,7 @@ public class PyConfigurationInjector extends PyInjectorBase {
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final PyInjectionUtil.InjectionResult result = registerInjection(registrar, context);
     if (!result.isStrict()) {
-      InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+      InjectorUtils.putInjectedFileUserData(context, getInjectedLanguage(context), InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
     }
   }
 

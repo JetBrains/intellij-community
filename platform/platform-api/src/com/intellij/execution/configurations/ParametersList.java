@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.Application;
@@ -23,6 +9,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -39,54 +26,50 @@ import java.util.regex.Pattern;
 /**
  * A list of command-line parameters featuring the following:
  * <ul>
- *   <li>special handling for java properties ({@code -D<name>=<value>})</li>
+ *   <li>special handling for Java properties ({@code -D<name>=<value>})</li>
  *   <li>macro substitution upon addition for plain parameters, and property values</li>
  *   <li>named groups for parameters</li>
  *   <li>parameter strings with quoted parameters</li>
  * </ul>
- * 
+ *
  * @see ParametersList#defineProperty(String, String)
- * @see ParametersList#expandMacros(String) 
- * @see ParametersList#addParamsGroup(String) 
- * @see ParametersList#addParametersString(String) 
- * @see ParamsGroup 
+ * @see ParametersList#expandMacros(String)
+ * @see ParametersList#addParamsGroup(String)
+ * @see ParametersList#addParametersString(String)
+ * @see ParamsGroup
  */
 public final class ParametersList implements Cloneable {
-
-  private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)=(.+)");
+  private static final Pattern PROPERTY_PATTERN = Pattern.compile("-D(\\S+?)(?:=(.+))?");
   private static final Pattern MACRO_PATTERN = Pattern.compile("\\$\\{([^}]+)}");
-  private static Map<String, String> ourTestMacros;
 
   private final List<String> myParameters = new ArrayList<>();
   private final List<ParamsGroup> myGroups = new SmartList<>();
   private final NotNullLazyValue<Map<String, String>> myMacroMap = NotNullLazyValue.createValue(ParametersList::computeMacroMap);
-  
-  @TestOnly
-  public static void setTestMacros(@Nullable Map<String, String> testMacros) {
-    ourTestMacros = testMacros;
+
+  public boolean hasParameter(@NotNull String parameter) {
+    return myParameters.contains(parameter);
   }
 
-  public boolean hasParameter(@NotNull String param) {
-    return myParameters.contains(param);
+  public boolean hasProperty(@NotNull String propertyName) {
+    return getPropertyValue(propertyName) != null;
   }
 
-  public boolean hasProperty(@NotNull String name) {
-    return getPropertyValue(name) != null;
-  }
-  
   @Nullable
-  public String getPropertyValue(@NotNull String name) {
-    String prefix = "-D" + name + "=";
-    int index = indexOfParameter(o -> o.startsWith(prefix));
-    return index < 0 ? null : myParameters.get(index).substring(prefix.length());
+  public String getPropertyValue(@NotNull String propertyName) {
+    String exact = "-D" + propertyName;
+    String prefix = "-D" + propertyName + "=";
+    int index = indexOfParameter(o -> o.equals(exact) || o.startsWith(prefix));
+    if (index < 0) return null;
+    String str = myParameters.get(index);
+    return str.length() == exact.length() ? "" : str.substring(prefix.length());
   }
 
   @NotNull
   public Map<String, String> getProperties() {
-    LinkedHashMap<String, String> result = new LinkedHashMap<>();
+    Map<String, String> result = new LinkedHashMap<>();
     JBIterable<Matcher> matchers = JBIterable.from(myParameters).map(PROPERTY_PATTERN::matcher).filter(Matcher::matches);
     for (Matcher matcher : matchers) {
-      result.put(matcher.group(1), matcher.group(2));
+      result.put(matcher.group(1), StringUtil.notNullize(matcher.group(2), ""));
     }
     return result;
   }
@@ -208,13 +191,16 @@ public final class ParametersList implements Cloneable {
   }
 
   /**
-   * Keeps the {@code <propertyName>} property if defined; otherwise appends the new one.
+   * Keeps the {@code <propertyName>} property if defined; otherwise appends the new one ignoring null values.
    */
   public void defineProperty(@NotNull String propertyName, @Nullable String propertyValue) {
-    if (StringUtil.isEmpty(propertyValue)) return;
+    if (propertyValue == null) return;
+    String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
-    if (indexOfParameter(o -> o.startsWith(prefix)) > -1) return;
-    myParameters.add(prefix + expandMacros(propertyValue));
+    int index = indexOfParameter(o -> o.equals(exact) || o.startsWith(prefix));
+    if (index > -1) return;
+    String value = propertyValue.isEmpty() ? exact : prefix + expandMacros(propertyValue);
+    myParameters.add(value);
   }
 
   /**
@@ -227,13 +213,24 @@ public final class ParametersList implements Cloneable {
   }
 
   /**
-   * Adds {@code -D<propertyName>=<propertyValue>} to the list ignoring empty or null values;
+   * Adds {@code -D<propertyName>=<propertyValue>} to the list ignoring null values;
    * replaces the value of the last property if defined.
    */
   public void addProperty(@NotNull String propertyName, @Nullable String propertyValue) {
-    if (StringUtil.isEmpty(propertyValue)) return; 
+    if (propertyValue == null) return;
+    String exact = "-D" + propertyName;
     String prefix = "-D" + propertyName + "=";
-    replaceOrAppend(prefix, prefix + expandMacros(propertyValue));
+    String value = propertyValue.isEmpty() ? exact : prefix + expandMacros(propertyValue);
+    replaceOrAddAt(value, myParameters.size(), o -> o.equals(exact) || o.startsWith(prefix));
+  }
+
+  /**
+   * Adds {@code -D<propertyName>=<propertyValue>} to the list ignoring null, empty and spaces-only values;
+   * replaces the value of the last property if defined.
+   */
+  public void addNotEmptyProperty(@NotNull String propertyName, @Nullable String propertyValue) {
+    if (StringUtil.isEmptyOrSpaces(propertyValue)) return;
+    addProperty(propertyName, propertyValue);
   }
 
   /**
@@ -253,7 +250,7 @@ public final class ParametersList implements Cloneable {
   }
 
   private void replaceOrAddAt(@NotNull String replacement,
-                              int position, 
+                              int position,
                               @NotNull Condition<? super String> existingCondition) {
     int index = indexOfParameter(existingCondition);
     boolean setNewValue = StringUtil.isNotEmpty(replacement);
@@ -359,12 +356,19 @@ public final class ParametersList implements Cloneable {
     return sb == null ? text : sb.append(text, start, text.length()).toString();
   }
 
+  private static Map<String, String> ourTestMacros;
+
+  @TestOnly
+  public static void setTestMacros(@Nullable Map<String, String> testMacros) {
+    ourTestMacros = testMacros;
+  }
+
   @NotNull
   private static Map<String, String> computeMacroMap() {
     // ApplicationManager.getApplication() will return null if executed in ParameterListTest
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode() && ourTestMacros != null) {
-      return ourTestMacros;
+      return ObjectUtils.notNull(ourTestMacros, Collections.emptyMap());
     }
     Map<String, String> map = ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE);
     PathMacros pathMacros = PathMacros.getInstance();
@@ -384,5 +388,4 @@ public final class ParametersList implements Cloneable {
   public String toString() {
     return myParameters + (myGroups.isEmpty() ? "" : " and " + myGroups);
   }
-
 }

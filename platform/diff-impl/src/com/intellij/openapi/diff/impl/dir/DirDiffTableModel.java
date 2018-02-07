@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.ide.IdeBundle;
@@ -59,6 +61,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,6 +90,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private Updater myUpdater;
   private List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
+  /** directory path -> map from name of source element name to name of target element which is manually specified as replacement for that source */
+  private Map<String, BiMap<String, String>> mySourceToReplacingTarget = HashBiMap.create();
 
   private DirDiffPanel myPanel;
   private volatile boolean myDisposed;
@@ -177,11 +182,26 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public boolean isOperationsEnabled() {
-    return !myDisposed && mySource.isOperationsEnabled() && myTarget.isOperationsEnabled();
+    return !myDisposed && mySettings.enableOperations && mySource.isOperationsEnabled() && myTarget.isOperationsEnabled();
   }
 
   public List<DirDiffElementImpl> getElements() {
     return myElements;
+  }
+
+  public void setReplacement(DirDiffElementImpl source, @Nullable DirDiffElementImpl target) {
+    BiMap<String, String> map = mySourceToReplacingTarget.computeIfAbsent(source.getParentNode().getPath(), (p) -> HashBiMap.create());
+    if (target != null) {
+      map.forcePut(source.getSourceName(), target.getTargetName());
+    }
+    else {
+      map.remove(source.getSourceName());
+    }
+  }
+
+  public String getReplacementName(DirDiffElementImpl source) {
+    BiMap<String, String> map = mySourceToReplacingTarget.get(source.getParentNode().getPath());
+    return map != null ? map.get(source.getSourceName()) : null;
   }
 
   private static String prepareText(String text) {
@@ -410,7 +430,9 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final DiffElement[] children = element.getChildren();
       for (DiffElement child : children) {
         if (!myUpdating.get()) return;
-        final DTree el = root.addChild(child, source);
+        BiMap<String, String> replacing = mySourceToReplacingTarget.get(root.getPath());
+        String replacementName = replacing != null ? source ? replacing.get(child.getName()) : replacing.inverse().get(child.getName()) : null;
+        final DTree el = root.addChild(child, source, replacementName);
         scan(child, el, source);
       }
     }

@@ -26,7 +26,7 @@ import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewModel;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,6 @@ import java.util.Comparator;
  * @author max
  */
 public class PropertiesFileStructureViewModel extends TextEditorBasedStructureViewModel implements PropertiesGroupingStructureViewModel {
-  private final PropertiesFileImpl myPropertiesFile;
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
   @NonNls public static final String KIND_SORTER_ID = "KIND_SORTER";
   private static final Sorter KIND_SORTER = new Sorter() {
@@ -65,16 +64,16 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
     }
   };
 
-  public PropertiesFileStructureViewModel(final PropertiesFileImpl root) {
-    super(root);
-    myPropertiesFile = root;
-    String separator = PropertiesSeparatorManager.getInstance(root.getProject()).getSeparator(root.getResourceBundle());
+  public PropertiesFileStructureViewModel(PropertiesFileImpl file, Editor editor) {
+    super(editor, file);
+    String separator = PropertiesSeparatorManager.getInstance(file.getProject()).getSeparator(file.getResourceBundle());
     myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
   }
 
   public void setSeparator(String separator) {
     myByWordPrefixesGrouper.setSeparator(separator);
-    PropertiesSeparatorManager.getInstance(myPropertiesFile.getProject()).setSeparator(myPropertiesFile.getResourceBundle(), separator);
+    PropertiesSeparatorManager separatorManager = PropertiesSeparatorManager.getInstance(getPsiFile().getProject());
+    separatorManager.setSeparator(((PropertiesFileImpl)getPsiFile()).getResourceBundle(), separator);
   }
 
   public String getSeparator() {
@@ -83,7 +82,7 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
 
   @NotNull
   public StructureViewTreeElement getRoot() {
-    return new PropertiesFileStructureViewElement(myPropertiesFile);
+    return new PropertiesFileStructureViewElement((PropertiesFileImpl)getPsiFile());
   }
 
   @NotNull
@@ -94,10 +93,6 @@ public class PropertiesFileStructureViewModel extends TextEditorBasedStructureVi
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER, KIND_SORTER};
-  }
-
-  protected PsiFile getPsiFile() {
-    return myPropertiesFile;
   }
 
   @NotNull

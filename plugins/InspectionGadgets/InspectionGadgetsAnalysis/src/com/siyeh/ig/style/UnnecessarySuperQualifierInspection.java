@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,12 +26,16 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class UnnecessarySuperQualifierInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  public boolean ignoreClarification = false;
 
   @Override
   @Nls
@@ -46,6 +51,12 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
     return InspectionGadgetsBundle.message(
       "unnecessary.super.qualifier.problem.descriptor"
     );
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel("Ignore clarification 'super' qualifier", this, "ignoreClarification");
   }
 
   @Override
@@ -71,11 +82,15 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new UnnecessarySuperQualifierVisitor();
+    return new UnnecessarySuperQualifierVisitor(ignoreClarification);
   }
 
-  private static class UnnecessarySuperQualifierVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessarySuperQualifierVisitor extends BaseInspectionVisitor {
+    private boolean myIgnoreClarification;
+
+    public UnnecessarySuperQualifierVisitor(boolean ignoreClarification) {
+      myIgnoreClarification = ignoreClarification;
+    }
 
     @Override
     public void visitSuperExpression(PsiSuperExpression expression) {
@@ -91,15 +106,44 @@ public class UnnecessarySuperQualifierInspection extends BaseInspection implemen
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
       final PsiElement grandParent = referenceExpression.getParent();
       if (grandParent instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)grandParent;
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
         if (!hasUnnecessarySuperQualifier(methodCallExpression)) {
           return;
+        }
+
+        if (myIgnoreClarification) {
+          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          if (containingClass != null) {
+            final PsiElement classParent = containingClass.getParent();
+            String referenceName = methodCallExpression.getMethodExpression().getReferenceName();
+            if (referenceName != null) {
+              PsiExpression copyCall = JavaPsiFacade.getElementFactory(expression.getProject())
+                .createExpressionFromText(referenceName + methodCallExpression.getArgumentList().getText(), classParent);
+              PsiMethod method = ((PsiMethodCallExpression)copyCall).resolveMethod();
+              if (method != null && method != referenceExpression.resolve()) {
+                return;
+              }
+            }
+          }
         }
       }
       else {
         if (!hasUnnecessarySuperQualifier(referenceExpression)) {
           return;
+        }
+        if (myIgnoreClarification) {
+          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          if (containingClass != null) {
+            final PsiElement classParent = containingClass.getParent();
+            final String referenceText = referenceExpression.getReferenceName();
+            if (referenceText != null) {
+              PsiVariable variable = PsiResolveHelper.SERVICE.getInstance(expression.getProject())
+                .resolveAccessibleReferencedVariable(referenceText, classParent);
+              if (variable != null && variable != referenceExpression.resolve()) {
+                return;
+              }
+            }
+          }
         }
       }
       registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

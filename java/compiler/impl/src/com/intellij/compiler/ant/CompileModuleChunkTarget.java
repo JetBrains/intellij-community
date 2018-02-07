@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class CompileModuleChunkTarget extends CompositeGenerator {
 

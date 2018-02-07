@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -139,6 +140,11 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   void setNavigateAction(@NotNull  AnAction navigateAction) {
     myNavigateAction = navigateAction;
+  }
+
+  @NotNull
+  public MarkupEditorFilter getEditorFilter() {
+    return MarkupEditorFilter.EMPTY;
   }
 
   @Nullable

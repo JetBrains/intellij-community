@@ -71,7 +71,7 @@ public final class LanguageUtil {
   @NotNull
   public static Language[] getLanguageDialects(@NotNull final Language base) {
     final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), language -> language.getBaseLanguage() == base);
-    return list.toArray(new Language[list.size()]);
+    return list.toArray(new Language[0]);
   }
 
   public static boolean isInTemplateLanguageFile(@Nullable final PsiElement element) {

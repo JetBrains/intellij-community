@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_X)) {
+    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_10)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -48,7 +48,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
            replaceExplicitTypeWithVar(typeElementCopy, variable);
            if (variable.getType().equals(copyVariable.getType())) {
              holder.registerProblem(element2Highlight,
-                                    "Explicit type of local variable is redundant",
+                                    "Explicit type of local variable can be omitted",
                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                     new ReplaceWithVarFix());
            }

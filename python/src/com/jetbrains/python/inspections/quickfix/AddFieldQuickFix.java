@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Available on self.my_something when my_something is unresolved.
  * User: dcheryasov
- * Date: Apr 4, 2009 1:53:46 PM
  */
 public class AddFieldQuickFix implements LocalQuickFix {
 

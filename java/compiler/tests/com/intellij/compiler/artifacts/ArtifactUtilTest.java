@@ -2,6 +2,7 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -73,6 +74,14 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     assertSameElements(ArtifactUtil.getArtifactsContainingModuleOutput(m), a, b);
   }
 
+  public void testCopyElement() {
+    VirtualFile file = createFile("a.txt");
+    final Artifact a = addArtifact(root().dir("lib").file(file));
+    CompositePackagingElement<?> copy = ArtifactUtil.copyFromRoot(a.getRootElement(), myProject);
+    assertLayout(copy, "<root>\n" +
+                       " lib/\n" +
+                       "  file:" + file.getPath() + "\n");
+  }
 
   private void processDirectoryChildren(final CompositePackagingElement<?> rootElement, final String relativePath, ElementToStringCollector processor) {
     ArtifactUtil.processDirectoryChildren(rootElement, PackagingElementPath.EMPTY, relativePath, getContext(), PlainArtifactType.getInstance(), processor);

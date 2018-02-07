@@ -33,7 +33,7 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -242,6 +242,10 @@ public final class IdeMouseEventDispatcher {
       return false; // forward mouse processing to the special shortcut panel
     }
 
+    if (doVerticalDiagramScrolling(c, e)) {
+      return true;
+    }
+
     if (isHorizontalScrolling(c, e)) {
       boolean done = doHorizontalScrolling(c, (MouseWheelEvent)e);
       if (done) return true;
@@ -258,7 +262,7 @@ public final class IdeMouseEventDispatcher {
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
-      AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
+      AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
       for (AnAction action : actions) {
         DataContext dataContext = DataManager.getInstance().getDataContext(c);
         Presentation presentation = myPresentationFactory.getPresentation(action);
@@ -312,6 +316,43 @@ public final class IdeMouseEventDispatcher {
     return false;
   }
 
+  private static boolean doVerticalDiagramScrolling(@Nullable Component component, @NotNull MouseEvent event) {
+    if (component != null && event instanceof MouseWheelEvent && isDiagramViewComponent(component.getParent())) {
+      MouseWheelEvent mwe = (MouseWheelEvent)event;
+      if (!mwe.isShiftDown() && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && JBScrollPane.isScrollEvent(mwe)) {
+        JScrollBar scrollBar = findVerticalScrollBar(component);
+        if (scrollBar != null) {
+          scrollBar.setValue(scrollBar.getValue() + getScrollAmount(mwe, scrollBar));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static JScrollBar findVerticalScrollBar(@Nullable Component component) {
+    if (component == null) {
+      return null;
+    }
+    if (component instanceof JScrollPane) {
+      JScrollBar scrollBar = ((JScrollPane)component).getVerticalScrollBar();
+      return scrollBar != null && scrollBar.isVisible() ? scrollBar : null;
+    }
+    if (isDiagramViewComponent(component)) {
+      JComponent view = (JComponent)component;
+      for (int i = 0; i < view.getComponentCount(); i++) {
+        if (view.getComponent(i) instanceof JScrollBar) {
+          JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+          if (scrollBar.getOrientation() == Adjustable.VERTICAL) {
+            return scrollBar.isVisible() ? scrollBar : null;
+          }
+        }
+      }
+    }
+    return findVerticalScrollBar(component.getParent());
+  }
+
   public void resetHorScrollingTracker() {
     myLastHorScrolledComponentHash = 0;
   }
@@ -355,8 +396,9 @@ public final class IdeMouseEventDispatcher {
     return findHorizontalScrollBar(c.getParent());
   }
 
-  private static boolean isDiagramViewComponent(Component c) {
-    return c != null && "y.view.Graph2DView".equals(c.getClass().getName());
+  private static boolean isDiagramViewComponent(@Nullable Component component) {
+    // in production yfiles classes is obfuscated
+    return UIUtil.isClientPropertyTrue(component, "y.view.Graph2DView");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {

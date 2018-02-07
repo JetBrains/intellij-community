@@ -1108,7 +1108,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (!useStrongRefs()) {
       synchronized (myPsiLock) {
         for (PsiFile root : myViewProvider.getAllFiles()) {
-          if ((root instanceof PsiFileImpl)) {
+          if (root instanceof PsiFileImpl) {
             ((PsiFileImpl)root).switchToStrongRefs();
           }
         }
@@ -1118,7 +1118,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void checkWritable() {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
-    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress()) {
+    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress() && !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
       CheckUtil.checkWritable(this);
     }
   }

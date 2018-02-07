@@ -79,7 +79,7 @@ public class UtilsTest {
     catch (IOException e) {
       ts = (System.nanoTime() - ts) / 1_000_000;
       assertEquals("Cannot delete: " + f.getAbsolutePath(), e.getMessage());
-      assertThat(ts).as("Utils.delete took " + ts + " ms, which is less than expected").isGreaterThanOrEqualTo(100);
+      assertThat(ts).as("Utils.delete took " + ts + " ms, which is less than expected").isGreaterThanOrEqualTo(95);
     }
   }
 

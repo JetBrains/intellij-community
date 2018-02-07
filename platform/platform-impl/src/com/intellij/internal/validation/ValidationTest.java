@@ -47,13 +47,11 @@ public class ValidationTest extends DialogWrapper {
     };
 
     init();
+
+    myPanel.field5.addActionListener(e -> myPanel.spinner.setEnabled(myPanel.field5.isSelected()));
+    myPanel.spinner.setEnabled(myPanel.field5.isSelected());
   }
 
-
-  @Override
-  protected boolean postponeValidation() {
-    return true;
-  }
 
   @Override
   public JComponent getPreferredFocusedComponent() {

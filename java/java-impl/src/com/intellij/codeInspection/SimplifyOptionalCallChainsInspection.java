@@ -74,7 +74,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       else if (OPTIONAL_OR_ELSE_GET.test(call)) {
         useOrElseGet = true;
         PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
-        if (lambda == null || lambda.getParameterList().getParametersCount() != 0) return;
+        if (lambda == null || !lambda.getParameterList().isEmpty()) return;
         falseArg = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       }
       if (falseArg == null) return;
@@ -184,7 +184,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
     if (OPTIONAL_OR_ELSE_GET.test(call)) {
       PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
-      if (lambda == null || lambda.getParameterList().getParametersCount() != 0) return null;
+      if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
       return LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
     }
     return null;
@@ -460,9 +460,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       @Nullable
       static Context extract(@NotNull PsiMethodCallExpression orElseCall, @NotNull PsiExpression orElseArgument) {
         if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-        PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(orElseCall, PsiLocalVariable.class, true);
+        PsiLocalVariable returnVar = tryCast(orElseCall.getParent(), PsiLocalVariable.class);
         if (returnVar == null) return null;
-        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, false);
+        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
         if(statement == null) return null;
         PsiStatement nextStatement =
           tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);

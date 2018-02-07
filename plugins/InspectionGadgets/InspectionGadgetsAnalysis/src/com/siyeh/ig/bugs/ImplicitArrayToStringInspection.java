@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -108,8 +108,7 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor){
       final PsiElement element = descriptor.getPsiElement();
       final PsiExpression expression;
       if (element instanceof PsiExpression) {
@@ -118,21 +117,19 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       else {
         expression = (PsiExpression)element.getParent().getParent();
       }
+      CommentTracker commentTracker = new CommentTracker();
       final String expressionText;
       if (removeToString) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression =
-          methodCallExpression.getMethodExpression();
-        final PsiExpression qualifier =
-          methodExpression.getQualifierExpression();
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
+        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
         if (qualifier == null) {
           return;
         }
-        expressionText = qualifier.getText();
+        expressionText = commentTracker.text(qualifier);
       }
       else {
-        expressionText = expression.getText();
+        expressionText = commentTracker.text(expression);
       }
       @NonNls final String newExpressionText;
       if (deepString) {
@@ -147,18 +144,15 @@ public class ImplicitArrayToStringInspection extends BaseInspection {
       if (parent instanceof PsiExpressionList) {
         final PsiElement grandParent = parent.getParent();
         if (grandParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression =
-            (PsiMethodCallExpression)grandParent;
-          final PsiReferenceExpression methodExpression =
-            methodCallExpression.getMethodExpression();
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+          final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
           if ("valueOf".equals(methodExpression.getReferenceName())) {
-            PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression,
-                                                           newExpressionText);
+            PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpressionText, commentTracker);
             return;
           }
         }
       }
-      PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpressionText);
+      PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpressionText, commentTracker);
     }
   }
 

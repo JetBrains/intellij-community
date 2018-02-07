@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -43,6 +42,7 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
@@ -77,7 +77,7 @@ internal class ApplicationStoreTest {
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
-    componentStore.save(SmartList())
+    saveStore()
 
     assertThat(streamProvider.data[RoamingType.DEFAULT]!!["new.xml"]).isEqualTo("<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
   }
@@ -126,7 +126,7 @@ internal class ApplicationStoreTest {
   @Test fun `export settings`() {
     testAppConfig.refreshVfs()
 
-    val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
+    val storageManager = ApplicationManager.getApplication().stateStore.storageManager
     val optionsPath = storageManager.expandMacros(APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)
@@ -162,14 +162,12 @@ internal class ApplicationStoreTest {
 
     val componentPath = configDir.resolve("a.xml")
     assertThat(componentPath).isRegularFile
-    val componentFile = componentPath
 
     // additional export path
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
-    val additionalFile = additionalPath
     val exportedData = BufferExposingByteArrayOutputStream()
-    exportSettings(setOf(componentFile, additionalFile), exportedData, configPath)
+    exportSettings(setOf(componentPath, additionalPath), exportedData, configPath)
 
     val relativePaths = getPaths(ByteArrayInputStream(exportedData.internalBuffer, 0, exportedData.size()))
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
@@ -180,7 +178,8 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(listOf(ExportableItem(componentFile, ""))), additionalFile.to(listOf(ExportableItem(additionalFile, " (schemes)"))))
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(
+        componentPath.to(listOf(ExportableItem(componentPath, ""))), additionalPath.to(listOf(ExportableItem(additionalPath, " (schemes)"))))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)
@@ -222,7 +221,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `don't save if only format is changed`() {
-    val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
+    val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
     val file = writeConfig("a.xml", oldContent)
     val oldModificationTime = file.lastModified()
     testAppConfig.refreshVfs()
@@ -240,7 +239,10 @@ internal class ApplicationStoreTest {
     component.options.foo = "1"
     saveStore()
 
-    assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"1\" bar=\"2\" />\n</application>")
+    assertThat(file).hasContent("""
+    <application>
+      <component name="A" foo="1" bar="2" />
+    </application>""")
   }
 
   @Test
@@ -252,12 +254,12 @@ internal class ApplicationStoreTest {
     open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
       var options = TestState()
 
-      var stateCalledCount = 0
+      val stateCalledCount = AtomicLong(0)
       var lastGetStateStackTrace: String? = null
 
       override fun getState(): TestState {
         lastGetStateStackTrace = ExceptionUtil.currentStackTrace()
-        stateCalledCount++
+        stateCalledCount.incrementAndGet()
         return options
       }
 
@@ -270,23 +272,23 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
 
     assertThat(component.modificationCount).isEqualTo(0)
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
     component.lastGetStateStackTrace = null
     saveStore()
     @Suppress("USELESS_CAST")
     assertThat(component.lastGetStateStackTrace as String?).isNull()
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     // test that store correctly save last modification time and doesn't call our state on next save
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     val componentFile = testAppConfig.resolve("a.xml")
     assertThat(componentFile).doesNotExist()
@@ -299,7 +301,7 @@ internal class ApplicationStoreTest {
 
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(2)
+    assertThat(component.stateCalledCount.get()).isEqualTo(2)
 
     assertThat(componentFile).hasContent("""
     <application>
@@ -314,16 +316,16 @@ internal class ApplicationStoreTest {
 
     @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))
     open class A : PersistentStateComponentWithModificationTracker<TestState> {
-      var modificationCount: Long = 0
+      var modificationCount = AtomicLong(0)
 
-      override fun getStateModificationCount() = modificationCount
+      override fun getStateModificationCount() = modificationCount.get()
 
       var options = TestState()
 
-      var stateCalledCount = 0
+      var stateCalledCount = AtomicLong(0)
 
       override fun getState(): TestState {
-        stateCalledCount++
+        stateCalledCount.incrementAndGet()
         return options
       }
 
@@ -332,28 +334,28 @@ internal class ApplicationStoreTest {
       }
 
       fun incModificationCount() {
-        modificationCount++
+        modificationCount.incrementAndGet()
       }
     }
 
     val component = A()
     componentStore.initComponent(component, false)
 
-    assertThat(component.modificationCount).isEqualTo(0)
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.modificationCount.get()).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     // test that store correctly save last modification time and doesn't call our state on next save
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     val componentFile = testAppConfig.resolve("b.xml")
     assertThat(componentFile).doesNotExist()
@@ -366,7 +368,7 @@ internal class ApplicationStoreTest {
 
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(2)
+    assertThat(component.stateCalledCount.get()).isEqualTo(2)
 
     assertThat(componentFile).hasContent("""
     <application>
@@ -378,7 +380,7 @@ internal class ApplicationStoreTest {
     @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
     class AWorkspace : A()
 
-    val oldContent = "<application><component name=\"A\" foo=\"old\" deprecated=\"old\"/></application>"
+    val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
     val file = writeConfig("b.xml", oldContent)
     testAppConfig.refreshVfs()
 
@@ -386,9 +388,31 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
     assertThat(component.options).isEqualTo(TestState("old"))
 
+    try {
+      setRoamableComponentSaveThreshold(-100)
+      saveStore()
+    }
+    finally {
+      restoreDefaultNotRoamableComponentSaveThreshold()
+    }
+
+    assertThat(file).hasContent("""
+    <application>
+      <component name="A" foo="old" />
+    </application>""")
+  }
+
+  @Test fun `other xml file as not-roamable without explicit roaming`() {
+    @State(name = "A", storages = arrayOf(Storage(value = "other.xml")))
+    class AOther : A()
+
+    val component = AOther()
+    componentStore.initComponent(component, false)
+    component.options.foo = "old"
+
     saveStore()
 
-    assertThat(file).hasContent("<application>\n  <component name=\"A\" foo=\"old\" />\n</application>")
+    assertThat(testAppConfig.resolve("other.xml")).doesNotExist()
   }
 
   private fun saveStore() {
@@ -403,7 +427,7 @@ internal class ApplicationStoreTest {
     val data: MutableMap<RoamingType, MutableMap<String, String>> = THashMap()
 
     override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-      getMap(roamingType).put(fileSpec, String(content, 0, size, CharsetToolkit.UTF8_CHARSET))
+      getMap(roamingType).put(fileSpec, String(content, 0, size, Charsets.UTF_8))
     }
 
     private fun getMap(roamingType: RoamingType): MutableMap<String, String> {

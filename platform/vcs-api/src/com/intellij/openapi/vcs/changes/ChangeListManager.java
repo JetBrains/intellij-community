@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -49,6 +50,7 @@ public abstract class ChangeListManager implements ChangeListModification {
                                          @Nullable String title,
                                          @Nullable ModalityState state);
 
+  @Deprecated
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable String title,
@@ -135,6 +137,8 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
+
+  public abstract void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable);
 
   public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 

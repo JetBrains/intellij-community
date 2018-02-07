@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 4/27/11
- *         Time: 10:38 AM
  */
 @SomeQueue
 public class ZipAndQueue {

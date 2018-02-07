@@ -31,11 +31,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection {
 
-  @Override
-  public boolean isSuppressedFor(@NotNull PsiElement element) {
-    return super.isSuppressedFor(element);
-  }
-
   @Nls
   @NotNull
   @Override

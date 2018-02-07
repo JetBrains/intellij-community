@@ -49,10 +49,14 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon = null;
   private static Icon myDisabledIcon = null;
+  private static Icon myWin10ComboDropTriagleIcon = null;
 
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
-      return IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      if (myWin10ComboDropTriagleIcon == null) {
+        myWin10ComboDropTriagleIcon = IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      }
+      return myWin10ComboDropTriagleIcon;
     }
     Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
     if (myIcon != icon) {
@@ -114,10 +118,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     myPopupTitle = popupTitle;
   }
 
-  @Override
-  public void update(AnActionEvent e) {
-  }
-
   protected boolean shouldShowDisabledActions() {
     return false;
   }
@@ -160,14 +160,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
-      if (isSmallVariant()) {
-        if (!UIUtil.isUnderWin10LookAndFeel()) {
-          setBorder(JBUI.Borders.empty(0, 2));
-        }
-
-        if (!UIUtil.isUnderGTKLookAndFeel()) {
-          setFont(JBUI.Fonts.label(11));
-        }
+      if (isSmallVariant() && !UIUtil.isUnderGTKLookAndFeel()) {
+        setFont(JBUI.Fonts.label(11));
       }
       addActionListener(
         new ActionListener() {
@@ -356,13 +350,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
       int width = isEmpty ? JBUI.scale(10) : super.getPreferredSize().width;
       width += getArrowIcon(isEnabled()).getIconWidth();
-      if (isSmallVariant()) {
-        int extraWidth = UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(4);
-        width += extraWidth;
-      }
-
-      int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(24) : JBUI.scale(19);
-      return new Dimension(width, isSmallVariant() ? height : super.getPreferredSize().height);
+      return new Dimension(width, isSmallVariant() ? JBUI.scale(24) : super.getPreferredSize().height);
     }
 
     @Override

@@ -70,7 +70,7 @@
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"
-            icon="AllIcons.Debugger.StreamDebugger.Stream_debugger"
+            icon="JavaDebuggerStreamsIcons.Stream_debugger"
             text="Trace Current Stream Chain">
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
     </action>

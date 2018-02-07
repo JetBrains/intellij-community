@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -133,7 +133,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   public PsiElement updateCurrentNode(PsiElement targetNode) {
-    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatements().length == 1) {
+    if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatementCount() == 1) {
       PsiElement targetNodeParent = targetNode.getParent();
       if (targetNodeParent instanceof PsiBlockStatement) {
         targetNodeParent = targetNodeParent.getParent();
@@ -322,13 +322,14 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
     final PsiElement firstElement = elements[0];
     final PsiElement secondElement = elements[1];
+    final PsiElement lastElement = elements[elements.length - 1];
 
     if (firstElement instanceof PsiDocComment) {
       // might be method with javadoc
       return true;
     }
     else if (firstElement instanceof PsiDeclarationStatement && PsiTreeUtil.lastChild(firstElement) instanceof PsiErrorElement) {
-      // might be method
+      // might be method or static initializer
       return true;
     }
     else if (firstElement instanceof PsiErrorElement &&
@@ -337,9 +338,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       // might be generic method
       return true;
     }
-    else if (elements.length == 3 && PsiModifier.STATIC.equals(firstElement.getText()) && secondElement instanceof PsiWhiteSpace &&
-        elements[2] instanceof PsiBlockStatement) {
-      // looks like static initializer
+    else if (firstElement instanceof PsiExpressionStatement && firstElement.getFirstChild() instanceof PsiMethodCallExpression &&
+      firstElement.getLastChild() instanceof PsiErrorElement && lastElement instanceof PsiBlockStatement) {
+      // might be constructor
       return true;
     }
     return false;
@@ -356,8 +357,9 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     PsiElement element = searchContext.getFile();
 
+    final Project project = searchContext.getProject();
     if (element != null && !useLastConfiguration) {
-      final Editor selectedEditor = FileEditorManager.getInstance(searchContext.getProject()).getSelectedTextEditor();
+      final Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
 
       if (selectedEditor != null) {
         int caretPosition = selectedEditor.getCaretModel().getOffset();
@@ -376,19 +378,20 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       }
     }
 
-    final PsiManager psimanager = PsiManager.getInstance(searchContext.getProject());
-    final Project project = psimanager.getProject();
     final PsiCodeFragment file = createCodeFragment(project, text, element);
-    final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(file);
-    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(file, false);
-    return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+    final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
+    assert doc != null;
+    DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
+    return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
   }
 
+  @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return JavaCodeContextType.class;
   }
 
+  @NotNull
   @Override
   public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);

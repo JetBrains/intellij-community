@@ -429,7 +429,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterBeforeArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() <caret>-> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() <caret>-> int:\n" +
                                                                "    pass",
                 "def func() \\\n" +
                 "        -> int:\n" +
@@ -438,7 +438,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterAfterArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -><caret> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -><caret> int:\n" +
                                                                "    pass",
                 "def func() ->\\\n" +
                 "        int:\n" +
@@ -447,7 +447,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterDoesNotInsertSlashInsideArrow() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -<caret>> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -<caret>> int:\n" +
                                                                "    pass",
                 "def func() -\n" +
                 "> int:\n" +
@@ -590,5 +590,10 @@ public class PyEditingTest extends PyTestCase {
                 "def hello_world():\n" +
                 "    return bar, 'so' \\\n" +
                 "                'me'");
+  }
+
+  // PY-27178
+  public void testIncompleteFunctionTypeComment() {
+    doTypingTest('.');
   }
 }

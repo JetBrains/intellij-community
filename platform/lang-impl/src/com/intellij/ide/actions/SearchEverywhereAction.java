@@ -31,6 +31,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -42,9 +43,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
@@ -221,6 +222,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
         label.setToolTipText(null);
         IdeTooltipManager.getInstance().hideCurrentNow(false);
+        ActionToolbarImpl toolbar = UIUtil.getParentOfType(ActionToolbarImpl.class, panel);
+        if (toolbar != null) {
+          ToolbarClicksCollector.record(SearchEverywhereAction.this, toolbar.getPlace());
+        }
         actionPerformed(null, e);
       }
 
@@ -388,6 +393,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(editor, true));
           return;
         }
+
+        if (UIUtil.haveCommonOwner(e.getComponent(), e.getOppositeComponent())) {
+          return;
+        }
+
         onFocusLost();
       }
     });
@@ -489,17 +499,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       SwingUtilities.invokeLater(() -> getField().setText("#" + ((OptionsTopHitProvider)value).getId() + " "));
       return;
     }
-    Runnable onDone = null;
-
-    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
+    Runnable onDone =
+    ReadAction.compute(() -> {
       if (value instanceof PsiElement) {
-        onDone = () -> NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
-        return;
+        return () -> NavigationUtil.activateFileWithPsiElement((PsiElement)value, true);
       }
       else if (isVirtualFile(value)) {
-        onDone = () -> OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
-        return;
+        return () -> OpenSourceUtil.navigate(true, new OpenFileDescriptor(project, (VirtualFile)value));
       }
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
@@ -520,24 +526,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 itemWrapper.perform(project, executor, dataManager.getDataContext(c));
               }
             }
-          } else {
+          }
+          else {
             GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
-            if (isToolWindowAction(value)) return;
           }
         });
-        return;
+        return ()->{};
       }
       else if (value instanceof Navigatable) {
-        onDone = () -> OpenSourceUtil.navigate(true, (Navigatable)value);
-        return;
+        return () -> OpenSourceUtil.navigate(true, (Navigatable)value);
       }
-    }
-    finally {
-      token.finish();
-      final ActionCallback callback = onFocusLost();
-      if (onDone != null) {
-        callback.doWhenDone(onDone);
-      }
+      return null;
+    });
+
+    final ActionCallback callback = onFocusLost();
+    if (onDone != null) {
+      callback.doWhenDone(onDone);
+      return;
     }
     focusManager.requestDefaultFocus(true);
   }
@@ -626,6 +631,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       Disposer.dispose(myPopupField);
     }
     myPopupField = new MySearchTextField();
+    UIUtil.typeAheadUntilFocused(e.getInputEvent(), myPopupField.getTextEditor());
     myPopupField.getTextEditor().addKeyListener(new KeyAdapter() {
       @Override
       public void keyTyped(KeyEvent e) {
@@ -731,9 +737,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final Window window = WindowManager.getInstance().suggestParentWindow(project);
 
     project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
 
       @Override
       public void exitDumbMode() {

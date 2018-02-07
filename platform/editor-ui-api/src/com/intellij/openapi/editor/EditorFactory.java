@@ -42,124 +42,95 @@ public abstract class EditorFactory {
 
   /**
    * Creates a document from the specified text specified as a character sequence.
-   *
-   * @param text the text to create the document from.
-   * @return the document instance.
    */
   @NotNull
   public abstract Document createDocument(@NotNull CharSequence text);
 
   /**
    * Creates a document from the specified text specified as an array of characters.
-   *
-   * @param text the text to create the document from.
-   * @return the document instance.
    */
   @NotNull
   public abstract Document createDocument(@NotNull char[] text);
 
   /**
-   * Creates an editor for the specified document.
-   *
-   * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @return the editor instance.
-   * @see #releaseEditor(Editor)
+   * Creates an editor for the specified document. Must be invoked in EDT.
+   * <p>
+   * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
+   * </p>
    */
   public abstract Editor createEditor(@NotNull Document document);
 
   /**
-   * Creates a read-only editor for the specified document.
-   *
-   * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @return the editor instance.
-   * @see #releaseEditor(Editor)
+   * Creates a read-only editor for the specified document. Must be invoked in EDT.
+   * <p>
+   * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
+   * </p>
    */
   public abstract Editor createViewer(@NotNull Document document);
 
   /**
-   * Creates an editor for the specified document associated with the specified project.
-   *
-   * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @param project  the project with which the editor is associated.
-   * @return the editor instance.
+   * Creates an editor for the specified document associated with the specified project. Must be invoked in EDT.
+   * <p>
+   * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
+   * </p>
    * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
    */
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project);
 
   /**
-   * Must be invoked in EDT.
+   * Does the same as {@link #createEditor(Document, Project)} and also sets the special kind for the created editor
    */
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
-   * Creates an editor for the specified document associated with the specified project.
-   *
-   * Must be invoked in EDT.
+   * Creates an editor for the specified document associated with the specified project. Must be invoked in EDT.
+   * <p>
+   * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
+   * </p>
    *
    * @param document the document to create the editor for.
    * @param project  the project for which highlighter should be created
    * @param fileType the file type according to which the editor contents is highlighted.
    * @param isViewer true if read-only editor should be created
-   * @return the editor instance.
    * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
    */
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull FileType fileType, boolean isViewer);
 
   /**
-   * Creates an editor for the specified document associated with the specified project.
-   *
-   * Must be invoked in EDT.
-   *
+   * Creates an editor for the specified document associated with the specified project. Must be invoked in EDT.
+   * <p>
+   * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}.
+   * </p>
    * @param document the document to create the editor for.
    * @param project  the project for which highlighter should be created
    * @param file     the file according to which the editor contents is highlighted.
    * @param isViewer true if read-only editor should be created
    * @return the editor instance.
    * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
    */
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer);
 
   /**
-   * Must be invoked in EDT.
-   * @param file     the file according to which the editor contents is highlighted.
-   * @param isViewer true if read-only editor should be created
+   * Does the same as {@link #createEditor(Document, Project, VirtualFile, boolean)} and also sets the special kind for the created editor
    */
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer,
                                       @NotNull EditorKind kind);
 
   /**
-   * Creates a read-only editor for the specified document associated with the specified project.
-   *
-   * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @param project  the project with which the editor is associated.
-   * @return the editor instance.
-   * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
+   * Creates a read-only editor for the specified document associated with the specified project. Must be invoked in EDT.
+   * <p>
+   * The created editor must be disposed after use by calling {@link #releaseEditor(Editor)}
+   * </p>
    */
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project);
 
   /**
-   * Must be invoked in EDT.
+   * Does the same as {@link #createViewer(Document, Project)} and also sets the special kind for the created viewer
    */
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
   /**
-   * Disposes of the specified editor instance.
-   *
-   * Must be invoked in EDT.
-   *
-   * @param editor the editor instance to release.
+   * Disposes the specified editor instance. Must be invoked in EDT.
    */
   public abstract void releaseEditor(@NotNull Editor editor);
 
@@ -169,24 +140,18 @@ public abstract class EditorFactory {
    * @param document the document for which editors are requested.
    * @param project  the project with which editors should be associated, or null if any editors
    *                 for this document should be returned.
-   * @return the list of editors.
    */
   @NotNull
   public abstract Editor[] getEditors(@NotNull Document document, @Nullable Project project);
 
   /**
    * Returns the list of all editors for the specified document.
-   *
-   * @param document the document for which editors are requested.
-   * @return the list of editors.
    */
   @NotNull
   public abstract Editor[] getEditors(@NotNull Document document);
 
   /**
    * Returns the list of all currently open editors.
-   *
-   * @return the list of editors.
    */
   @NotNull
   public abstract Editor[] getAllEditors();
@@ -194,8 +159,6 @@ public abstract class EditorFactory {
   /**
    * Registers a listener for receiving notifications when editor instances are created
    * and released.
-   *
-   * @param listener the listener instance.
    * @deprecated use the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener);
@@ -203,25 +166,18 @@ public abstract class EditorFactory {
   /**
    * Registers a listener for receiving notifications when editor instances are created and released
    * and removes the listener when the {@code parentDisposable} gets disposed.
-   *
-   * @param listener         the listener instance.
-   * @param parentDisposable the Disposable which triggers the removal of the listener
    */
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable);
 
   /**
    * Un-registers a listener for receiving notifications when editor instances are created
    * and released.
-   *
-   * @param listener the listener instance.
    * @deprecated you should have used the {@link #addEditorFactoryListener(EditorFactoryListener, Disposable)} instead
    */
   public abstract void removeEditorFactoryListener(@NotNull EditorFactoryListener listener);
 
   /**
    * Returns the service for attaching event listeners to all editor instances.
-   *
-   * @return the event multicaster instance.
    */
   @NotNull
   public abstract EditorEventMulticaster getEventMulticaster();

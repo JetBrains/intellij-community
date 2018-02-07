@@ -58,6 +58,7 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,7 +101,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
 
     @Override
-    public void loadState(final Element element) {
+    public void loadState(@NotNull final Element element) {
       myAdvancedConfiguration.loadState(element);
       super.loadState(element);
     }
@@ -220,7 +221,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     myInjections.clear();
 
     List<Element> injectionElements = element.getChildren("injection");
@@ -463,7 +464,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         if (replace) {
           originalInjections.add(injection);
           final BaseInjection newInjection = injection.copy();
-          newInjection.setInjectionPlaces(newPlaces.toArray(new InjectionPlace[newPlaces.size()]));
+          newInjection.setInjectionPlaces(newPlaces.toArray(InjectionPlace.EMPTY_ARRAY));
           newInjections.add(newInjection);
         }
       }
@@ -555,6 +556,17 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       configurationModified();
     }
     return changed;
+  }
+
+  @TestOnly
+  public void withInjections(List<? extends BaseInjection> injections, Runnable runnable) {
+    replaceInjections(injections, ContainerUtil.emptyList(), true);
+    try {
+      runnable.run();
+    }
+    finally {
+      replaceInjections(ContainerUtil.emptyList(), injections, true);
+    }
   }
 
   public static class AdvancedConfiguration {

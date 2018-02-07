@@ -28,7 +28,6 @@ import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/3/12
 */
 public final class FilteredResourceRootDescriptor extends ResourceRootDescriptor {
   public FilteredResourceRootDescriptor(@NotNull File root, @NotNull ResourcesTarget target, @NotNull String packagePrefix,

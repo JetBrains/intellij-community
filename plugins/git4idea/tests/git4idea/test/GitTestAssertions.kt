@@ -94,16 +94,16 @@ fun GitRepository.assertCommitted(changes: ChangesBuilder.() -> Unit) {
 }
 
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
-  Assertions.assertThat(actual).isEqualToIgnoringWhitespace(lastMessage()).withFailMessage(failMessage)
+  assertMessage(actual, lastMessage(), failMessage)
 }
 
-fun GitPlatformTest.assertMessage(actual: String, expected: String, failMessage: String = "Commit message is incorrect") {
+fun assertMessage(actual: String, expected: String, failMessage: String = "Commit message is incorrect") {
   Assertions.assertThat(actual).isEqualToIgnoringWhitespace(expected).withFailMessage(failMessage)
 }
 
 fun GitPlatformTest.assertLogMessages(vararg messages: String) {
   val separator = "\u0001"
-  val actualMessages = git("log -${messages.size} --pretty=%B${separator}").split(separator)
+  val actualMessages = git("log -${messages.size} --pretty=${getPrettyFormatTagForFullCommitMessage(project)}${separator}").split(separator)
   for ((index, message) in messages.withIndex()) {
     Assertions.assertThat(actualMessages[index].trim()).isEqualToIgnoringWhitespace(message.trimIndent())
   }

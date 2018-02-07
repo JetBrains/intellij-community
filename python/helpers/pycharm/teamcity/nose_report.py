@@ -92,15 +92,31 @@ class TeamcityReport(Plugin):
 
         if self._capture_plugin_enabled():
             capture_plugin = self._get_capture_plugin()
+
             old_before_test = capture_plugin.beforeTest
+            old_after_test = capture_plugin.afterTest
+            old_format_error = capture_plugin.formatError
 
             def newCaptureBeforeTest(test):
-                old_before_test(test)
+                rv = old_before_test(test)
                 test_id = self.get_test_id(test)
                 capture_plugin._buf = FlushingStringIO(lambda data: dump_test_stdout(self.messages, test_id, test_id, data))
                 sys.stdout = capture_plugin._buf
+                return rv
+
+            def newCaptureAfterTest(test):
+                if isinstance(capture_plugin._buf, FlushingStringIO):
+                    capture_plugin._buf.flush()
+                return old_after_test(test)
+
+            def newCaptureFormatError(test, err):
+                if isinstance(capture_plugin._buf, FlushingStringIO):
+                    capture_plugin._buf.flush()
+                return old_format_error(test, err)
 
             capture_plugin.beforeTest = newCaptureBeforeTest
+            capture_plugin.afterTest = newCaptureAfterTest
+            capture_plugin.formatError = newCaptureFormatError
 
     def options(self, parser, env=os.environ):
         pass
@@ -130,6 +146,12 @@ class TeamcityReport(Plugin):
         else:
             return 'true'
 
+    def report_started(self, test):
+        test_id = self.get_test_id(test)
+
+        self.test_started_datetime_map[test_id] = datetime.datetime.now()
+        self.messages.testStarted(test_id, captureStandardOutput=self._captureStandardOutput_value(), flowId=test_id)
+
     def report_fail(self, test, fail_type, err):
         # workaround nose bug on python 3
         if is_string(err[1]):
@@ -152,19 +174,12 @@ class TeamcityReport(Plugin):
                 details = convert_error_to_string(err, 2)
                 self.messages.testFailed(test_id, message=error.msg, details=details, flowId=test_id, comparison_failure=error)
                 return
-        except:
+        except Exception:
             pass
         self.messages.testFailed(test_id, message=fail_type, details=details, flowId=test_id)
 
     def report_finish(self, test):
         test_id = self.get_test_id(test)
-
-        captured_output = getattr(test, "capturedOutput", None)
-        if captured_output is None and self._capture_plugin_enabled():
-            # nose capture does not fill 'capturedOutput' property on successful tests
-            captured_output = self._capture_plugin_buffer()
-        if captured_output:
-            dump_test_stdout(self.messages, test_id, test_id, captured_output)
 
         if test_id in self.test_started_datetime_map:
             time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
@@ -225,6 +240,10 @@ class TeamcityReport(Plugin):
             self.report_fail(test, 'error in ' + test.error_context + ' context', err)
             self.messages.testFinished(test_id, flowId=test_id)
         else:
+            # some test cases may report errors in pre setup when startTest was not called yet
+            # example: https://github.com/JetBrains/teamcity-messages/issues/153
+            if test_id not in self.test_started_datetime_map:
+                self.report_started(test)
             self.report_fail(test, 'Error', err)
             self.report_finish(test)
 

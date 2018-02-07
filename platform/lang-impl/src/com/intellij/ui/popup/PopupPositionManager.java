@@ -25,13 +25,12 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -105,8 +104,9 @@ public class PopupPositionManager {
     final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (focusOwner == null) return null;
 
-    if (focusOwner instanceof JBList) {
-      return new PositionAdjuster(SwingUtilities.getWindowAncestor(focusOwner));
+    JBPopup popup = PopupUtil.getPopupContainerFor(focusOwner);
+    if (popup != null) {
+      return new PositionAdjuster(popup.getContent());
     }
 
     final Component existing = discoverPopup(LangDataKeys.POSITION_ADJUSTER_POPUP, focusOwner);
@@ -114,8 +114,6 @@ public class PopupPositionManager {
       return new PositionAdjuster2(existing, discoverPopup(LangDataKeys.PARENT_POPUP, focusOwner));
     }
 
-    //final Window window = SwingUtilities.getWindowAncestor(focusOwner);
-    //return window == null ? null : new PositionAdjuster(window);
     return null;
   }
 

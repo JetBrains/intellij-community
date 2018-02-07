@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public class TestStatusLine extends JPanel {
+public class TestStatusLine extends NonOpaquePanel {
   private static final SimpleTextAttributes IGNORE_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.YELLOW);
   private static final SimpleTextAttributes ERROR_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ColorProgressBar.RED_TEXT);
 
@@ -41,13 +42,14 @@ public class TestStatusLine extends JPanel {
 
   public TestStatusLine() {
     super(new BorderLayout());
-    myProgressPanel = new JPanel(new BorderLayout());
+    myProgressPanel = new NonOpaquePanel(new BorderLayout());
     add(myProgressPanel, BorderLayout.SOUTH);
     myProgressBar.setMaximum(100);
     myProgressBar.putClientProperty("ProgressBar.stripeWidth", 3);
     myProgressBar.putClientProperty("ProgressBar.flatEnds", Boolean.TRUE);
     setStatusColor(ColorProgressBar.GREEN);
-    JPanel stateWrapper = new JPanel(new BorderLayout());
+    JPanel stateWrapper = new NonOpaquePanel(new BorderLayout());
+    myState.setOpaque(false);
     stateWrapper.add(myState, BorderLayout.NORTH);
     add(stateWrapper, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));

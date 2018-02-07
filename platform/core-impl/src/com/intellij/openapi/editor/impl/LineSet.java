@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
@@ -77,10 +78,7 @@ public class LineSet{
                      : genericUpdate(prevText, start, end, replacement);
 
     if (doTest) {
-      MergingCharSequence newText = new MergingCharSequence(
-        new MergingCharSequence(prevText.subSequence(0, start), replacement),
-        prevText.subSequence(end, prevText.length()));
-      result.checkEquals(createLineSet(newText));
+      result.checkEquals(createLineSet(StringUtil.replaceSubSequence(prevText, start, end, replacement)));
     }
     return wholeTextReplaced ? result.clearModificationFlags() : result;
   }

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.testFramework.vcs.ExecutableHelper
-import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 import git4idea.commands.getGitCommandInstance
@@ -73,7 +73,6 @@ fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
-fun GitPlatformTest.checkoutNew(branchName: String, startPoint: String = "") = checkoutNew(project, branchName, startPoint)
 private fun checkoutNew(project: Project, branchName: String, startPoint: String) =
   git(project, "checkout -b $branchName $startPoint")
 
@@ -102,7 +101,6 @@ private fun tacp(project: Project, file: String): String {
 }
 
 fun GitRepository.appendAndCommit(file: String, additionalContent: String) = cd { appendAndCommit(project, file, additionalContent) }
-fun GitPlatformTest.appendAndCommit(file: String, additionalContent: String) = appendAndCommit(project, file, additionalContent)
 private fun appendAndCommit(project: Project, file: String, additionalContent: String): String {
   append(file, additionalContent)
   add(project, file)
@@ -122,7 +120,11 @@ private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
-private fun lastMessage(project: Project) = git(project, "log -1 --pretty=%B")
+private fun lastMessage(project: Project) = message(project, "HEAD")
+
+fun GitRepository.message(revision: String) = cd { message(project, revision)}
+private fun message(project: Project, revision: String) =
+  git(project, "log $revision --no-walk --pretty=${getPrettyFormatTagForFullCommitMessage(project)}")
 
 fun GitRepository.log(vararg params: String) = cd { log(project, *params) }
 fun GitPlatformTest.log(vararg params: String) = log(project, *params)
@@ -207,4 +209,12 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
   fun exists() = file.exists()
 
   fun read() = FileUtil.loadFile(file)
+
+  fun cat(): String = FileUtil.loadFile(file)
+
+  fun prepend(content: String): TestFile {
+    val previousContent = cat()
+    FileUtil.writeToFile(file, content + previousContent)
+    return this
+  }
 }

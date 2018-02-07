@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.ut;
 
 import com.google.common.collect.Lists;
@@ -44,6 +30,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -53,6 +40,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.PyTestTask;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
@@ -74,7 +62,7 @@ import java.util.List;
 
 /**
  * Tasks to run unit test configurations.
- * You should extend it either implementing {@link #after()} and {@link #before()} or implement {@link #runTestOn(String)}
+ * You should extend it either implementing {@link #after()} and {@link #before()} or implement {@link PyTestTask#runTestOn(String, Sdk)}
  * yourself and use {@link #runConfiguration(com.intellij.execution.configurations.ConfigurationFactory, String, com.intellij.openapi.project.Project)}
  * or {@link #runConfiguration(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.configurations.RunConfiguration)} .
  * Use {@link #myDescriptor} and {@link #myConsoleView} to check output
@@ -159,7 +147,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void runTestOn(String sdkHome) throws Exception {
+  public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     final Project project = getProject();
     final ConfigurationFactory factory = PythonTestConfigurationType.getInstance().LEGACY_UNITTEST_FACTORY;
     runConfiguration(factory, sdkHome, project);
@@ -193,7 +181,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
       @Override
       protected void run(@NotNull Result result) {
         RunManager runManager = RunManager.getInstance(project);
-        runManager.addConfiguration(settings, false);
+        runManager.addConfiguration(settings);
         runManager.setSelectedConfiguration(settings);
         Assert.assertSame(settings, runManager.getSelectedConfiguration());
       }

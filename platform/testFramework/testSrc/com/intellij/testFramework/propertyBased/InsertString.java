@@ -18,7 +18,7 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
-import jetCheck.Generator;
+import org.jetbrains.jetCheck.Generator;
 
 public class InsertString extends ActionOnRange {
   private final String myToInsert;
@@ -26,6 +26,13 @@ public class InsertString extends ActionOnRange {
   InsertString(PsiFile file, int offset, String toInsert) {
     super(file, offset, offset);
     myToInsert = toInsert;
+  }
+
+  @Override
+  public void performCommand(@NotNull Environment env) {
+    int offset = env.generateValue(Generator.integers(0, getDocument().getTextLength()), null);
+    String toInsert = env.generateValue(Generator.stringsOf(Generator.asciiPrintableChars()), "Insert '%s' at " + offset + " in " + getPath());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> getDocument().insertString(offset, toInsert));
   }
 
   public static Generator<InsertString> asciiInsertions(@NotNull PsiFile psiFile) {

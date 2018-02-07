@@ -15,10 +15,10 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 
 import java.util.Arrays;
@@ -31,7 +31,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+    CodeStyle.dropTemporarySettings(getProject());
     myModel = new CodeStyleSchemesModel(getProject());
     myDefaultScheme = myModel.getSelectedScheme();
   }
@@ -39,7 +39,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      for (CodeStyleScheme scheme : myModel.getSchemes().toArray(new CodeStyleScheme[myModel.getSchemes().size()])) {
+      for (CodeStyleScheme scheme : myModel.getSchemes().toArray(new CodeStyleScheme[0])) {
         if (myModel.canDeleteScheme(scheme)) {
           myModel.removeScheme(scheme);
         }
@@ -88,7 +88,7 @@ public class CodeStyleSchemesModelTest extends CodeStyleTestCase {
     CodeStyleSettings settings = scheme.getCodeStyleSettings();
     settings.setDefaultRightMargin(66);
     myModel.copyToProject(scheme);
-    CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings currentSettings = CodeStyle.getSettings(getProject());
     assertEquals(66, currentSettings.getDefaultRightMargin());
   }
 

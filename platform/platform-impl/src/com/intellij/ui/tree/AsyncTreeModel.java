@@ -182,7 +182,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       async.setError("path is wrong");
       return;
     }
-    accept(new TreeVisitor.PathFinder(path)).processed(result -> {
+    accept(new TreeVisitor.ByTreePath<>(path, o -> o)).processed(result -> {
       if (result == null) {
         async.setError("path not found");
         return;
@@ -260,14 +260,13 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
         return null;
       }
     };
-    onValidThread(() -> {
-      if (allowLoading) {
-        promiseRootEntry().done(walker::start).rejected(walker::setError);
-      }
-      else {
-        walker.start(tree.root);
-      }
-    });
+    if (allowLoading) {
+      // start visiting on the background thread to ensure that root node is already invalidated
+      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().done(walker::start).rejected(walker::setError)));
+    }
+    else {
+      onValidThread(() -> walker.start(tree.root));
+    }
     return walker.promise();
   }
 
@@ -280,7 +279,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
 
   private boolean isValidThread() {
     if (processor.foreground.isValidThread()) return true;
-    LOG.warn("AsyncTreeModel is used from unexpected thread");
+    LOG.warn(new IllegalStateException("AsyncTreeModel is used from unexpected thread"));
     return false;
   }
 
@@ -570,7 +569,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
           LOG.warn("ignore null child at " + i);
         }
         else if (!set.add(child)) {
-          LOG.warn("ignore duplicated child at " + i);
+          LOG.warn("ignore duplicated child at " + i + ": " + child);
         }
         else {
           if (isObsolete()) return null;

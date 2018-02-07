@@ -157,7 +157,7 @@ class GradleNonCodeMembersContributor : NonCodeMembersContributor() {
         argsCount++ // Configuration name is delivered as an argument.
 
         // at runtime, see org.gradle.internal.metaobject.ConfigureDelegate.invokeMethod
-        val wrappedBase = GrLightMethodBuilder(place.manager, "configure").apply {
+        val wrappedBase = GrLightMethodBuilder(place.manager, propCandidate).apply {
           returnType = domainObjectType
           containingClass = aClass
           val closureParam = addAndGetParameter("configuration", GROOVY_LANG_CLOSURE, true)

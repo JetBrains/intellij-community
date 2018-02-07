@@ -238,9 +238,7 @@ public class GitFetcher {
       description += result.getAdditionalInfo();
       GitUIUtil.notifyMessage(project, title, description, true, null);
     } else {
-      if (GitVcs.getInstance(project).getExecutableValidator().isExecutableValid()) {
-        GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
-      }
+      GitUIUtil.notifyMessage(project, "Fetch failed", result.getAdditionalInfo(), true, errors);
     }
   }
 

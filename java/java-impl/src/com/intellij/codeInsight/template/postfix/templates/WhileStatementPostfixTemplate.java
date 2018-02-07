@@ -33,10 +33,5 @@ public class WhileStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public String getTemplateString(@NotNull PsiElement element) {
     return "while ($expr$) {\n$END$\n}";
   }
-
-  @Override
-  protected boolean shouldReformat() {
-    return true;
-  }
 }
 

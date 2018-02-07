@@ -42,7 +42,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
     if (fieldOrGetterMethod == null) {
       final PsiMethod[] methods = aClass.findMethodsByName(name, true);
       for (PsiMethod method : methods) {
-        if (method.getParameterList().getParameters().length == 0) {
+        if (method.getParameterList().isEmpty()) {
           fieldOrGetterMethod = method;
           break;
         }

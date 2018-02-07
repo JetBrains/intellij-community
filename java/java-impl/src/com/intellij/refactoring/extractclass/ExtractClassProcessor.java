@@ -259,6 +259,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     return false;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactorJBundle.message("extracted.class.command.name", newClassName);
   }

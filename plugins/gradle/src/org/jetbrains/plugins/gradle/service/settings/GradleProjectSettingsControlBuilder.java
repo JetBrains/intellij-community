@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemSettingsControlCustomizer;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
@@ -65,7 +66,14 @@ public interface GradleProjectSettingsControlBuilder {
    */
   boolean isModified();
 
-  void reset(Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation);
+  void reset(@Nullable Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation);
+
+  default void reset(@Nullable Project project,
+                     GradleProjectSettings settings,
+                     boolean isDefaultModuleCreation,
+                     @Nullable WizardContext wizardContext) {
+    reset(project, settings, isDefaultModuleCreation);
+  }
 
   void createAndFillControls(PaintAwarePanel content, int indentLevel);
 

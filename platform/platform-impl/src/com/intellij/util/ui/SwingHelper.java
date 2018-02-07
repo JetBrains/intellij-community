@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -100,7 +101,7 @@ public class SwingHelper {
 
   @NotNull
   public static JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
-    return newVerticalPanel(childAlignmentX, children.toArray(new Component[children.size()]));
+    return newVerticalPanel(childAlignmentX, children.toArray(new Component[0]));
   }
 
   /**
@@ -610,6 +611,7 @@ public class SwingHelper {
     else {
       textPane = new JEditorPane();
     }
+    UISettings.setupComponentAntialiasing(textPane);
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
     textPane.setEditorKit(UIUtil.getHTMLEditorKit());
     textPane.setEditable(false);

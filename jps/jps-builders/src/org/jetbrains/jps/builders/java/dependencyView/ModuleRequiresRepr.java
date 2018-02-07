@@ -15,7 +15,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 02-Oct-17
  */
 public class ModuleRequiresRepr extends Proto {
 

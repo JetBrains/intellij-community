@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.compiler.CompilerConfiguration
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -41,7 +40,15 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
       val targetFile = target.containingFile
       if (targetFile is PsiClassOwner) {
-        return checkAccess(targetFile, useFile, targetFile.packageName, quick)
+        if (targetFile.isPhysical) {
+          return checkAccess(targetFile, useFile, targetFile.packageName, quick)
+        }
+        else {
+          val pkg = JavaPsiFacade.getInstance(targetFile.project).findPackage(targetFile.packageName)
+          if (pkg != null) {
+            return checkAccess(pkg, place, quick)
+          }
+        }
       }
     }
 
@@ -120,9 +127,13 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
       }
 
       if (!(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
-        return if (quick) ERR else ErrorWithFixes(
-          JavaErrorMessages.message("module.access.does.not.read", packageName, targetName, useName),
-          listOf(AddRequiresDirectiveFix(useModule, targetName)))
+        return when {
+          quick -> ERR
+          PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
+            JavaErrorMessages.message("module.access.does.not.read", packageName, targetName, useName),
+            listOf(AddRequiresDirectiveFix(useModule, targetName)))
+          else -> ErrorWithFixes(JavaErrorMessages.message("module.access.bad.name", packageName, targetName))
+        }
       }
     }
     else if (useModule != null) {
@@ -133,7 +144,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inAddedExports(module: Module, targetName: String, packageName: String, useName: String): Boolean {
-    val options = CompilerConfiguration.getInstance(module.project).getAdditionalOptions(module)
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
     return optionValues(options, "--add-exports")
@@ -144,7 +155,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
-    val options = CompilerConfiguration.getInstance(module.project).getAdditionalOptions(module)
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     return optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" }
@@ -174,10 +185,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
       if (isAvailable(project, editor, file)) {
-        val configuration = CompilerConfiguration.getInstance(project)
-        val options = configuration.getAdditionalOptions(module).toMutableList()
+        val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module).toMutableList()
         update(options)
-        configuration.setAdditionalOptions(module, options)
+        JavaCompilerConfigurationProxy.setAdditionalOptions(module.project, module, options)
         PsiManager.getInstance(project).dropPsiCaches()
         DaemonCodeAnalyzer.getInstance(project).restart()
       }

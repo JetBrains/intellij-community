@@ -31,12 +31,11 @@ import git4idea.test.*
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import kotlin.properties.Delegates
 import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
-  private var repo: GitRepository by Delegates.notNull()
+  private lateinit var repo: GitRepository
 
   override fun setUp() {
     super.setUp()
@@ -220,8 +219,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertErrorNotification("Rebase Failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        <a>Retry.</a><br/>
-        Note that some local changes were <a>stashed</a> before rebase.
+        Local changes were stashed before rebase.
         """)
     assertNoRebaseInProgress(repo)
     repo.assertNoLocalChanges()
@@ -421,7 +419,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseInteractively()
 
-    assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
+    assertSuccessfulNotification("Rebase Stopped for Editing", "")
     assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(project)

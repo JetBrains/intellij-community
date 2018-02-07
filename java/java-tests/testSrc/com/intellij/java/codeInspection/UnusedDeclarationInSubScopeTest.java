@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
@@ -23,7 +25,7 @@ public class UnusedDeclarationInSubScopeTest extends AbstractUnusedDeclarationTe
   @Override
   protected AnalysisScope createAnalysisScope(VirtualFile sourceDir) {
     VirtualFile[] roots = ModuleRootManager.getInstance(myModule).getSourceRoots(false);
-    assertTrue(roots.length == 1);
+    assertEquals(1, roots.length);
     PsiManager psiManager = PsiManager.getInstance(myProject);
     return new AnalysisScope(psiManager.findDirectory(roots[0]));
   }

@@ -10,6 +10,7 @@ class ConditionalCondition {
     final ConditionalCondition condition = (ConditionalCondition)other;
 
 
+      //end line comment
       return (s != null ? !s.equals(condition.s) : condition.s != null) ? false : t.equals(condition.t);
   }
 }

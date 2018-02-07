@@ -111,6 +111,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   private boolean myNeedChangeContext; // target class is not immediate container of the code to be extracted
 
   private boolean myShowErrorDialogs = true;
+  private boolean myIsPreviewSupported;
+  private boolean myPreviewDuplicates;
   protected boolean myCanBeStatic;
   protected boolean myCanBeChainedConstructor;
   protected boolean myIsChainedConstructor;
@@ -187,6 +189,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     myShowErrorDialogs = showErrorDialogs;
   }
 
+  public void setPreviewSupported(boolean previewSupported) {
+    myIsPreviewSupported = previewSupported;
+  }
+
+  public boolean isPreviewDuplicates() {
+    return myPreviewDuplicates;
+  }
+
   public void setChainedConstructor(final boolean isChainedConstructor) {
     myIsChainedConstructor = isChainedConstructor;
   }
@@ -200,6 +210,7 @@ public class ExtractMethodProcessor implements MatchProvider {
    * Invoked in atomic action
    */
   public boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass) throws PrepareFailedException {
+    if (myElements.length == 0) return false;
     myExpression = null;
     if (myElements.length == 1 && myElements[0] instanceof PsiExpression) {
       final PsiExpression expression = (PsiExpression)myElements[0];
@@ -315,7 +326,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                                                           elements);
     }
     List<PsiClassType> exceptions = ExceptionUtil.getThrownCheckedExceptions(myElements);
-    myThrownExceptions = exceptions.toArray(new PsiClassType[exceptions.size()]);
+    myThrownExceptions = exceptions.toArray(PsiClassType.EMPTY_ARRAY);
 
     if (container instanceof PsiMethod) {
       checkLocalClasses((PsiMethod) container);
@@ -584,6 +595,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnType != null) {
       myReturnType = returnType;
     }
+    myPreviewDuplicates = dialog.isPreviewUsages();
   }
 
   protected AbstractExtractDialog createExtractMethodDialog(final boolean direct) {
@@ -591,9 +603,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myNullness = initNullness();
     myArtificialOutputVariable = PsiType.VOID.equals(myReturnType) ? getArtificialOutputVariable() : null;
     final PsiType returnType = myArtificialOutputVariable != null ? myArtificialOutputVariable.getType() : myReturnType;
+    int duplicatesCount = estimateDuplicatesCount();
     return new ExtractMethodDialog(myProject, myTargetClass, myInputVariables, returnType, getTypeParameterList(),
                                    getThrownExceptions(), isStatic(), isCanBeStatic(), myCanBeChainedConstructor,
-                                                         myRefactoringName, myHelpId, myNullness, myElements) {
+                                                         myRefactoringName, myHelpId, myNullness, myElements,duplicatesCount) {
       protected boolean areTypesDirected() {
         return direct;
       }
@@ -642,12 +655,17 @@ public class ExtractMethodProcessor implements MatchProvider {
           }
         }
       }
+
+      @Override
+      protected boolean isPreviewSupported() {
+        return myIsPreviewSupported && getDuplicatesCount() != 0;
+      }
     };
   }
 
   public void setDataFromInputVariables() {
     final List<VariableData> variables = myInputVariables.getInputVariables();
-    myVariableDatum = variables.toArray(new VariableData[variables.size()]);
+    myVariableDatum = variables.toArray(new VariableData[0]);
   }
 
   public PsiExpression[] findOccurrences() {
@@ -662,7 +680,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
     final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
-    return map.toArray(new PsiExpression[map.size()]);
+    return map.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private Nullness initNullness() {
@@ -849,6 +867,11 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
   }
 
+  public void previewRefactoring() {
+    initDuplicates();
+    chooseAnchor();
+  }
+
   @Nullable
   private DuplicatesFinder initDuplicates() {
     PsiElement[] elements = StreamEx.of(myElements)
@@ -872,6 +895,35 @@ public class ExtractMethodProcessor implements MatchProvider {
       myDuplicates = new ArrayList<>();
     }
     return null;
+  }
+
+  private int estimateDuplicatesCount() {
+    PsiElement[] elements = StreamEx.of(myElements)
+                                    .filter(element -> !(element instanceof PsiWhiteSpace || element instanceof PsiComment))
+                                    .toArray(PsiElement[]::new);
+
+    ReturnValue value;
+    List<PsiVariable> parameters;
+    if (myExpression != null) {
+      value = null;
+      parameters = Collections.emptyList();
+    }
+    else if (elements.length != 0) {
+      value = myOutputVariable != null ? new VariableReturnValue(myOutputVariable) : null;
+      parameters = Arrays.asList(myOutputVariables);
+    }
+    else {
+      return 0;
+    }
+    DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), value, parameters);
+    List<Match> myDuplicates = finder.findDuplicates(myTargetClass);
+    if (!ContainerUtil.isEmpty(myDuplicates)) return myDuplicates.size();
+    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
+    if (parametrizedDuplicates != null) {
+      List<Match> duplicates = parametrizedDuplicates.getDuplicates();
+      return duplicates != null ? duplicates.size() : 0;
+    }
+    return 0;
   }
 
   public void doExtract() throws IncorrectOperationException {
@@ -915,12 +967,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
         }
         else if (myGenerateConditionalExit) {
-          if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
-          }
-          else {
-            ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
-          }
+          ifStatement = generateConditionalExitStatement(varName);
         }
         else {
           ifStatement = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return;", null);
@@ -931,7 +978,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       else if (myNotNullConditionalCheck) {
         String varName = myOutputVariable != null ? myOutputVariable.getName() : "x";
         varName = declareVariableAtMethodCallLocation(varName, myReturnType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)myReturnType).getBoxedType(myCodeFragmentMember) : myReturnType);
-        addToMethodCallLocation(myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null));
+        addToMethodCallLocation(generateNotNullConditionalStatement(varName));
         declareVariableReusedAfterCall(myOutputVariable);
       }
       else if (myGenerateConditionalExit) {
@@ -1039,6 +1086,19 @@ public class ExtractMethodProcessor implements MatchProvider {
         RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
+  }
+
+  @NotNull
+  private PsiIfStatement generateConditionalExitStatement(String varName) {
+    if (myFirstExitStatementCopy instanceof PsiReturnStatement && ((PsiReturnStatement)myFirstExitStatementCopy).getReturnValue() != null) {
+      return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) return null;", null);
+    }
+    return (PsiIfStatement)myElementFactory.createStatementFromText("if (" + varName + "==null) " + myFirstExitStatementCopy.getText(), null);
+  }
+
+  @NotNull
+  private PsiStatement generateNotNullConditionalStatement(String varName) {
+    return myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
   }
 
   protected PsiExpression expressionToReplace(PsiExpression expression) {
@@ -1236,6 +1296,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myDuplicates;
   }
 
+  ParametrizedDuplicates getParametrizedDuplicates() {
+    return myParametrizedDuplicates;
+  }
+
   private static List<Match> filterChainedConstructorDuplicates(final List<Match> duplicates) {
     List<Match> result = new ArrayList<>();
     for(Match duplicate: duplicates) {
@@ -1299,16 +1363,16 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private void addNotNullConditionalCheck(Match match, PsiElement replacedMatch) {
-    if (myNotNullConditionalCheck && myOutputVariable != null) {
+    if ((myNotNullConditionalCheck || myGenerateConditionalExit) && myOutputVariable != null) {
       ReturnValue returnValue = match.getOutputVariableValue(myOutputVariable);
       if (returnValue instanceof VariableReturnValue) {
         String varName = ((VariableReturnValue)returnValue).getVariable().getName();
         LOG.assertTrue(varName != null, "returned variable name is null");
         PsiStatement statement = PsiTreeUtil.getParentOfType(replacedMatch, PsiStatement.class, false);
         if (statement != null) {
-          PsiStatement conditionalReturn =
-            myElementFactory.createStatementFromText("if (" + varName + " != null) return " + varName + ";", null);
-          statement.getParent().addAfter(conditionalReturn, statement);
+          PsiStatement conditionalExit = myNotNullConditionalCheck ?
+                                         generateNotNullConditionalStatement(varName) : generateConditionalExitStatement(varName);
+          statement.getParent().addAfter(conditionalExit, statement);
         }
       }
     }
@@ -1953,7 +2017,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void showMultipleExitPointsMessage() {
     if (myShowErrorDialogs) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
-      PsiStatement[] exitStatementsArray = myExitStatements.toArray(new PsiStatement[myExitStatements.size()]);
+      PsiStatement[] exitStatementsArray = myExitStatements.toArray(PsiStatement.EMPTY_ARRAY);
       EditorColorsManager manager = EditorColorsManager.getInstance();
       TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       highlightManager.addOccurrenceHighlights(myEditor, exitStatementsArray, attributes, true, null);
@@ -2022,8 +2086,14 @@ public class ExtractMethodProcessor implements MatchProvider {
       return true;
     }
 
+    if (initParametrizedDuplicates(true)) return null;
+    return false;
+  }
+
+  boolean initParametrizedDuplicates(boolean showDialog) {
     if (myExtractedMethod != null && myParametrizedDuplicates != null) {
-      if (ApplicationManager.getApplication().isUnitTestMode() ||
+      if (!showDialog ||
+          ApplicationManager.getApplication().isUnitTestMode() ||
           new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
                                               myParametrizedDuplicates.getSize()).showAndGet()) {
@@ -2034,7 +2104,7 @@ public class ExtractMethodProcessor implements MatchProvider {
           myMethodCall = myParametrizedDuplicates.replaceCall(myMethodCall);
         });
         myVariableDatum = myParametrizedDuplicates.getVariableDatum();
-        return null;
+        return true;
       }
     }
     return false;
@@ -2120,6 +2190,15 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   public PsiElement[] getElements() {
     return myElements;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  public String getMethodName() {
+    return myMethodName;
   }
 
   public PsiVariable[] getOutputVariables() {

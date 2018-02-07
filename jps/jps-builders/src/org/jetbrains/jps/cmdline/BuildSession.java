@@ -55,7 +55,6 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 4/17/12
 */
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
@@ -171,7 +170,8 @@ final class BuildSession implements Runnable, CanceledStatus {
             int srcCount = message.getNumberOfProcessedSources();
             long time = message.getElapsedTimeMs();
             if (srcCount != 0 || time > 50) {
-              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed");
+              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed" +
+                       (srcCount == 0 ? "" : " ("+ time/srcCount +"ms per file)"));
             }
             response = null;
           }

@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 2/18/11
- *         Time: 7:15 PM
  */
 public class LightIndexPatternSearcher extends IndexPatternSearcher {
   @Override

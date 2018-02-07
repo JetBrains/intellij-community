@@ -287,7 +287,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
     });
 
-    return filtered.toArray(new PsiAnnotation[filtered.size()]);
+    return filtered.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

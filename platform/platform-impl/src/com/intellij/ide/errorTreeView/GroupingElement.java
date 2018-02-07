@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 12, 2004
  */
 public class GroupingElement extends ErrorTreeElement {
   private final String[] myText;

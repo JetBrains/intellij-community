@@ -16,6 +16,7 @@
 package com.intellij.python.propertyBased;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -23,8 +24,8 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.propertyBased.*;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
-import jetCheck.Generator;
-import jetCheck.PropertyChecker;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
@@ -103,7 +104,7 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
     final String subfolder = "sanity";
     runTest(new PyExecutionFixtureTestTask(subfolder) {
       @Override
-      public void runTestOn(String sdkHome) {
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           final Pair<String, CodeInsightTestFixture> pathAndFixture =
             Pair.create(new File(myFixture.getTestDataPath(), subfolder).getPath(), myFixture);

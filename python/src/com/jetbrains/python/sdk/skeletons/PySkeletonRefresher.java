@@ -63,7 +63,6 @@ import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVers
  * One-time, non-reusable instances.
  * <br/>
  * User: dcheryasov
- * Date: 4/15/11 5:38 PM
  */
 public class PySkeletonRefresher {
   private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);

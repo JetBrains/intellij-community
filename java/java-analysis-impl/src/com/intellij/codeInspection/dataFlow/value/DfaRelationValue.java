@@ -19,7 +19,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +54,20 @@ public class DfaRelationValue extends DfaValue {
 
     RelationType(String name) {
       myName = name;
+    }
+
+    public boolean isSubRelation(RelationType other) {
+      if (other == this) return true;
+      switch (this) {
+        case LE:
+          return other == LT || other == EQ;
+        case GE:
+          return other == GT || other == EQ;
+        case NE:
+          return other == LT || other == GT;
+        default:
+          return false;
+      }
     }
 
     @NotNull

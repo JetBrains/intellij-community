@@ -87,7 +87,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   private boolean isValidThread() {
     if (invoker.isValidThread()) return true;
-    LOG.warn("StructureTreeModel is used from unexpected thread");
+    LOG.warn(new IllegalStateException("StructureTreeModel is used from unexpected thread"));
     return false;
   }
 
@@ -109,13 +109,26 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       invoker.invokeLaterIfNeeded(() -> {
         Node node = (Node)component;
         if (disposed) return;
-        boolean updated = node.update();
-        if (structure) {
-          node.invalidate();
-          treeStructureChanged(path, null, null);
+        if (isNodeRemoved(node)) return;
+        if (isValid(node.getElement())) {
+          boolean updated = node.update();
+          if (structure) {
+            node.invalidate();
+            treeStructureChanged(path, null, null);
+          }
+          else if (updated) {
+            treeNodesChanged(path, null, null);
+          }
         }
-        else if (updated) {
-          treeNodesChanged(path, null, null);
+        else {
+          LOG.debug("invalid element cannot be updated: ", path);
+          TreePath parent = path.getParentPath();
+          if (parent != null) {
+            invalidate(parent, true);
+          }
+          else {
+            invalidate(null);
+          }
         }
       });
     }
@@ -135,7 +148,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private Node getNode(Object object) {
     if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
-    if (!node.isNodeAncestor(root.get())) return null; // node was removed before
+    if (isNodeRemoved(node)) return null;
     if (!node.children.isValid()) {
       List<Node> newChildren = getValidChildren(node);
       List<Node> oldChildren = node.children.set(newChildren);
@@ -144,6 +157,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       LOG.debug("children updated: ", node);
     }
     return node;
+  }
+
+  private boolean isNodeRemoved(Node node) {
+    return !node.isNodeAncestor(root.get());
   }
 
   @Override
@@ -205,13 +222,12 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     Object element = structure.getRootElement();
     if (!isValid(element)) return null;
 
-    Node node = root.get();
-    boolean leaf = structure.isAlwaysLeaf(element);
-    if (node == null || leaf == node.getAllowsChildren() || !element.equals(node.getElement())) {
-      node = new Node(structure.createDescriptor(element, null), leaf);
+    Node newNode = new Node(structure, element, null); // an exception may be thrown while getting a root
+    Node oldNode = root.get();
+    if (oldNode != null && oldNode.canReuse(newNode, element)) {
+      return oldNode; // reuse old node with possible children
     }
-    node.update();
-    return node;
+    return newNode;
   }
 
   private List<Node> getValidChildren(@NotNull Node node) {
@@ -227,40 +243,50 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
     Object[] elements = structure.getChildElements(parent);
     if (elements == null || elements.length == 0) return null;
 
+    List<Node> list = new ArrayList<>(elements.length);
+    for (Object element : elements) {
+      if (isValid(element)) {
+        list.add(new Node(structure, element, descriptor)); // an exception may be thrown while getting children
+      }
+    }
+    Comparator<Node> comparator = this.comparator;
+    if (comparator != null) list.sort(comparator); // an exception may be thrown while sorting children
+
     HashMap<Object, Node> map = new HashMap<>();
     node.getChildren().forEach(child -> {
       Object element = child.getElement();
       if (element != null) map.put(element, child);
     });
-    List<Node> list = new ArrayList<>(elements.length);
-    for (Object element : elements) {
-      if (isValid(element)) {
-        Node child = map.get(element);
-        boolean leaf = structure.isAlwaysLeaf(element);
-        if (child == null || leaf == child.getAllowsChildren()) {
-          child = new Node(structure.createDescriptor(element, descriptor), leaf);
-        }
-        child.update();
-        list.add(child);
+    for (int i = 0; i < list.size(); i++) {
+      Node newNode = list.get(i);
+      Node oldNode = map.get(newNode.getElement());
+      if (oldNode != null && oldNode.canReuse(newNode, null)) {
+        list.set(i, oldNode); // reuse old node with possible children
       }
     }
-    Comparator<Node> comparator = this.comparator;
-    if (comparator != null) list.sort(comparator);
     return list;
   }
 
   private static final class Node extends DefaultMutableTreeNode {
     private final Reference<List<Node>> children = new Reference<>();
 
-    private Node(@NotNull NodeDescriptor descriptor, boolean leaf) {
-      super(descriptor, !leaf);
-      if (leaf) children.set(null);
+    private Node(@NotNull AbstractTreeStructure structure, Object element, NodeDescriptor parent) {
+      super(structure.createDescriptor(element, parent), !structure.isAlwaysLeaf(element));
+      if (!getAllowsChildren()) children.set(null); // validate children for leaf node
+      update(); // an exception may be thrown while updating
     }
 
     private void dispose() {
       setParent(null);
       List<Node> list = children.set(null);
       if (list != null) list.forEach(Node::dispose);
+    }
+
+    private boolean canReuse(@NotNull Node node, Object element) {
+      if (super.allowsChildren != node.allowsChildren) return false;
+      if (element != null && !element.equals(getElement())) return false;
+      super.userObject = node.userObject; // replace old descriptor
+      return true;
     }
 
     private boolean update() {

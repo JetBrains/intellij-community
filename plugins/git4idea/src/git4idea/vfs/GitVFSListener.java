@@ -15,7 +15,6 @@
  */
 package git4idea.vfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -36,12 +35,10 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitFileUtils;
+import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -57,10 +54,12 @@ public class GitVFSListener extends VcsVFSListener {
    */
   private final AtomicInteger myEventsSuppressLevel = new AtomicInteger(0);
   private final Git myGit;
+  private final GitVcsConsoleWriter myVcsConsoleWriter;
 
-  public GitVFSListener(final Project project, final GitVcs vcs, Git git) {
+  public GitVFSListener(@NotNull Project project, @NotNull GitVcs vcs, @NotNull  Git git, @NotNull GitVcsConsoleWriter vcsConsoleWriter) {
     super(project, vcs);
     myGit = git;
+    myVcsConsoleWriter = vcsConsoleWriter;
   }
 
   /**
@@ -118,7 +117,7 @@ public class GitVFSListener extends VcsVFSListener {
             retainedFiles.addAll(myGit.untrackedFiles(myProject, root, files));
           }
           catch (VcsException ex) {
-            ApplicationManager.getApplication().invokeLater(() -> gitVcs().showMessages(ex.getMessage()));
+            myVcsConsoleWriter.showMessage(ex.getMessage());
           }
         }
         addedFiles.retainAll(retainedFiles);
@@ -213,6 +212,7 @@ public class GitVFSListener extends VcsVFSListener {
         toAdd.add(VcsUtil.getFilePath(newPath));
       }
     }
+    LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
     performAdding(toAdd);
     performDeletion(toRemove);
     performForceMove(toForceMove);
@@ -225,10 +225,10 @@ public class GitVFSListener extends VcsVFSListener {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) {
         for (FilePath file : files) {
-          GitHandler h = new GitSimpleHandler(myProject, root, GitCommand.MV);
           MovedFileInfo info = filesToMove.get(file);
+          GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
           h.addParameters("-f", info.myOldPath, info.myNewPath);
-          h.runInCurrentThread(null);
+          myGit.runCommand(h);
           toRefresh.add(new File(info.myOldPath));
           toRefresh.add(new File(info.myNewPath));
         }
@@ -259,7 +259,7 @@ public class GitVFSListener extends VcsVFSListener {
       sortedFiles = GitUtil.sortFilePathsByGitRoot(files, true);
     }
     catch (VcsException e) {
-      gitVcs().showMessages(e.getMessage());
+      myVcsConsoleWriter.showMessage(e.getMessage());
       return;
     }
 
@@ -270,7 +270,7 @@ public class GitVFSListener extends VcsVFSListener {
             executor.execute(e.getKey(), e.getValue());
           }
           catch (final VcsException ex) {
-            ApplicationManager.getApplication().invokeLater(() -> gitVcs().showMessages(ex.getMessage()));
+            myVcsConsoleWriter.showMessage(ex.getMessage());
           }
         }
         RefreshVFsSynchronously.refreshFiles(executor.getFilesToRefresh());

@@ -20,7 +20,9 @@ import org.fest.swing.awt.AWT
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
+import org.fest.swing.keystroke.KeyStrokeMap
 import org.fest.swing.timing.Pause
+import org.fest.swing.util.Modifiers
 import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
@@ -28,6 +30,7 @@ import java.awt.Point
 import java.awt.Window
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
 /**
@@ -41,6 +44,7 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   val waitConst = 30L
   var myAwareClick: Boolean = false
+  val fastRobot: java.awt.Robot = java.awt.Robot()
 
   fun superWaitForIdle() {
     super.waitForIdle()
@@ -90,13 +94,13 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
     moveMouse(c, where.x, where.y)
-    myEdtAwareClick(button, times)
+    myEdtAwareClick(button, times, where, c)
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouse(where.x, where.y)
-    myEdtAwareClick(button, times)
+    myEdtAwareClick(button, times, where, null)
   }
 
 
@@ -110,13 +114,11 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouseWithAttempts(c, x, y, attempts - 1)
   }
 
-  private fun myInnerClick(button: MouseButton, times: Int) {
-    val robot = java.awt.Robot()
-    robot.autoDelay = 50
-    for (i in 1..times) {
-      robot.mousePress(button.mask)
-      robot.mouseRelease(button.mask)
-    }
+  private fun myInnerClick(button: MouseButton, times: Int, point: Point, component: Component?) {
+    if (component == null)
+      super.click(point, button, times)
+    else
+      super.click(component, point, button, times)
   }
 
   private fun waitFor(condition: () -> Boolean) {
@@ -138,10 +140,69 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     }
   }
 
-  private fun myEdtAwareClick(button: MouseButton, times: Int) {
+  fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    val updatedModifiers = Modifiers.updateModifierWithKeyCode(keyCode, unifiedModifiers)
+    fastPressModifiers(updatedModifiers)
+    if (updatedModifiers == unifiedModifiers) {
+      fastPressKey(keyCode)
+      fastReleaseKey(keyCode)
+    }
+    fastReleaseModifiers(updatedModifiers)
+  }
+
+  fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
+    fastPressKey(keyCode)
+    fastReleaseKey(keyCode)
+  }
+
+  fun fastType(character: Char) {
+    val keyStroke = KeyStrokeMap.keyStrokeFor(character) ?: throw Exception("Unable to get keystroke for char '$character'")
+    fastPressAndReleaseKey(keyStroke.keyCode)
+  }
+
+  fun preparedFastTypeWithoutModifiers(string: String) {
+    val keyCodeArray = string
+      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
+      .toIntArray()
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it) }
+  }
+
+  fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+    val keyCodeArray = string
+      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
+      .toIntArray()
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
+    if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(10) }
+  }
+
+  private fun fastPressKey(keyCode: Int) {
+    fastRobot.keyPress(keyCode);
+  }
+
+  private fun fastReleaseKey(keyCode: Int) {
+    fastRobot.keyRelease(keyCode);
+  }
+
+  private fun fastPressModifiers(modifierMask: Int) {
+    val keys = Modifiers.keysFor(modifierMask)
+    val keysSize = keys.size
+    (0 until keysSize)
+      .map { keys[it] }
+      .forEach { fastPressKey(it) }
+  }
+
+  private fun fastReleaseModifiers(modifierMask: Int) {
+    val modifierKeys = Modifiers.keysFor(modifierMask)
+    for (i in modifierKeys.indices.reversed())
+      fastReleaseKey(modifierKeys[i])
+  }
+
+  private fun myEdtAwareClick(button: MouseButton, times: Int, point: Point, component: Component?) {
     awareClick {
       performOnEdt {
-        myInnerClick(button, times)
+        myInnerClick(button, times, point, component)
       }
     }
     waitForIdle()

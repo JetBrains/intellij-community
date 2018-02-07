@@ -41,9 +41,9 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
-      psiLiteral().methodCallParameter(0,
-                                       psiMethod().withName("isFeatureEnabled", "setFeatureEnabled")
-                                         .inClass(psiClass().withQualifiedName(Experiments.class.getName()))),
+      psiLiteral()
+        .methodCallParameter(0, psiMethod().withName("isFeatureEnabled", "setFeatureEnabled")
+          .inClass(psiClass().withQualifiedName(Experiments.class.getName()))),
       new PsiReferenceProvider() {
         @NotNull
         @Override
@@ -83,7 +83,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public Object[] getVariants() {
-      List<LookupElement> variants = new SmartList<>();
+      final List<LookupElement> variants = new SmartList<>();
       processCandidates(extension -> {
         final GenericAttributeValue<String> id = extension.getId();
         if (id == null || extension.getXmlElement() == null) return true;
@@ -103,7 +103,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
                        .withTypeText(percentage != null ? percentage + "%" : ""));
         return true;
       });
-      return variants.toArray(new LookupElement[variants.size()]);
+      return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
     @Nullable
@@ -119,7 +119,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
 
     @Nullable
     private static String getAttributeValue(Extension extension, String attributeName) {
-      DomAttributeChildDescription attributeDescription = extension.getGenericInfo().getAttributeChildDescription(attributeName);
+      final DomAttributeChildDescription attributeDescription = extension.getGenericInfo().getAttributeChildDescription(attributeName);
       if (attributeDescription == null) {
         return null;
       }
@@ -134,7 +134,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
         JavaPsiFacade.getInstance(project).findClass(ExperimentalFeature.class.getName(), myElement.getResolveScope());
       if (experimentalFeatureClass == null) return;
 
-      ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(experimentalFeatureClass);
+      final ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(experimentalFeatureClass);
       final ExtensionPointCandidate extensionPointCandidate = ContainerUtil.getFirstItem(extensionPointLocator.findDirectCandidates());
       if (extensionPointCandidate == null) return;
 
@@ -142,7 +142,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
       final DomElement extensionPointDomElement = manager.getDomElement(extensionPointCandidate.pointer.getElement());
       if (!(extensionPointDomElement instanceof ExtensionPoint)) return;
 
-      ExtensionLocator locator = ExtensionLocator.byExtensionPoint((ExtensionPoint)extensionPointDomElement);
+      final ExtensionLocator locator = ExtensionLocator.byExtensionPoint((ExtensionPoint)extensionPointDomElement);
       for (ExtensionCandidate candidate : locator.findCandidates()) {
         final XmlTag element = candidate.pointer.getElement();
         final DomElement domElement = manager.getDomElement(element);

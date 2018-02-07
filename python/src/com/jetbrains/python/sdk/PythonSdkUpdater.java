@@ -79,18 +79,19 @@ public class PythonSdkUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        final Project project = getProject();
-        if (project.isDisposed()) {
-          return;
-        }
-        for (final Sdk sdk : getPythonSdks(project)) {
-          update(sdk, null, project, null);
-        }
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      if (project.isDisposed()) {
+        return;
       }
-    }), INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          for (Sdk sdk : getPythonSdks(project)) {
+            update(sdk, null, project, null);
+          }
+        }
+      });
+    }, INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
   }
 
   /**

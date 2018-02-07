@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,13 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +82,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       if (expression == null) {
@@ -114,7 +110,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
       if (addNullCheck) {
         newExpression = new StringBuilder(checkedExpression.getText());
         newExpression.append("!=null&&");
-      } else {
+      }
+      else {
         newExpression = new StringBuilder("");
       }
       final PsiElement parent = call.getParent();
@@ -149,7 +146,10 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
           newExpression.append(checkedExpression.getText()).append(".length()==0");
         }
       }
-      PsiReplacementUtil.replaceExpression(expressionToReplace, newExpression.toString());
+
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(checkedExpression);
+      PsiReplacementUtil.replaceExpression(expressionToReplace, newExpression.toString(), commentTracker);
     }
 
     private static boolean isCheckedForNull(PsiExpression expression) {
@@ -186,7 +186,8 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         if (rhs == null) {
           continue;
         }
-        if (PsiType.NULL.equals(lhs.getType()) && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression, rhs)) {
+        if (PsiType.NULL.equals(lhs.getType()) &&
+            EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression, rhs)) {
           return true;
         }
         else if (PsiType.NULL.equals(rhs.getType()) && EquivalenceChecker.getCanonicalPsiEquivalence()

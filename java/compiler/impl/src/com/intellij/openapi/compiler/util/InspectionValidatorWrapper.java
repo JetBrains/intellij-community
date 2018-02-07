@@ -175,7 +175,7 @@ public class InspectionValidatorWrapper implements Validator {
       });
     if (items == null) return ProcessingItem.EMPTY_ARRAY;
 
-    return items.toArray(new ProcessingItem[items.size()]);
+    return items.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
   @Override
@@ -212,7 +212,7 @@ public class InspectionValidatorWrapper implements Validator {
       }
     }
 
-    return processedItems.toArray(new ProcessingItem[processedItems.size()]);
+    return processedItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
   private boolean checkFile(List<LocalInspectionTool> inspections, final MyValidatorProcessingItem item, final CompileContext context) {

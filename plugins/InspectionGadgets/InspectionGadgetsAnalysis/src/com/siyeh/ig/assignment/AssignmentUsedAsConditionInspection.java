@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class AssignmentUsedAsConditionInspection extends BaseInspection {
@@ -62,8 +63,9 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
       final PsiExpression leftExpression = expression.getLExpression();
       final PsiExpression rightExpression = expression.getRExpression();
       assert rightExpression != null;
-      final String newExpression = leftExpression.getText() + "==" + rightExpression.getText();
-      PsiReplacementUtil.replaceExpression(expression, newExpression);
+      CommentTracker commentTracker = new CommentTracker();
+      final String newExpression = commentTracker.text(leftExpression) + "==" + commentTracker.text(rightExpression);
+      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }
 

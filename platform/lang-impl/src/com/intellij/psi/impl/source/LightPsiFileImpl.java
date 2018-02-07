@@ -29,7 +29,6 @@ import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -233,12 +232,6 @@ public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFile
   @NotNull
   public synchronized PsiReference[] getReferences() {
     return SharedPsiElementImplUtil.getReferences(this);
-  }
-
-  @Override
-  @NotNull
-  public SearchScope getUseScope() {
-    return ResolveScopeManager.getElementUseScope(this);
   }
 
   @Override

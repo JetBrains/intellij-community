@@ -54,6 +54,7 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
     return switcher.mergeSourceAvailable(line) ? "M" : "";
   }
 
+  @Override
   public void consume(final AnnotationSource annotationSource) {
     myTurnedOn = annotationSource.showMerged();
   }

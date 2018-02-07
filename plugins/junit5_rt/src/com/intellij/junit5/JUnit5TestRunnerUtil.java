@@ -50,7 +50,7 @@ public class JUnit5TestRunnerUtil {
           final String packageName = reader.readLine();
           if (packageName == null) return null;
 
-          String tagName = reader.readLine();
+          String tags = reader.readLine();
           String filters = reader.readLine();
           String line;
 
@@ -68,8 +68,10 @@ public class JUnit5TestRunnerUtil {
           else {
             builder = builder.selectors(selectors);
           }
-          if (tagName != null && !tagName.isEmpty()) {
-            builder = builder.filters(TagFilter.includeTags(tagName));
+          if (tags != null && !tags.isEmpty()) {
+            builder = builder
+              .filters(TagFilter.includeTags(tags.split(" ")))
+              .filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*"));
           }
           return builder.build();
         }

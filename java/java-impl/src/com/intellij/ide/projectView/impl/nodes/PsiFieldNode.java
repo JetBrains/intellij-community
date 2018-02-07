@@ -46,7 +46,7 @@ public class PsiFieldNode extends BasePsiMemberNode<PsiField>{
     String name;
     try {
       name = PsiFormatUtil.formatVariable(field,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_INITIALIZER,
+                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER,
                                           PsiSubstitutor.EMPTY);
     }
     catch (IndexNotReadyException e) {

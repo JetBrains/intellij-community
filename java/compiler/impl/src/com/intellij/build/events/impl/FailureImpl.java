@@ -16,7 +16,8 @@
 package com.intellij.build.events.impl;
 
 import com.intellij.build.events.Failure;
-import com.intellij.build.events.NotificationData;
+import com.intellij.notification.Notification;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -32,34 +33,38 @@ public class FailureImpl implements Failure {
   private final List<? extends Failure> myCauses;
   private final Throwable myError;
   @Nullable
-  private final NotificationData myNotificationData;
+  private final Notification myNotification;
+  @Nullable
+  private final Navigatable myNavigatable;
 
   public FailureImpl(String message, Throwable error) {
-    this(message, null, Collections.emptyList(), error, null);
+    this(message, null, Collections.emptyList(), error, null, null);
   }
 
-  public FailureImpl(String message, Throwable error, @Nullable NotificationData notificationData) {
-    this(message, null, Collections.emptyList(), error, notificationData);
+  public FailureImpl(String message, Throwable error, @Nullable Notification notification, @Nullable Navigatable navigatable) {
+    this(message, null, Collections.emptyList(), error, notification, navigatable);
   }
 
   public FailureImpl(String message, String description) {
-    this(message, description, Collections.emptyList(), null, null);
+    this(message, description, Collections.emptyList(), null, null, null);
   }
 
   public FailureImpl(String message, String description, List<? extends Failure> causes) {
-    this(message, description, causes, null, null);
+    this(message, description, causes, null, null, null);
   }
 
   private FailureImpl(String message,
                       String description,
                       List<? extends Failure> causes,
                       Throwable error,
-                      @Nullable NotificationData notificationData) {
+                      @Nullable Notification notification,
+                      @Nullable Navigatable navigatable) {
     myMessage = message;
     myDescription = description;
     myCauses = causes;
     myError = error;
-    myNotificationData = notificationData;
+    myNotification = notification;
+    myNavigatable = navigatable;
   }
 
   @Nullable
@@ -86,7 +91,14 @@ public class FailureImpl implements Failure {
   }
 
   @Nullable
-  public NotificationData getNotificationData() {
-    return myNotificationData;
+  @Override
+  public Notification getNotification() {
+    return myNotification;
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getNavigatable() {
+    return myNavigatable;
   }
 }

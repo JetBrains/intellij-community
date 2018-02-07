@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 02-Jun-16
  */
 public class CompilerEncodingConfigurationTest extends JpsEncodingConfigurationServiceTest {
   private File myDataStorageRoot;

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -81,7 +82,7 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
           if (guardExpression instanceof PsiThisExpression) {
             final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
             final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
-            if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
+            if (aClass == null || InheritanceUtil.isInheritorOrSelf(containingMethod.getContainingClass(), aClass, true)) {
               return;
             }
           }
@@ -160,7 +161,7 @@ public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspec
         else if (guardExpression instanceof PsiMethodCallExpression && lockExpression instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression methodCallExpression1 = (PsiMethodCallExpression)guardExpression;
           final PsiMethodCallExpression methodCallExpression2 = (PsiMethodCallExpression)lockExpression;
-          if (methodCallExpression2.getArgumentList().getExpressions().length == 0) {
+          if (methodCallExpression2.getArgumentList().isEmpty()) {
             final PsiMethod method1 = methodCallExpression1.resolveMethod();
             final PsiMethod method2 = methodCallExpression2.resolveMethod();
             if (method1 == null || method1.equals(method2)) {

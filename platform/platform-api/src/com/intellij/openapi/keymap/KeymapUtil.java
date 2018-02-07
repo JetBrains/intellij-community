@@ -58,6 +58,7 @@ public class KeymapUtil {
   private KeymapUtil() {
   }
 
+  @NotNull
   public static String getShortcutText(@NotNull Shortcut shortcut) {
     String s = "";
 
@@ -88,7 +89,8 @@ public class KeymapUtil {
     return s;
   }
 
-  public static Icon getShortcutIcon(Shortcut shortcut) {
+  @NotNull
+  public static Icon getShortcutIcon(@NotNull Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
       return AllIcons.General.KeyboardShortcut;
     }
@@ -100,6 +102,7 @@ public class KeymapUtil {
     }
   }
 
+  @NotNull
   public static String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
     if (shortcut instanceof PressureShortcut) return shortcut.toString();
     return getMouseShortcutText(shortcut.getButton(), shortcut.getModifiers(), shortcut.getClickCount());
@@ -111,7 +114,8 @@ public class KeymapUtil {
    * @param clickCount    target clicks count
    * @return string representation of passed mouse shortcut.
    */
-  public static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
+  @NotNull
+  private static String getMouseShortcutText(int button, @JdkConstants.InputEventMask int modifiers, int clickCount) {
     String resource;
     if (button == MouseShortcut.BUTTON_WHEEL_UP) {
       resource = "mouse.wheel.rotate.up.shortcut.text";
@@ -124,7 +128,8 @@ public class KeymapUtil {
     }
     else if (clickCount < 3) {
       resource = "mouse.double.click.shortcut.text";
-    } else {
+    }
+    else {
       throw new IllegalStateException("unknown clickCount: " + clickCount);
     }
     return KeyMapBundle.message(resource, getModifiersText(mapNewModifiers(modifiers)), button);
@@ -151,6 +156,7 @@ public class KeymapUtil {
     return modifiers;
   }
 
+  @NotNull
   public static String getKeystrokeText(KeyStroke accelerator) {
     if (accelerator == null) return "";
     if (SystemInfo.isMac) {
@@ -162,17 +168,31 @@ public class KeymapUtil {
       acceleratorText = getModifiersText(modifiers);
     }
 
-    final int code = accelerator.getKeyCode();
-    String keyText = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
-    // [vova] this is dirty fix for bug #35092
-    if(CANCEL_KEY_TEXT.equals(keyText)){
-      keyText = BREAK_KEY_TEXT;
-    }
-
-    acceleratorText += keyText;
+    acceleratorText += getKeyText(accelerator.getKeyCode());
     return acceleratorText.trim();
   }
 
+  @NotNull
+  public static String getKeyText(int code) {
+    switch (code) {
+      case KeyEvent.VK_BACK_QUOTE:     return "`";
+      case KeyEvent.VK_SEPARATOR:      return ",";
+      case KeyEvent.VK_DECIMAL:        return ".";
+      case KeyEvent.VK_SLASH:          return "/";
+      case KeyEvent.VK_BACK_SLASH:     return "\\";
+      case KeyEvent.VK_PERIOD:         return ".";
+      case KeyEvent.VK_SEMICOLON:      return ";";
+      case KeyEvent.VK_CLOSE_BRACKET:  return "]";
+      case KeyEvent.VK_OPEN_BRACKET:   return "[";
+      case KeyEvent.VK_EQUALS:         return "=";
+    }
+
+    String result = SystemInfo.isMac ? MacKeymapUtil.getKeyText(code) : KeyEvent.getKeyText(code);
+    // [vova] this is dirty fix for bug #35092
+    return CANCEL_KEY_TEXT.equals(result) ? BREAK_KEY_TEXT : result;
+  }
+
+  @NotNull
   private static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     if (SystemInfo.isMac) {
       //try {
@@ -191,12 +211,7 @@ public class KeymapUtil {
     }
 
     final String keyModifiersText = KeyEvent.getKeyModifiersText(modifiers);
-    if (keyModifiersText.isEmpty()) {
-      return keyModifiersText;
-    }
-    else {
-      return keyModifiersText + "+";
-    }
+    return keyModifiersText.isEmpty() ? keyModifiersText : keyModifiersText + "+";
   }
 
   @NotNull
@@ -235,7 +250,8 @@ public class KeymapUtil {
            shortcuts.length > 0 ? getShortcutText(shortcuts[0]) : "";
   }
 
-  public static String getShortcutsText(Shortcut[] shortcuts) {
+  @NotNull
+  public static String getShortcutsText(@NotNull Shortcut[] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
     }
@@ -257,7 +273,8 @@ public class KeymapUtil {
    * @return                      shortcut for the given keystroke
    * @throws InvalidDataException if {@code keystrokeString} doesn't represent valid {@code MouseShortcut}.
    */
-  public static MouseShortcut parseMouseShortcut(String keystrokeString) throws InvalidDataException {
+  @NotNull
+  public static MouseShortcut parseMouseShortcut(@NotNull String keystrokeString) throws InvalidDataException {
     if (Registry.is("ide.mac.forceTouch") && keystrokeString.startsWith("Force touch")) {
       return new PressureShortcut(2);
     }
@@ -304,7 +321,8 @@ public class KeymapUtil {
    * @return string representation of passed mouse shortcut. This method should
    *         be used only for serializing of the {@code MouseShortcut}
    */
-  public static String getMouseShortcutString(MouseShortcut shortcut) {
+  @NotNull
+  public static String getMouseShortcutString(@NotNull MouseShortcut shortcut) {
     if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
       return "Force touch";
     }
@@ -343,30 +361,31 @@ public class KeymapUtil {
     return buffer.toString().trim(); // trim trailing space (if any)
   }
 
+  @NotNull
   public static String getKeyModifiersTextForMacOSLeopard(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
-      if ((modifiers & InputEvent.META_MASK) != 0) {
-          buf.append("\u2318");
-      }
-      if ((modifiers & InputEvent.CTRL_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
-      }
-      if ((modifiers & InputEvent.ALT_MASK) != 0) {
-          buf.append("\u2325");
-      }
-      if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
-      }
-      if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-      }
-      if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
-          buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-      }
-      return buf.toString();
+    if ((modifiers & InputEvent.META_MASK) != 0) {
+      buf.append("\u2318");
+    }
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.control", "Ctrl"));
+    }
+    if ((modifiers & InputEvent.ALT_MASK) != 0) {
+      buf.append("\u2325");
+    }
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.shift", "Shift"));
+    }
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    }
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) {
+      buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
+    }
+    return buf.toString();
   }
 
-  public static boolean isTooltipRequest(KeyEvent keyEvent) {
+  public static boolean isTooltipRequest(@NotNull KeyEvent keyEvent) {
     if (ourTooltipKeysProperty == null) {
       ourTooltipKeysProperty = Registry.get("ide.forcedShowTooltip");
       ourTooltipKeysProperty.addListener(new RegistryValueListener.Adapter() {
@@ -394,7 +413,7 @@ public class KeymapUtil {
     return code == KeyEvent.VK_META || code == KeyEvent.VK_CONTROL || code == KeyEvent.VK_SHIFT || code == KeyEvent.VK_ALT;
   }
 
-  private static void updateTooltipRequestKey(RegistryValue value) {
+  private static void updateTooltipRequestKey(@NotNull RegistryValue value) {
     final String text = value.asString();
 
     ourTooltipKeys.clear();
@@ -461,9 +480,9 @@ public class KeymapUtil {
   /**
    * Checks that one of the mouse shortcuts assigned to the provided action has the same modifiers as provided
    */
-  public static boolean matchActionMouseShortcutsModifiers(final Keymap activeKeymap,
+  public static boolean matchActionMouseShortcutsModifiers(@NotNull Keymap activeKeymap,
                                                            @JdkConstants.InputEventMask int modifiers,
-                                                           final String actionId) {
+                                                           @NotNull String actionId) {
     final MouseShortcut syntheticShortcut = new MouseShortcut(MouseEvent.BUTTON1, modifiers, 1);
     for (Shortcut shortcut : activeKeymap.getShortcuts(actionId)) {
       if (shortcut instanceof MouseShortcut) {
@@ -479,6 +498,7 @@ public class KeymapUtil {
   /**
    * Creates shortcut corresponding to a single-click event
    */
+  @NotNull
   public static MouseShortcut createMouseShortcut(@NotNull MouseEvent e) {
     int button = MouseShortcut.getButton(e);
     int modifiers = e.getModifiersEx();
@@ -545,7 +565,7 @@ public class KeymapUtil {
   private static final class RedispatchEventAction extends AbstractAction {
     private final Component myComponent;
 
-    public RedispatchEventAction(Component component) {
+    RedispatchEventAction(@NotNull Component component) {
       myComponent = component;
     }
 

@@ -2,7 +2,7 @@ from click.core import Context
 from typing import Optional
 
 
-def get_current_context(silent: bool = False) -> Context:
+def get_current_context(silent: bool = ...) -> Context:
     ...
 
 
@@ -14,5 +14,5 @@ def pop_context() -> None:
     ...
 
 
-def resolve_color_default(color: Optional[bool] = None) -> Optional[bool]:
+def resolve_color_default(color: Optional[bool] = ...) -> Optional[bool]:
     ...

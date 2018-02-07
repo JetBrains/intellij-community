@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -10,13 +10,10 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
-import com.intellij.debugger.jdi.GeneratedLocation;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
-import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -148,13 +144,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (Registry.is("debugger.capture.points")) {
-      StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
-      if (isAgentEnabled()) {
-        points = points.append(CaptureSettingsProvider.getIdeInsertPoints());
-      }
-      points.forEach(c -> track(debugProcess, c));
+    StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
+    if (isAgentEnabled()) {
+      points = points.append(debugProcess.getAgentInsertPoints());
     }
+    points.forEach(c -> track(debugProcess, c));
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
@@ -272,7 +266,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           }
           catch (EvaluateException e) {
             LOG.debug(e);
-            debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+            if (!(e.getCause() instanceof IncompatibleThreadStateException)) {
+              debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+            }
           }
         }
       }
@@ -315,21 +311,26 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       return null;
     }
 
-    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key),
+    VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
+    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
+    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, args,
                                           ObjectReference.INVOKE_SINGLE_THREADED, true);
+    DebuggerUtilsEx.keep(resArray, evaluationContext);
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());
+      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses());
       for (Value value : values) {
         if (value == null) {
           res.add(null);
         }
         else {
           List<Value> values1 = ((ArrayReference)value).getValues();
-          res.add(new ProcessStackFrameItem(process,
-                                            getStringRefValue((StringReference)values1.get(0)),
-                                            getStringRefValue((StringReference)values1.get(2)),
-                                            Integer.parseInt(((StringReference)values1.get(3)).value())));
+          String className = getStringRefValue((StringReference)values1.get(0));
+          String methodName = getStringRefValue((StringReference)values1.get(2));
+          int line = Integer.parseInt(((StringReference)values1.get(3)).value());
+          Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
+          res.add(new ProcessStackFrameItem(location, className, methodName));
         }
       }
       return res;
@@ -344,24 +345,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static class ProcessStackFrameItem extends StackFrameItem {
     final String myClass;
     final String myMethod;
-    final int myLine;
 
-    public ProcessStackFrameItem(DebugProcessImpl debugProcess, String aClass, String method, int line) {
-      super(new GeneratedLocation(debugProcess, aClass, method, line), null);
+    public ProcessStackFrameItem(Location location, String aClass, String method) {
+      super(location, null);
       myClass = aClass;
       myMethod = method;
-      myLine = line;
     }
 
     @NotNull
     @Override
     public String path() {
       return myClass;
-    }
-
-    @Override
-    public int line() {
-      return myLine;
     }
 
     @NotNull
@@ -372,8 +366,24 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     @Override
     public String toString() {
-      return myClass + "." + myMethod + ":" + myLine;
+      return myClass + "." + myMethod + ":" + line();
     }
+  }
+
+  private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
+    if (type != null && line >= 0) {
+      try {
+        Location location = type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line).stream()
+          .filter(l -> l.method().name().equals(methodName))
+          .findFirst().orElse(null);
+        if (location != null) {
+          return location;
+        }
+      }
+      catch (AbsentInformationException ignored) {
+      }
+    }
+    return new GeneratedLocation(debugProcess, type, methodName, line);
   }
 
   @Nullable
@@ -445,6 +455,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   public static boolean isAgentEnabled() {
-    return Registry.is("debugger.capture.points.agent") && DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+    return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 }

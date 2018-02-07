@@ -374,10 +374,6 @@ public class BuildFilePropertiesPanel {
     public JComponent getPreferedFocusComponent() {
       return myFiltersTable;
     }
-
-    public void reset(AbstractProperty.AbstractPropertyContainer options) {
-      super.reset(options);
-    }
   }
 
   static class ExecutionTab extends Tab {

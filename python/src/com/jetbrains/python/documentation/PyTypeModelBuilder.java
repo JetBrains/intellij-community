@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
@@ -21,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
@@ -63,6 +50,13 @@ public class PyTypeModelBuilder {
       final TypeToDescriptionVisitor visitor = new TypeToDescriptionVisitor();
       accept(visitor);
       return visitor.getDescription();
+    }
+
+    @NotNull
+    public String asPep484TypeHint() {
+      final TypeToStringVisitor visitor = new TypeToPep484TypeHintVisitor();
+      accept(visitor);
+      return visitor.getString();
     }
   }
 
@@ -233,7 +227,20 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTupleType) {
+    if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
+      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
+      // Special case: render Type[type] as just type
+      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
+        result = NamedType.nameOrAny(type);
+      }
+      else {
+        result = new ClassObjectType(build(instanceType, allowUnions));
+      }
+    }
+    else if (type instanceof PyNamedTupleType) {
+      result = NamedType.nameOrAny(type);
+    }
+    else if (type instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)type;
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
@@ -283,16 +290,6 @@ public class PyTypeModelBuilder {
     }
     else if (type instanceof PyCallableType && !(type instanceof PyClassLikeType)) {
       result = buildCallable((PyCallableType)type);
-    }
-    else if (type instanceof PyInstantiableType && ((PyInstantiableType)type).isDefinition()) {
-      final PyInstantiableType instanceType = ((PyInstantiableType)type).toInstance();
-      // Special case: render Type[type] as just type
-      if (type instanceof PyClassType && instanceType.equals(PyBuiltinCache.getInstance(((PyClassType)type).getPyClass()).getTypeType())) {
-        result = NamedType.nameOrAny(type);
-      }
-      else {
-        result = new ClassObjectType(build(instanceType, allowUnions));
-      }
     }
     else if (type instanceof PyGenericType) {
       result = new GenericType(type.getName());
@@ -390,6 +387,40 @@ public class PyTypeModelBuilder {
     }
   }
 
+  private static class TypeToPep484TypeHintVisitor extends TypeToStringVisitor {
+    @Override
+    protected boolean maxDepthExceeded() {
+      return false;
+    }
+
+    @Override
+    public void function(FunctionType function) {
+      add("Callable[");
+      final Collection<TypeModel> parameters = function.parameters;
+      if (parameters != null) {
+        add("[");
+        processList(parameters);
+        add("]");
+      }
+      else {
+        add("...");
+      }
+      add(", ");
+      function.returnType.accept(this);
+      add("]");
+    }
+
+    @Override
+    public void param(ParamType param) {
+      if (param.type != null) {
+        param.type.accept(this);
+      }
+      else {
+        add("Any");
+      }
+    }
+  }
+
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
     private ChainIterable<String> myBody;
     private PsiElement myAnchor;
@@ -439,7 +470,7 @@ public class PyTypeModelBuilder {
     @Override
     public void oneOf(OneOf oneOf) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }
@@ -449,7 +480,7 @@ public class PyTypeModelBuilder {
       myDepth--;
     }
 
-    private void processList(@NotNull Collection<TypeModel> list) {
+    protected void processList(@NotNull Collection<TypeModel> list) {
       boolean first = true;
       for (TypeModel t : list) {
         if (!first) {
@@ -468,7 +499,7 @@ public class PyTypeModelBuilder {
     @Override
     public void collectionOf(CollectionOf collectionOf) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }
@@ -491,7 +522,7 @@ public class PyTypeModelBuilder {
     @Override
     public void function(FunctionType function) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }
@@ -508,10 +539,14 @@ public class PyTypeModelBuilder {
       myDepth--;
     }
 
+    protected boolean maxDepthExceeded() {
+      return myDepth > MAX_DEPTH;
+    }
+
     @Override
     public void param(ParamType param) {
       myDepth++;
-      if (myDepth > MAX_DEPTH) {
+      if (maxDepthExceeded()) {
         add("...");
         return;
       }

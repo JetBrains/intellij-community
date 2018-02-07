@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -23,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.ui.*;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -46,14 +35,19 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
+import javax.swing.plaf.basic.BasicTextUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.CSS;
+import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -206,8 +200,9 @@ public class UIUtil {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
+  /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
   public static boolean isAppleRetina() {
-    return isRetina() && SystemInfo.isAppleJvm;
+    return false;
   }
 
   public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
@@ -232,6 +227,13 @@ public class UIUtil {
 
   public static boolean isDialogFont(Font font) {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
+  }
+
+  public static boolean isScrolledToTheBottom(JComponent c) {
+    JScrollPane scrollPane = c != null ? getParentOfType(JScrollPane.class, c) : null;
+    if (scrollPane == null) return true;
+    Rectangle viewRect = scrollPane.getViewport().getViewRect();
+    return (c.getHeight() == viewRect.y + viewRect.height);
   }
 
   public enum FontSize {NORMAL, SMALL, MINI}
@@ -338,7 +340,7 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData;
 
-  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
+  public static float DEF_SYSTEM_FONT_SIZE = 12f;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -385,6 +387,7 @@ public class UIUtil {
     return isJreHiDPIEnabled() && JBUI.isHiDPI(JBUI.sysScale(ctx));
   }
 
+  // accessed from com.intellij.util.ui.paint.AbstractPainter2D via reflect
   private static Boolean jreHiDPI;
   private static boolean jreHiDPI_earlierVersion;
 
@@ -416,7 +419,7 @@ public class UIUtil {
       }
     }
     if (SystemInfo.isMac) {
-      jreHiDPI = !SystemInfo.isAppleJvm;
+      jreHiDPI = true;
     }
     return jreHiDPI;
   }
@@ -445,12 +448,9 @@ public class UIUtil {
      * value that has been got on AppKit previously.
      */
     static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
-
-      if (SystemInfo.isAppleJvm) return false;
-
       Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
 
-      if (isRetina != null){
+      if (isRetina != null) {
         return isRetina;
       }
 
@@ -485,28 +485,8 @@ public class UIUtil {
       return isRetina;
     }
 
-    /*
-      Could be quite easily implemented with [NSScreen backingScaleFactor]
-      and JNA
-     */
-    //private static boolean isAppleRetina (Graphics2D g2d) {
-    //  return false;
-    //}
-
-    /**
-     * For JDK6 we have a dedicated property which does not allow to understand anything
-     * per device but could be useful for image creation. We will get true in case
-     * if at least one retina device is present.
-     */
-    private static boolean hasAppleRetinaDevice() {
-      return (Float)Toolkit.getDefaultToolkit()
-        .getDesktopProperty(
-          "apple.awt.contentScaleFactor") != 1.0f;
-    }
-
     /**
      * This method perfectly detects retina Graphics2D for jdk7+
-     * For Apple JDK6 it returns false.
      * @param g graphics to be tested
      * @return false if the device of the Graphics2D is not a retina device,
      * jdk is an Apple JDK or Oracle API has been changed.
@@ -524,10 +504,6 @@ public class UIUtil {
      * @return true if at least one device is a retina device
      */
     private static boolean isRetina() {
-      if (SystemInfo.isAppleJvm) {
-        return hasAppleRetinaDevice();
-      }
-
       // Oracle JDK
 
       if (SystemInfo.isMac) {
@@ -548,11 +524,8 @@ public class UIUtil {
     }
   }
 
-  public static boolean isRetina (Graphics2D graphics) {
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-      return DetectRetinaKit.isMacRetina(graphics);
-    }
-    return isRetina();
+  public static boolean isRetina(Graphics2D graphics) {
+    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -569,32 +542,23 @@ public class UIUtil {
 
     if (Registry.is("new.retina.detection")) {
       return DetectRetinaKit.isRetina();
-    } else {
+    }
+    else {
       synchronized (ourRetina) {
         if (ourRetina.isNull()) {
           ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-          if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
-            if (!"false".equals(System.getProperty("ide.mac.retina"))) {
-              ourRetina.set(IsRetina.isRetina());
-              return ourRetina.get();
+          try {
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            final GraphicsDevice device = env.getDefaultScreenDevice();
+            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+            if (scale != null && scale.intValue() == 2) {
+              ourRetina.set(true);
+              return true;
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
-            try {
-              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-              final GraphicsDevice device = env.getDefaultScreenDevice();
-              Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-              if (scale != null && scale.intValue() == 2) {
-                ourRetina.set(true);
-                return true;
-              }
-            }
-            catch (AWTError ignore) {
-            }
-            catch (Exception ignore) {
-            }
-          }
+          catch (AWTError ignore) { }
+          catch (Exception ignore) { }
           ourRetina.set(false);
         }
 
@@ -700,12 +664,12 @@ public class UIUtil {
     if (x == x1) {
       int minY = Math.min(y, y1);
       int maxY = Math.max(y, y1);
-      graphics.drawLine(x, minY + 1, x1, maxY - 1);
+      drawLine(graphics, x, minY + 1, x1, maxY - 1);
     }
     else if (y == y1) {
       int minX = Math.min(x, x1);
       int maxX = Math.max(x, x1);
-      graphics.drawLine(minX + 1, y, maxX - 1, y1);
+      drawLine(graphics, minX + 1, y, maxX - 1, y1);
     }
     else {
       drawLine(graphics, x, y, x1, y1);
@@ -716,7 +680,7 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
-    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4 
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
     if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
     if (SystemInfo.isMac) {
@@ -807,8 +771,12 @@ public class UIUtil {
     }
   }
 
+  /**
+   * @deprecated Use {@link LinePainter2D#paint(Graphics, double, double, double, double)} instead.
+   */
+  @Deprecated
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
-    g.drawLine(x1, y1, x2, y2);
+    LinePainter2D.paint((Graphics2D)g, x1, y1, x2, y2);
   }
 
   public static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
@@ -820,7 +788,7 @@ public class UIUtil {
     if (bgColor != null) {
       g.setBackground(bgColor);
     }
-    drawLine(g, x1, y1, x2, y2);
+    LinePainter2D.paint(g, x1, y1, x2, y2);
     if (fgColor != null) {
       g.setColor(oldFg);
     }
@@ -1253,6 +1221,10 @@ public class UIUtil {
     return ColorUtil.isDark(background) ? new JBColor(Gray._30, new Color(13, 41, 62)) : UNFOCUSED_SELECTION_COLOR;
   }
 
+  public static Color getTableUnfocusedSelectionBackground() {
+    return getListUnfocusedSelectionBackground();
+  }
+
   public static Color getTextFieldForeground() {
     return UIManager.getColor("TextField.foreground");
   }
@@ -1602,7 +1574,9 @@ public class UIUtil {
   }
 
   public static int getListCellHPadding() {
-    return isUnderNativeMacLookAndFeel() ? 7 : 2;
+    return isUnderDefaultMacTheme() ? 8 :
+           isUnderWin10LookAndFeel() ? 2 :
+           7;
   }
 
   public static int getListCellVPadding() {
@@ -1799,25 +1773,25 @@ public class UIUtil {
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
       g.setColor(new Color(100, 100, 100, 50));
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
-      g.drawLine(startX, 3, endX - 1, 3);
-      g.drawLine(startX, height - 3, endX - 1, height - 3);
+      drawLine(g ,startX, 3, endX - 1, 3);
+      drawLine(g ,startX, height - 3, endX - 1, height - 3);
     }
 
     config.restore();
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
-    g.drawLine(x + 1, y, x + w - 1, y);
-    g.drawLine(x + w, y + 1, x + w, y + h - 1);
-    g.drawLine(x + w - 1, y + h, x + 1, y + h);
-    g.drawLine(x, y + 1, x, y + h - 1);
+    drawLine(g ,x + 1, y, x + w - 1, y);
+    drawLine(g ,x + w, y + 1, x + w, y + h - 1);
+    drawLine(g ,x + w - 1, y + h, x + 1, y + h);
+    drawLine(g ,x, y + 1, x, y + h - 1);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1850,8 +1824,8 @@ public class UIUtil {
     g.setColor(fgColor != null ? fgColor : oldColor);
     // Now draw bold line segments
     for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
-      g.drawLine(dotXi, lineY, dotXi + 1, lineY);
-      g.drawLine(dotXi, lineY + 1, dotXi + 1, lineY + 1);
+      drawLine(g ,dotXi, lineY, dotXi + 1, lineY);
+      drawLine(g ,dotXi, lineY + 1, dotXi + 1, lineY + 1);
     }
 
     // restore color
@@ -1876,16 +1850,11 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    height++;
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
     try {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJreHiDPI((Graphics2D)g);
-      if (jmHiDPI) {
-        ((Graphics2D)g).setStroke(new BasicStroke(2f));
-      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1894,8 +1863,8 @@ public class UIUtil {
         g.fillRect(x, 0, width, height);
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - (jmHiDPI ? 1 : 2), width, height - (jmHiDPI ? 1 : 2));
+      if (drawTopLine) drawLine(g ,x, 0, width, 0);
+      if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
@@ -1903,7 +1872,7 @@ public class UIUtil {
         g.setColor(isUnderDarcula() ? CONTRAST_BORDER_COLOR : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, 0, width, 0);
+      drawLine(g ,x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1919,10 +1888,10 @@ public class UIUtil {
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
-        g.drawLine(dot, xOrY, dot, xOrY);
+        drawLine(g ,dot, xOrY, dot, xOrY);
       }
       else {
-        g.drawLine(xOrY, dot, xOrY, dot);
+        drawLine(g ,xOrY, dot, xOrY, dot);
       }
     }
   }
@@ -2652,7 +2621,9 @@ public class UIUtil {
   }
 
   public static class JBHtmlEditorKit extends HTMLEditorKit {
+    private static final Method MODEL_CHANGED = ReflectionUtil.getDeclaredMethod(BasicTextUI.class, "modelChanged");
     private final StyleSheet style;
+    private final HyperlinkListener myHyperlinkListener;
 
     public JBHtmlEditorKit() {
       this(true);
@@ -2661,6 +2632,42 @@ public class UIUtil {
     public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
       style = createStyleSheet();
       if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
+      myHyperlinkListener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
+            setUnderlined(e, true);
+          } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
+            setUnderlined(e, false);
+          }
+          if (MODEL_CHANGED == null) {
+            LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
+            return;
+          }
+          try {
+            MODEL_CHANGED.invoke(((JEditorPane)e.getSource()).getUI());
+          }
+          catch (IllegalAccessException exception) {
+            LOG.error(exception);
+          }
+          catch (InvocationTargetException exception) {
+            LOG.error(exception);
+          }
+        }
+
+        private void setUnderlined(HyperlinkEvent e, boolean underlined) {
+          AttributeSet attributes = e.getSourceElement().getAttributes();
+          Object attribute = attributes.getAttribute(HTML.Tag.A);
+          if (attribute instanceof MutableAttributeSet) {
+            MutableAttributeSet a = (MutableAttributeSet)attribute;
+            if (underlined) {
+              a.addAttribute(CSS.Attribute.TEXT_DECORATION, "underline");
+            } else {
+              a.removeAttribute(CSS.Attribute.TEXT_DECORATION);
+            }
+          }
+        }
+      };
     }
 
     @Override
@@ -2673,6 +2680,8 @@ public class UIUtil {
       style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
       style.addRule("code { font-size: 100%; }"); // small by Swing's default
       style.addRule("small { font-size: small; }"); // x-small by Swing's default
+      style.addRule("a { text-decoration: none;}");
+
       return style;
     }
 
@@ -2698,7 +2707,14 @@ public class UIUtil {
             pane.removePropertyChangeListener(this);
           }
         });
+        pane.addHyperlinkListener(myHyperlinkListener);
       }
+    }
+
+    @Override
+    public void deinstall(JEditorPane c) {
+      c.removeHyperlinkListener(myHyperlinkListener);
+      super.deinstall(c);
     }
   }
 
@@ -2969,17 +2985,20 @@ public class UIUtil {
     if (Registry.is("ide.ui.scale.override")) {
       forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
     }
-    else if (SystemInfo.isLinux && !SystemInfo.isJetBrainsJvm) {
-      // With Oracle JDK: derive scale from X server DPI
-      float scale = getScreenScale();
-      if (scale > 1f) {
-        forcedScale = Float.valueOf(scale);
+    else if (SystemInfo.isLinux) {
+      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      if (value instanceof Integer) {
+        // If the property is defined, then:
+        // 1) it provides correct system scale
+        // 2) the label font size is scaled
+        int dpi = ((Integer)value).intValue() / 1024;
+        if (dpi < 50) dpi = 50;
+        float scale = JBUI.discreteScale(dpi / 96f);
+        DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
       }
-      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
-      // If it is (likely with GTK DE), then the UI scale will be derived from it,
-      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
-      // not to bother about X server DPI settings. Users of other DEs (like KDE)
-      // will have to set X server DPI to meet their display.
+      else {
+        forcedScale = Float.valueOf(getScreenScale());
+      }
     }
     else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
@@ -3008,14 +3027,7 @@ public class UIUtil {
     }
     catch (HeadlessException ignored) {
     }
-    float scale = 1f;
-    if (dpi < 120) scale = 1f;
-    else if (dpi < 144) scale = 1.25f;
-    else if (dpi < 168) scale = 1.5f;
-    else if (dpi < 192) scale = 1.75f;
-    else scale = 2f;
-
-    return scale;
+    return JBUI.discreteScale(dpi / 96f);
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
@@ -3498,7 +3510,7 @@ public class UIUtil {
                 g.setColor(info.underlineColor);
               }
 
-              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
               if (c != null) {
                 g.setColor(c);
               }
@@ -3506,7 +3518,7 @@ public class UIUtil {
               if (myDrawShadow) {
                 c = g.getColor();
                 g.setColor(myShadowColor);
-                g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
                            yOffset[0] + fm.getDescent() + 1);
                 g.setColor(c);
               }
@@ -3801,12 +3813,10 @@ public class UIUtil {
     }
   }
 
-  public static void setAutoRequestFocus (final Window onWindow, final boolean set){
-    if (SystemInfo.isMac) return;
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+  public static void setAutoRequestFocus(final Window onWindow, final boolean set) {
+    if (!SystemInfo.isMac) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
-        setAutoRequestFocusMethod.invoke(onWindow, set);
+        onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }
       catch (InvocationTargetException e) { LOG.debug(e); }
@@ -4208,5 +4218,54 @@ public class UIUtil {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
     if(component.isCursorSet() && component.getCursor() == cursor) return;
     component.setCursor(cursor);
+  }
+
+  public static boolean haveCommonOwner(Component c1, Component c2) {
+    if (c1 == null || c2 == null) return false;
+    Window c1Ancestor = findWindowAncestor(c1);
+    Window c2Ancestor = findWindowAncestor(c2);
+
+    Set <Window> ownerSet = new HashSet<Window>();
+
+    Window owner = c1Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      ownerSet.add(owner);
+      owner = owner.getOwner();
+    }
+
+    owner = c2Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      if (ownerSet.contains(owner)) return true;
+      owner = owner.getOwner();
+    }
+
+    return false;
+  }
+
+  private static Window findWindowAncestor(@NotNull Component c) {
+    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
+  }
+
+  public static boolean isHelpButton(Component button) {
+    return button instanceof JButton && "help".equals(((JComponent)button).getClientProperty("JButton.buttonType"));
+  }
+
+  public static void typeAheadUntilFocused(InputEvent event, Component component) {
+    LOG.assertTrue(component.isFocusable());
+    Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
+    try {
+      if (enqueueKeyEventsMethod != null) {
+        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
+                                      event != null ? event.getWhen() : System.currentTimeMillis(), component);
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.debug(e);
+    }
+    catch (InvocationTargetException e) {
+      LOG.debug(e);
+    }
   }
 }

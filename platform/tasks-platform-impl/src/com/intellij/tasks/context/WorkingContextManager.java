@@ -278,7 +278,7 @@ public class WorkingContextManager {
       archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {
-        JBZipEntry[] array = entries.toArray(new JBZipEntry[entries.size()]);
+        JBZipEntry[] array = entries.toArray(new JBZipEntry[0]);
         Arrays.sort(array, ENTRY_COMPARATOR);
         for (int i = array.length - 1; i >= max; i--) {
           archive.eraseEntry(array[i]);

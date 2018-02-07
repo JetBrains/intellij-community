@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
@@ -52,6 +39,32 @@ public class JBColor extends Color {
     super(0);
     darkColor = null;
     func = function;
+  }
+
+  public static Color link() {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color linkColor = UIManager.getColor("link.foreground");
+        return linkColor == null ? new Color(0x589df6) : linkColor;
+      }
+    });
+  }
+
+  public static Color linkHover() {
+    Color hoverColor = UIManager.getColor("link.hover.foreground");
+    return hoverColor == null ? link() : hoverColor;
+  }
+
+  public static Color linkPressed() {
+    Color pressedColor = UIManager.getColor("link.pressed.foreground");
+    return pressedColor == null ? new JBColor(0xf00000, 0xba6f25) : pressedColor;
+  }
+
+  public static Color linkVisited() {
+    Color visitedColor = UIManager.getColor("link.visited.foreground");
+    return visitedColor == null ? new JBColor(0x800080, 0x9776a9) : visitedColor;
   }
 
   public static void setDark(boolean dark) {

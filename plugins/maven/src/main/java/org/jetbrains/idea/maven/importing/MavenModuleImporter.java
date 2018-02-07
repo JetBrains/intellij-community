@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -194,15 +193,12 @@ public class MavenModuleImporter {
   private void configDependencies() {
     THashSet<String> dependencyTypesFromSettings = new THashSet<>();
 
-    AccessToken accessToken = ReadAction.start();
-    try {
-      if (myModule.getProject().isDisposed()) return;
+    if (!ReadAction.compute(()->{
+      if (myModule.getProject().isDisposed()) return false;
 
       dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myModule.getProject()).getImportingSettings().getDependencyTypesAsSet());
-    }
-    finally {
-      accessToken.finish();
-    }
+      return true;
+    })) return;
 
 
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
@@ -276,6 +272,22 @@ public class MavenModuleImporter {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
+        if ("bundle".equals(dependencyType)) {
+          artifact = new MavenArtifact(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getVersion(),
+            artifact.getBaseVersion(),
+            "jar",
+            artifact.getClassifier(),
+            artifact.getScope(),
+            artifact.isOptional(),
+            "jar",
+            null,
+            myMavenProject.getLocalRepository(),
+            false, false
+          );
+        }
         LibraryOrderEntry libraryOrderEntry =
           myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
         myModifiableModelsProvider.trySubstitute(
@@ -372,7 +384,11 @@ public class MavenModuleImporter {
     }
 
     if (level == null) {
-      level = LanguageLevel.parse(myMavenProject.getSourceLevel());
+      String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
+      level = LanguageLevel.parse(mavenProjectSourceLevel);
+      if (level == null && StringUtil.isNotEmpty(mavenProjectSourceLevel)) {
+        level = LanguageLevel.JDK_X;
+      }
     }
 
     // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin

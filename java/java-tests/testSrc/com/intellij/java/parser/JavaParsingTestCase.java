@@ -112,7 +112,7 @@ public abstract class JavaParsingTestCase extends ParsingTestCase {
     }
 
     @Override
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
       PsiBuilder builder = createBuilder(chameleon);
 
       PsiBuilder.Marker root = builder.mark();

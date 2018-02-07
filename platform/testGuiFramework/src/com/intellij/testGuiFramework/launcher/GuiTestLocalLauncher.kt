@@ -55,7 +55,7 @@ object GuiTestLocalLauncher {
 
   var process: Process? = null
 
-  private val TEST_GUI_FRAMEWORK_MODULE_NAME = "testGuiFramework"
+  private val TEST_GUI_FRAMEWORK_MODULE_NAME = "intellij.platform.testGuiFramework"
 
   val project: JpsProject by lazy {
     val home = PathManager.getHomePath()
@@ -105,6 +105,8 @@ object GuiTestLocalLauncher {
                        timeOutUnit: TimeUnit = TimeUnit.SECONDS,
                        args: List<String>) {
     LOG.info("Running $ide locally \n with args: $args")
+    //do not limit IDE starting if we are using debug mode to not miss the debug listening period
+    val conditionalTimeout = if (GuiTestOptions.isDebug()) 0 else timeOut
     val startLatch = CountDownLatch(1)
     thread(start = true, name = "IdeaTestThread") {
       val ideaStartTest = ProcessBuilder().inheritIO().command(args)
@@ -113,8 +115,8 @@ object GuiTestLocalLauncher {
     }
     if (needToWait) {
       startLatch.await()
-      if (timeOut != 0L)
-        process!!.waitFor(timeOut, timeOutUnit)
+      if (conditionalTimeout != 0L)
+        process!!.waitFor(conditionalTimeout, timeOutUnit)
       else
         process!!.waitFor()
       try {
@@ -227,6 +229,7 @@ object GuiTestLocalLauncher {
       .plus("-Dapple.laf.useScreenMenuBar=${GuiTestOptions.useAppleScreenMenuBar()}")
       .plus("-Didea.is.internal=${GuiTestOptions.isInternal()}")
       .plus("-Didea.debug.mode=true")
+      .plus("-Dnative.mac.file.chooser.enabled=false")
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
@@ -246,7 +249,7 @@ object GuiTestLocalLauncher {
 
 
   /**
-   * return union of classpaths for current test (get from classloader) and classpaths of main and testGuiFramework modules*
+   * return union of classpaths for current test (get from classloader) and classpaths of main and intellij.platform.testGuiFramework modules*
    */
   private fun getFullClasspath(moduleName: String, testClassNames: List<String>): List<File> {
     val classpath: MutableSet<File> = substituteAllMacro(getExtendedClasspath(moduleName))
@@ -336,7 +339,8 @@ object GuiTestLocalLauncher {
     val fullPath = "$packagePath/$name"
     val resourceUrl = classLoader.getResource(fullPath) ?: throw Exception(
       "Unable to get resource path to a \"$fullPath\". Check the path to class or a classloader URLs.")
-    var cutPath = resourceUrl.path.substring(0, resourceUrl.path.length - fullPath.length)
+    val correctPath = resourceUrl.correctPath()
+    var cutPath = correctPath.substring(0, correctPath.length - fullPath.length)
     if (cutPath.endsWith("!") or cutPath.endsWith("!/")) cutPath = cutPath.substring(0..(cutPath.length - 3)) // in case of it is a jar
     val file = File(cutPath)
     if (!file.exists()) throw Exception("File for a class '$className' doesn't exist by path: $cutPath")
@@ -345,7 +349,7 @@ object GuiTestLocalLauncher {
 
 
   /**
-   * return union of classpaths for @moduleName and testGuiFramework modules
+   * return union of classpaths for @moduleName and intellij.platform.testGuiFramework modules
    */
   private fun getExtendedClasspath(moduleName: String): MutableSet<File> {
     // here we trying to analyze output path for project from classloader path and from modules classpath.
@@ -359,8 +363,13 @@ object GuiTestLocalLauncher {
   private fun List<JpsModule>.module(moduleName: String): JpsModule? =
     this.firstOrNull { it.name == moduleName }
 
-  private fun JpsModule.getClasspath(): MutableCollection<File> =
-    JpsJavaExtensionService.dependencies(this).productionOnly().runtimeOnly().recursively().classes().roots
+  //get production dependencies and test root of the current module
+  private fun JpsModule.getClasspath(): MutableCollection<File> {
+    val result = JpsJavaExtensionService.dependencies(
+      this).productionOnly().runtimeOnly().recursively().classes().roots.toMutableSet()
+    result.addAll(JpsJavaExtensionService.dependencies(this).withoutDepModules().withoutLibraries().withoutSdk().classes().roots)
+    return result.toMutableList()
+  }
 
 
   private fun getOutputRootFromClassloader(): File {
@@ -385,6 +394,10 @@ object GuiTestLocalLauncher {
       val projectExtension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(this)
       projectExtension.outputUrl = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(getOutputRootFromClassloader().path))
     }
+  }
+
+  private fun URL.correctPath(): String {
+    return Paths.get(this.toURI()).toFile().path
   }
 
 }

@@ -146,9 +146,6 @@ public class IgnoredSettingsPanel implements SearchableConfigurable, Configurabl
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
   @Nls
   public String getDisplayName() {
     return "Ignored Files";

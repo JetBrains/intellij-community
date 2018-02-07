@@ -280,7 +280,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
           }
         }
       }
-      return elements.toArray(new PsiElement[elements.size()]);
+      return elements.toArray(PsiElement.EMPTY_ARRAY);
     }
     return null;
   }

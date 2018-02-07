@@ -1,39 +1,23 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.idea.Bombed;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
@@ -61,10 +45,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
@@ -73,7 +57,10 @@ import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
@@ -88,6 +75,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
@@ -97,6 +85,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.jar.JarFile;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.junit.Assert.assertEquals;
+
 /**
  * @author yole
  */
@@ -104,10 +95,8 @@ import java.util.jar.JarFile;
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
-  
   private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
+  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -172,7 +161,7 @@ public class PlatformTestUtil {
   public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
     return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
   }
-  
+
   private static String print(JTree tree, Object root,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
@@ -247,22 +236,76 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    Assert.assertEquals(expected, treeStringPresentation);
+    assertEquals(expected, treeStringPresentation);
   }
 
-  @TestOnly
+  public static void expand(JTree tree, int... rows) {
+    for (int row : rows) {
+      tree.expandRow(row);
+      waitWhileBusy(tree);
+    }
+  }
+
+  public static void expandAll(JTree tree) {
+    waitForPromise(TreeUtil.promiseExpandAll(tree));
+  }
+
+  private static long getMillisSince(long startTimeMillis) {
+    return System.currentTimeMillis() - startTimeMillis;
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis) {
+    assert getMillisSince(startTimeMillis) <= MAX_WAIT_TIME : "the waiting takes too long";
+  }
+
+  private static void assertDispatchThreadWithoutWriteAccess() {
+    assertDispatchThreadWithoutWriteAccess(getApplication());
+  }
+
+  private static void assertDispatchThreadWithoutWriteAccess(Application application) {
+    if (application != null) {
+      assert !application.isWriteAccessAllowed() : "do not wait under the write action to avoid possible deadlock";
+      assert application.isDispatchThread();
+    }
+    else {
+      // do not check for write access in simple tests
+      assert EventQueue.isDispatchThread();
+    }
+  }
+
+  private static boolean isBusy(JTree tree) {
+    UIUtil.dispatchAllInvocationEvents();
+    TreeModel model = tree.getModel();
+    if (model instanceof AsyncTreeModel) {
+      AsyncTreeModel async = (AsyncTreeModel)model;
+      if (async.isProcessing()) return true;
+      UIUtil.dispatchAllInvocationEvents();
+      return async.isProcessing();
+    }
+    AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
+    if (builder == null) return false;
+    AbstractTreeUi ui = builder.getUi();
+    if (ui == null) return false;
+    return ui.hasPendingWork();
+  }
+
+  public static void waitWhileBusy(JTree tree) {
+    assertDispatchThreadWithoutWriteAccess();
+    long startTimeMillis = System.currentTimeMillis();
+    while (isBusy(tree)) {
+      assertMaxWaitTimeSince(startTimeMillis);
+    }
+  }
+
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
     callback.doWhenDone(() -> promise.setResult(null));
     waitForPromise(promise);
   }
 
-  @TestOnly
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
-    Application app = ApplicationManager.getApplication();
-    assert !app.isWriteAccessAllowed() : "It's a bad idea to wait for a promise under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert app.isDispatchThread();
+    assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.processed(ignore -> complete.set(true));
     T result = null;
@@ -274,20 +317,16 @@ public class PlatformTestUtil {
       }
       catch (Exception ignore) {
       }
-      if (System.currentTimeMillis() - start > 100 * 1000) {
-        throw new AssertionError("The promise takes too long... aborting");
-      }
+      assertMaxWaitTimeSince(start);
     }
     while (!complete.get());
     UIUtil.dispatchAllInvocationEvents();
     return result;
   }
 
-  @TestOnly
   public static void waitForAlarm(final int delay) {
-    Application app = ApplicationManager.getApplication();
-    assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert app.isDispatchThread();
+    @NotNull Application app = getApplication();
+    assertDispatchThreadWithoutWriteAccess();
 
     Disposable tempDisposable = Disposer.newDisposable();
 
@@ -315,13 +354,13 @@ public class PlatformTestUtil {
       boolean sleptAlready = false;
       while (!alarmInvoked2.get()) {
         AtomicBoolean laterInvoked = new AtomicBoolean();
-        ApplicationManager.getApplication().invokeLater(() -> laterInvoked.set(true));
+        app.invokeLater(() -> laterInvoked.set(true));
         UIUtil.dispatchAllInvocationEvents();
         Assert.assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
         sleptAlready = true;
-        if (System.currentTimeMillis() - start > 100 * 1000) {
+        if (getMillisSince(start) > MAX_WAIT_TIME) {
           throw new AssertionError("Couldn't await alarm" +
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
@@ -348,7 +387,6 @@ public class PlatformTestUtil {
    * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
@@ -365,7 +403,6 @@ public class PlatformTestUtil {
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  @TestOnly
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     //noinspection StatementWithEmptyBody
@@ -376,7 +413,6 @@ public class PlatformTestUtil {
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     AWTEvent event = eventQueue.peekEvent();
@@ -384,22 +420,6 @@ public class PlatformTestUtil {
     AWTEvent event1 = eventQueue.getNextEvent();
     eventQueue.dispatchEvent(event1);
     return event1;
-  }
-
-  private static Date raidDate(Bombed bombed) {
-    final Calendar instance = Calendar.getInstance();
-    instance.set(Calendar.YEAR, bombed.year());
-    instance.set(Calendar.MONTH, bombed.month());
-    instance.set(Calendar.DAY_OF_MONTH, bombed.day());
-    instance.set(Calendar.HOUR_OF_DAY, bombed.time());
-    instance.set(Calendar.MINUTE, 0);
-
-    return instance.getTime();
-  }
-
-  public static boolean bombExplodes(Bombed bombedAnnotation) {
-    Date now = new Date();
-    return now.after(raidDate(bombedAnnotation));
   }
 
   public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
@@ -478,7 +498,7 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
-    Assert.assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
+    assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
   }
 
   @NotNull
@@ -560,36 +580,17 @@ public class PlatformTestUtil {
   }
 
   /**
-   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).cpuBound().assertTiming();}
+   * example usage: {@code startPerformanceTest("calculating pi",100, testRunnable).assertTiming();}
    */
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  public static TestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
-    return new TestInfo(test, expectedMs, what);
-  }
-
-  public static boolean canRunTest(@NotNull Class testCaseClass) {
-    if (!SKIP_SLOW && !SKIP_HEADLESS) {
-      return true;
-    }
-
-    for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-      if (SKIP_HEADLESS && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
-        System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
-        return false;
-      }
-      if (SKIP_SLOW && clazz.getAnnotation(SkipSlowTestLocally.class) != null) {
-        System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it is dog slow");
-        return false;
-      }
-    }
-
-    return true;
+  public static PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
+    return new PerformanceTestInfo(test, expectedMs, what);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
     if (expected != null) expected = FileUtil.toSystemIndependentName(expected);
     if (actual != null) actual = FileUtil.toSystemIndependentName(actual);
-    Assert.assertEquals(expected, actual);
+    assertEquals(expected, actual);
   }
 
   @NotNull
@@ -599,180 +600,16 @@ public class PlatformTestUtil {
 
   @NotNull
   public static String getRtJarPath() {
-    String home = SystemProperties.getJavaHome();
-    return SystemInfo.isAppleJvm ? FileUtil.toCanonicalPath(home + "/../Classes/classes.jar") : home + "/lib/rt.jar";
+    return SystemProperties.getJavaHome() + "/lib/rt.jar";
   }
 
   public static void saveProject(@NotNull Project project) {
-    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
-    StoreUtil.save(ServiceKt.getStateStore(project), project);
+    saveProject(project, false);
   }
 
-  public static class TestInfo {
-    private final ThrowableRunnable test; // runnable to measure
-    private final int expectedMs;           // millis the test is expected to run
-    private ThrowableRunnable setup;      // to run before each test
-    private int usedReferenceCpuCores = 1;
-    private int attempts = 4;             // number of retries if performance failed
-    private final String what;         // to print on fail
-    private boolean adjustForIO = false;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
-    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
-    private boolean useLegacyScaling;
-
-    private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
-      this.test = test;
-      this.expectedMs = expectedMs;
-      assert expectedMs > 0 : "Expected must be > 0. Was: "+ expectedMs;
-      this.what = what;
-    }
-
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
-
-    /**
-     * Invoke this method if and only if the code under performance tests is using all CPU cores.
-     * The "standard" expected time then should be given for a machine which has 8 CPU cores.
-     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
-
-    /**
-     * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or less if the computer has less).
-     * The "standard" expected time then should be given for a machine which has {@code maxCores} CPU cores.
-     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedReferenceCpuCores = maxCores; return this; }
-
-    /**
-     * @deprecated tests are CPU-bound by default, so no need to call this method. 
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    @Deprecated
-    public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo attempts(int attempts) { this.attempts = attempts; return this; }
-    /**
-     * @deprecated Enables procedure for nonlinear scaling of results between different machines. This was historically enabled, but doesn't
-     * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
-     * expected execution time accordingly.
-     */
-    @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-    public TestInfo useLegacyScaling() { useLegacyScaling = true; return this; }
-
-    public void assertTiming() {
-      assert expectedMs != 0 : "Must call .expect() before run test";
-      if (COVERAGE_ENABLED_BUILD) return;
-      Timings.getStatistics(); // warm-up, measure
-
-      if (attempts == 1) {
-        System.gc();
-      }
-
-      while (true) {
-        attempts--;
-        CpuUsageData data;
-        try {
-          if (setup != null) setup.run();
-          waitForAllBackgroundActivityToCalmDown();
-          data = CpuUsageData.measureCpuUsage(test);
-        }
-        catch (RuntimeException|Error throwable) {
-          throw throwable;
-        }
-        catch (Throwable throwable) {
-          throw new RuntimeException(throwable);
-        }
-        long duration = data.durationMs;
-
-        int expectedOnMyMachine = expectedMs;
-        if (adjustForCPU) {
-          int coreCountUsedHere = usedReferenceCpuCores < 8 ? Math.min(JobSchedulerImpl.CORES_COUNT, usedReferenceCpuCores) : JobSchedulerImpl.CORES_COUNT;
-          expectedOnMyMachine *= usedReferenceCpuCores;
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.CPU_TIMING, Timings.REFERENCE_CPU_TIMING, useLegacyScaling);
-          expectedOnMyMachine /= coreCountUsedHere;
-        }
-        if (adjustForIO) {
-          expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.REFERENCE_IO_TIMING, useLegacyScaling);
-        }
-
-        // Allow 10% more in case of test machine is busy.
-        double acceptableChangeFactor = 1.1;
-        int percentage = (int)(100.0 * (duration - expectedOnMyMachine) / expectedOnMyMachine);
-        String colorCode = duration < expectedOnMyMachine ? "32;1m" : // green
-                        duration < expectedOnMyMachine * acceptableChangeFactor ? "33;1m" : // yellow
-                        "31;1m"; // red
-        String logMessage = String.format(
-          "%s took \u001B[%s%d%% %s time\u001B[0m than expected" +
-          "\n  Expected: %sms (%s)" +
-          "\n  Actual:   %sms (%s)" +
-          "\n  Timings:  %s" +
-          "\n  Threads:  %s" +
-          "\n  GC stats: %s",
-          what, colorCode, Math.abs(percentage), percentage > 0 ? "more" : "less",
-          expectedOnMyMachine, StringUtil.formatDuration(expectedOnMyMachine),
-          duration, StringUtil.formatDuration(duration),
-          Timings.getStatistics(),
-          data.getThreadStats(),
-          data.getGcStats());
-
-        if (duration < expectedOnMyMachine) {
-          TeamCityLogger.info(logMessage);
-          System.out.println("\nSUCCESS: " + logMessage);
-        }
-        else if (duration < expectedOnMyMachine * acceptableChangeFactor) {
-          TeamCityLogger.warning(logMessage, null);
-          System.out.println("\nWARNING: " + logMessage);
-        }
-        else {
-          // try one more time
-          if (attempts == 0) {
-            //try {
-            //  Object result = Class.forName("com.intellij.util.ProfilingUtil").getMethod("captureCPUSnapshot").invoke(null);
-            //  System.err.println("CPU snapshot captured in '"+result+"'");
-            //}
-            //catch (Exception e) {
-            //}
-
-            throw new AssertionFailedError(logMessage);
-          }
-          System.gc();
-          System.gc();
-          System.gc();
-          String s = logMessage + "\n  " + attempts + " attempts remain";
-          TeamCityLogger.warning(s, null);
-          if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-            System.err.println(s);
-          }
-          //if (attempts == 1) {
-          //  try {
-          //    Class.forName("com.intellij.util.ProfilingUtil").getMethod("startCPUProfiling").invoke(null);
-          //  }
-          //  catch (Exception e) {
-          //  }
-          //}
-          continue;
-        }
-        break;
-      }
-    }
-
-    private static int adjust(int expectedOnMyMachine, long thisTiming, long referenceTiming, boolean useLegacyScaling) {
-      if (useLegacyScaling) {
-        double speed = 1.0 * thisTiming / referenceTiming;
-        double delta = speed < 1
-                       ? 0.9 + Math.pow(speed - 0.7, 2)
-                       : 0.45 + Math.pow(speed - 0.25, 2);
-        expectedOnMyMachine *= delta;
-        return expectedOnMyMachine;
-      }
-      else {
-        return (int)(expectedOnMyMachine * thisTiming / referenceTiming);
-      }
-    }
+  public static void saveProject(@NotNull Project project, boolean isForce) {
+    ProjectManagerEx.getInstanceEx().flushChangedProjectFileAlarm();
+    StoreUtil.save(ServiceKt.getStateStore(project), project, isForce);
   }
 
   static void waitForAllBackgroundActivityToCalmDown() {
@@ -852,7 +689,7 @@ public class PlatformTestUtil {
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    Assert.assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
+    assertEquals(dirAfter.getPath(), keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -879,7 +716,7 @@ public class PlatformTestUtil {
       }
     }
 
-    Assert.assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
+    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
   }
 
   private static String sortAndJoin(List<String> strings) {
@@ -943,7 +780,7 @@ public class PlatformTestUtil {
     Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    getApplication().runWriteAction(() -> {
       dirAfter.refresh(false, true);
       dirBefore.refresh(false, true);
     });
@@ -957,7 +794,7 @@ public class PlatformTestUtil {
   @Deprecated
   public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
+      assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
@@ -1051,7 +888,7 @@ public class PlatformTestUtil {
   public static void assertSuccessful(@NotNull GeneralCommandLine command) {
     try {
       ProcessOutput output = ExecUtil.execAndGetOutput(command.withRedirectErrorStream(true));
-      Assert.assertEquals(output.getStdout(), 0, output.getExitCode());
+      assertEquals(output.getStdout(), 0, output.getExitCode());
     }
     catch (ExecutionException e) {
       throw new RuntimeException(e);
@@ -1074,17 +911,76 @@ public class PlatformTestUtil {
     });
     return refs;
   }
-  
+
   public static void registerProjectCleanup(@NotNull Runnable cleanup) {
     ourProjectCleanups.add(cleanup);
   }
-  
+
   public static void cleanupAllProjects() {
     for (Runnable each : ourProjectCleanups) {
       each.run();
     }
     ourProjectCleanups.clear();
   }
+
+  /**
+   * Disposes the application (it also stops some application-related threads)
+   * and checks for project leaks.
+   */
+  public static void disposeApplicationAndCheckForProjectLeaks() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      try {
+        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
+      }
+      catch (RuntimeException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      cleanupAllProjects();
+
+      UIUtil.dispatchAllInvocationEvents();
+
+      ApplicationImpl application = (ApplicationImpl)getApplication();
+      System.out.println(application.writeActionStatistics());
+      System.out.println(ActionUtil.ActionPauses.STAT.statistics());
+      System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
+      System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
+
+      try {
+        LeakHunter.checkNonDefaultProjectLeak();
+      }
+      catch (AssertionError | Exception e) {
+        captureMemorySnapshot();
+        ExceptionUtil.rethrowAllAsUnchecked(e);
+      }
+      finally {
+        application.setDisposeInProgress(true);
+        LightPlatformTestCase.disposeApplication();
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    });
+
+  }
+
+  public static void captureMemorySnapshot() {
+    try {
+      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
+      if (snapshot != null) {
+        Object path = snapshot.invoke(null);
+        System.out.println("Memory snapshot captured to '" + path + "'");
+      }
+    }
+    catch (ClassNotFoundException e) {
+      // ProfilingUtil is missing from the classpath, ignore
+    }
+    catch (Exception e) {
+      e.printStackTrace(System.err);
+    }
+  }
+
 
   public static <T> void assertComparisonContractNotViolated(@NotNull List<T> values,
                                                              @NotNull Comparator<T> comparator,
@@ -1097,8 +993,8 @@ public class PlatformTestUtil {
         int result12 = comparator.compare(value1, value2);
         int result21 = comparator.compare(value2, value1);
         if (equality.equals(value1, value2)) {
-          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
-          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
+          assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
         }
         else {
           if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));

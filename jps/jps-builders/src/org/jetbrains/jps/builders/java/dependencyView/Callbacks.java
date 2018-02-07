@@ -23,7 +23,6 @@ import java.util.concurrent.Future;
 
 /**
  * @author: db
- * Date: 28.01.11
  */
 public class Callbacks {
 

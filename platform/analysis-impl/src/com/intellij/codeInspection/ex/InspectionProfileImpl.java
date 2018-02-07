@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ex;
 
@@ -63,7 +51,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @TestOnly
   public static boolean INIT_INSPECTIONS;
   @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
-  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>();
+  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
   protected volatile Set<String> myChangedToolNames;
   @Attribute("is_locked")
@@ -431,7 +419,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (Tools toolList : myTools.values()) {
       result.add(toolList.getInspectionTool(element));
     }
-    return result.toArray(new InspectionToolWrapper[result.size()]);
+    return result.toArray(InspectionToolWrapper.EMPTY_ARRAY);
   }
 
   @Override

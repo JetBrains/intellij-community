@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement.engine;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -27,7 +29,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.*;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
@@ -35,7 +36,7 @@ import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntArrayList;
@@ -110,7 +111,7 @@ public class ArrangementEngine {
       return;
     }
 
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(file);
     ArrangementSettings arrangementSettings = settings.getCommonSettings(file.getLanguage()).getArrangementSettings();
     if (arrangementSettings == null && rearranger instanceof ArrangementStandardSettingsAware) {
       arrangementSettings = ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
@@ -118,14 +119,6 @@ public class ArrangementEngine {
     
     if (arrangementSettings == null) {
       return;
-    }
-
-    final DocumentEx documentEx;
-    if (document instanceof DocumentEx && !((DocumentEx)document).isInBulkUpdate()) {
-      documentEx = (DocumentEx)document;
-    }
-    else {
-      documentEx = null;
     }
 
     final Context<? extends ArrangementEntry> context;
@@ -138,20 +131,12 @@ public class ArrangementEngine {
     }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (documentEx != null) {
-        //documentEx.setInBulkUpdate(true);
-      }
-      try {
+      FormatChangedTextUtil.getInstance().runHeavyModificationTask(file.getProject(), document, () -> {
         doArrange(context);
         if (callback != null) {
           callback.afterArrangement(context.moveInfos);
         }
-      }
-      finally {
-        if (documentEx != null) {
-          //documentEx.setInBulkUpdate(false);
-        }
-      }
+      });
     });
   }
 

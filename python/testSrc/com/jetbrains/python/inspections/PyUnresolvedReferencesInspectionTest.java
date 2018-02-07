@@ -222,7 +222,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7389
@@ -232,7 +232,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7516
@@ -532,13 +532,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-22620
   public void testTupleTypeCommentsUseImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest();
   }
 
@@ -590,7 +588,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23540
   public void testMemberFromMetaclassWhenSuperclassMetaclassIsABCMeta() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-23623
@@ -655,6 +653,26 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-26243
   public void testNotImportedPackageInDunderAll() {
     doMultiFileTest("pkg/__init__.py");
+  }
+
+  // PY-27146
+  public void testPrivateMemberOwnerResolvedToStub() {
+    doMultiFileTest();
+  }
+
+  // PY-28017
+  public void testModuleWithGetAttr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-22868
+  public void testStubWithGetAttr() {
+    doMultiFileTest();
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
   }
 
   @NotNull

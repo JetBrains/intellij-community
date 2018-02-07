@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 /*
  * Class MethodBreakpoint
@@ -208,7 +210,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
 
         List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (allLineLocations == null) { // no line numbers
+        if (allLineLocations == null && !method.isBridge()) { // no line numbers
           breakpoint.disableEmulation();
           return;
         }
@@ -346,13 +348,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   private static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName;
-    try {
-      locationFileName = location.sourceName();
-    }
-    catch (AbsentInformationException e) {
-      locationFileName = defaultFileName;
-    }
+    String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
     return DebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
                                   method.declaringType().name() + "." + method.name() + "()",
@@ -448,10 +444,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
    * finds FQ method's class name and method's signature
    */
   @Nullable
-  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final PsiFile psiJavaFile, @NotNull final SourcePosition sourcePosition) {
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
-    final Document document = docManager.getDocument(psiJavaFile);
-    if(document == null) {
+  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project,
+                                                      @NotNull final PsiFile psiJavaFile,
+                                                      @Nullable final SourcePosition sourcePosition) {
+    if (sourcePosition == null) {
+      return null;
+    }
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiJavaFile);
+    if (document == null) {
       return null;
     }
     //final int endOffset = document.getLineEndOffset(sourcePosition);

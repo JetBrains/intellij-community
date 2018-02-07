@@ -29,13 +29,13 @@ import java.util.concurrent.atomic.AtomicLong;
 class FileLoader extends Loader {
   private final File myRootDir;
   private final String myRootDirAbsolutePath;
-  private final boolean myCanHavePersistentIndex;
+  private final ClassPath myConfiguration;
 
-  FileLoader(URL url, int index, boolean canHavePersistentIndex) throws IOException {
+  FileLoader(URL url, int index, ClassPath configuration) {
     super(url, index);
     myRootDir = new File(FileUtil.unquote(url.getFile()));
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
-    myCanHavePersistentIndex = canHavePersistentIndex;
+    myConfiguration = configuration;
   }
 
   private void buildPackageCache(final File dir, ClasspathCache.LoaderData loaderData) {
@@ -108,7 +108,7 @@ class FileLoader extends Loader {
   private static final Boolean doFsActivityLogging = false;
 
   private ClasspathCache.LoaderData tryReadFromIndex() {
-    if (!myCanHavePersistentIndex) return null;
+    if (!myConfiguration.myCanHavePersistentIndex) return null;
     long started = System.nanoTime();
     ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
     File index = getIndexFileFile();
@@ -142,7 +142,7 @@ class FileLoader extends Loader {
   }
 
   private void trySaveToIndex(ClasspathCache.LoaderData data) {
-    if (!myCanHavePersistentIndex) return;
+    if (!myConfiguration.myCanHavePersistentIndex) return;
     long started = System.nanoTime();
     File index = getIndexFileFile();
     BufferedWriter writer = null;

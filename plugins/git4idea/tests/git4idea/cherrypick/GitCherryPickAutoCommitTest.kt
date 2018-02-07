@@ -74,6 +74,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
+    `assert commit dialog was shown`()
     changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
     assertNoNotification()
   }
@@ -140,7 +141,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test nothing to commit`() {
     val commit = file("c.txt").create().addCommit("fix #1").hash()
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
 
     cherryPick(commit)
 
@@ -151,7 +152,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test several commits one of which have already been applied`() {
     file("common.txt").create("common content\n").addCommit("common file")
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
     val commit1 = file("a.txt").create("initial\n").addCommit("fix #1").hash()
     val emptyCommit = file("common.txt").append("more to common\n").addCommit("to common").hash()
     val commit3 = file("a.txt").append("more\n").addCommit("fix #2").hash()

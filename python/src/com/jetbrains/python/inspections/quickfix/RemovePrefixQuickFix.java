@@ -30,8 +30,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   06.03.2010
- * Time:   16:50:53
  */
 public class RemovePrefixQuickFix implements LocalQuickFix {
   private final String myPrefix;

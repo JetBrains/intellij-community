@@ -67,12 +67,8 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
           comma.delete();
         }
       }
-
-      super.deleteChildInternal(child);
     }
-    else {
-      super.deleteChildInternal(child);
-    }
+    super.deleteChildInternal(child);
   }
 
   @Override
@@ -113,7 +109,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
       for (GrCodeReferenceElement ref : getReferenceElementsGroovy()) {
         types.add(new GrClassReferenceType(ref));
       }
-      myCachedTypes = types.toArray(new PsiClassType[types.size()]);
+      myCachedTypes = types.toArray(PsiClassType.EMPTY_ARRAY);
     }
     return myCachedTypes;
   }

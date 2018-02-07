@@ -25,8 +25,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
+import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 
 /**
  * @author Tagir Valeev
@@ -339,7 +339,8 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   private static void register(MapCheckCondition condition, ProblemsHolder holder, boolean informationLevel, ReplaceWithSingleMapOperation fix) {
-    holder.registerProblem(condition.getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.getName()),
+    if (informationLevel && !holder.isOnTheFly()) return;
+    holder.registerProblem(condition.getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName),
                            informationLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
   }
 

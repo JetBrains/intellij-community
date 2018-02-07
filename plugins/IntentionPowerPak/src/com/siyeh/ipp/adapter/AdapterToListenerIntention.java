@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,18 @@
  */
 package com.siyeh.ipp.adapter;
 
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.siyeh.ipp.base.MutablyNamedIntention;
-import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.openapi.project.Project;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class AdapterToListenerIntention extends MutablyNamedIntention {
 
@@ -47,8 +44,7 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiElement parent = element.getParent();
     final PsiElement grandParent = parent.getParent();
     if (!(grandParent instanceof PsiClass)) {
@@ -78,8 +74,7 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
     }
     final PsiJavaCodeReferenceElement[] implementsReferences =
       implementsList.getReferenceElements();
-    final List<PsiJavaCodeReferenceElement> listenerReferences =
-      new ArrayList();
+    final List<PsiJavaCodeReferenceElement> listenerReferences = new ArrayList<>();
     for (PsiJavaCodeReferenceElement implementsReference :
       implementsReferences) {
       final String name = implementsReference.getReferenceName();

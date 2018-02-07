@@ -31,7 +31,6 @@ import javax.swing.*;
 /**
  * Describes the buildout facet.
  * User: dcheryasov
- * Date: Jul 26, 2010 5:47:24 PM
  */
 public class BuildoutFacetType extends FacetType<BuildoutFacet, BuildoutFacetConfiguration> {
   private BuildoutFacetType() {

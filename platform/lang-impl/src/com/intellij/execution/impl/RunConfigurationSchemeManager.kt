@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
@@ -15,7 +17,7 @@ import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
 
   private val converters by lazy {
@@ -23,6 +25,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
   }
 
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
+    // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
     return if (isShared) scheme.name else "${scheme.type.id}-${scheme.name}"
   }
 
@@ -101,7 +104,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element {
     val result = super.writeScheme(scheme)
-    if (isShared) {
+    if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
         .attribute("name", "ProjectRunConfigurationManager")
         .addContent(result)

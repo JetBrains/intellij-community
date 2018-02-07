@@ -330,7 +330,7 @@ class TreeHasherBase extends AbstractTreeHasher {
       final TreeHashResult childResult = hash(element, parentFragment, nodeSpecificHasher);
       result.add(childResult);
     }
-    return result.toArray(new TreeHashResult[result.size()]);
+    return result.toArray(new TreeHashResult[0]);
   }
 
   @NotNull

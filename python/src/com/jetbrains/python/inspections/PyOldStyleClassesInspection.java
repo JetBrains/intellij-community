@@ -72,14 +72,16 @@ public class PyOldStyleClassesInspection extends PyInspection {
       if (!node.isNewStyleClass(myTypeEvalContext)) {
         for (PyTargetExpression attr : node.getClassAttributes()) {
           if (PyNames.SLOTS.equals(attr.getName())) {
-            registerProblem(attr, PyBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+            registerProblem(attr, PyBundle.message("INSP.oldstyle.class.slots"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
+              LocalQuickFix.EMPTY_ARRAY));
           }
         }
         for (PyFunction attr : node.getMethods()) {
           if (PyNames.GETATTRIBUTE.equals(attr.getName())) {
             final ASTNode nameNode = attr.getNameNode();
             assert nameNode != null;
-            registerProblem(nameNode.getPsi(), PyBundle.message("INSP.oldstyle.class.getattribute"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+            registerProblem(nameNode.getPsi(), PyBundle.message("INSP.oldstyle.class.getattribute"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(
+              LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }
@@ -105,7 +107,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
           final PyExpression callee = node.getCallee();
           if (callee != null) {
             registerProblem(callee, PyBundle.message("INSP.oldstyle.class.super"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                            null, quickFixes.toArray(quickFixes.toArray(new LocalQuickFix[quickFixes.size()])));
+                            null, quickFixes.toArray(quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY)));
           }
         }
       }

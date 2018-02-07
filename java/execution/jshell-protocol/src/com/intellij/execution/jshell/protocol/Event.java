@@ -6,7 +6,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Jun-17
  */
 @XmlRootElement
 public class Event {

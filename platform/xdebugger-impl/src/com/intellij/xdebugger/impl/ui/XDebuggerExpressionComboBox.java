@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.ui;
 
@@ -21,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -47,6 +36,7 @@ import java.util.function.Function;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
+  private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
   private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
   private Function<Document, Document> myDocumentProcessor = Function.identity();
@@ -54,35 +44,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox<>(100);
-    myComboBox.setFocusCycleRoot(true);
-    myComboBox.setFocusTraversalPolicyProvider(true);
-    myComboBox.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-      @Override
-      public Component getComponentAfter(Container aContainer, Component aComponent) {
-        return null;
-      }
-
-      @Override
-      public Component getComponentBefore(Container aContainer, Component aComponent) {
-        return null;
-      }
-
-      @Override
-      public Component getFirstComponent(Container aContainer) {
-        return null;
-      }
-
-      @Override
-      public Component getLastComponent(Container aContainer) {
-        return null;
-      }
-
-      @Override
-      public Component getDefaultComponent(Container aContainer) {
-        return null;
-      }
-    });
+    myComboBox = new ComboBox<>(myModel, 100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -90,7 +52,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMinimumSize(minimumSize);
     initEditor(showEditor, languageInside);
     fillComboBox();
-    myComponent = JBUI.Panels.simplePanel(myComboBox);
+    myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
   }
 
   public ComboBox getComboBox() {
@@ -140,8 +102,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void fillComboBox() {
-    myComboBox.removeAllItems();
-    getRecentExpressions().forEach(myComboBox::addItem);
+    myModel.replaceAll(getRecentExpressions());
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }
@@ -212,7 +173,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         comp = addChooser(comp);
       }
       if (showMultiline) {
-        comp = addExpand(comp);
+        comp = addExpand(comp, true);
       }
       myPanel = comp;
     }

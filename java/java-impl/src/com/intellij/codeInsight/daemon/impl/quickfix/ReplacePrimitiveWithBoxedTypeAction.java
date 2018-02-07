@@ -84,9 +84,4 @@ public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntenti
     LOG.assertTrue(boxedType != null);
     startElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(boxedType));
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

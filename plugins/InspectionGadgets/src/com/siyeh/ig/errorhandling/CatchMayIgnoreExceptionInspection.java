@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.StreamEx;
@@ -36,6 +37,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
   public boolean m_ignoreCatchBlocksWithComments = true;
   public boolean m_ignoreNonEmptyCatchBlock = true;
+  public boolean m_ignoreUsedIgnoredName = false;
 
   @Nullable
   @Override
@@ -44,6 +46,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.comments"),
                       "m_ignoreCatchBlocksWithComments");
     panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.nonempty"), "m_ignoreNonEmptyCatchBlock");
+    panel.addCheckbox(InspectionGadgetsBundle.message("inspection.catch.ignores.exception.option.ignored.used"), "m_ignoreUsedIgnoredName");
     return panel;
   }
 
@@ -68,7 +71,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         final String parameterName = parameter.getName();
         if (parameterName == null) return;
         if (PsiUtil.isIgnoredName(parameterName)) {
-          if (VariableAccessUtils.variableIsUsed(parameter, section)) {
+          if (!m_ignoreUsedIgnoredName && VariableAccessUtils.variableIsUsed(parameter, section)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.used.message"));
           }
           return;
@@ -82,7 +85,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         final PsiCodeBlock block = section.getCatchBlock();
         if (block == null) return;
         SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(CatchMayIgnoreExceptionInspection.this, section);
-        if (isEmpty(block)) {
+        if (ControlFlowUtils.isEmpty(block, m_ignoreCatchBlocksWithComments, true)) {
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
                                  new EmptyCatchBlockFix(), fix);
         }
@@ -136,38 +139,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           };
         return runner.analyzeCodeBlock(block, visitor, stateAdjuster) == RunnerResult.OK;
       }
-
-      private boolean isEmpty(PsiElement element) {
-        if (!m_ignoreCatchBlocksWithComments && element instanceof PsiComment) {
-          return true;
-        }
-        else if (element instanceof PsiEmptyStatement) {
-          return !m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(element, PsiComment.class) == null;
-        }
-        else if (element instanceof PsiWhiteSpace) {
-          return true;
-        }
-        else if (element instanceof PsiBlockStatement) {
-          final PsiBlockStatement block = (PsiBlockStatement)element;
-          return isEmpty(block.getCodeBlock());
-        }
-        else if (element instanceof PsiCodeBlock) {
-          final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
-          PsiElement bodyElement = codeBlock.getFirstBodyElement();
-          final PsiElement lastBodyElement = codeBlock.getLastBodyElement();
-          while (bodyElement != null) {
-            if (!isEmpty(bodyElement)) {
-              return false;
-            }
-            if (bodyElement == lastBodyElement) {
-              break;
-            }
-            bodyElement = bodyElement.getNextSibling();
-          }
-          return true;
-        }
-        return false;
-      }
     };
   }
 
@@ -186,7 +157,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       myExceptionVar = exceptionVar;
       myMethods = StreamEx.of("getMessage", "getLocalizedMessage", "getCause")
         .flatArray(name -> exceptionClass.findMethodsByName(name, true))
-        .filter(m -> m.getParameterList().getParametersCount() == 0)
+        .filter(m -> m.getParameterList().isEmpty())
         .toList();
     }
 

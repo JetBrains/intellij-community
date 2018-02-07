@@ -63,6 +63,11 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
     }
 
     @Override
+    public boolean isQueryValid() {
+      return myElementToSearch.isValid();
+    }
+
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;

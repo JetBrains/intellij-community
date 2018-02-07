@@ -22,7 +22,6 @@ import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixt
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
-import org.intellij.lang.annotations.Language
 
 /**
  * @author Pavel.Dolgov

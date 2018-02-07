@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.model;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.project.IntelliJProjectConfiguration;
@@ -70,7 +69,7 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   }
 
   private static String getJDomSources() {
-    return JpsPathUtil.urlToPath(assertOneElement(IntelliJProjectConfiguration.getProjectLibrarySourceRootUrls("JDOM")));
+    return JpsPathUtil.urlToPath(assertOneElement(IntelliJProjectConfiguration.getProjectLibrary("JDOM").getSourcesUrls()));
   }
 
   private static String getJDomJar() {
@@ -79,10 +78,6 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
 
   private static String getAsmJar() {
     return getJarUrlFromProjectLib("ASM");
-  }
-
-  private static String getJarUrlFromLibDir(final String relativePath) {
-    return JpsPathUtil.getLibraryRootUrl(PathManager.findFileInLibDirectory(relativePath));
   }
 
   private static String getJarUrlFromProjectLib(final String libraryName) {

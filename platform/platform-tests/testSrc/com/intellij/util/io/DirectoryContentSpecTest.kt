@@ -118,6 +118,25 @@ class DirectoryContentSpecTest {
       }
     })
   }
+
+  @Test
+  fun `merge directory definitions`() {
+    val dir = directoryContent {
+      dir("foo") {
+        file("a.txt")
+      }
+      dir("foo") {
+        file("b.txt")
+      }
+    }.generateInTempDir()
+
+    dir.assertMatches(directoryContent {
+      dir("foo") {
+        file("a.txt")
+        file("b.txt")
+      }
+    })
+  }
 }
 
 private fun File.assertNotMatches(spec: DirectoryContentSpec) {

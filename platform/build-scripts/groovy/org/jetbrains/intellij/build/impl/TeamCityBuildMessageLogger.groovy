@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.intellij.build.impl
 
@@ -63,6 +51,9 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         break
       case LogMessage.Kind.ARTIFACT_BUILT:
         printTeamCityMessage("publishArtifacts", false, "'${escape(message.text)}'")
+        break
+      case LogMessage.Kind.BUILD_STATUS:
+        printTeamCityMessage("buildStatus", false, "text='${escape(message.text)}'")
         break
       case LogMessage.Kind.STATISTICS:
         int index = message.text.indexOf('=')
@@ -134,21 +125,21 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
       case ']': return ']' as char
     }
 
-    return 0;
+    return 0
   }
 
   private static String escape(String text) {
-    StringBuilder escaped = new StringBuilder();
+    StringBuilder escaped = new StringBuilder()
     for (char c : text.toCharArray()) {
-      char escChar = escapeChar(c);
+      char escChar = escapeChar(c)
       if (escChar == 0 as char) {
-        escaped.append(c);
+        escaped.append(c)
       }
       else {
-        escaped.append('|').append(escChar);
+        escaped.append('|').append(escChar)
       }
     }
 
-    return escaped.toString();
+    return escaped.toString()
   }
 }

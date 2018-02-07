@@ -35,6 +35,6 @@ public class CompositeShortcutSet implements ShortcutSet {
     for (ShortcutSet each : mySets) {
       Collections.addAll(result, each.getShortcuts());
     }
-    return result.toArray(new Shortcut[result.size()]);
+    return result.toArray(Shortcut.EMPTY_ARRAY);
   }
 }

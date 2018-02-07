@@ -1,28 +1,15 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl;
 
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -42,10 +29,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.pom.NonNavigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.GuiUtils;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.DocumentUtil;
@@ -155,145 +143,154 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                          final boolean temporary,
                                                                                                          @Nullable final Editor editor,
                                                                                                          boolean canRemove) {
-    return new WriteAction<Promise<XLineBreakpoint>>() {
-      @Override
-      protected void run(@NotNull Result<Promise<XLineBreakpoint>> result) throws Throwable {
-        final VirtualFile file = position.getFile();
-        final int line = position.getLine();
-        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-        XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
-        if (breakpoint != null) {
-          if (!temporary && canRemove) {
-            breakpointManager.removeBreakpoint(breakpoint);
-          }
-        }
-        else {
-          List<? extends XLineBreakpointType<P>.XLineBreakpointVariant> variants = type.computeVariants(project, position);
-          if (!variants.isEmpty() && editor != null) {
-            RelativePoint relativePoint = DebuggerUIUtil.getPositionForPopup(editor, line);
-            if (variants.size() > 1 && relativePoint != null) {
-              final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
-              class MySelectionListener implements ListSelectionListener {
-                RangeHighlighter myHighlighter = null;
-
-                @Override
-                public void valueChanged(ListSelectionEvent e) {
-                  if (!e.getValueIsAdjusting()) {
-                    updateHighlighter(((JList)e.getSource()).getSelectedValue());
-                  }
-                }
-
-                public void initialSet(Object value) {
-                  if (myHighlighter == null) {
-                    updateHighlighter(value);
-                  }
-                }
-
-                void updateHighlighter(Object value) {
-                  clearHighlighter();
-                  if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
-                    TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
-                    TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
-                    if (range != null) {
-                      range = range.intersection(lineRange);
-                    }
-                    else {
-                      range = lineRange;
-                    }
-                    if (range != null && !range.isEmpty()) {
-                      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-                      TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-                      myHighlighter = editor.getMarkupModel().addRangeHighlighter(
-                        range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                        HighlighterTargetArea.EXACT_RANGE);
-                    }
-                  }
-                }
-
-                private void clearHighlighter() {
-                  if (myHighlighter != null) {
-                    myHighlighter.dispose();
-                  }
-                }
-              }
-
-              // calculate default item
-              int caretOffset = editor.getCaretModel().getOffset();
-              XLineBreakpointType<P>.XLineBreakpointVariant defaultVariant = null;
-              for (XLineBreakpointType<P>.XLineBreakpointVariant variant : variants) {
-                TextRange range = variant.getHighlightRange();
-                if (range != null && range.contains(caretOffset)) {
-                  //noinspection ConstantConditions
-                  if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
-                    defaultVariant = variant;
-                  }
-                }
-              }
-              final int defaultIndex = defaultVariant != null ? variants.indexOf(defaultVariant) : 0;
-
-              final MySelectionListener selectionListener = new MySelectionListener();
-              ListPopupImpl popup = new ListPopupImpl(
-                new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
-                  @NotNull
-                  @Override
-                  public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {
-                    return value.getText();
-                  }
-
-                  @Override
-                  public Icon getIconFor(XLineBreakpointType.XLineBreakpointVariant value) {
-                    return value.getIcon();
-                  }
-
-                  @Override
-                  public void canceled() {
-                    selectionListener.clearHighlighter();
-                  }
-
-                  @Override
-                  public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
-                    selectionListener.clearHighlighter();
-                    WriteAction.run(() -> {
-                      P properties = (P)selectedValue.createProperties();
-                      res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary));
-                    });
-                    return FINAL_CHOICE;
-                  }
-
-                  @Override
-                  public int getDefaultOptionIndex() {
-                    return defaultIndex;
-                  }
-                }) {
-                @Override
-                protected void afterShow() {
-                  super.afterShow();
-                  selectionListener.initialSet(getList().getSelectedValue());
-                }
-              };
-              DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
-              popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
-
-              popup.addListSelectionListener(selectionListener);
-              popup.show(relativePoint);
-              result.setResult(res);
-              return;
-            }
-            else {
-              P properties = variants.get(0).createProperties();
-              result.setResult(
-                Promise.resolve(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
-              return;
-            }
-          }
-          P properties = type.createBreakpointProperties(file, line);
-          result.setResult(
-            Promise.resolve(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
+    final VirtualFile file = position.getFile();
+    final int line = position.getLine();
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+    if (breakpoint != null) {
+      if (!temporary && canRemove) {
+        WriteAction.run(() -> breakpointManager.removeBreakpoint(breakpoint));
+      }
+    }
+    else {
+      Promise<List<? extends XLineBreakpointType<P>.XLineBreakpointVariant>> variantsPromise = type.computeVariantsAsync(project, position);
+      final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
+      variantsPromise.done(variants -> GuiUtils.invokeLaterIfNeeded(() -> {
+        XLineBreakpoint<P> alreadyAddedBreakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+        if (alreadyAddedBreakpoint != null) {
           return;
         }
-        result.setResult(rejectedPromise());
-      }
-    }.execute().getResultObject();
+        if (!variants.isEmpty() && editor != null) {
+          RelativePoint relativePoint = DebuggerUIUtil.getPositionForPopup(editor, line);
+          if (variants.size() > 1 && relativePoint != null) {
+            class MySelectionListener implements ListSelectionListener {
+              RangeHighlighter myHighlighter = null;
+
+              @Override
+              public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                  updateHighlighter(((JList)e.getSource()).getSelectedValue());
+                }
+              }
+
+              public void initialSet(Object value) {
+                if (myHighlighter == null) {
+                  updateHighlighter(value);
+                }
+              }
+
+              void updateHighlighter(Object value) {
+                clearHighlighter();
+                if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
+                  TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
+                  TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
+                  if (range != null) {
+                    range = range.intersection(lineRange);
+                  }
+                  else {
+                    range = lineRange;
+                  }
+                  if (range != null && !range.isEmpty()) {
+                    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+                    TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+                    myHighlighter = editor.getMarkupModel().addRangeHighlighter(
+                      range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                      HighlighterTargetArea.EXACT_RANGE);
+                  }
+                }
+              }
+
+              private void clearHighlighter() {
+                if (myHighlighter != null) {
+                  myHighlighter.dispose();
+                }
+              }
+            }
+
+            // calculate default item
+            int caretOffset = editor.getCaretModel().getOffset();
+            XLineBreakpointType<P>.XLineBreakpointVariant defaultVariant = null;
+            for (XLineBreakpointType<P>.XLineBreakpointVariant variant : variants) {
+              TextRange range = variant.getHighlightRange();
+              if (range != null && range.contains(caretOffset)) {
+                //noinspection ConstantConditions
+                if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
+                  defaultVariant = variant;
+                }
+              }
+            }
+            final int defaultIndex = defaultVariant != null ? variants.indexOf(defaultVariant) : 0;
+
+            final MySelectionListener selectionListener = new MySelectionListener();
+            ListPopupImpl popup = new ListPopupImpl(
+              new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
+                @NotNull
+                @Override
+                public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {
+                  return value.getText();
+                }
+
+                @Override
+                public Icon getIconFor(XLineBreakpointType.XLineBreakpointVariant value) {
+                  return value.getIcon();
+                }
+
+                @Override
+                public void canceled() {
+                  selectionListener.clearHighlighter();
+                  res.cancel();
+                }
+
+                @Override
+                public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
+                  selectionListener.clearHighlighter();
+                  P properties = (P)selectedValue.createProperties();
+                  insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
+                  return FINAL_CHOICE;
+                }
+
+                @Override
+                public int getDefaultOptionIndex() {
+                  return defaultIndex;
+                }
+              }) {
+              @Override
+              protected void afterShow() {
+                super.afterShow();
+                selectionListener.initialSet(getList().getSelectedValue());
+              }
+            };
+            DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
+            popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
+
+            popup.addListSelectionListener(selectionListener);
+            popup.show(relativePoint);
+            return;
+          }
+          else {
+            P properties = variants.get(0).createProperties();
+            insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
+            return;
+          }
+        }
+        P properties = type.createBreakpointProperties(file, line);
+        insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
+      }, ModalityState.defaultModalityState()))
+        .rejected(error -> ApplicationManager.getApplication().invokeLater(() -> res.setError(error)));
+
+      return res;
+    }
+    return rejectedPromise();
+  }
+
+  private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
+                                AsyncPromise<XLineBreakpoint> res,
+                                XBreakpointManager breakpointManager,
+                                VirtualFile file,
+                                int line,
+                                XLineBreakpointType<P> type,
+                                Boolean temporary) {
+    WriteAction.run(() -> res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
   }
 
   @Override
@@ -347,60 +344,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   @Override
   @Nullable
   public XSourcePosition createPositionByElement(PsiElement element) {
-    if (element == null) return null;
-
-    PsiFile psiFile = element.getContainingFile();
-    if (psiFile == null) return null;
-
-    final VirtualFile file = psiFile.getVirtualFile();
-    if (file == null) return null;
-
-    final SmartPsiElementPointer<PsiElement> pointer =
-      SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
-
-    return new XSourcePosition() {
-      private volatile XSourcePosition myDelegate;
-
-      private XSourcePosition getDelegate() {
-        if (myDelegate == null) {
-          myDelegate = ReadAction.compute(() -> {
-            PsiElement elem = pointer.getElement();
-            return XSourcePositionImpl.createByOffset(pointer.getVirtualFile(), elem != null ? elem.getTextOffset() : -1);
-          });
-        }
-        return myDelegate;
-      }
-
-      @Override
-      public int getLine() {
-        return getDelegate().getLine();
-      }
-
-      @Override
-      public int getOffset() {
-        return getDelegate().getOffset();
-      }
-
-      @NotNull
-      @Override
-      public VirtualFile getFile() {
-        return file;
-      }
-
-      @NotNull
-      @Override
-      public Navigatable createNavigatable(@NotNull Project project) {
-        // no need to create delegate here, it may be expensive
-        if (myDelegate != null) {
-          return myDelegate.createNavigatable(project);
-        }
-        PsiElement elem = pointer.getElement();
-        if (elem instanceof Navigatable) {
-          return ((Navigatable)elem);
-        }
-        return NonNavigatable.INSTANCE;
-      }
-    };
+    return XSourcePositionImpl.createByElement(element);
   }
 
   @Override
@@ -592,5 +536,53 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static boolean isEmptyExpression(@Nullable XExpression expression) {
     return expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression());
+  }
+
+  public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
+    XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
+    if (activeExecutionStack != null) {
+      activeExecutionStack.computeStackFrames(0, new XExecutionStack.XStackFrameContainer() {
+        List<XStackFrame> myFrames = new ArrayList<>();
+
+        @Override
+        public void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, boolean last) {
+          myFrames.addAll(stackFrames);
+          if (last) {
+            print(null);
+          }
+        }
+
+        @Override
+        public void errorOccurred(@NotNull String errorMessage) {
+          print(errorMessage);
+        }
+
+        void print(@Nullable String errorMessage) {
+          ConsoleView view = session.getConsoleView();
+          Project project = session.getProject();
+          DebuggerUIUtil.invokeLater(() -> view.print("Stack: ", ConsoleViewContentType.SYSTEM_OUTPUT));
+          myFrames.forEach(f -> {
+            SimpleColoredText text = new SimpleColoredText();
+            ReadAction.run(() -> f.customizePresentation(text));
+            XSourcePosition position = f.getSourcePosition();
+            Navigatable navigatable = position != null ? position.createNavigatable(project) : null;
+            DebuggerUIUtil.invokeLater(() -> {
+              view.print("\n\t", ConsoleViewContentType.SYSTEM_OUTPUT);
+              view.printHyperlink(text.toString(), p -> {
+                if (navigatable != null) {
+                  navigatable.navigate(true);
+                }
+              });
+            });
+          });
+          DebuggerUIUtil.invokeLater(() -> {
+            if (errorMessage != null) {
+              view.print("\n\t" + errorMessage, ConsoleViewContentType.SYSTEM_OUTPUT);
+            }
+            view.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+          });
+        }
+      });
+    }
   }
 }

@@ -33,7 +33,6 @@ import java.util.HashSet;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public class JShellParser extends JavaParser {
   public static final JShellParser INSTANCE = new JShellParser();

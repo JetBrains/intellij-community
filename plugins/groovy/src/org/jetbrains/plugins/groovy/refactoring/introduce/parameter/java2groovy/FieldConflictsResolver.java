@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 29, 2009 2:20:17 PM
  */
 public class FieldConflictsResolver {
   //  private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.FieldConflictsResolver");

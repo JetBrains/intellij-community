@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 24, 2010
  */
 public class LowMemoryWatcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");

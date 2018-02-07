@@ -82,7 +82,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
                        .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
       }
     }
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static class JavaFxOptimizeImportsFix implements LocalQuickFix {

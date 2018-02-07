@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Ref;
@@ -227,7 +228,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }
     }
-    return result.toArray(new FilePath[result.size()]);
+    return result.toArray(new FilePath[0]);
   }
 
   protected abstract boolean filterRootsBeforeAction();
@@ -333,7 +334,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
-      runImpl();
+      DumbService.getInstance(myProject).suspendIndexingAndRun("VCS update", this::runImpl);
     }
 
     private void runImpl() {
@@ -359,7 +360,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
           // actual update
           UpdateSession updateSession =
-            updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]), myUpdatedFiles, progressIndicator, refContext);
+            updateEnvironment.updateDirectories(files.toArray(new FilePath[0]), myUpdatedFiles, progressIndicator, refContext);
 
           myContextInfo.put(vcs, refContext.get());
           processed++;

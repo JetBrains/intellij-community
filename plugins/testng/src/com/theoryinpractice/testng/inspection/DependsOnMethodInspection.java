@@ -8,7 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
+ * @author Hani Suleiman
  */
 public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");
@@ -94,7 +94,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
       }
     }
 
-    return problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
+    return problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static void checkMethodNameDependency(InspectionManager manager,
@@ -119,7 +119,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
         final String methodNameMask = StringUtil.trimEnd(methodName, "*");
         final List<PsiMethod> methods = ContainerUtil.filter(psiClass.getMethods(),
                                                              method -> method.getName().startsWith(methodNameMask));
-        foundMethods = methods.toArray(new PsiMethod[methods.size()]);
+        foundMethods = methods.toArray(PsiMethod.EMPTY_ARRAY);
       }
       else {
         foundMethods = psiClass.findMethodsByName(methodName, true);

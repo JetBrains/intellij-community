@@ -30,7 +30,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +119,7 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
       ContainerUtil.quickSort(list, PsiClassUtil.createScopeComparator(scope));
     }
 
-    return list.toArray(new PsiClass[list.size()]);
+    return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull

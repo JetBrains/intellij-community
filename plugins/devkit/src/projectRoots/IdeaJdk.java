@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -36,7 +22,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -48,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -122,29 +108,22 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    if (isFromIDEAProject(path)) {
+    if (PsiUtil.isPathToIntelliJIdeaSources(path)) {
       return true;
     }
     File home = new File(path);
-    return home.exists() && getBuildNumber(path) != null && getOpenApiJar(path) != null;
+    return home.exists() && getBuildNumber(path) != null && getPlatformApiJar(path) != null;
   }
 
   @Nullable
-  private static File getOpenApiJar(String home) {
-    @NonNls final String openapiJar = "openapi.jar";
+  private static File getPlatformApiJar(String home) {
     final File libDir = new File(home, LIB_DIR_NAME);
-    File f = new File(libDir, openapiJar);
+    File f = new File(libDir, "platform-api.jar");
     if (f.exists()) return f;
-    f = new File(libDir, "platform-api.jar");
+    //in 173.* and earlier builds all IDEs included platform modules into openapi.jar (see org.jetbrains.intellij.build.ProductModulesLayout.platformApiModules)
+    f = new File(libDir, "openapi.jar");
     if (f.exists()) return f;
     return null;
-  }
-
-  public static boolean isFromIDEAProject(String path) {
-    File ultimate = new File(path, "idea.iml");
-    File community = new File(path, "community-main.iml");
-    return ultimate.exists() && ultimate.isFile() ||
-           community.exists() && community.isFile();
   }
 
   @Override
@@ -165,7 +144,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    if (isFromIDEAProject(sdkHome)) return "Local IDEA [" + sdkHome + "]";
+    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
@@ -296,11 +275,9 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Nullable
   private static JavaSdkVersion getRequiredJdkVersion(Sdk ideaSdk) {
-    if (isFromIDEAProject(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
-    File apiJar = getOpenApiJar(ideaSdk.getHomePath());
-    int classFileVersion = apiJar == null ? -1 : getIdeaClassFileVersion(apiJar);
-    LanguageLevel languageLevel = classFileVersion <= 0? null : ClsParsingUtil.getLanguageLevelByVersion(classFileVersion);
-    return languageLevel != null ? JavaSdkVersion.fromLanguageLevel(languageLevel) : null;
+    if (PsiUtil.isPathToIntelliJIdeaSources(ideaSdk.getHomePath())) return JavaSdkVersion.JDK_1_8;
+    File apiJar = getPlatformApiJar(ideaSdk.getHomePath());
+    return apiJar != null ? ClsParsingUtil.getJdkVersionByBytecode(getIdeaClassFileVersion(apiJar)) : null;
   }
 
   private static int getIdeaClassFileVersion(File apiJar) {
@@ -325,7 +302,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static boolean setupSdkPaths(Sdk sdk, SdkModificator sdkModificator, SdkModel sdkModel) {
     String sdkHome = ObjectUtils.notNull(sdk.getHomePath());
-    if (isFromIDEAProject(sdkHome)) {
+    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) {
       try {
         ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
           setupSdkPathsFromIDEAProject(sdk, sdkModificator, sdkModel);
@@ -367,8 +344,8 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     boolean isUltimate = vfsManager.findFileByUrl(VfsUtilCore.pathToUrl(sdkHome + "/ultimate/ultimate-resources")) != null;
     Set<String> suppressedModules = ContainerUtil.newTroveSet("jps-plugin-system");
     Set<String> ultimateModules = ContainerUtil.newTroveSet(
-      "platform-ultimate", "ultimate-resources", "ultimate-verifier",
-      "diagram-api", "diagram-impl", "uml-plugin");
+      "intellij.platform.commercial", "intellij.idea.ultimate.resources", "intellij.platform.commercial.verifier",
+      "intellij.diagram", "intellij.diagram.impl", "intellij.uml");
     List<JpsModule> modules = JBIterable.from(model.getProject().getModules())
       .filter(o -> {
         if (suppressedModules.contains(o.getName())) return false;

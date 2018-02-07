@@ -39,7 +39,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 // todo: move path variables properties and jdk home properties into te generated property file
 public class BuildPropertiesImpl extends BuildProperties {

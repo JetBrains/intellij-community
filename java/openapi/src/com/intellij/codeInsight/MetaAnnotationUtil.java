@@ -165,6 +165,28 @@ public class MetaAnnotationUtil {
     return false;
   }
 
+  public static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                   @NotNull Collection<String> annotations) {
+    return isMetaAnnotatedInHierarchy(listOwner, annotations, new HashSet<>());
+  }
+
+  private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                    @NotNull Collection<String> annotations,
+                                                    Set<PsiMember> visited) {
+    if (isMetaAnnotated(listOwner, annotations)) return true;
+    if (listOwner instanceof PsiClass) {
+      for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
+        if (visited.add(superClass) && isMetaAnnotatedInHierarchy(superClass, annotations, visited)) return true;
+      }
+    }
+    else if (listOwner instanceof PsiMethod) {
+      for (PsiMethod method : ((PsiMethod)listOwner).findSuperMethods()) {
+        if (visited.add(method) && isMetaAnnotatedInHierarchy(method, annotations, visited)) return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
     return CachedValuesManager.getCachedValue(subjectAnnotation, () -> {

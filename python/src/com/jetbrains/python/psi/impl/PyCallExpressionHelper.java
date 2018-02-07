@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
  * User: dcheryasov
- * Date: Dec 23, 2008 10:31:38 AM
  */
 public class PyCallExpressionHelper {
   private PyCallExpressionHelper() {
@@ -370,9 +369,9 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  public static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
-                                              @NotNull PyExpression qualifier,
-                                              @NotNull TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
+                                               @NotNull PyExpression qualifier,
+                                               @NotNull TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
       return false;
     }
@@ -470,10 +469,7 @@ public class PyCallExpressionHelper {
           return PyUnionType.union(members);
         }
       }
-      if (callee == null) {
-        return null;
-      }
-      else {
+      if (callee != null) {
         final PyType type = context.getType(callee);
         if (type instanceof PyCallableType) {
           final PyCallableType callableType = (PyCallableType)type;
@@ -482,8 +478,8 @@ public class PyCallExpressionHelper {
         if (type instanceof PyUnionType) {
           return getCallResultTypeFromUnion(call, context, (PyUnionType)type);
         }
-        return null;
       }
+      return null;
     }
     finally {
       TypeEvalStack.evaluated(call);
@@ -725,12 +721,15 @@ public class PyCallExpressionHelper {
     final List<PyCallableParameter> parameters = markedCallee.getCallableType().getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callExpression);
 
-    final List<PyCallableParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
+    final int safeImplicitOffset = Math.min(markedCallee.getImplicitOffset(), parameters.size());
+    final List<PyCallableParameter> explicitParameters = parameters.subList(safeImplicitOffset, parameters.size());
+    final List<PyCallableParameter> implicitParameters = parameters.subList(0, safeImplicitOffset);
     final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
     return new PyCallExpression.PyArgumentsMapping(callExpression,
                                                    markedCallee,
+                                                   implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
@@ -799,8 +798,8 @@ public class PyCallExpressionHelper {
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
     final List<PyExpression> arguments = callSite.getArguments(callable);
-    final List<PyCallableParameter> explicitParameters =
-      filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> implicitParameters = parameters.subList(0, parameters.size() - explicitParameters.size());
 
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
@@ -809,6 +808,7 @@ public class PyCallExpressionHelper {
 
     return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    markedCallee,
+                                                   implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),

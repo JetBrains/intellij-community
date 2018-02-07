@@ -145,6 +145,9 @@
       <interface-class>org.jetbrains.ide.BuiltInServerManager</interface-class>
       <implementation-class>org.jetbrains.ide.BuiltInServerManagerImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

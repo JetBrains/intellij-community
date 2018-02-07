@@ -784,7 +784,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           }
           datas.add(data);
         }
-        return datas.toArray(new VariableData[datas.size()]);
+        return datas.toArray(new VariableData[0]);
       }
 
       @NotNull

@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,12 +31,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class DataFlowRunner {
@@ -73,14 +76,16 @@ public class DataFlowRunner {
   }
 
   @Nullable
-  private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
+  private Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
+                                                         @NotNull InstructionVisitor visitor,
+                                                         boolean allowInlining) {
     PsiElement container = PsiTreeUtil.getParentOfType(psiBlock, PsiClass.class, PsiLambdaExpression.class);
     if (container != null && (!(container instanceof PsiClass) || PsiUtil.isLocalOrAnonymousClass((PsiClass)container))) {
       PsiElement block = DfaPsiUtil.getTopmostBlockInSameClass(container.getParent());
       if (block != null) {
         final RunnerResult result;
         try {
-          myInlining = false;
+          myInlining = allowInlining;
           result = analyzeMethod(block, visitor);
         }
         finally {
@@ -88,7 +93,7 @@ public class DataFlowRunner {
         }
         if (result == RunnerResult.OK) {
           final Collection<DfaMemoryState> closureStates = myNestedClosures.get(DfaPsiUtil.getTopmostBlockInSameClass(psiBlock));
-          if (!closureStates.isEmpty()) {
+          if (allowInlining || !closureStates.isEmpty()) {
             return closureStates;
           }
         }
@@ -99,10 +104,39 @@ public class DataFlowRunner {
     return Collections.singletonList(createMemoryState());
   }
 
+  /**
+   * Analyze this particular method (lambda, class initializer) without inlining this method into parent one.
+   * E.g. if supplied method is a lambda within Stream API call chain, it still will be analyzed as separate method.
+   * On the other hand, inlining will normally work inside the supplied method.
+   *
+   * @param psiBlock method/lambda/class initializer body
+   * @param visitor a visitor to use
+   * @return result status
+   */
   @NotNull
   public final RunnerResult analyzeMethod(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
-    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor);
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, false);
     return initialStates == null ? RunnerResult.NOT_APPLICABLE : analyzeMethod(psiBlock, visitor, false, initialStates);
+  }
+
+  /**
+   * Analyze this particular method (lambda, class initializer) trying to inline it into outer scope if possible.
+   * Usually inlining works, e.g. for lambdas inside stream API calls.
+   *
+   * @param psiBlock method/lambda/class initializer body
+   * @param visitor a visitor to use
+   * @return result status
+   */
+  @NotNull
+  public final RunnerResult analyzeMethodWithInlining(@NotNull PsiElement psiBlock, @NotNull InstructionVisitor visitor) {
+    Collection<DfaMemoryState> initialStates = createInitialStates(psiBlock, visitor, true);
+    if (initialStates == null) {
+      return RunnerResult.NOT_APPLICABLE;
+    }
+    if (initialStates.isEmpty()) {
+      return RunnerResult.OK;
+    }
+    return analyzeMethod(psiBlock, visitor, false, initialStates);
   }
 
   public final RunnerResult analyzeCodeBlock(@NotNull PsiCodeBlock block,
@@ -243,11 +277,33 @@ public class DataFlowRunner {
     }
   }
 
+  public RunnerResult analyzeMethodRecursively(PsiElement block, StandardInstructionVisitor visitor) {
+    Collection<DfaMemoryState> states = createInitialStates(block, visitor, false);
+    if (states == null) return RunnerResult.NOT_APPLICABLE;
+    return analyzeBlockRecursively(block, states, visitor);
+  }
+
+  private RunnerResult analyzeBlockRecursively(PsiElement block,
+                                               Collection<? extends DfaMemoryState> states,
+                                               StandardInstructionVisitor visitor) {
+    RunnerResult result = analyzeMethod(block, visitor, false, states);
+    if (result != RunnerResult.OK) return result;
+
+    Ref<RunnerResult> ref = Ref.create(RunnerResult.OK);
+    forNestedClosures((closure, nestedStates) -> {
+      RunnerResult res = analyzeBlockRecursively(closure, nestedStates, visitor);
+      if (res != RunnerResult.OK) {
+        ref.set(res);
+      }
+    });
+    return ref.get();
+  }
+
   @Nullable
   private static DfaValue makeInitialValue(DfaVariableValue var, PsiElement block) {
     if(var.getQualifier() != null) return null;
     PsiField field = ObjectUtils.tryCast(var.getPsiVariable(), PsiField.class);
-    if (field == null || DfaUtil.hasInitializationHacks(field)) return null;
+    if (field == null || DfaUtil.ignoreInitializer(field) || DfaUtil.hasInitializationHacks(field)) return null;
     return DfaUtil.getPossiblyNonInitializedValue(var.getFactory(), field, block);
   }
 
@@ -372,9 +428,25 @@ public class DataFlowRunner {
     return myInstructions[index];
   }
 
-  @NotNull
-  MultiMap<PsiElement, DfaMemoryState> getNestedClosures() {
-    return new MultiMap<>(myNestedClosures);
+  public void forNestedClosures(BiConsumer<PsiElement, Collection<? extends DfaMemoryState>> consumer) {
+    // Copy to avoid concurrent modifications
+    MultiMap<PsiElement, DfaMemoryState> closures = new MultiMap<>(myNestedClosures);
+    for (PsiElement closure : closures.keySet()) {
+      List<DfaVariableValue> unusedVars = StreamEx.of(getFactory().getValues())
+        .select(DfaVariableValue.class)
+        .filter(var -> var.getQualifier() == null)
+        .filter(var -> var.getPsiVariable() instanceof PsiVariable &&
+                       !VariableAccessUtils.variableIsUsed((PsiVariable)var.getPsiVariable(), closure))
+        .toList();
+      Collection<? extends DfaMemoryState> states = closures.get(closure);
+      if (!unusedVars.isEmpty()) {
+        List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
+          .peek(state -> unusedVars.forEach(state::flushVariable))
+          .map(state -> (DfaMemoryStateImpl)state).distinct().toList();
+        states = StateQueue.mergeGroup(stateList);
+      }
+      consumer.accept(closure, states);
+    }
   }
 
   @NotNull

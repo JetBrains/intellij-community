@@ -103,12 +103,29 @@ public class StreamChainInliner implements CallInliner {
     .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
     .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new);
 
+  private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
+    @Override
+    void before(CFGBuilder builder) {
+      builder.flushFields();
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.pop();
+    }
+
+    @Override
+    void pushResult(CFGBuilder builder) {
+      builder.pushUnknown();
+    }
+  };
+
   static abstract class Step {
     final Step myNext;
-    final @NotNull PsiMethodCallExpression myCall;
+    final PsiMethodCallExpression myCall;
     final PsiExpression myFunction;
 
-    Step(@NotNull PsiMethodCallExpression call, Step next, PsiExpression function) {
+    Step(PsiMethodCallExpression call, Step next, PsiExpression function) {
       myNext = next;
       myCall = call;
       myFunction = function;
@@ -382,10 +399,13 @@ public class StreamChainInliner implements CallInliner {
       } else {
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
         builder.pop()
+          .pushUnknown()
+          .ifConditionIs(true)
           .doWhile()
           .push(builder.getFactory().createTypeValue(outType, Nullness.UNKNOWN))
           .chain(myNext::iteration)
-          .endWhileUnknown();
+          .endWhileUnknown()
+          .endIf();
       }
     }
   }
@@ -480,9 +500,30 @@ public class StreamChainInliner implements CallInliner {
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
-    if (!TERMINAL_CALL.test(call)) {
+    if (TERMINAL_CALL.test(call)) {
+      return inlineCompleteStream(builder, call);
+    }
+    else {
+      return inlinePartialStream(builder, call);
+    }
+  }
+
+  private static boolean inlinePartialStream(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
+    Step firstStep = buildChain(call, NULL_TERMINAL_STEP);
+    if (firstStep == NULL_TERMINAL_STEP) {
       return false;
     }
+    PsiExpression originalQualifier = firstStep.myCall.getMethodExpression().getQualifierExpression();
+    if (originalQualifier == null) return false;
+    builder.pushUnknown()
+      .ifConditionIs(true)
+      .chain(b -> buildStreamCFG(b, firstStep, originalQualifier))
+      .endIf()
+      .push(builder.getFactory().createTypeValue(call.getType(), Nullness.NOT_NULL));
+    return true;
+  }
+
+  private static boolean inlineCompleteStream(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
     Step terminalStep = createTerminalStep(call);
     Step firstStep = buildChain(qualifierCall, terminalStep);

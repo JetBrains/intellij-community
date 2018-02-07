@@ -24,6 +24,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -77,13 +78,13 @@ fun <T : UElement> UElement.getParentOfType(
   }
 }
 
-fun UElement.getUCallExpression(): UCallExpression? = this.withContainingElements.mapNotNull {
+fun UElement?.getUCallExpression(): UCallExpression? = this?.withContainingElements?.mapNotNull {
   when (it) {
     is UCallExpression -> it
     is UQualifiedReferenceExpression -> it.selector as? UCallExpression
     else -> null
   }
-}.firstOrNull()
+}?.firstOrNull()
 
 @Deprecated(message = "This function is deprecated, use getContainingUFile", replaceWith = ReplaceWith("getContainingUFile()"))
 fun UElement.getContainingFile() = getContainingUFile()
@@ -158,3 +159,15 @@ tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
 }
 
 fun Collection<UElement?>.toPsiElements() = mapNotNull { it?.psi }
+
+/**
+ * A helper function for getting parents for given [PsiElement] that could be considered as identifier.
+ * Useful for working with gutter accorting to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ */
+@ApiStatus.Experimental
+fun getUParentForIdentifier(identifier: PsiElement): UElement? {
+  val uIdentifier = identifier.toUElementOfType<UIdentifier>() ?: return null
+  return uIdentifier.uastParent
+         ?: identifier.parent.toUElement() // a workaround for Kotlin < 1.2.30 which identifiers cant get parents
+
+}

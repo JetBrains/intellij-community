@@ -57,7 +57,7 @@ public class RefreshOutputDirectoriesTest extends BaseCompilerTestCase {
       modules.add(module);
 
     }
-    Module[] modulesArray = modules.toArray(new Module[modules.size()]);
+    Module[] modulesArray = modules.toArray(Module.EMPTY_ARRAY);
     subscribeToRootChanges();
     make(modulesArray);
     assertOutputDirectoriesRefreshed(modulesArray);

@@ -151,7 +151,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     // a new top level frame just got the focus. This is important to prevent screen readers
     // from announcing the title of the top level frame when the list is shown (or hidden),
     // as they usually do when a new top-level frame receives the focus.
-    AccessibleContextUtil.setParent(myList, myEditor.getContentComponent());
+    AccessibleContextUtil.setParent((Component)myList, myEditor.getContentComponent());
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
@@ -843,7 +843,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void fireItemSelected(@Nullable final LookupElement item, char completionChar){
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (item != null && item.requiresCommittedDocuments()) {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    }
     myArranger.itemSelected(item, completionChar);
     if (!myListeners.isEmpty()){
       LookupEvent event = new LookupEvent(this, item, completionChar);
@@ -992,7 +994,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     PsiFile hostFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (hostFile != null) {
       // inspired by com.intellij.codeInsight.editorActions.TypedHandler.injectedEditorIfCharTypedIsSignificant()
-      for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
+      List<DocumentWindow> injected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostFile, TextRange.create(offset, offset));
+      for (DocumentWindow documentWindow : injected ) {
         if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
           return documentWindow;
         }
@@ -1089,7 +1092,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   public void dispose() {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert myHidden;
     if (myDisposed) {
       LOG.error(disposeTrace);

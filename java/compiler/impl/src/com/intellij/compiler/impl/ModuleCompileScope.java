@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Jan 20, 2003
- * Time: 5:34:19 PM
  */
 package com.intellij.compiler.impl;
 
@@ -78,7 +76,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
 
   @NotNull
   public Module[] getAffectedModules() {
-    return myScopeModules.toArray(new Module[myScopeModules.size()]);
+    return myScopeModules.toArray(Module.EMPTY_ARRAY);
   }
 
   @NotNull

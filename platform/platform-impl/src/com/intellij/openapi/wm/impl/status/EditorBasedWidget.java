@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorManagerListener {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.EditorBasedWidget");
   public static final String SWING_FOCUS_OWNER_PROPERTY = "focusOwner";
 
   protected StatusBar myStatusBar;
@@ -54,18 +56,30 @@ public abstract class EditorBasedWidget implements StatusBarWidget, FileEditorMa
     FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, myStatusBar);
     Editor result = null;
     if (fileEditor instanceof TextEditor) {
-      result = ((TextEditor)fileEditor).getEditor();
+      Editor editor = ((TextEditor)fileEditor).getEditor();
+      if (ensureValidEditorFile(editor)) {
+        result = editor;
+      }
     }
 
     if (result == null) {
       final FileEditorManager manager = FileEditorManager.getInstance(project);
       Editor editor = manager.getSelectedTextEditor();
-      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == myStatusBar) {
+      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == myStatusBar && ensureValidEditorFile(editor)) {
         result = editor;
       }
     }
 
     return result;
+  }
+
+  private static boolean ensureValidEditorFile(Editor editor) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    if (file != null && !file.isValid()) {
+      LOG.error("Returned editor for invalid file: " + editor + "; disposed=" + editor.isDisposed() + "; file " + file.getClass());
+      return false;
+    }
+    return true;
   }
 
   boolean isOurEditor(Editor editor) {

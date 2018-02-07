@@ -128,8 +128,4 @@ public class GroupConfigurable extends NamedConfigurable<ProxyGroup> {
       // never
     }
   }
-
-  public void disposeUIResources() {
-
-  }
 }

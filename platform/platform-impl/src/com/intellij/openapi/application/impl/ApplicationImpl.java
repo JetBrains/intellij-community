@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -90,6 +75,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public class ApplicationImpl extends PlatformComponentManagerImpl implements ApplicationEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.application.impl.ApplicationImpl");
@@ -116,7 +102,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final long myStartTime;
   @Nullable
   private Splash mySplash;
-  private boolean myDoNotSave;
+  private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
   private volatile boolean myDisposeInProgress;
 
@@ -158,7 +144,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
 
-    myDoNotSave = isUnitTestMode || isHeadless;
+    mySaveAllowed = !(isUnitTestMode || isHeadless);
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
@@ -234,12 +220,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private boolean disposeSelf(final boolean checkCanCloseProject) {
     final ProjectManagerImpl manager = (ProjectManagerImpl)ProjectManagerEx.getInstanceEx();
     if (manager == null) {
-      saveSettings();
+      saveSettings(true);
     }
     else {
       final boolean[] canClose = {true};
       try {
         CommandProcessor.getInstance().executeCommand(null, () -> {
+          saveSettings(true);
           if (!manager.closeAndDisposeAllProjects(checkCanCloseProject)) {
             canClose[0] = false;
           }
@@ -355,6 +342,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         return action.toString();
       }
     });
+  }
+
+  /**
+   * Can be called from inside {@link #executeSuspendingWriteAction}. 
+   * The returned access token allows to start read action on another thread.
+   */
+  @ApiStatus.Experimental
+  public Supplier<AccessToken> transferReadPrivilege() {
+    ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
+    return () -> myLock.applyReadPrivilege(suspensionId); 
   }
 
   @Override
@@ -955,7 +952,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithProgressInDispatchThread(
+  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(
+    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
+    @NotNull Consumer<ProgressIndicator> action
+  ) {
+    return runEdtProgressWriteAction(title, project, parentComponent, null, action);
+  }
+
+  @ApiStatus.Experimental
+  public boolean runWriteActionWithCancellableProgressInDispatchThread(
+    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
+    @NotNull Consumer<ProgressIndicator> action
+  ) {
+    return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
+  }
+
+  private boolean runEdtProgressWriteAction(
     @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
     @NotNull Consumer<ProgressIndicator> action
   ) {
@@ -1394,39 +1406,44 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveSettings() {
-    if (myDoNotSave) return;
+    saveSettings(false);
+  }
 
-    if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-      try {
-        StoreUtil.save(ServiceKt.getStateStore(this), null);
-      }
-      finally {
-        mySaveSettingsIsInProgress.set(false);
-      }
+  @Override
+  public void saveSettings(boolean isForce) {
+    if (!mySaveAllowed || !mySaveSettingsIsInProgress.compareAndSet(false, true)) {
+      return;
+    }
+
+    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    try {
+      StoreUtil.save(ServiceKt.getStateStore(this), null, isForce);
+    }
+    finally {
+      mySaveSettingsIsInProgress.set(false);
     }
   }
 
   @Override
   public void saveAll() {
-    if (myDoNotSave) return;
-
-    StoreUtil.saveDocumentsAndProjectsAndApp();
+    saveAll(false);
   }
 
   @Override
-  public void doNotSave() {
-    doNotSave(true);
+  public void saveAll(boolean isForce) {
+    if (mySaveAllowed) {
+      StoreUtil.saveDocumentsAndProjectsAndApp(isForce);
+    }
   }
 
   @Override
-  public void doNotSave(boolean value) {
-    myDoNotSave = value;
+  public void setSaveAllowed(boolean value) {
+    mySaveAllowed = value;
   }
 
   @Override
-  public boolean isDoNotSave() {
-    return myDoNotSave;
+  public boolean isSaveAllowed() {
+    return mySaveAllowed;
   }
 
   @NotNull

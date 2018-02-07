@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
@@ -30,10 +16,10 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -73,6 +59,9 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
       return null;
     }
   }
+
+  public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
+  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE = false;
 
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
@@ -163,14 +152,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
    * So please don't reference this field directly, use JavaProjectCodeInsightSettings instead.
    */
   @Property(surroundWithTag = false)
-  @AbstractCollection(
-    surroundWithTag = false,
-    elementTag = "EXCLUDED_PACKAGE",
-    elementValueAttribute = "NAME")
+  @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
   public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
   @Override
-  public void loadState(final Element state) {
+  public void loadState(@NotNull Element state) {
     // 'Write' save only diff from default. Before load do reset to default values.
     setDefaults();
 

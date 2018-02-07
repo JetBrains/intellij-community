@@ -96,7 +96,7 @@ public class DiffManagerTest {
     @NotNull
     @Override
     public DiffContent[] getContents() {
-      return myDiffContents.toArray(new DiffContent[myDiffContents.size()]);
+      return myDiffContents.toArray(new DiffContent[0]);
     }
 
     public void addContent(DiffContent content, String title) {

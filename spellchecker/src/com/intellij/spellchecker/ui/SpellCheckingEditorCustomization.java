@@ -34,8 +34,10 @@ import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -125,6 +127,10 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     if (analyzer != null) {
       analyzer.restart(file);
     }
+  }
+
+  public static Set<String> getSpellCheckingToolNames() {
+    return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfileImpl, InspectionProfileWrapper> {

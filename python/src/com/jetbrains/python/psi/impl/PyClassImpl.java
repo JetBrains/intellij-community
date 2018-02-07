@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -22,15 +9,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -345,7 +331,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         result.add(((PyClassType)type).getPyClass());
       }
     }
-    return result.toArray(new PyClass[result.size()]);
+    return result.toArray(PyClass.EMPTY_ARRAY);
   }
 
   @Override
@@ -356,18 +342,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       public String getPresentableText() {
         PyPsiUtils.assertValid(PyClassImpl.this);
         final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
-        final PyExpression[] superClassExpressions = getSuperClassExpressions();
-        if (superClassExpressions.length > 0) {
+        final List<String> superClassesText = getSuperClassesText();
+        if (!superClassesText.isEmpty()) {
           result.append("(");
-          result.append(join(Arrays.asList(superClassExpressions), expr -> {
-            String name = expr.getText();
-            return notNullize(name, PyNames.UNNAMED_ELEMENT);
-          }, ", "));
+          result.append(join(superClassesText, expr -> notNullize(expr, PyNames.UNNAMED_ELEMENT), ", "));
           result.append(")");
         }
         return result.toString();
       }
     };
+  }
+
+  private List<String> getSuperClassesText() {
+    PyClassStub stub = getGreenStub();
+    if (stub == null) {
+      return ContainerUtil.map(getSuperClassExpressions(), PsiElement::getText);
+    }
+    else {
+      return stub.getSuperClassesText();
+    }
   }
 
   @NotNull
@@ -442,7 +435,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       final List<List<PyClassLikeType>> lines = new ArrayList<>();
       for (PyClassLikeType base : bases) {
         if (base != null) {
-          final List<PyClassLikeType> baseClassMRO = mroLinearize(base, true, context, cache);
+          // Don't include ancestors of a metaclass instance
+          final List<PyClassLikeType> baseClassMRO;
+          if (base.isDefinition()) {
+            baseClassMRO = mroLinearize(base, true, context, cache);
+          }
+          else {
+            List<PyClassLikeType> metaclassInstanceMro = new ArrayList<>();
+            metaclassInstanceMro.add(base);
+            if (base instanceof PyClassType) {
+              final PyClassImpl pyClass = as(((PyClassType)base).getPyClass(), PyClassImpl.class);
+              if (pyClass != null) {
+                ContainerUtil.addIfNotNull(metaclassInstanceMro, pyClass.getImplicitSuper(context));
+              }
+            }
+            baseClassMRO = metaclassInstanceMro;
+          }
           if (!baseClassMRO.isEmpty()) {
             // mroMerge() updates passed MRO lists internally
             lines.add(new LinkedList<>(baseClassMRO));
@@ -504,7 +512,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                                                                                          @NotNull Class<T> childrenClass,
                                                                                          @NotNull ArrayFactory<T> factory) {
     final List<T> result = new ArrayList<>();
-    processClassLevelDeclarations(new BaseScopeProcessor() {
+    processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement)element).getElementType())) {
@@ -656,13 +664,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   /**
    * @param name            name of the property
    * @param property_filter returns true if the property is acceptable
-   * @param advanced        is @foo.setter syntax allowed
    * @return the first property that both filters accepted.
    */
   @Nullable
-  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter, boolean advanced) {
+  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter) {
     // NOTE: fast enough to be rerun every time
-    Property prop = processDecoratedProperties(name, property_filter, advanced);
+    Property prop = processDecoratedProperties(name, property_filter);
     if (prop != null) return prop;
     if (getStub() != null) {
       prop = processStubProperties(name, property_filter);
@@ -683,7 +690,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean useAdvancedSyntax) {
+  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter) {
     // look at @property decorators
     Map<String, List<PyFunction>> grouped = new HashMap<>();
     // group suitable same-named methods, each group defines a property
@@ -718,16 +725,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                 }
               }
               if (PyNames.PROPERTY.equals(decoName) ||
-                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject()))) {
+                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
+                  qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.GETTER)) {
-                getter = new Maybe<>(method);
-              }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.SETTER)) {
+              else if (qname.matches(decoratorName, PyNames.SETTER)) {
                 setter = new Maybe<>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.DELETER)) {
+              else if (qname.matches(decoratorName, PyNames.DELETER)) {
                 deleter = new Maybe<>(method);
               }
             }
@@ -842,14 +847,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
     PyPsiUtils.assertValid(this);
-    LanguageLevel level = LanguageLevel.getDefault();
-    // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
-    final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
-    if (file != null) {
-      level = LanguageLevel.forElement(file);
-    }
-    final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    final Property local = processPropertiesInClass(name, filter, useAdvancedSyntax);
+    final Property local = processPropertiesInClass(name, filter);
     if (local != null) {
       return local;
     }
@@ -858,7 +856,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return null;
       }
       for (PyClass cls : getAncestorClasses(null)) {
-        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter, useAdvancedSyntax);
+        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter);
         if (property != null) {
           return property;
         }
@@ -1066,6 +1064,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
           if (target instanceof PyTargetExpression) {
             result.add((PyTargetExpression)target);
           }
+        }
+      }
+      else if (psiElement instanceof PyTypeDeclarationStatement) {
+        final PyExpression target = ((PyTypeDeclarationStatement)psiElement).getTarget();
+        if (target instanceof PyTargetExpression) {
+          result.add((PyTargetExpression)target);
         }
       }
     }
@@ -1416,7 +1420,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
 
-    if (LanguageLevel.forElement(this).isOlderThan(LanguageLevel.PYTHON30) && getMetaClassQName() == null) {
+    if (LanguageLevel.forElement(this).isPython2() && getMetaClassQName() == null) {
       final QualifiedName typesInstanceTypeQName = QualifiedName.fromDottedString(PyNames.TYPES_INSTANCE_TYPE);
       final PsiElement typesInstanceType = resolveTopLevelMember(typesInstanceTypeQName, fromFoothold(this));
 
@@ -1433,6 +1437,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return ContainerUtil.filter(getAncestorTypesWithMetaClassInstances(context), type -> type == null || type.isDefinition());
+  }
+
+  @NotNull
+  private List<PyClassLikeType> getAncestorTypesWithMetaClassInstances(@NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(this, context, contextArgument -> {
       List<PyClassLikeType> ancestorTypes;
       if (isNewStyleClass(contextArgument)) {
@@ -1484,7 +1493,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
     }
     final LanguageLevel level = LanguageLevel.forElement(this);
-    if (level.isOlderThan(LanguageLevel.PYTHON30)) {
+    if (level.isPython2()) {
       final PsiFile file = getContainingFile();
       if (file instanceof PyFile) {
         final PyFile pyFile = (PyFile)file;
@@ -1497,6 +1506,79 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
+  @Override
+  @Nullable
+  public PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
+    if (!inherited) {
+      return as(getMetaClassType(context), PyClassLikeType.class);
+    }
+    final List<PyClassLikeType> metaClassTypes = getAllPossibleMetaClassTypes(context);
+    final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
+    return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(this).getObjectType("type");
+  }
+
+  @Nullable
+  private static PyClassLikeType getMostDerivedClassType(@NotNull List<PyClassLikeType> classTypes,
+                                                         @NotNull final TypeEvalContext context) {
+    if (classTypes.isEmpty()) {
+      return null;
+    }
+    try {
+      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
+
+      return classTypes
+        .stream()
+        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .max(
+          (t1, t2) -> {
+            if (Objects.equals(t1, t2)) {
+              return 0;
+            }
+            else if (t2 == null || t1 != null && t1.getAncestorTypes(context).contains(t2)) {
+              return 1;
+            }
+            else if (t1 == null || t2.getAncestorTypes(context).contains(t1)) {
+              return -1;
+            }
+            else {
+              throw new NotDerivedClassTypeException();
+            }
+          }
+        )
+        .orElse(null);
+    }
+    catch (NotDerivedClassTypeException ignored) {
+      return null;
+    }
+  }
+
+  private static final class NotDerivedClassTypeException extends RuntimeException {
+  }
+
+  @NotNull
+  private List<PyClassLikeType> getAllPossibleMetaClassTypes(@NotNull TypeEvalContext context) {
+    final List<PyClassLikeType> results = Lists.newArrayList();
+    final PyClassLikeType ownMeta = getMetaClassType(false, context);
+    if (ownMeta != null) {
+      results.add(ownMeta);
+    }
+    for (PyClassLikeType ancestor : getAncestorTypesWithMetaClassInstances(context)) {
+      if (ancestor != null) {
+        if (!ancestor.isDefinition()) {
+          results.add(ancestor.toClass());
+        }
+        else {
+          final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
+          if (ancestorMeta != null) {
+            results.add(ancestorMeta);
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+
   @Nullable
   private QualifiedName getMetaClassQName() {
     final PyClassStub stub = getStub();
@@ -1507,7 +1589,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyExpression getMetaClassExpression() {
     final LanguageLevel level = LanguageLevel.forElement(this);
-    if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+    if (!level.isPython2()) {
       // Requires AST access
       for (PyExpression expression : getSuperClassExpressions()) {
         if (expression instanceof PyKeywordArgument) {

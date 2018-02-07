@@ -45,7 +45,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 25, 2007
  *
  * A file has three indexed states (per particular index): indexed (with particular index_stamp), outdated and (trivial) unindexed
  * if index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything
@@ -148,11 +147,11 @@ public class IndexingStamp {
     return getIndexVersion(indexId, currentIndexVersion) == null;
   }
 
-  private static final int ANY_VERSION = 1;
+  private static final int ANY_CURRENT_INDEX_VERSION = Integer.MIN_VALUE;
   private static final long NO_VERSION = 0;
   
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    IndexVersion version = getIndexVersion(indexName, ANY_VERSION);
+    IndexVersion version = getIndexVersion(indexName, ANY_CURRENT_INDEX_VERSION);
     return version != null ? version.myModificationCount : NO_VERSION;
   }
 
@@ -169,7 +168,7 @@ public class IndexingStamp {
         final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
         try {
 
-          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
+          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
               DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
             version = new IndexVersion(in);
@@ -431,9 +430,9 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
-              timestamp.writeToStream(sink);
-              sink.close();
+              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+                timestamp.writeToStream(sink);
+              }
             }
           } catch (IOException e) {
             throw new RuntimeException(e);

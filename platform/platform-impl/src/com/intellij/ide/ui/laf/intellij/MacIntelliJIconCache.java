@@ -17,10 +17,10 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
+import java.util.HashMap;
 
 /**
  * @author Konstantin Bulenkov
@@ -37,8 +37,15 @@ public class MacIntelliJIconCache {
     else if (focused) key+= "Focused";
     else if (!enabled) key+="Disabled";
 
-    if (IntelliJLaf.isGraphite()) key= "graphite/" + key;
-    if (UIUtil.isUnderWin10LookAndFeel()) key = "win10/" + key;
+    String dir = "";
+
+    // For Mac blue theme and other LAFs use default directory icons
+    if (UIUtil.isUnderDefaultMacTheme()) dir = IntelliJLaf.isGraphite() ? "graphite/" : "";
+    else if (UIUtil.isUnderWin10LookAndFeel()) dir = "win10/";
+    else if (UIUtil.isUnderDarcula()) dir = "darcula/";
+    else if (UIUtil.isUnderIntelliJLaF()) dir = "intellij/";
+
+    key = dir + key;
 
     Icon icon = cache.get(key);
     if (icon == null) {
@@ -59,6 +66,7 @@ public class MacIntelliJIconCache {
   public static Icon getIcon(String name, boolean selected, boolean focused) {
     return getIcon(name, false, selected, focused, true);
   }
+
   public static Icon getIcon(String name) {
     return getIcon(name, false, false, false, true);
   }

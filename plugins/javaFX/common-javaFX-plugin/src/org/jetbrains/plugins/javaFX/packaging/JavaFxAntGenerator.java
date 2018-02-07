@@ -99,12 +99,13 @@ public class JavaFxAntGenerator {
     //create jar task
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
                                                  Couple.of("destfile", tempDirPath + "/" + artifactFileName));
+    addVerboseAttribute(createJarTag, packager);
     createJarTag.add(new SimpleTag("fx:application", Couple.of("refid", appId)));
 
     final List<Pair> fileset2Jar = new ArrayList<>();
     fileset2Jar.add(Couple.of("dir", tempDirPath));
     fileset2Jar.add(Couple.of("excludes", "**/*.jar"));
-    createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
+    createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[0])));
 
     createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
 
@@ -137,6 +138,7 @@ public class JavaFxAntGenerator {
     if (!StringUtil.isEmpty(packager.getHtmlPlaceholderId())) {
       deployTag.addAttribute(Couple.of("placeholderId", packager.getHtmlPlaceholderId()));
     }
+    addVerboseAttribute(deployTag, packager);
 
     if (packager.isEnabledSigning()) {
       deployTag.add(new SimpleTag("fx:permissions", Couple.of("elevated", "true")));
@@ -159,6 +161,13 @@ public class JavaFxAntGenerator {
 
     topLevelTagsCollector.add(deployTag);
     return topLevelTagsCollector;
+  }
+
+  private static void addVerboseAttribute(SimpleTag tag, @NotNull AbstractJavaFxPackager packager) {
+    JavaFxPackagerConstants.MsgOutputLevel msgOutputLevel = packager.getMsgOutputLevel();
+    if (msgOutputLevel != null && msgOutputLevel.isVerbose()) {
+      tag.addAttribute(Couple.of("verbose", "true"));
+    }
   }
 
   @NotNull
@@ -339,7 +348,7 @@ public class JavaFxAntGenerator {
     }
 
     public Pair[] getPairs() {
-      return myPairs.toArray(new Pair[myPairs.size()]);
+      return myPairs.toArray(new Pair[0]);
     }
 
     public String getValue() {

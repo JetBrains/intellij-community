@@ -38,7 +38,7 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
       final PsiMethod method = (PsiMethod)refElement;
       PsiClass containingClass = ReadAction.compute(() -> {
         boolean isValueMethod =
-          PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0;
+          PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().isEmpty();
         return isValueMethod ? method.getContainingClass() : null;
       });
       if (containingClass != null) {

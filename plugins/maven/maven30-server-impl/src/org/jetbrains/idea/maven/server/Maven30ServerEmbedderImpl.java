@@ -193,7 +193,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
       //noinspection SSBasedInspection
-      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
 
       for (String each : new String[]{"initialize", "cli", "logging", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * @since Aug 18, 2010 1:37:55 PM
  */
 public interface EditorTextFieldProvider {
+  static EditorTextFieldProvider getInstance() {
+    return ServiceManager.getService(EditorTextFieldProvider.class);
+  }
 
   /**
    * This factory method allows creation of an editor where the given customizations are applied to the editor.

@@ -266,7 +266,7 @@ public class DeclarationParser {
     }
 
     PsiBuilder.Marker typeParams = null;
-    if (builder.getTokenType() == JavaTokenType.LT) {
+    if (builder.getTokenType() == JavaTokenType.LT && context != Context.CODE_BLOCK) {
       typeParams = myParser.getReferenceParser().parseTypeParameters(builder);
     }
 
@@ -278,7 +278,7 @@ public class DeclarationParser {
 
     if (builder.getTokenType() == JavaTokenType.LBRACE) {
       if (context == Context.CODE_BLOCK) {
-        error(builder, JavaErrorMessages.message("expected.identifier.or.type"), typeParams);
+        error(builder, JavaErrorMessages.message("expected.identifier.or.type"), null);
         declaration.drop();
         return modList;
       }

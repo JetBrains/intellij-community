@@ -32,8 +32,6 @@ import java.util.EventListener;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 7:24:37 PM
  */
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
   @NotNull protected final Project myProject;
@@ -79,9 +77,6 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
 
   @Override
   public void apply() throws ConfigurationException {}
-
-  @Override
-  public void reset() {}
 
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName) {}
 

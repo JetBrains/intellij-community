@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -108,7 +107,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private PythonDebugConsoleCommunication myDebugCommunication;
   private boolean myNeedsMore = false;
 
-  private PythonConsoleView myConsoleView;
+  private @Nullable PythonConsoleView myConsoleView;
   private List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
@@ -178,12 +177,12 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   public synchronized void close() {
     sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       myWebServer.shutdown();
       myWebServer = null;
     }
-    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
   }
 
   /**
@@ -195,6 +194,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   @NotNull
   public synchronized Future<Void> closeAsync() {
     sendCloseMessageToScript();
+    PyDebugValueExecutionService.getInstance(myProject).sessionStopped(this);
 
     if (myWebServer != null) {
       Future<Void> shutdownFuture = myWebServer.shutdownAsync();
@@ -233,7 +233,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return execNotifyAboutMagic(params);
     }
     else if ("ShowConsole".equals(method)) {
-      myConsoleView.setConsoleEnabled(true);
+      if (myConsoleView != null) {
+        myConsoleView.setConsoleEnabled(true);
+      }
       return "";
     }
     else {
@@ -262,14 +264,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
-
-        try {
-          FileEditorManager.getInstance(myProject).openFile(file, true);
-        }
-        finally {
-          at.finish();
-        }
+        FileEditorManager.getInstance(myProject).openFile(file, true);
       });
 
       return Boolean.TRUE;
@@ -400,7 +395,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return; //TODO: handle text input and other cases
     }
     nextResponse = null;
-    if (waitingForInput) {
+    if (waitingForInput && myConsoleView != null && myConsoleView.isInitialized()) {
       inputReceived = command.getText();
       waitingForInput = false;
       //the thread that we started in the last exec is still alive if we were waiting for an input.
@@ -479,6 +474,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
+        progressIndicator.setIndeterminate(false);
         final long startTime = System.nanoTime();
         while (nextResponse == null) {
           if (progressIndicator.isCanceled()) {
@@ -789,7 +785,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
   }
 
-  public void setConsoleView(PythonConsoleView consoleView) {
+  public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;
   }
 

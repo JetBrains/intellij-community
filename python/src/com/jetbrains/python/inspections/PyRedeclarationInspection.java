@@ -79,7 +79,7 @@ public class PyRedeclarationInspection extends PyInspection {
 
     @Override
     public void visitPyTargetExpression(final PyTargetExpression node) {
-      if (PyNames.UNDERSCORE.equals(node.getText())) return;
+      if (node.isQualified() || PyNames.UNDERSCORE.equals(node.getText())) return;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFile || owner instanceof PyClass) {
         processElement(node);
@@ -164,7 +164,7 @@ public class PyRedeclarationInspection extends PyInspection {
                           PyBundle.message("INSP.redeclared.name", name),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                           null,
-                          quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+                          quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
     }

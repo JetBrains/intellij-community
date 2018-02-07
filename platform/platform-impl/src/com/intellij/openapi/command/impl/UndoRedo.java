@@ -51,6 +51,10 @@ abstract class UndoRedo {
     return myUndoableGroup.isTransparent();
   }
 
+  boolean isTemporary() {
+    return myUndoableGroup.isTemporary();
+  }
+
   boolean hasMoreActions() {
     return getStackHolder().canBeUndoneOrRedone(getDecRefs());
   }

@@ -99,7 +99,7 @@ public class TypeInfo {
     }
 
     PsiAnnotationStub[] stubArray = PsiAnnotationStub.EMPTY_ARRAY;
-    if (annotationStubs != null) stubArray = annotationStubs.toArray(new PsiAnnotationStub[annotationStubs.size()]);
+    if (annotationStubs != null) stubArray = annotationStubs.toArray(PsiAnnotationStub.EMPTY_ARRAY);
     return new TypeInfo(text, arrayCount, isEllipsis, stubArray);
   }
 

@@ -18,18 +18,22 @@ package com.intellij.vcs.log.history;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryUi> {
   @NotNull private final FilePath myFilePath;
+  @Nullable private final Hash myHash;
 
-  public FileHistoryUiFactory(@NotNull FilePath path) {
+  public FileHistoryUiFactory(@NotNull FilePath path, @Nullable Hash hash) {
     myFilePath = path;
+    myHash = hash;
   }
 
   @Override
@@ -37,6 +41,6 @@ public class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileH
     FileHistoryUiProperties properties = ServiceManager.getService(project, FileHistoryUiProperties.class);
     return new FileHistoryUi(logData, project, colorManager, properties,
                              new VisiblePackRefresherImpl(project, logData, PermanentGraph.SortType.Normal,
-                                                    new FileHistoryFilterer(logData, myFilePath)), myFilePath);
+                                                    new FileHistoryFilterer(logData, myFilePath, myHash)), myFilePath, myHash);
   }
 }

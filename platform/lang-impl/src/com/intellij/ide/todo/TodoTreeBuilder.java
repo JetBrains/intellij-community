@@ -47,7 +47,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -240,7 +240,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
    *         and which are located under specified {@code psiDirectory}.
-   * @see com.intellij.ide.todo.FileTree#getFiles(com.intellij.openapi.vfs.VirtualFile)
+   * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory) {
     return getFiles(psiDirectory, true);

@@ -1,10 +1,10 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2017" minor="3" eap="true"/>
-  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
+  <version major="2018" minor="1" eap="true"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2010"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="fffd9a" progressX="114" progressY="278" progressHeight="3"/>
+  <logo url="/pycharm_core_logo.png" textcolor="e5e5e5" progressColor="21d688" progressX="114" progressY="278" progressHeight="3"/>
   <about url="/pycharm_core_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="cccccc"
          copyrightForeground="cccccc" linkColor="ffffff"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" ico="PyCharmCore.ico"/>
@@ -12,6 +12,7 @@
   <names product="PyCharm" edition="Community Edition" script="charm"/>
 
   <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png"/>
+  <customize-ide-wizard provider="com.jetbrains.python.PyCharmCustomizeIDEWizardStepsProvider"/>
 
   <plugins url="http://plugins.jetbrains.com/"/>
   <update-urls check="http://www.jetbrains.com/updates/updates.xml"

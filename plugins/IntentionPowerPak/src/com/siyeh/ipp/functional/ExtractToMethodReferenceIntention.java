@@ -1,25 +1,16 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ipp.functional;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
@@ -33,16 +24,14 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntentionAction {
   private static final Logger LOG = Logger.getInstance(ExtractToMethodReferenceIntention.class);
@@ -82,21 +71,24 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
         .canBeMethodReferenceProblem(body, lambdaExpression.getParameterList().getParameters(), functionalInterfaceType, null);
       if (asMethodReference != null) return false;
       try {
-        PsiElement[] toExtract = body instanceof PsiCodeBlock ? ((PsiCodeBlock)body).getStatements() : new PsiElement[] {body};
+        PsiElement[] toExtract = body instanceof PsiCodeBlock ? ((PsiCodeBlock)body).getStatements() : new PsiElement[]{body};
         ControlFlowWrapper wrapper = new ControlFlowWrapper(project, body, toExtract);
         wrapper.prepareExitStatements(toExtract, body);
         PsiVariable[] outputVariables = wrapper.getOutputVariables();
         List<PsiVariable> inputVariables = wrapper.getInputVariables(body, toExtract, outputVariables);
-        return inputVariables.stream().allMatch(variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
+        return inputVariables.stream()
+          .allMatch(variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
       }
-      catch (PrepareFailedException ignored) { }
-      catch (ControlFlowWrapper.ExitStatementsNotSameException ignored) { }
+      catch (PrepareFailedException ignored) {
+      }
+      catch (ControlFlowWrapper.ExitStatementsNotSameException ignored) {
+      }
     }
     return false;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
     if (lambdaExpression != null) {
       PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
@@ -110,15 +102,18 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
 
-      String parameters = LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) + "{}";
+      String parameters =
+        LambdaRefactoringUtil.createLambdaParameterListWithFormalTypes(functionalInterfaceType, lambdaExpression, false) + "{}";
       String targetMethodName = getUniqueMethodName(targetClass, elementFactory, functionalInterfaceType, parameters);
 
       PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);
       LOG.assertTrue(returnType != null);
       PsiMethod container = PsiTreeUtil.getParentOfType(lambdaExpression, PsiMethod.class);
       PsiTypeParameterList typeParamsList =
-        container != null ? RefactoringUtil.createTypeParameterListWithUsedTypeParameters(container.getTypeParameterList(), elements) : null;
-      PsiMethod emptyMethod = elementFactory.createMethodFromText("private "  + (canBeStatic ? "static " : "") +
+        container != null
+        ? RefactoringUtil.createTypeParameterListWithUsedTypeParameters(container.getTypeParameterList(), elements)
+        : null;
+      PsiMethod emptyMethod = elementFactory.createMethodFromText("private " + (canBeStatic ? "static " : "") +
                                                                   (typeParamsList != null ? typeParamsList.getText() + " " : "") +
                                                                   returnType.getCanonicalText() + " " +
                                                                   targetMethodName + parameters, targetClass);
@@ -126,10 +121,14 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       LOG.assertTrue(targetMethodBody != null);
       if (elements.length > 0) targetMethodBody.addRange(elements[0], elements[elements.length - 1]);
 
-      PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
+      PsiMethod method = (PsiMethod)CodeStyleManager.getInstance(project)
+        .reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(targetClass.add(emptyMethod)));
       PsiMethodReferenceExpression methodReference =
-        (PsiMethodReferenceExpression)elementFactory.createExpressionFromText((canBeStatic ? targetClass.getName() : "this") + "::" + targetMethodName, lambdaExpression);
-      methodReference = (PsiMethodReferenceExpression)lambdaExpression.replace(methodReference);
+        (PsiMethodReferenceExpression)elementFactory
+          .createExpressionFromText((canBeStatic ? targetClass.getName() : "this") + "::" + targetMethodName, lambdaExpression);
+      CommentTracker tracker = new CommentTracker();
+      methodReference = (PsiMethodReferenceExpression)tracker.replace(lambdaExpression, methodReference);
+      tracker.insertCommentsBefore(methodReference);
 
       startInplaceRename(editor, method, methodReference);
     }
@@ -152,11 +151,30 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
     processor.substituteElementToRename(method, editor, new Pass<PsiElement>() {
       @Override
       public void pass(PsiElement substitutedElement) {
-        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(method, substitutedElement, editor);
+        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(method, substitutedElement, editor) {
+          @Override
+          protected boolean performRefactoring() {
+            if (super.performRefactoring()) {
+              ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(method));
+              return true;
+            }
+            return false;
+          }
+        };
         final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(suggestedNames);
         renamer.performInplaceRefactoring(nameSuggestions);
       }
     });
+  }
+
+  private static void processMethodsDuplicates(PsiMethod method) {
+    final Runnable runnable = () -> {
+      if (!method.isValid()) return;
+      MethodDuplicatesHandler
+        .invokeOnScope(method.getProject(), Collections.singleton(method), new AnalysisScope(method.getContainingFile()), true);
+    };
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(runnable),
+                                                                      MethodDuplicatesHandler.REFACTORING_NAME, true, method.getProject());
   }
 
   private static String getUniqueMethodName(PsiClass targetClass,

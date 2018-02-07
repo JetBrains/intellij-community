@@ -114,7 +114,7 @@ public final class RegExResponseHandler extends ResponseHandler {
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
       tasks.add(new GenericTask(id, summary, myRepository));
     }
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   @Nullable

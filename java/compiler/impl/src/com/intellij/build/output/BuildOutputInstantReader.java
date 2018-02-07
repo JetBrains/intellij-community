@@ -16,5 +16,11 @@ public interface BuildOutputInstantReader {
 
   void pushBack();
 
+  /***
+   * Push back the given number of lines.
+   * @param numberOfLines
+   */
+  void pushBack(int numberOfLines);
+
   String getCurrentLine();
 }

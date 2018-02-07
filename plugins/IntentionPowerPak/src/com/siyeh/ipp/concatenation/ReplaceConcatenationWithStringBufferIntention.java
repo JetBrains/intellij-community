@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
@@ -48,25 +48,27 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isConcatenation(parent)) {
       expression = (PsiPolyadicExpression)parent;
       parent = expression.getParent();
     }
+    CommentTracker commentTracker = new CommentTracker();
     @NonNls final StringBuilder newExpression = new StringBuilder();
     if (isPartOfStringBufferAppend(expression)) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
       assert methodCallExpression != null;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+
       if (qualifierExpression != null) {
-        final String qualifierText = qualifierExpression.getText();
+        final String qualifierText = commentTracker.text(qualifierExpression);
         newExpression.append(qualifierText);
       }
-      turnExpressionIntoChainedAppends(expression, newExpression);
-      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+      turnExpressionIntoChainedAppends(expression, newExpression, commentTracker);
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     }
     else {
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
@@ -75,9 +77,9 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       else {
         newExpression.append("new StringBuilder()");
       }
-      turnExpressionIntoChainedAppends(expression, newExpression);
+      turnExpressionIntoChainedAppends(expression, newExpression, commentTracker);
       newExpression.append(".toString()");
-      PsiReplacementUtil.replaceExpression(expression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
     }
   }
 
@@ -104,19 +106,21 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
     return "append".equals(methodName);
   }
 
-  private static void turnExpressionIntoChainedAppends(PsiExpression expression, @NonNls StringBuilder result) {
+  private static void turnExpressionIntoChainedAppends(PsiExpression expression,
+                                                       @NonNls StringBuilder result,
+                                                       CommentTracker commentTracker) {
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression concatenation = (PsiPolyadicExpression)expression;
       final PsiType type = concatenation.getType();
       if (type != null && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-        result.append(".append(").append(concatenation.getText()).append(')');
+        result.append(".append(").append(commentTracker.text(concatenation)).append(')');
         return;
       }
       final PsiExpression[] operands = concatenation.getOperands();
       final PsiType startType = operands[0].getType();
       if (startType == null || startType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         for (PsiExpression operand : operands) {
-          turnExpressionIntoChainedAppends(operand, result);
+          turnExpressionIntoChainedAppends(operand, result, commentTracker);
         }
         return;
       }
@@ -129,13 +133,14 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
           if (operandType == null || operandType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
             final PsiExpression newExpression = factory.createExpressionFromText(newExpressionText.toString(), expression);
-            turnExpressionIntoChainedAppends(newExpression, result);
-            turnExpressionIntoChainedAppends(operand, result);
+            turnExpressionIntoChainedAppends(newExpression, result, commentTracker);
+            turnExpressionIntoChainedAppends(operand, result, commentTracker);
             string = true;
           }
-          newExpressionText.append('+').append(operand.getText());
-        } else {
-          turnExpressionIntoChainedAppends(operand, result);
+          newExpressionText.append('+').append(commentTracker.text(operand));
+        }
+        else {
+          turnExpressionIntoChainedAppends(operand, result, commentTracker);
         }
       }
     }
@@ -143,7 +148,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
       final PsiExpression strippedExpression = ParenthesesUtils.stripParentheses(expression);
       result.append(".append(");
       if (strippedExpression != null) {
-        result.append(strippedExpression.getText());
+        result.append(commentTracker.text(strippedExpression));
       }
       result.append(')');
     }

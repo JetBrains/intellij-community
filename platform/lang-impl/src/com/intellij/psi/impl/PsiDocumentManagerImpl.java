@@ -19,12 +19,11 @@ package com.intellij.psi.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.AppTopics;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.EditorWindowImpl;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -32,20 +31,26 @@ import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.impl.source.tree.injected.MultiHostRegistrarImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
-import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
@@ -53,12 +58,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 //todo listen & notifyListeners readonly events?
-public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements SettingsSavingComponent {
+public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   private final DocumentCommitProcessor myDocumentCommitThread;
   private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -139,7 +142,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
 
   @VisibleForTesting
   public void doCommitWithoutReparse(@NotNull Document document) {
-    finishCommitInWriteAction(document, Collections.emptyList(), true, true);
+    finishCommitInWriteAction(document, Collections.emptyList(), Collections.emptyList(), true, true);
   }
 
   @Override
@@ -151,13 +154,14 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
 
   @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
-                                              @NotNull List<Processor<Document>> finishProcessors,
-                                              boolean synchronously, 
+                                              @NotNull List<BooleanRunnable> finishProcessors,
+                                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
+                                              boolean synchronously,
                                               boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
-      EditorWindowImpl.disposeInvalidEditors();
+      InjectedLanguageManagerImpl.disposeInvalidEditors();
     }
-    return super.finishCommitInWriteAction(document, finishProcessors, synchronously, forceNoPsiCommit);
+    return super.finishCommitInWriteAction(document, finishProcessors, reparseInjectedProcessors, synchronously, forceNoPsiCommit);
   }
 
   @Override
@@ -175,21 +179,47 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   }
 
   @Override
-  public void save() {
-    // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
-    try {
-      commitAllDocuments();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
-
-  @Override
   @TestOnly
   public void clearUncommittedDocuments() {
+    SmartPointerManagerImpl smartPointerManager = getSmartPointerManager();
+    if (smartPointerManager != null) {
+      for (VirtualFile file : ContainerUtil.mapNotNull(getUncommittedDocuments(), PsiDocumentManagerBase::getVirtualFile)) {
+        smartPointerManager.clearPointers(file);
+      }
+    }
+
     super.clearUncommittedDocuments();
     ((DocumentCommitThread)myDocumentCommitThread).clearQueue();
+  }
+
+  @NotNull
+  @Override
+  List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                        @NotNull PsiFile hostPsiFile,
+                                                        @NotNull TextRange hostChangedRange,
+                                                        @NotNull ProgressIndicator indicator,
+                                                        @NotNull ASTNode oldRoot,
+                                                        @NotNull ASTNode newRoot) {
+    List<DocumentWindow> changedInjected = InjectedLanguageManager.getInstance(myProject).getCachedInjectedDocumentsInRange(hostPsiFile, hostChangedRange);
+    if (changedInjected.isEmpty()) return Collections.emptyList();
+    FileViewProvider hostViewProvider = hostPsiFile.getViewProvider();
+    List<DocumentWindow> fromLast = new ArrayList<>(changedInjected);
+    // make sure modifications do not ruin all document offsets after
+    fromLast.sort(Collections.reverseOrder(Comparator.comparingInt(doc -> ArrayUtil.getLastElement(doc.getHostRanges()).getEndOffset())));
+    List<BooleanRunnable> result = new ArrayList<>(changedInjected.size());
+    for (DocumentWindow document : fromLast) {
+      Segment[] ranges = document.getHostRanges();
+      if (ranges.length != 0) {
+        // host document change has left something valid in this document window place. Try to reparse.
+        PsiFile injectedPsiFile = getCachedPsiFile(document);
+        if (injectedPsiFile  == null || !injectedPsiFile.isValid()) continue;
+
+        BooleanRunnable runnable = InjectedLanguageUtil.reparse(injectedPsiFile, document, hostPsiFile, hostViewProvider, indicator, oldRoot, newRoot);
+        ContainerUtil.addIfNotNull(result, runnable);
+      }
+    }
+
+    return result;
   }
 
   @NonNls
@@ -206,6 +236,19 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @NotNull
   @Override
   protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
-    return MultiHostRegistrarImpl.freezeWindow((DocumentWindowImpl)document);
+    return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
+  }
+
+  @Override
+  public void associatePsi(@NotNull Document document, @Nullable PsiFile file) {
+    if (file != null) {
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
+      Document cachedDocument = FileDocumentManager.getInstance().getCachedDocument(vFile);
+      if (cachedDocument != null && cachedDocument != document) {
+        throw new IllegalStateException("Can't replace existing document");
+      }
+      
+      FileDocumentManagerImpl.registerDocument(document, vFile);
+    }
   }
 }

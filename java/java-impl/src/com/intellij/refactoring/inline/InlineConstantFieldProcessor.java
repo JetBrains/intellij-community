@@ -132,7 +132,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
           .addTextOccurences(myField, stringToSearch, GlobalSearchScope.projectScope(myProject), usages, nonCodeUsageFactory);
       }
     }
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -218,6 +218,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr, invalidationCopy);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("inline.field.command", DescriptiveNameUtil.getDescriptiveName(myField));

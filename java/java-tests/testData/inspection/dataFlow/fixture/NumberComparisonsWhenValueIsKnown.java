@@ -22,7 +22,7 @@ class Test {
   void forLoop() {
     int target = 3;
     for (int current = 0; <warning descr="Condition 'current < target' is always 'true'">current < target</warning>; ) {
-      current = 0;
+      <warning descr="Variable is already assigned to this value">current</warning> = 0;
     }
   }
 
@@ -40,7 +40,7 @@ class Test {
     int target = 3;
     while (<warning descr="Condition 'current < target' is always 'true'">current < target</warning>)
     {
-      current = 0;
+      <warning descr="Variable is already assigned to this value">current</warning> = 0;
     }
   }
 

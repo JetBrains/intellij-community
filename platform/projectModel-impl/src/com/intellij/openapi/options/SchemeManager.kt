@@ -25,7 +25,10 @@ abstract class SchemeManager<T> {
   open val isEmpty: Boolean
     get() = allSchemes.isEmpty()
 
-  abstract val currentScheme: T?
+  abstract val activeScheme: T?
+
+  @Deprecated(replaceWith = ReplaceWith("activeScheme"), message = "Use activeScheme")
+  open fun getCurrentScheme(): Scheme = activeScheme as Scheme
 
   /**
    * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)

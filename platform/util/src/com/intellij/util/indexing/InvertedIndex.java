@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 24, 2007
  */
 public interface InvertedIndex<Key, Value, Input> {
   @NotNull

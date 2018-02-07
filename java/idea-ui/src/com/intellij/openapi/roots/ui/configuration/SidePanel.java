@@ -60,7 +60,7 @@ public class SidePanel extends JPanel {
 
       @Override
       public String getTooltipFor(final SidePanelItem value) {
-        return value.myText;
+        return null;
       }
 
       @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
 import com.intellij.openapi.module.Module;
@@ -20,7 +6,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -28,6 +13,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
@@ -40,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/9/12
  */
 public class TargetOptionsComponent extends JPanel {
   private static final String[] KNOWN_TARGETS;
@@ -49,16 +34,13 @@ public class TargetOptionsComponent extends JPanel {
   private final ComboBox myCbProjectTargetLevel;
   private final JBTable myTable;
   private final Project myProject;
-  
+
   static {
     List<String> targets = new ArrayList<>();
     targets.add("1.1");
     targets.add("1.2");
     for (LanguageLevel level : LanguageLevel.values()) {
-      final String target = level.getCompilerComplianceDefaultOption();
-      if (!StringUtil.isEmptyOrSpaces(target)) {
-        targets.add(target);
-      }
+      targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
     }
     KNOWN_TARGETS = ArrayUtil.toStringArray(targets);
   }

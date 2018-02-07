@@ -23,7 +23,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
@@ -88,7 +90,7 @@ public class TestMethodIsPublicVoidNoArgInspectionBase extends BaseInspection {
         registerMethodError(method, Problem.STATIC, method);
         return;
       }
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         final PsiParameter[] parameters = parameterList.getParameters();
         boolean annotated = true;
         for (PsiParameter parameter : parameters) {

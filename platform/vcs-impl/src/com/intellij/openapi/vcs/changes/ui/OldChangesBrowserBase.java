@@ -57,8 +57,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
 
@@ -206,7 +205,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
       if (list.isEmpty()) list = getAllChanges();
-      sink.put(VcsDataKeys.CHANGES, list.toArray(new Change[list.size()]));
+      sink.put(VcsDataKeys.CHANGES, list.toArray(new Change[0]));
     }
     else if (key == VcsDataKeys.CHANGES_SELECTION) {
       sink.put(VcsDataKeys.CHANGES_SELECTION, getChangesSelection());
@@ -222,7 +221,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
       sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getSelectedFiles()));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatableArray(myProject, getNavigatableFiles()));
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
       sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
@@ -232,7 +231,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     }
     else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
       final List<Change> selectedChanges = getSelectedChanges();
-      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
+      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[0]));
     }
     else if (UNVERSIONED_FILES_DATA_KEY.equals(key)) {
       sink.put(UNVERSIONED_FILES_DATA_KEY, getVirtualFiles(myViewer.getSelectionPaths(), UNVERSIONED_FILES_TAG));
@@ -299,7 +298,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
     ListSelection<Change> selection = getChangesSelection();
     List<Change> changes = selection.getList();
 
-    Change[] changesArray = changes.toArray(new Change[changes.size()]);
+    Change[] changesArray = changes.toArray(new Change[0]);
     showDiffForChanges(changesArray, selection.getSelectedIndex());
 
     afterDiffRefresh();
@@ -427,7 +426,7 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
         files.add(ioFile);
       }
     }
-    return files.toArray(new File[files.size()]);
+    return files.toArray(new File[0]);
   }
 
   @NotNull
@@ -438,6 +437,14 @@ public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSaf
 
   @NotNull
   protected Stream<VirtualFile> getSelectedFiles() {
+    return Stream.concat(
+      getAfterRevisionsFiles(getSelectedChanges().stream()),
+      getVirtualFiles(myViewer.getSelectionPaths(), null)
+    ).distinct();
+  }
+
+  @NotNull
+  protected Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges().stream()),
       getVirtualFiles(myViewer.getSelectionPaths(), null)

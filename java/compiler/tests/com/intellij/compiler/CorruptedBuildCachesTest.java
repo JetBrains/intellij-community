@@ -37,19 +37,21 @@ public class CorruptedBuildCachesTest extends BaseCompilerTestCase {
   }
 
   public void testSrcOutMapping() {
+    final String moduleName = "m";
+    final String moduleDirName = moduleName + "_" + Integer.toHexString(moduleName.hashCode());
     VirtualFile a = createFile("src/A.java", "class A{}");
-    Module m = addModule("m", a.getParent());
+    Module m = addModule(moduleName, a.getParent());
     make(m);
     assertOutput(m, fs().file("A.class"));
     File systemDirectory = BuildManager.getInstance().getProjectSystemDirectory(myProject);
 
-    assertTrue(FileUtil.delete(new File(systemDirectory, "targets/java-production/m/src-out")));
+    assertTrue(FileUtil.delete(new File(systemDirectory, "targets/java-production/"+moduleDirName+"/src-out")));
     changeFile(a, "class A{int b;}");
     make(m).assertGenerated("A.class");
     make(m).assertUpToDate();
 
     changeFile(a, "class A{int c;}");
-    corruptCaches(new File(systemDirectory, "targets/java-production/m/src-out/data"));
+    corruptCaches(new File(systemDirectory, "targets/java-production/"+moduleDirName+"/src-out/data"));
     make(m).assertGenerated("A.class");
 
     assertOutput(m, fs().file("A.class"));

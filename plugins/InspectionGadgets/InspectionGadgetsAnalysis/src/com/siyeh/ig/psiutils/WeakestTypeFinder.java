@@ -24,8 +24,10 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -129,6 +131,13 @@ public class WeakestTypeFinder {
             !findWeakestType(methodCallExpression, weakestTypeClasses)) {
           return Collections.emptyList();
         }
+      }
+      else if (referenceParent instanceof PsiResourceExpression) {
+        PsiClass closeable = facade.findClass(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, scope);
+        if (closeable == null || variableOrMethodClass.equals(closeable)) {
+          return Collections.emptyList();
+        }
+        weakestTypeClasses.add(closeable);
       }
       else if (referenceParent instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)referenceParent;
@@ -267,7 +276,7 @@ public class WeakestTypeFinder {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() == 0) {
+    if (parameterList.isEmpty()) {
       return false;
     }
     final PsiParameter[] parameters = parameterList.getParameters();

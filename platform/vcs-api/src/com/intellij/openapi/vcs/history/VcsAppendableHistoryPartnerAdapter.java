@@ -19,8 +19,6 @@ import com.intellij.openapi.vcs.VcsException;
 
 /**
  * @author irengrig
- *         Date: 7/13/11
- *         Time: 5:52 PM
  */
 public class VcsAppendableHistoryPartnerAdapter implements VcsAppendableHistorySessionPartner {
   private VcsAbstractHistorySession mySession;

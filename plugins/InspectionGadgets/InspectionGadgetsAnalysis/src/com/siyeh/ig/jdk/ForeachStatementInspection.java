@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +59,7 @@ public class ForeachStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -68,9 +68,11 @@ public class ForeachStatementInspection extends BaseInspection {
       if (iteratedValue == null) {
         return;
       }
+      CommentTracker tracker = new CommentTracker();
       @NonNls final StringBuilder newStatement = new StringBuilder();
       final PsiParameter iterationParameter = statement.getIterationParameter();
       boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(project).isGenerateFinalLocals();
+      tracker.markUnchanged(iteratedValue);
       if (iteratedValue.getType() instanceof PsiArrayType) {
         final PsiType type = iterationParameter.getType();
         final String index = codeStyleManager.suggestUniqueVariableName("i", statement, true);
@@ -116,7 +118,7 @@ public class ForeachStatementInspection extends BaseInspection {
         final PsiElement[] children = block.getChildren();
         for (int i = 1; i < children.length - 1; i++) {
           //skip the braces
-          newStatement.append(children[i].getText());
+          newStatement.append(tracker.text(children[i]));
         }
       }
       else {
@@ -125,12 +127,13 @@ public class ForeachStatementInspection extends BaseInspection {
           bodyText = "";
         }
         else {
-          bodyText = body.getText();
+          bodyText = tracker.text(body);
         }
         newStatement.append(bodyText);
       }
       newStatement.append('}');
-      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString());
+
+      PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString(), tracker);
     }
   }
 

@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 17.07.13
  */
 public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
 

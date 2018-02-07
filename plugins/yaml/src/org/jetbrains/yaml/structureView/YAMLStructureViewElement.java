@@ -46,7 +46,7 @@ public class YAMLStructureViewElement implements StructureViewTreeElement {
     for (YAMLPsiElement child : children) {
       structureElements.add(new YAMLStructureViewElement(child));
     }
-    return structureElements.toArray(new StructureViewTreeElement[structureElements.size()]);
+    return structureElements.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
   
   @NotNull

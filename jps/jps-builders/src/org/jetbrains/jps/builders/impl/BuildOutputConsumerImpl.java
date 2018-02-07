@@ -33,7 +33,6 @@ import java.util.Collection;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 11/16/12
 */
 public class BuildOutputConsumerImpl implements BuildOutputConsumer {
   private static final Logger LOG = Logger.getInstance(BuildOutputConsumerImpl.class);

@@ -37,7 +37,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
 import com.intellij.uiDesigner.ErrorAnalyzer;
@@ -225,7 +224,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   @Nullable
   public IntrospectedProperty getSelectedIntrospectedProperty(){
     Property property = getSelectedProperty();
-    if (property == null || !(property instanceof IntrospectedProperty)) {
+    if (!(property instanceof IntrospectedProperty)) {
       return null;
     }
 

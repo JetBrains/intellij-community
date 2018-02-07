@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
@@ -68,7 +67,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
       }
     }
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(new InspectionGadgetsFix[0]);
   }
 
   protected static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
@@ -80,7 +79,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -96,8 +95,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
         final PsiElement context = element.getParent();
         if (context instanceof PsiNewExpression) {
           SwingUtilities.invokeLater(() -> Messages.showInfoMessage(aClass.getProject(),
-                                                                "Utility class has instantiations, private constructor will not be created",
-                                                                "Can't generate constructor"));
+                                                                    "Utility class has instantiations, private constructor will not be created",
+                                                                    "Can't generate constructor"));
           return;
         }
       }
@@ -121,7 +120,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement classNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = classNameIdentifier.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -131,7 +130,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
       final PsiMethod[] constructors = aClass.getConstructors();
       for (final PsiMethod constructor : constructors) {
         final PsiParameterList parameterList = constructor.getParameterList();
-        if (parameterList.getParametersCount() == 0) {
+        if (parameterList.isEmpty()) {
           final PsiModifierList modifiers = constructor.getModifierList();
           modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
           modifiers.setModifierProperty(PsiModifier.PROTECTED, false);

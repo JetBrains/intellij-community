@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.navigation
 
@@ -33,6 +21,7 @@ import com.intellij.util.concurrency.Semaphore
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
+
 /**
  * @author peter
  */
@@ -177,7 +166,7 @@ class Intf {
     popup = createPopup(new GotoFileModel(project), barContext)
     assert calcPopupElements(popup, "index") == [barIndex, fooIndex]
   }
-  
+
   private PsiFile addEmptyFile(String relativePath) {
     return myFixture.addFileToProject(relativePath, "")
   }
@@ -225,7 +214,7 @@ class Intf {
   void "test prefer files to directories even if longer"() {
     def fooFile = addEmptyFile('dir/fooFile.txt')
     def fooDir = addEmptyFile('foo/barFile.txt').containingDirectory
-    
+
     def popup = createPopup(new GotoFileModel(project))
     def popupElements = calcPopupElements(popup, 'foo')
 
@@ -330,7 +319,7 @@ class Intf {
   void "test super method not matching query qualifier"() {
     def baseClass = myFixture.addClass("class Base { void xpaint() {} }")
     def subClass = myFixture.addClass("class Sub extends Base { void xpaint() {} }")
-    
+
     def base = null
     def sub = null
     runInEdtAndWait {
@@ -432,7 +421,7 @@ class Intf {
 
   void "test fix keyboard layout"() {
     assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
-    assert (gotoSymbol('Ыекштп')[0] as PsiClass).name == 'String'
+    assert (gotoSymbol('Ыекштп').find { it instanceof PsiClass && it.name == 'String' })
     assert (gotoFile('Ыекштп')[0] as PsiFile).name == 'String.class'
     assert (gotoFile('дфтпЫекштп')[0] as PsiFile).name == 'String.class'
   }
@@ -444,6 +433,18 @@ class Intf {
     assert gotoFile('SomeClass.java') == [camel.containingFile, upper.containingFile]
   }
   
+  void "test prefer closer path match"() {
+    def index = addEmptyFile("content/objc/features/index.html")
+    def i18n = addEmptyFile("content/objc/features/screenshots/i18n.html")
+    assert gotoFile('objc/features/i') == [index, i18n]
+  }
+
+  void "test matching file in a matching directory"() {
+    def file = addEmptyFile("foo/index/index")
+    assert gotoFile('in') == [file, file.parent]
+    assert gotoFile('foin') == [file, file.parent]
+  }
+
   private List<Object> gotoClass(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoClassModel2(project), text, checkboxState)
   }
@@ -451,7 +452,7 @@ class Intf {
   private List<Object> gotoSymbol(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoSymbolModel2(project), text, checkboxState)
   }
-  
+
   private List<Object> gotoFile(String text, boolean checkboxState = false) {
     return getPopupElements(new GotoFileModel(project), text, checkboxState)
   }

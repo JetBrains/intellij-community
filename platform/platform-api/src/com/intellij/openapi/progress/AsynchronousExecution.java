@@ -22,8 +22,6 @@ import java.lang.annotation.Target;
 
 /**
  * @author irengrig
- *         Date: 3/30/11
- *         Time: 7:55 PM
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD})

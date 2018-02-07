@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.openapi.vcs.changes;
@@ -21,9 +9,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -51,6 +37,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -68,7 +55,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -92,7 +79,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private boolean myDisposed = false;
 
-  @NotNull private final ChangeListListener myListener = new MyChangeListListener();
   @NotNull private final Project myProject;
   @NotNull private final ChangesViewContentManager myContentManager;
 
@@ -136,16 +122,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @Override
   public void projectOpened() {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.addChangeListListener(myListener);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        changeListManager.removeChangeListListener(myListener);
-      }
-    });
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), myProject);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     myContent = new MyChangeViewContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
+    myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
@@ -198,7 +178,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
     visualActionsGroup.add(new ToggleDetailsAction());
-    visualActionsGroup.add(new ContextHelpAction(ChangesListView.HELP_ID));
     toolbarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false).getComponent(), BorderLayout.CENTER);
 
@@ -340,6 +319,30 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   @Override
+  public void selectChanges(@NotNull List<Change> changes) {
+    List<TreePath> paths = new ArrayList<>();
+
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+    for (Change change : changes) {
+      ContainerUtil.addIfNotNull(paths, findObjectInTree(root, change));
+    }
+
+    if (!paths.isEmpty()) {
+      TreeUtil.selectPaths(myView, paths);
+    }
+  }
+
+  @Nullable
+  private static TreePath findObjectInTree(@NotNull DefaultMutableTreeNode root, Object userObject) {
+    DefaultMutableTreeNode objectNode =
+      userObject instanceof ChangeListChange
+      ? TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject))
+      : TreeUtil.findNodeWithObject(root, userObject);
+    return objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
+  }
+
+
+  @Override
   public void refreshChangesViewNodeAsync(@NotNull final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(() -> refreshChangesViewNode(file), myProject.getDisposed());
   }
@@ -383,29 +386,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
-
     @Override
-    public void changeListAdded(ChangeList list) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changeListRemoved(ChangeList list) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+    public void changeListsChanged() {
       scheduleRefresh();
     }
 
@@ -532,9 +514,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Override
     protected void selectChange(@NotNull Wrapper change) {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change.getUserObject());
-      if (node != null) {
-        TreePath path = TreeUtil.getPathFromRoot(node);
+      TreePath path = findObjectInTree(root, change.getUserObject());
+      if (path != null) {
         TreeUtil.selectPath(myView, path, false);
       }
     }

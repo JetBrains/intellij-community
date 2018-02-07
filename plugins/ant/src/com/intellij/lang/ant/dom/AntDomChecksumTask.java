@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 6, 2010
  */
 public abstract class AntDomChecksumTask extends AntDomPropertyDefiningTask {
 

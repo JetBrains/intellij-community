@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -64,6 +52,22 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
   public void handleInsert(InsertionContext context) {
     markClassItemWrapped(getDelegate());
     super.handleInsert(context);
+
+    context.commitDocument();
+    PsiCallExpression callExpression = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), 
+                                                                              PsiCallExpression.class, false);
+    // make sure this is the constructor call we've just added, not the enclosing method/constructor call
+    if (callExpression != null) {
+      PsiElement completedElement = callExpression instanceof PsiNewExpression ?
+                                    ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference() : null;
+      TextRange completedElementRange = completedElement == null ? null : completedElement.getTextRange();
+      if (completedElementRange == null || completedElementRange.getStartOffset() != context.getStartOffset()) {
+        callExpression = null;
+      }
+    }
+    if (callExpression != null) {
+      JavaMethodCallElement.showParameterHints(context, myConstructor, callExpression);
+    }
   }
 
   @NotNull
@@ -108,7 +112,8 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
 
   static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
                                             @NotNull PsiElement position, @NotNull Supplier<PsiClassType> type) {
-    if (Registry.is("java.completion.show.constructors") && isConstructorCallPlace(position)) {
+    if ((Registry.is("java.completion.show.constructors") || CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) && 
+        isConstructorCallPlace(position)) {
       List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));
       if (!constructors.isEmpty()) {
         return ContainerUtil.map(constructors, c -> new JavaConstructorCallElement(classItem, c, type.get()));

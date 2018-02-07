@@ -16,42 +16,8 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import java.util.Collection;
-
 /**
  * @author yole
  */
 public class ChangeListAdapter implements ChangeListListener {
-  public void changeListAdded(ChangeList list) {
-  }
-
-  public void changeListRemoved(ChangeList list) {
-  }
-
-  public void changeListChanged(ChangeList list) {
-  }
-
-  public void changeListRenamed(ChangeList list, String oldName) {
-  }
-
-  public void changeListCommentChanged(final ChangeList list, final String oldComment) {
-  }
-
-  public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-  }
-
-  public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
-  }
-
-  public void unchangedFileStatusChanged() {
-  }
-
-  public void changeListUpdateDone() {
-  }
-
-  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-  }
-
-  public void changesAdded(Collection<Change> changes, ChangeList toList) {
-  }
 }

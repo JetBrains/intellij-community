@@ -113,7 +113,7 @@ public class GradleScriptType extends GroovyRunnableScriptType {
     List<String> tasks = getTasksTarget(location);
     if (tasks != null) {
       String s = StringUtil.join(tasks, " ");
-      configuration.setProgramParameters(s);
+      configuration.setProgramParameters(s + " --no-daemon");
       configuration.setName("gradle:" + s);
     }
     RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);

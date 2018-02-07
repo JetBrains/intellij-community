@@ -16,7 +16,6 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -24,7 +23,7 @@ import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NonNls;
@@ -156,10 +155,6 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   }
 
   private class SubstitutionVisitor extends PsiTypeMapper {
-    @Override
-    public PsiType visitCapturedWildcardType(PsiCapturedWildcardType type) {
-      return type;
-    }
 
     @Override
     public PsiType visitType(PsiType type) {

@@ -30,7 +30,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 07.03.11
  */
 abstract class ProtoMember extends Proto {
 

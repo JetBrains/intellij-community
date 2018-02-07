@@ -65,7 +65,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 01-Jun-17
  */
 public class JShellHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.JShellHandler");

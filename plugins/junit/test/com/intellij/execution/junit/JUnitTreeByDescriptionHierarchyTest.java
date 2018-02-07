@@ -425,7 +425,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "\n" +
@@ -435,7 +435,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='TestB.testNameB' locationHint='java:test://TestB.testNameB']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='TestB.testNameB' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testIgnored name='TestB.testNameB' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestB.testNameB']\n" +
                                           "\n" +
@@ -472,7 +472,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='Class Configuration'  locationHint='java:suite://TestA' ]\n" +
                                           "\n" +
-                                          "##teamcity[testFailed name='Class Configuration' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testFailed name='Class Configuration' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='Class Configuration']\n" +
                                           "\n" +
@@ -541,7 +541,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.test1' locationHint='java:test://TestA.test1']\n" +
                                           "\n" +
-                                          "##teamcity[testFailed name='TestA.test1' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testFailed name='TestA.test1' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.test1']\n" +
                                           "\n" +
@@ -588,7 +588,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='Class Configuration'  locationHint='java:suite://TestA' ]\n" +
                                           "\n" +
-                                          "##teamcity[testFailed name='Class Configuration' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testFailed name='Class Configuration' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='Class Configuration']\n" +
                                           "\n" +
@@ -633,7 +633,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='TestA.testName' locationHint='java:test://TestA.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testIgnored name='TestA.testName' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "\n" +
@@ -649,7 +649,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     Assert.assertEquals("output: " + buf, "##teamcity[rootName name = 'root' location = 'java:suite://root']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='TestA.testName' details='java.lang.Exception|n' error='true' message='']\n", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testIgnored name='TestA.testName' error='true' message='' details='java.lang.Exception|n']\n", StringUtil.convertLineSeparators(buf.toString()));
     
   }
 
@@ -718,7 +718,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='Test1.testName' locationHint='java:test://Test1.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='Test1.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testIgnored name='Test1.testName' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='Test1.testName']\n" +
                                           "\n" +
@@ -736,7 +736,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testStarted name='Test3.testName' locationHint='java:test://Test3.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testIgnored name='Test3.testName' details='java.lang.Exception|n' error='true' message='']\n" +
+                                          "##teamcity[testIgnored name='Test3.testName' error='true' message='' details='java.lang.Exception|n']\n" +
                                           "\n" +
                                           "##teamcity[testFinished name='Test3.testName']\n" +
                                           "\n" +

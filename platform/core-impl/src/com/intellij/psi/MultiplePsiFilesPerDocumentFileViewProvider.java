@@ -29,7 +29,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +40,9 @@ import java.util.concurrent.ConcurrentMap;
 
 public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends AbstractFileViewProvider {
   private final ConcurrentMap<Language, PsiFileImpl> myRoots = ContainerUtil.newConcurrentMap(1, 0.75f, 1);
-  private MultiplePsiFilesPerDocumentFileViewProvider myOriginal = null;
+  private MultiplePsiFilesPerDocumentFileViewProvider myOriginal;
 
-  public MultiplePsiFilesPerDocumentFileViewProvider(PsiManager manager, VirtualFile virtualFile, boolean eventSystemEnabled) {
+  public MultiplePsiFilesPerDocumentFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile virtualFile, boolean eventSystemEnabled) {
     super(manager, virtualFile, eventSystemEnabled, virtualFile.getFileType());
   }
 
@@ -67,7 +66,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
     return roots;
   }
 
-  protected final void removeFile(final Language language) {
+  protected final void removeFile(@NotNull Language language) {
     PsiFileImpl file = myRoots.remove(language);
     if (file != null) {
       file.markInvalidated();
@@ -103,13 +102,15 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   }
 
 
+  @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {
     return myRoots.get(target);
   }
 
+  @NotNull
   @Override
   public final List<PsiFile> getCachedPsiFiles() {
-    return ContainerUtil.mapNotNull(myRoots.keySet(), (NullableFunction<Language, PsiFile>)language -> getCachedPsi(language));
+    return ContainerUtil.mapNotNull(myRoots.keySet(), this::getCachedPsi);
   }
 
   @NotNull
@@ -147,7 +148,8 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
     return copy;
   }
 
-  protected abstract MultiplePsiFilesPerDocumentFileViewProvider cloneInner(VirtualFile fileCopy);
+  @NotNull
+  protected abstract MultiplePsiFilesPerDocumentFileViewProvider cloneInner(@NotNull VirtualFile fileCopy);
 
   @Override
   @Nullable

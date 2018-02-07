@@ -60,7 +60,6 @@ import java.util.regex.Pattern;
  * Facet for buildout support.
  * Knows which script in bin/ contains paths we want to add.
  * User: dcheryasov
- * Date: Jul 25, 2010 3:23:50 PM
  */
 public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
@@ -330,7 +329,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
         final PsiFile configFile = PsiFileFactory
           .getInstance(getModule().getProject()).createFileFromText("buildout.cfg",
                                                                     BuildoutCfgLanguage.INSTANCE, text);
-        if (configFile != null && configFile instanceof BuildoutCfgFile) {
+        if (configFile instanceof BuildoutCfgFile) {
           return (BuildoutCfgFile)configFile;
         }
       }

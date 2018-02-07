@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,9 +49,6 @@ public class WSLUtil {
     LEGACY_WSL
   );
 
-  private static final AtomicNotNullLazyValue<List<WSLDistribution>> AVAILABLE_DISTRIBUTIONS_PROVIDER =
-    AtomicNotNullLazyValue.createValue(() -> ContainerUtil.filter(DISTRIBUTIONS, dist -> dist.isAvailable()));
-
   /**
    * @return
    */
@@ -66,7 +62,7 @@ public class WSLUtil {
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
-    return AVAILABLE_DISTRIBUTIONS_PROVIDER.getValue();
+    return ContainerUtil.filter(DISTRIBUTIONS, dist -> dist.isAvailable());
   }
 
   /**

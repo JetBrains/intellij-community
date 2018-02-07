@@ -11,23 +11,4 @@ class Util {
     }
   }
 
-  public static void main(String[] args, int d) {
-    String is = null;
-    if (d != 0) return;
-
-    try {
-      if (Math.random() > 0.5) {
-        double k = 1 / <warning descr="Value 'd' is always '0'">d</warning>;
-      } else {
-        is = "This is printed half of the time";
-        double k = 1 / 0;
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-      if (is != null) {
-        System.out.println(is);
-      }
-    }
-  }
-
 }

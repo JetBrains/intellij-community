@@ -15,7 +15,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 19, 2006
  */
 public class TreeBasedMapTest extends TestCase {
 

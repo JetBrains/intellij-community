@@ -37,10 +37,10 @@ class Option:
         self,
         opts: Iterable[str],
         dest: str,
-        action: Optional[str] = None,
-        nargs: int = 1,
-        const: Optional[Any] = None,
-        obj: Optional[Any] = None
+        action: Optional[str] = ...,
+        nargs: int = ...,
+        const: Optional[Any] = ...,
+        obj: Optional[Any] = ...
     ) -> None:
         ...
 
@@ -53,7 +53,7 @@ class Argument:
     nargs: int
     obj: Any
 
-    def __init__(self, dest: str, nargs: int = 1, obj: Optional[Any] = None) -> None:
+    def __init__(self, dest: str, nargs: int = ..., obj: Optional[Any] = ...) -> None:
         ...
 
     def process(self, value: Any, state: 'ParsingState') -> None:
@@ -79,21 +79,21 @@ class OptionParser:
     _opt_prefixes: Set[str]
     _args: List[Argument]
 
-    def __init__(self, ctx: Optional[Context] = None) -> None:
+    def __init__(self, ctx: Optional[Context] = ...) -> None:
         ...
 
     def add_option(
         self,
         opts: Iterable[str],
         dest: str,
-        action: Optional[str] = None,
-        nargs: int = 1,
-        const: Optional[Any] = None,
-        obj: Optional[Any] = None
+        action: Optional[str] = ...,
+        nargs: int = ...,
+        const: Optional[Any] = ...,
+        obj: Optional[Any] = ...
     ) -> None:
         ...
 
-    def add_argument(self, dest: str, nargs: int = 1, obj: Optional[Any] = None) -> None:
+    def add_argument(self, dest: str, nargs: int = ..., obj: Optional[Any] = ...) -> None:
         ...
 
     def parse_args(

@@ -23,5 +23,8 @@ UFile (package = ) [public class Strings {...]
                         UBinaryExpression (operator = +) [s4 + 2016] = "Hello wounderful world 2016" (depending on: (var s4 = "Hello wounderful world " (depending on: (var s2 = "Hello wounderful" (depending on: (var s1 = "Hello "))), (var s3 = " world "))))
                             USimpleNameReferenceExpression (identifier = s4) [s4] = (var s4 = "Hello wounderful world " (depending on: (var s2 = "Hello wounderful" (depending on: (var s1 = "Hello "))), (var s3 = " world ")))
                             ULiteralExpression (value = 2016) [2016] = 2016
+                UDeclarationsExpression [var empty: java.lang.String = ""] = Undetermined
+                    ULocalVariable (name = empty) [var empty: java.lang.String = ""]
+                        ULiteralExpression (value = "") [""] = ""
                 UReturnExpression [return s5] = Nothing
                     USimpleNameReferenceExpression (identifier = s5) [s5] = (var s5 = "Hello wounderful world 2016" (depending on: (var s4 = "Hello wounderful world " (depending on: (var s2 = "Hello wounderful" (depending on: (var s1 = "Hello "))), (var s3 = " world ")))))

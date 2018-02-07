@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
@@ -60,22 +46,22 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyImportUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyUnusedImportUtil.unusedImports;
 
 /**
  * @author ilyas
  */
 public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
 
-  private final GroovyFile myFile;
-  private final Editor myEditor;
+  private final @NotNull GroovyFile myFile;
+  private final @NotNull Editor myEditor;
   private volatile Set<GrImportStatement> myUnusedImports;
   private volatile List<HighlightInfo> myUnusedDeclarations;
 
-  public GroovyPostHighlightingPass(GroovyFile file, Editor editor) {
+  public GroovyPostHighlightingPass(@NotNull GroovyFile file, @NotNull Editor editor) {
     super(file.getProject(), editor.getDocument(), true);
     myFile = file;
     myEditor = editor;
@@ -171,9 +157,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         super.visitElement(element);
       }
     });
-    final Set<GrImportStatement> unusedImports = new HashSet<>(PsiUtil.getValidImportStatements(myFile));
-    unusedImports.removeAll(GroovyImportUtil.findUsedImports(myFile));
-    myUnusedImports = unusedImports;
+    myUnusedImports = unusedImports(myFile);
 
     if (deadCodeEnabled) {
       for (GrParameter parameter : usedParams.keySet()) {

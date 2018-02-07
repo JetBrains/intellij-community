@@ -120,7 +120,7 @@ public class AddVariableInitializerFix implements IntentionAction {
         result.add(newExpression);
       }
     }
-    return result.toArray(new LookupElement[result.size()]);
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

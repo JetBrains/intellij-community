@@ -84,7 +84,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   
   // PY-18762
   public void testHomogeneousTuples() {
-    myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
     doTest();
   }
 
@@ -184,7 +183,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-20073
-  public void testMapArgumentsInOppositeOrder() {
+  public void testMapArgumentsInOppositeOrderPy3() {
     doTest();
   }
 
@@ -247,6 +246,21 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-21302
+  public void testInitializingNewType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeAsParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeInheritance() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-24287
   public void testPromotingBytearrayToBytes() {
     doTest();
@@ -272,5 +286,14 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   public void testMatchingOpenFunctionCallTypesPy3() {
     doMultiFileTest();
+  }
+
+  public void testChainedComparisonsGenericMatching() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
   }
 }

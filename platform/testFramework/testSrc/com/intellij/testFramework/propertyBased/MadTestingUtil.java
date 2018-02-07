@@ -37,17 +37,17 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
-import jetCheck.DataStructure;
-import jetCheck.Generator;
-import jetCheck.IntDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetCheck.DataStructure;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.ImperativeCommand;
+import org.jetbrains.jetCheck.IntDistribution;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -56,6 +56,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -172,16 +173,7 @@ public class MadTestingUtil {
     });
   }
 
-  /**
-   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
-   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
-   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment. 
-   * @return
-   */
-  @NotNull
-  public static Generator<FileWithActions> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
-                                                                 FileFilter fileFilter,
-                                                                 Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
+  private static Generator<File> randomFiles(String rootPath, FileFilter fileFilter) {
     FileFilter interestingIdeaFiles = child -> {
       String name = child.getName();
       if (name.startsWith(".")) return false;
@@ -193,19 +185,32 @@ public class MadTestingUtil {
              fileFilter.accept(child) &&
              child.length() < 500_000;
     };
-    Generator<File> randomFiles = Generator.from(new FileGenerator(new File(rootPath), interestingIdeaFiles))
-      .suchThat(new Predicate<File>() {
-        @Override
-        public boolean test(File file) {
-          return file != null;
-        }
+    return Generator.from(new FileGenerator(new File(rootPath), interestingIdeaFiles))
+                    .suchThat(new Predicate<File>() {
+                      @Override
+                      public boolean test(File file) {
+                        return file != null;
+                      }
 
-        @Override
-        public String toString() {
-          return "can find a file under " + rootPath + " satisfying given filters";
-        }
-      })
-      .noShrink();
+                      @Override
+                      public String toString() {
+                        return "can find a file under " + rootPath + " satisfying given filters";
+                      }
+                    })
+                    .noShrink();
+  }
+
+  /**
+   * Finds files under {@code rootPath} (e.g. test data root) satisfying {@code fileFilter condition} (e.g. correct extension) and uses {@code actions} to generate actions those files (e.g. invoke completion/intentions or random editing).
+   * Almost: the files with same paths and contents are created inside the test project, then the actions are executed on them.
+   * Note that the test project contains only one file at each moment, so it's best to test actions that don't require much environment. 
+   * @return
+   */
+  @NotNull
+  public static Generator<FileWithActions> actionsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+                                                                 FileFilter fileFilter,
+                                                                 Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
+    Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
     return randomFiles.flatMap(ioFile -> {
       VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
       PsiDocumentManager.getInstance(fixture.getProject()).commitAllDocuments();
@@ -218,6 +223,30 @@ public class MadTestingUtil {
       }
       return Generator.nonEmptyLists(actions.apply(file)).map(a -> new FileWithActions(file, a));
     });
+  }
+
+  @NotNull
+  public static Supplier<ImperativeCommand> commandsOnFileContents(CodeInsightTestFixture fixture, String rootPath,
+                                                                   FileFilter fileFilter,
+                                                                   Function<PsiFile, Generator<? extends MadTestingAction>> actions) {
+    Generator<File> randomFiles = randomFiles(rootPath, fileFilter);
+    return () -> env -> new RunAll()
+      .append(() -> {
+        File ioFile = env.generateValue(randomFiles, "Working with %s");
+        VirtualFile vFile = copyFileToProject(ioFile, fixture, rootPath);
+        PsiFile psiFile = fixture.getPsiManager().findFile(vFile);
+        if (psiFile instanceof PsiBinaryFile || psiFile instanceof PsiPlainTextFile) {
+          System.err.println("Can't check " + vFile + " due to incorrect file type: " + psiFile + " of " + psiFile.getClass());
+          return;
+        }
+        env.executeCommands(actions.apply(psiFile));
+      })
+      .append(() -> WriteAction.run(() -> {
+        for (VirtualFile file : fixture.getTempDirFixture().getFile("").getChildren()) {
+          file.delete(fixture);
+        }
+      }))
+      .run();
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
@@ -265,14 +294,7 @@ public class MadTestingUtil {
   }
 
   public static boolean isAfterError(PsiFile file, int offset) {
-    PsiElement leaf = file.findElementAt(offset);
-    Set<Integer> errorOffsets = SyntaxTraverser.psiTraverser(file)
-      .filter(PsiErrorElement.class)
-      .filterMap(PsiTreeUtil::nextVisibleLeaf)
-      .map(e -> e.getTextRange().getStartOffset())
-      .toSet();
-    return !errorOffsets.isEmpty() &&
-           SyntaxTraverser.psiApi().parents(leaf).find(e -> errorOffsets.contains(e.getTextRange().getStartOffset())) != null;
+    return SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).find(e -> e.getTextRange().getStartOffset() <= offset) != null;
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {
@@ -302,7 +324,7 @@ public class MadTestingUtil {
         }
 
         List<File> toChoose = preferDirs(data, children);
-        Collections.sort(toChoose);
+        Collections.sort(toChoose, Comparator.comparing(File::getName));
         int index = data.drawInt(IntDistribution.uniform(0, toChoose.size() - 1));
         File generated = generateRandomFile(data, toChoose.get(index), exhausted);
         if (generated != null) {

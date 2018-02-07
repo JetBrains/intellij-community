@@ -25,6 +25,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -36,7 +37,6 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -69,7 +69,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
         locals.add(e);
       }
     }
-    return locals.toArray(new LocalInspectionTool[locals.size()]);
+    return locals.toArray(LocalInspectionTool.EMPTY_ARRAY);
   }
 
   @SuppressWarnings("All") @Language("JAVA")

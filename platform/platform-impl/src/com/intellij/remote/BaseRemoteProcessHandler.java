@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,54 +16,31 @@
 package com.intellij.remote;
 
 import com.intellij.execution.CommandLineUtil;
-import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 
 /**
  * @author traff
  */
-public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractRemoteProcessHandler<T> implements TaskExecutor {
+public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProcessHandler<T> {
   private static final Logger LOG = Logger.getInstance(BaseRemoteProcessHandler.class);
 
-  protected final String myCommandLine;
-  protected final ProcessWaitFor myWaitFor;
-  protected final Charset myCharset;
-  protected T myProcess;
-
   public BaseRemoteProcessHandler(@NotNull T process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
-    myProcess = process;
-    myCommandLine = commandLine;
-    myWaitFor = new ProcessWaitFor(process, this, CommandLineUtil.extractPresentableName(commandLine));
-    myCharset = charset;
-    if (StringUtil.isEmpty(commandLine)) {
-      LOG.warn(new IllegalArgumentException("Must specify non-empty 'commandLine' parameter"));
-    }
-  }
-
-  @Override
-  public T getProcess() {
-    return myProcess;
+    super(process, commandLine, charset);
   }
 
   @Override
   protected void destroyProcessImpl() {
     if (!myProcess.killProcessTree()) {
-      baseDestroyProcessImpl();
+      super.destroyProcessImpl();
     }
   }
 
@@ -84,7 +61,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
             @NotNull
             @Override
             protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-              return BaseRemoteProcessHandler.executeOnPooledThread(runnable);
+              return BaseRemoteProcessHandler.this.executeTask(runnable);
             }
           };
 
@@ -97,7 +74,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
             @NotNull
             @Override
             protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-              return BaseRemoteProcessHandler.executeOnPooledThread(runnable);
+              return BaseRemoteProcessHandler.this.executeTask(runnable);
             }
           };
 
@@ -123,68 +100,15 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
     super.startNotify();
   }
 
-  protected void onOSProcessTerminated(final int exitCode) {
-    notifyProcessTerminated(exitCode);
-  }
-
+  @Deprecated
   protected void baseDestroyProcessImpl() {
-    try {
-      closeStreams();
-    }
-    finally {
-      doDestroyProcess();
-    }
-  }
-
-  protected void doDestroyProcess() {
-    getProcess().destroy();
-  }
-
-  @Override
-  protected void detachProcessImpl() {
-    final Runnable runnable = () -> {
-      closeStreams();
-
-      myWaitFor.detach();
-      notifyProcessDetached();
-    };
-
-    executeOnPooledThread(runnable);
-  }
-
-  protected void closeStreams() {
-    try {
-      myProcess.getOutputStream().close();
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-  }
-
-  @Override
-  public boolean detachIsDefault() {
-    return false;
-  }
-
-  @Override
-  public OutputStream getProcessInput() {
-    return myProcess.getOutputStream();
-  }
-
-  @Nullable
-  public Charset getCharset() {
-    return myCharset;
-  }
-
-  @NotNull
-  private static Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    return AppExecutorUtil.getAppExecutorService().submit(task);
+    super.destroyProcessImpl();
   }
 
   @NotNull
   @Override
   public Future<?> executeTask(@NotNull Runnable task) {
-    return executeOnPooledThread(task);
+    return AppExecutorUtil.getAppExecutorService().submit(task);
   }
 
   private abstract static class RemoteOutputReader extends BaseOutputReader {
@@ -243,10 +167,5 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends AbstractR
     private synchronized boolean isClosed() {
       return myClosed;
     }
-  }
-
-  @Nullable
-  public String getCommandLine() {
-    return myCommandLine;
   }
 }

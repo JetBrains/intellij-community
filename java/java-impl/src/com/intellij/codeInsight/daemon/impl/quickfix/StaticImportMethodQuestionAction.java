@@ -163,6 +163,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
             return PsiClassListCellRenderer.getContainerTextStatic(element);
           }
 
+          @Override
           public int getIconFlags() {
             return 0;
           }

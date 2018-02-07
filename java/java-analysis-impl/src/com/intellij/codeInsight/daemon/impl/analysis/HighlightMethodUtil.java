@@ -381,6 +381,7 @@ public class HighlightMethodUtil {
             String message = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
             if (message != null) {
               highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(fixRange).create();
+              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
             }
           }
         }
@@ -523,7 +524,7 @@ public class HighlightMethodUtil {
       PsiType rType = methodCall.getType();
       if (rType != null && !variable.getType().isAssignableFrom(rType)) {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
-        if (expectedTypeByApplicabilityConstraints != null && !expectedTypeByApplicabilityConstraints.equals(rType)) {
+        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints)) {
           HighlightFixUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
         }
       }
@@ -641,7 +642,7 @@ public class HighlightMethodUtil {
     boolean isThisOrSuper = referenceToMethod.getReferenceNameElement() instanceof PsiKeyword;
     if (isThisOrSuper) {
       // super(..) or this(..)
-      if (list.getExpressions().length == 0) { // implicit ctr call
+      if (list.isEmpty()) { // implicit ctr call
         CandidateInfo[] candidates = resolveHelper.getReferencedMethodCandidates(methodCall, true);
         if (candidates.length == 1 && !candidates[0].getElement().isPhysical()) {
           isDummy = true;// dummy constructor
@@ -822,7 +823,7 @@ public class HighlightMethodUtil {
       MethodCandidateInfo candidate = (MethodCandidateInfo)result;
       if (candidate.isAccessible()) candidateList.add(candidate);
     }
-    return candidateList.toArray(new MethodCandidateInfo[candidateList.size()]);
+    return candidateList.toArray(new MethodCandidateInfo[0]);
   }
 
   private static void registerMethodCallIntentions(@Nullable HighlightInfo highlightInfo,
@@ -989,7 +990,7 @@ public class HighlightMethodUtil {
                                                              String methodName,
                                                              PsiSubstitutor substitutor,
                                                              PsiClass aClass) {
-    return Math.max(parameters.length, list.getExpressions().length) <= 2
+    return Math.max(parameters.length, list.getExpressionCount()) <= 2
            ? createShortMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass)
            : createLongMismatchedArgumentsHtmlTooltip(list, info, parameters, methodName, substitutor, aClass);
   }
@@ -1639,7 +1640,7 @@ public class HighlightMethodUtil {
     PsiMethod[] constructors = aClass.getConstructors();
 
     if (constructors.length == 0) {
-      if (list.getExpressions().length != 0) {
+      if (!list.isEmpty()) {
         String constructorName = aClass.getName();
         String argTypes = buildArgTypesList(list);
         String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);

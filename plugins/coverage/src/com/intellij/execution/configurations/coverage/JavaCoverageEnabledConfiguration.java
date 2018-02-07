@@ -1,19 +1,6 @@
 /*
- * Copyright 2000-2007 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
 package com.intellij.execution.configurations.coverage;
 
 import com.intellij.coverage.CoverageRunner;
@@ -76,7 +63,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   public void appendCoverageArgument(RunConfigurationBase configuration, final SimpleJavaParameters javaParameters) {
     final CoverageRunner runner = getCoverageRunner();
     try {
-      if (runner != null && runner instanceof JavaCoverageRunner) {
+      if (runner instanceof JavaCoverageRunner) {
         final String path = getCoverageFilePath();
         assert path != null; // cannot be null here if runner != null
 
@@ -145,8 +132,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
     super.readExternal(element);
 
     // merge with prev results
-    final String mergeAttribute = element.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME);
-    myIsMergeWithPreviousResults = mergeAttribute != null && Boolean.valueOf(mergeAttribute).booleanValue();
+    myIsMergeWithPreviousResults = Boolean.parseBoolean(element.getAttributeValue(COVERAGE_MERGE_ATTRIBUTE_NAME));
 
     mySuiteToMergeWith = element.getAttributeValue(COVERAGE_MERGE_SUITE_ATT_NAME);
 
@@ -173,45 +159,24 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    // just for backward compatibility with settings format before "Huge Coverage Refactoring"
-    // see [IDEA-56800] ProjectRunConfigurationManager component: "coverage" extension: "merge" attribute is misplaced
-    // here we can't use super.writeExternal(...) due to differences in format between IDEA 10 and IDEA 9.x
-
-    // enabled
-    element.setAttribute(COVERAGE_ENABLED_ATTRIBUTE_NAME, String.valueOf(isCoverageEnabled()));
+    super.writeExternal(element);
 
     // merge with prev
-    element.setAttribute(COVERAGE_MERGE_ATTRIBUTE_NAME, String.valueOf(myIsMergeWithPreviousResults));
+    if (myIsMergeWithPreviousResults) {
+      element.setAttribute(COVERAGE_MERGE_ATTRIBUTE_NAME, String.valueOf(true));
+    }
 
     if (myIsMergeWithPreviousResults && mySuiteToMergeWith != null) {
       element.setAttribute(COVERAGE_MERGE_SUITE_ATT_NAME, mySuiteToMergeWith);
     }
 
-    // track per test
-    final boolean trackPerTestCoverage = isTrackPerTestCoverage();
-    if (!trackPerTestCoverage) {
-      element.setAttribute(TRACK_PER_TEST_COVERAGE_ATTRIBUTE_NAME, String.valueOf(trackPerTestCoverage));
-    }
-
-    // sampling
-    final boolean sampling = isSampling();
-    if (sampling) {
-      element.setAttribute(SAMPLING_COVERAGE_ATTRIBUTE_NAME, String.valueOf(sampling));
-    }
-
-    // test folders
-    final boolean trackTestFolders = isTrackTestFolders();
-    if (trackTestFolders) {
-      element.setAttribute(TRACK_TEST_FOLDERS, String.valueOf(trackTestFolders));
-    }
-
     // runner
     final CoverageRunner coverageRunner = getCoverageRunner();
-    final String runnerId = getRunnerId();
     if (coverageRunner != null) {
-      element.setAttribute(COVERAGE_RUNNER, coverageRunner.getId());
-    } else if (runnerId != null) {
-      element.setAttribute(COVERAGE_RUNNER, runnerId);
+      IDEACoverageRunner ideaRunner = CoverageRunner.EP_NAME.findExtension(IDEACoverageRunner.class);
+      if (ideaRunner != null && coverageRunner.getId().equals(ideaRunner.getId())) {
+        element.removeAttribute(COVERAGE_RUNNER);
+      }
     }
 
     // patterns

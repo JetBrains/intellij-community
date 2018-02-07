@@ -74,7 +74,7 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-4073
   public void testSpecialFunctionAttributesPy3() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON32,
+      LanguageLevel.PYTHON34,
       () -> {
         List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
         assertNotNull(suggested);
@@ -150,7 +150,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-20279
@@ -199,7 +199,6 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-21060
   public void testGenericTypeInheritor() {
-    myFixture.copyDirectoryToProject("../typing", "");
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
@@ -253,6 +252,21 @@ public class Py3CompletionTest extends PyTestCase {
 
     assertNotNull(suggested);
     assertDoesntContain(suggested, "meta_method");
+  }
+
+  // PY-27398
+  public void testDataclassPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-27398
+  public void testDataclassWithInitVarPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-27398
+  public void testDataclassPostInitNoInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
 
   @Override

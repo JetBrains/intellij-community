@@ -160,7 +160,7 @@ public class MavenResourceCompilerConfigurationGenerator {
       addResources(resourceConfig.resources, mavenProject.getResources());
       addResources(resourceConfig.testResources, mavenProject.getTestResources());
 
-      addWebResources(module, projectConfig, mavenProject);
+      addWebResources(resourceConfig, module, projectConfig, mavenProject);
       addEjbClientArtifactConfiguration(module, projectConfig, mavenProject);
 
       resourceConfig.filteringExclusions.addAll(MavenProjectsTree.getFilterExclusions(mavenProject));
@@ -334,7 +334,8 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
   }
 
-  private static void addWebResources(@NotNull Module module, MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
+  private static void addWebResources(@NotNull MavenModuleResourceConfiguration resourceConfig, @NotNull Module module,
+                                      MavenProjectConfiguration projectCfg, MavenProject mavenProject) {
     Element warCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
     if (warCfg == null) return;
 
@@ -353,15 +354,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       LOG.error("MavenWebArtifactConfiguration already exists.");
     }
 
-    String packagingIncludes = warCfg.getChildTextTrim("packagingIncludes");
-    if (packagingIncludes != null) {
-      artifactResourceCfg.packagingIncludes.addAll(StringUtil.split(packagingIncludes, ","));
-    }
-
-    String packagingExcludes = warCfg.getChildTextTrim("packagingExcludes");
-    if (packagingExcludes != null) {
-      artifactResourceCfg.packagingExcludes.addAll(StringUtil.split(packagingExcludes, ","));
-    }
+    addSplitAndTrimmed(artifactResourceCfg.packagingIncludes, warCfg.getChildTextTrim("packagingIncludes"));
+    addSplitAndTrimmed(artifactResourceCfg.packagingExcludes, warCfg.getChildTextTrim("packagingExcludes"));
+    addConfigValues(resourceConfig.filteringExclusions, "nonFilteredFileExtensions", "nonFilteredFileExtension", warCfg);
 
     String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
     if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";
@@ -369,6 +364,9 @@ public class MavenResourceCompilerConfigurationGenerator {
       warSourceDirectory = mavenProject.getDirectory() + '/' + warSourceDirectory;
     }
     artifactResourceCfg.warSourceDirectory = FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/'));
+
+    addSplitAndTrimmed(artifactResourceCfg.warSourceIncludes, warCfg.getChildTextTrim("warSourceIncludes"));
+    addSplitAndTrimmed(artifactResourceCfg.warSourceExcludes, warCfg.getChildTextTrim("warSourceExcludes"));
 
     if (webResources != null) {
       for (Element resource : webResources.getChildren("resource")) {
@@ -385,25 +383,8 @@ public class MavenResourceCompilerConfigurationGenerator {
 
         r.targetPath = resource.getChildTextTrim("targetPath");
 
-        Element includes = resource.getChild("includes");
-        if (includes != null) {
-          for (Element include : includes.getChildren("include")) {
-            String includeText = include.getTextTrim();
-            if (!includeText.isEmpty()) {
-              r.includes.add(includeText);
-            }
-          }
-        }
-
-        Element excludes = resource.getChild("excludes");
-        if (excludes != null) {
-          for (Element exclude : excludes.getChildren("exclude")) {
-            String excludeText = exclude.getTextTrim();
-            if (!excludeText.isEmpty()) {
-              r.excludes.add(excludeText);
-            }
-          }
-        }
+        addConfigValues(r.includes, "includes", "include", resource);
+        addConfigValues(r.excludes, "excludes", "exclude", resource);
 
         artifactResourceCfg.webResources.add(r);
       }
@@ -416,6 +397,29 @@ public class MavenResourceCompilerConfigurationGenerator {
       r.isFiltered = true;
       r.targetPath = "";
       artifactResourceCfg.webResources.add(r);
+    }
+  }
+
+  private static void addConfigValues(Collection<String> collection, String tag, String subTag, Element resource) {
+    Element config = resource.getChild(tag);
+    if (config != null) {
+      for (Element value : config.getChildren(subTag)) {
+        String text = value.getTextTrim();
+        if (!text.isEmpty()) {
+          collection.add(text);
+        }
+      }
+      if (config.getChildren(subTag).isEmpty()) {
+        addSplitAndTrimmed(collection, config.getTextTrim());
+      }
+    }
+  }
+
+  private static void addSplitAndTrimmed(Collection<String> collection, @Nullable String commaSeparatedList) {
+    if (commaSeparatedList != null) {
+      for (String s : StringUtil.split(commaSeparatedList, ",")) {
+        collection.add(s.trim());
+      }
     }
   }
 

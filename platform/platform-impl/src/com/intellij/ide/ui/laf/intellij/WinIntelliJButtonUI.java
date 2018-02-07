@@ -17,7 +17,6 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
@@ -38,7 +37,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     public void propertyChange(PropertyChangeEvent evt) {
       final Object source = evt.getSource();
       if (source instanceof AbstractButton) {
-        if (isHelpButton((JComponent)source)) {
+        if (UIUtil.isHelpButton((JComponent)source)) {
           ((AbstractButton)source).setOpaque(false);
         }
       }
@@ -65,7 +64,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       Icon help = MacIntelliJIconCache.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
@@ -117,30 +116,26 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       int delta = JBUI.scale(6);
       rect.x += delta;
       rect.width -= delta;
-    } else if (b instanceof JBOptionButton) {
-      rect.x -= JBUI.scale(4);
     }
 
     rect.y -= JBUI.scale(1); // Move one pixel up
   }
 
   @Override
-  public Dimension getPreferredSize(JComponent c) {
-    if (isHelpButton(c)) {
+  protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
+    if (UIUtil.isHelpButton(c)) {
       Icon icon = MacIntelliJIconCache.getIcon("winHelp");
       Insets i = c.getInsets();
       return new Dimension(icon.getIconWidth() + i.left + i.right, JBUI.scale(24));
     } else if (isSquare(c)) {
       return new JBDimension(24, 24);
     } else {
-      return super.getPreferredSize(c);
+      return prefSize;
     }
   }
 
   @Override
-  protected void setupDefaultButton(JButton button) {
-    //do nothing
-  }
+  protected void setupDefaultButton(JButton button) {}
 
   @Override
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {

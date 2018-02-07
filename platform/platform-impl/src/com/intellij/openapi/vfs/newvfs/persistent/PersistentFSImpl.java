@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
@@ -70,9 +58,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
-    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
+    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
   private final IntObjectMap<VirtualFileSystemEntry>
-    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
+    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
@@ -211,7 +199,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.updateList(id, childrenIds.toNativeArray());
     setChildrenCached(id);
 
-    return nameIds.toArray(new FSRecords.NameId[nameIds.size()]);
+    return nameIds.toArray(FSRecords.NameId.EMPTY_ARRAY);
   }
 
   private static void setChildrenCached(int id) {
@@ -253,7 +241,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.readContent(getFileId(file));
   }
 
-  @Nullable
+  @NotNull
   private static DataInputStream readContentById(int contentId) {
     return FSRecords.readContentById(contentId);
   }
@@ -553,15 +541,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     catch (IOException e) {
       FSRecords.handleError(e);
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
   @NotNull
   public byte[] contentsToByteArray(int contentId) throws IOException {
     final DataInputStream stream = readContentById(contentId);
-    assert stream != null : contentId;
     return FileUtil.loadBytes(stream);
   }
 
@@ -1108,7 +1095,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public VirtualFile[] getRoots() {
     Collection<VirtualFileSystemEntry> roots = myRoots.values();
-    return ArrayUtil.stripTrailingNulls(VfsUtilCore.toVirtualFileArray(roots));
+    return VfsUtilCore.toVirtualFileArray(roots); // ConcurrentHashMap.keySet().toArray(new T[0]) guaranteed to return array with no nulls
   }
 
   @Override

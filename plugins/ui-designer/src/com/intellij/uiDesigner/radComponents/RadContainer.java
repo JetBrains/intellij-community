@@ -212,7 +212,7 @@ public class RadContainer extends RadComponent implements IContainer {
       throw new IllegalArgumentException("component is already added: " + component);
     }
 
-    final RadComponent[] oldChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
+    final RadComponent[] oldChildren = myComponents.toArray(RadComponent.EMPTY_ARRAY);
 
     // Remove from old parent
     final RadContainer oldParent = component.getParent();
@@ -225,7 +225,7 @@ public class RadContainer extends RadComponent implements IContainer {
     component.setParent(this);
     myLayoutManager.addComponentToContainer(this, component, index);
 
-    final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
+    final RadComponent[] newChildren = myComponents.toArray(RadComponent.EMPTY_ARRAY);
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
   }
 
@@ -253,14 +253,14 @@ public class RadContainer extends RadComponent implements IContainer {
       throw new IllegalArgumentException("component is not added: " + component);
     }
 
-    final RadComponent[] oldChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
+    final RadComponent[] oldChildren = myComponents.toArray(RadComponent.EMPTY_ARRAY);
 
     // Remove child
     component.setParent(null);
     myComponents.remove(component);
     myLayoutManager.removeComponentFromContainer(this, component);
 
-    final RadComponent[] newChildren = myComponents.toArray(new RadComponent[myComponents.size()]);
+    final RadComponent[] newChildren = myComponents.toArray(RadComponent.EMPTY_ARRAY);
     firePropertyChanged(PROP_CHILDREN, oldChildren, newChildren);
   }
 
@@ -280,7 +280,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * @return new array with all children
    */
   public final RadComponent[] getComponents() {
-    return myComponents.toArray(new RadComponent[myComponents.size()]);
+    return myComponents.toArray(RadComponent.EMPTY_ARRAY);
   }
 
   @NotNull

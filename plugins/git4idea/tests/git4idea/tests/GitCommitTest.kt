@@ -15,6 +15,7 @@
  */
 package git4idea.tests
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
@@ -22,7 +23,9 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.ContainerUtil
 import git4idea.GitUtil
 import git4idea.checkin.GitCheckinEnvironment
+import git4idea.config.GitVersion
 import git4idea.test.*
+import org.junit.Assume.assumeTrue
 import java.io.File
 import java.util.*
 
@@ -133,6 +136,8 @@ class GitCommitTest : GitSingleRepoTest() {
   }
 
   fun `test commit case rename & don't commit one staged file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
     tac("s.java")
     generateCaseRename("a.java", "A.java")
     echo("s.java", "staged")
@@ -157,6 +162,8 @@ class GitCommitTest : GitSingleRepoTest() {
   }
 
   fun `test commit case rename & don't commit one staged simple rename, then rename should remain staged`() {
+    `assume version where git reset returns 0 exit code on success `()
+
     echo("before.txt", "some\ncontent\nere")
     addCommit("created before.txt")
     generateCaseRename("a.java", "A.java")
@@ -181,6 +188,8 @@ class GitCommitTest : GitSingleRepoTest() {
   }
 
   fun `test commit case rename + one unstaged file & don't commit one staged file`() {
+    `assume version where git reset returns 0 exit code on success `()
+
     tac("s.java")
     tac("m.java")
     generateCaseRename("a.java", "A.java")
@@ -209,11 +218,15 @@ class GitCommitTest : GitSingleRepoTest() {
   }
 
   fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore`() {
-    tac("c.java")
+    `assume version where git reset returns 0 exit code on success `()
+
+    tac("c.java", "initial")
     generateCaseRename("a.java", "A.java")
-    echo("c.java", "staged")
+    val STAGED_CONTENT = "staged"
+    overwrite("c.java", STAGED_CONTENT)
     git("add c.java")
-    overwrite("c.java", "unstaged")
+    val UNSTAGED_CONTENT = "unstaged"
+    overwrite("c.java", UNSTAGED_CONTENT)
 
     val changes = assertChanges {
       rename("a.java", "A.java")
@@ -231,11 +244,18 @@ class GitCommitTest : GitSingleRepoTest() {
     repo.assertStagedChanges {
       modified("c.java")
     }
-    // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
-    // so we are not doing it, at least until IDEA supports Git index
-    // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
-    assertEquals("unstaged", git("show :c.java"))
-    assertEquals("unstaged", FileUtil.loadFile(File(projectPath, "c.java")))
+
+    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive) {
+      STAGED_CONTENT
+    }
+    else {
+      // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
+      // so we are not doing it, at least until IDEA supports Git index
+      // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
+      UNSTAGED_CONTENT
+    }
+    assertEquals(expectedIndexContent, git("show :c.java"))
+    assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
   }
 
   fun `test commit case rename with additional non-staged changes should commit everything`() {
@@ -265,6 +285,11 @@ class GitCommitTest : GitSingleRepoTest() {
     }
     assertNoChanges()
     assertEquals(initialContent + additionalContent, git("show HEAD:A.java"))
+  }
+
+  private fun `assume version where git reset returns 0 exit code on success `() {
+    assumeTrue("Not testing: git reset returns 1 and fails the commit process in ${vcs.version}",
+               vcs.version.isLaterOrEqual(GitVersion(1, 8, 2, 0)))
   }
 
   private fun generateCaseRename(from: String, to: String) {

@@ -175,16 +175,20 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly2() { doTest(); }
   public void testTwoDifferentParameterizationCheckWithInterfaceTypeArguments() { doTest(); }
   public void testNonGenericInnerClassOfGenericsOuterInReturnType() { doTest(); }
+  public void testInferredApplicabilityForAnonymousClassConstructor() { doTest(); }
   public void testNonGenericInnerClassOfGenericsOuterWithWildcardsInReturnType() { doTest(); }
   public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() { doTest(); }
   //public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() { doTest(); }
   public void testRecursiveTypeWithCapture() { doTest(); }
   public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
+  public void testPostponeConditionalExpressionErrorToMethodLevel() { doTest(); }
 
   public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
   public void testCheckGlbConflictsAfterIntersectionTypeCreated() { doTest(); }
   public void testRestoreCapturedWildcardsInReturnTypesWhenNoAdditionalConstraintsDetected() { doTest(); }
+  public void testIntersectionWithSameInterfaceButDifferentTypeArgument() { doTest(); }
   public void testVarargsMethodPreferred() { doTest(); }
+  public void testSameNamedFreshVariables() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();

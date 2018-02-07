@@ -49,7 +49,7 @@ public class AnnotateActionGroup extends ActionGroup {
       actions.add(new ShowAnnotationColorsAction());
     }
     actions.add(new ShowShortenNames());
-    myActions = actions.toArray(new AnAction[actions.size()]);
+    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull

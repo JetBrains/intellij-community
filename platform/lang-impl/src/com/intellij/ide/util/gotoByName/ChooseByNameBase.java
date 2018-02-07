@@ -523,6 +523,11 @@ public abstract class ChooseByNameBase {
                 return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
               }
 
+              if (UIUtil.haveCommonOwner(oppositeComponent, e.getComponent()))
+              {
+                return;
+              }
+
               hideHint();
             }
           }, 5);
@@ -1379,7 +1384,7 @@ public abstract class ChooseByNameBase {
 
     private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
       myUpdateListAlarm.addRequest(() -> {
-        if (myCalcElementsThread != this) return;
+        if (myCalcElementsThread != this || !myProgress.isRunning()) return;
 
         int count = elements.size();
         if (count > lastCount) {
@@ -1630,7 +1635,7 @@ public abstract class ChooseByNameBase {
                                @NotNull UsageViewPresentation presentation) {
       UsageTarget[] usageTargets = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY :
                                    PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
-      UsageViewManager.getInstance(myProject).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), presentation);
+      UsageViewManager.getInstance(myProject).showUsages(usageTargets, usages.toArray(Usage.EMPTY_ARRAY), presentation);
     }
 
     @Override

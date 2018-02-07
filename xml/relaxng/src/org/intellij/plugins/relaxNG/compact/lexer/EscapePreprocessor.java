@@ -30,7 +30,6 @@ import java.io.Reader;
  * <p/>
  * Created by IntelliJ IDEA.
  * User: sweinreuter
- * Date: 05.08.2007
  */
 class EscapePreprocessor extends FilterReader {
   private final TIntArrayList myQueuedChars;

@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 
 public class AntCallParamsFinder extends AntDomRecursiveVisitor {

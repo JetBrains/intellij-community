@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -69,31 +69,23 @@ public class LiteralAsArgToStringEqualsInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiExpression argument =
-        (PsiExpression)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiExpression argument = (PsiExpression)descriptor.getPsiElement();
       final PsiElement argumentList = argument.getParent();
-      final PsiMethodCallExpression expression =
-        (PsiMethodCallExpression)argumentList.getParent();
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiExpression target =
-        methodExpression.getQualifierExpression();
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)argumentList.getParent();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpression target = methodExpression.getQualifierExpression();
       final String methodName = methodExpression.getReferenceName();
-      final PsiExpression strippedTarget =
-        ParenthesesUtils.stripParentheses(target);
+      final PsiExpression strippedTarget = ParenthesesUtils.stripParentheses(target);
       if (strippedTarget == null) {
         return;
       }
-      final PsiExpression strippedArg =
-        ParenthesesUtils.stripParentheses(argument);
+      final PsiExpression strippedArg = ParenthesesUtils.stripParentheses(argument);
       if (strippedArg == null) {
         return;
       }
       final String callString;
-      if (ParenthesesUtils.getPrecedence(strippedArg) >
-          ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
+      if (ParenthesesUtils.getPrecedence(strippedArg) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
         callString = '(' + strippedArg.getText() + ")." + methodName +
                      '(' + strippedTarget.getText() + ')';
       }
@@ -101,7 +93,10 @@ public class LiteralAsArgToStringEqualsInspection
         callString = strippedArg.getText() + '.' + methodName + '(' +
                      strippedTarget.getText() + ')';
       }
-      PsiReplacementUtil.replaceExpression(expression, callString);
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(strippedArg);
+      tracker.markUnchanged(strippedTarget);
+      PsiReplacementUtil.replaceExpression(expression, callString, tracker);
     }
   }
 

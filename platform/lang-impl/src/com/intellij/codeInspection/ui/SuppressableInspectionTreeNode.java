@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -68,22 +70,18 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   @NotNull
-  public Set<SuppressIntentionAction> getAvailableSuppressActions() {
-    return myAvailableSuppressActions;
+  public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
+    Set<SuppressIntentionAction> actions = myAvailableSuppressActions;
+    if (actions == null) {
+      actions = calculateAvailableSuppressActions();
+      myAvailableSuppressActions = actions;
+    }
+    return actions;
   }
 
   public void removeSuppressActionFromAvailable(@NotNull SuppressIntentionAction action) {
     myAvailableSuppressActions.remove(action);
   }
-
-  protected void init(Project project) {
-    myPresentableName = calculatePresentableName();
-    myValid = calculateIsValid();
-    myAvailableSuppressActions = getElement() == null
-                                 ? Collections.emptySet()
-                                 : calculateAvailableSuppressActions(project);
-  }
-
 
   @Nullable
   public abstract RefEntity getElement();
@@ -121,6 +119,20 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       return "Suppressed";
     }
     return !isValid() ? "No longer valid" : null;
+  }
+
+  @Override
+  protected void nodeAddedToTree() {
+    myPresentableName = calculatePresentableName();
+    myValid = calculateIsValid();
+    myAvailableSuppressActions = calculateAvailableSuppressActions();
+  }
+
+  @NotNull
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
+    return getElement() == null
+                                 ? Collections.emptySet()
+                                 : calculateAvailableSuppressActions(myPresentation.getContext().getProject());
   }
 
   @NotNull

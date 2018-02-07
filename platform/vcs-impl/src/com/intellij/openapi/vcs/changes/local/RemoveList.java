@@ -32,8 +32,8 @@ public class RemoveList implements ChangeListCommand {
   }
 
   public void apply(final ChangeListWorker worker) {
-    myListCopy = worker.getChangeListCopyByName(myName);
-    myDefaultListCopy = worker.getDefaultList().copy();
+    myListCopy = worker.getChangeListByName(myName);
+    myDefaultListCopy = worker.getDefaultList();
     myRemoved = worker.removeChangeList(myName);
   }
 
@@ -43,9 +43,5 @@ public class RemoveList implements ChangeListCommand {
       multicaster.changesMoved(myListCopy.getChanges(), myListCopy, myDefaultListCopy);
       multicaster.changeListRemoved(myListCopy);
     }
-  }
-
-  public boolean isRemoved() {
-    return myRemoved;
   }
 }

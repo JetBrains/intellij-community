@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 27-Jan-16
  */
 final class AutomakeCompileContext extends UserDataHolderBase implements CompileContext {
   private final Project myProject;

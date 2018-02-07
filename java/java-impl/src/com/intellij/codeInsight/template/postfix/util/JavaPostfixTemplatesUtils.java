@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.util;
 
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelectorBase;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
@@ -18,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,7 +128,8 @@ public abstract class JavaPostfixTemplatesUtils {
     @Override
     public PsiExpression getNegatedExpression(@NotNull PsiElement element) {
       assert element instanceof PsiExpression;
-      return CodeInsightServicesUtil.invertCondition((PsiExpression)element);
+      String negatedExpressionText = BoolUtils.getNegatedExpressionText((PsiExpression)element);
+      return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(negatedExpressionText, element);
     }
   };
 
@@ -182,7 +183,7 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isArray(@Nullable PsiType type) {
-    return type != null && type instanceof PsiArrayType;
+    return type instanceof PsiArrayType;
   }
 
   @Contract("null -> false")

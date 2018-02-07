@@ -45,8 +45,6 @@ import java.util.concurrent.CountDownLatch;
  * @author peter
  */
 public class DomConcurrencyStressTest extends DomTestCase {
-  private static final int ITERATIONS = Timings.adjustAccordingToMySpeed(239, true);
-
   public void testInternalDomLocksReadConsistency() throws Throwable {
     getDomManager().registerFileDescription(new DomFileDescription(MyElement.class, "a"), getTestRootDisposable());
 
@@ -79,6 +77,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
                                        "<bool/>" +
                                        "</a>");
 
+    final int ITERATIONS = Timings.adjustAccordingToMySpeed(239, true);
     System.out.println("ITERATIONS =" + ITERATIONS);
     runThreads(42, new Runnable() {
       @Override
@@ -184,6 +183,7 @@ public class DomConcurrencyStressTest extends DomTestCase {
   }
 
   public void testBigCustomFile() throws Throwable {
+    final int ITERATIONS = Timings.adjustAccordingToMySpeed(239, true);
     getDomManager().registerFileDescription(new DomFileDescription<>(MyAllCustomElement.class, "component"), getTestRootDisposable());
 
     registerExtender(MyAllCustomElement.class, MyAllCustomExtender.class);

@@ -19,8 +19,6 @@ import com.intellij.openapi.ui.ex.MessagesEx;
 
 /**
  * @author Hani Suleiman
- *         Date: Jul 20, 2005
- *         Time: 2:07:53 PM
  */
 public class MessageInfoException extends Exception
 {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -155,7 +155,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   @Override
-  public void loadState(RecentlyChangedFilesState state) {
+  public void loadState(@NotNull RecentlyChangedFilesState state) {
     myRecentlyChangedFiles = state;
   }
 
@@ -180,6 +180,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     Document document = e.getDocument();
     final VirtualFile file = getFileDocumentManager().getFile(document);
     if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) LOG.error("Document update for physical file not in EDT: " + file);
       myCurrentCommandHasChanges = true;
       myChangedFilesInCurrentCommand.add(file);
     }

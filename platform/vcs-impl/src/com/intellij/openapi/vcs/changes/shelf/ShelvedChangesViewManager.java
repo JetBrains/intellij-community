@@ -157,7 +157,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       @Override
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
+        if (node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
           String editorValue = ((TreeCellEditor)e.getSource()).getCellEditorValue().toString();
           ShelvedChangeList shelvedChangeList = ((ShelvedListNode)node).getList();
           ShelveChangesManager.getInstance(project).renameChangeList(shelvedChangeList, editorValue);
@@ -401,14 +401,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(false);
 
         if (changeLists.size() > 0) {
-          return changeLists.toArray(new ShelvedChangeList[changeLists.size()]);
+          return changeLists.toArray(new ShelvedChangeList[0]);
         }
       }
       else if (SHELVED_RECYCLED_CHANGELIST_KEY.is(dataId)) {
         final Set<ShelvedChangeList> changeLists = getSelectedLists(true);
 
         if (changeLists.size() > 0) {
-          return changeLists.toArray(new ShelvedChangeList[changeLists.size()]);
+          return changeLists.toArray(new ShelvedChangeList[0]);
         }
       }
       else if (SHELVED_CHANGE_KEY.is(dataId)) {
@@ -431,7 +431,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           for (ShelvedBinaryFile binaryFile : shelvedBinaryFiles) {
             changes.add(binaryFile.createChange(myProject));
           }
-          return changes.toArray(new Change[changes.size()]);
+          return changes.toArray(new Change[0]);
         }
         else {
           final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
@@ -446,7 +446,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
               changes.add(file.createChange(myProject));
             }
           }
-          return changes.toArray(new Change[changes.size()]);
+          return changes.toArray(new Change[0]);
         }
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
@@ -473,7 +473,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
             navigatables.add(navigatable);
           }
         }
-        return navigatables.toArray(new Navigatable[navigatables.size()]);
+        return navigatables.toArray(new Navigatable[0]);
       }
       return null;
     }

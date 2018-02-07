@@ -564,7 +564,7 @@ public class Javac2 extends Javac {
       final String s = tokenizer.nextToken();
       urls.add(new File(s).toURI().toURL());
     }
-    final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
+    final URL[] urlsArr = (URL[])urls.toArray(new URL[0]);
     return new InstrumentationClassFinder(urlsArr);
   }
 

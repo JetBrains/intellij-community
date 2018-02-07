@@ -183,8 +183,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
           if (value != null && targetTuple != null) {
             final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
-            if (assignedType instanceof PyTupleType) {
-              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, (PyTupleType)assignedType);
+            if (assignedType != null) {
+              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, assignedType, context);
               if (t != null) {
                 return t;
               }
@@ -428,7 +428,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
     final String nextMethodName = async
                                   ? PyNames.ANEXT
-                                  : LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30)
+                                  : !LanguageLevel.forElement(anchor).isPython2()
                                     ? PyNames.DUNDER_NEXT
                                     : PyNames.NEXT;
     final PyFunction next = findMethodByName(type, nextMethodName, context);
@@ -791,5 +791,14 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @Override
   public String getTypeCommentAnnotation() {
     return getTypeCommentAnnotationFromStubOrPsi(this);
+  }
+
+  @Override
+  public boolean hasAssignedValue() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.hasAssignedValue();
+    }
+    return findAssignedValue() != null;
   }
 }

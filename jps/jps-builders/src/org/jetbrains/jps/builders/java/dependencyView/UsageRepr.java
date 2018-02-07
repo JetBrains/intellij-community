@@ -30,7 +30,6 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 14.02.11
  */
 class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;

@@ -47,4 +47,9 @@ namespace c = "http://n.validator.nu/custom-elements/"
 	common.elem.flow |= element c:* { common.inner.transparent.flow & attr.any* }
 	common.elem.phrasing |= element c:* { common.inner.phrasing & attr.any* }
 	attr.any = attribute * { text }
+
+## The "is" attribute
 	common.attrs.other &= attribute is { common.data.custom.element.name }?
+
+## The "slot" attribute
+	common.attrs.other &= attribute slot { text }?

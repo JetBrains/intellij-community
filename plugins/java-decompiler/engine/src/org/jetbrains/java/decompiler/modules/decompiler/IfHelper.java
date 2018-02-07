@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
@@ -23,39 +9,25 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
+import java.util.*;
 
 public class IfHelper {
-
-
   public static boolean mergeAllIfs(RootStatement root) {
-
     boolean res = mergeAllIfsRec(root, new HashSet<>());
-
     if (res) {
       SequenceHelper.condenseSequences(root);
     }
-
     return res;
   }
 
-
-  private static boolean mergeAllIfsRec(Statement stat, HashSet<Integer> setReorderedIfs) {
-
+  private static boolean mergeAllIfsRec(Statement stat, Set<Integer> setReorderedIfs) {
     boolean res = false;
 
     if (stat.getExprents() == null) {
-
       while (true) {
-
         boolean changed = false;
 
         for (Statement st : stat.getStats()) {
-
           res |= mergeAllIfsRec(st, setReorderedIfs);
 
           // collapse composed if's
@@ -75,9 +47,7 @@ public class IfHelper {
     return res;
   }
 
-
-  public static boolean mergeIfs(Statement statement, HashSet<Integer> setReorderedIfs) {
-
+  public static boolean mergeIfs(Statement statement, Set<Integer> setReorderedIfs) {
     if (statement.type != Statement.TYPE_IF && statement.type != Statement.TYPE_SEQUENCE) {
       return false;
     }
@@ -85,7 +55,6 @@ public class IfHelper {
     boolean res = false;
 
     while (true) {
-
       boolean updated = false;
 
       List<Statement> lst = new ArrayList<>();
@@ -99,7 +68,6 @@ public class IfHelper {
       boolean stsingle = (lst.size() == 1);
 
       for (Statement stat : lst) {
-
         if (stat.type == Statement.TYPE_IF) {
           IfNode rtnode = buildGraph((IfStatement)stat, stsingle);
 
@@ -112,7 +80,6 @@ public class IfHelper {
           }
 
           if (!setReorderedIfs.contains(stat.id)) {
-
             if (updated = collapseIfElse(rtnode)) {
               break;
             }
@@ -133,14 +100,13 @@ public class IfHelper {
         break;
       }
 
-      res |= updated;
+      res |= true;
     }
 
     return res;
   }
 
   private static boolean collapseIfIf(IfNode rtnode) {
-
     if (rtnode.edgetypes.get(0) == 0) {
       IfNode ifbranch = rtnode.succs.get(0);
       if (ifbranch.succs.size() == 2) {
@@ -158,7 +124,7 @@ public class IfHelper {
             ifchild.removeSuccessor(ifchild.getAllSuccessorEdges().get(0));
             ifparent.getStats().removeWithKey(ifchild.id);
 
-            if (ifbranch.edgetypes.get(0).intValue() == 1) { // target null
+            if (ifbranch.edgetypes.get(0) == 1) { // target null
 
               ifparent.setIfstat(null);
 
@@ -213,11 +179,9 @@ public class IfHelper {
   }
 
   private static boolean collapseIfElse(IfNode rtnode) {
-
-    if (rtnode.edgetypes.get(0).intValue() == 0) {
+    if (rtnode.edgetypes.get(0) == 0) {
       IfNode ifbranch = rtnode.succs.get(0);
       if (ifbranch.succs.size() == 2) {
-
         // if-else branch
         if (ifbranch.succs.get(0).value == rtnode.succs.get(1).value) {
 
@@ -230,8 +194,8 @@ public class IfHelper {
             ifchild.getFirst().removeSuccessor(ifchild.getIfEdge());
             ifparent.getStats().removeWithKey(ifchild.id);
 
-            if (ifbranch.edgetypes.get(1).intValue() == 1 &&
-                ifbranch.edgetypes.get(0).intValue() == 1) { // target null
+            if (ifbranch.edgetypes.get(1) == 1 &&
+                ifbranch.edgetypes.get(0) == 1) { // target null
 
               ifparent.setIfstat(null);
 
@@ -265,10 +229,8 @@ public class IfHelper {
     return false;
   }
 
-
   private static boolean collapseElse(IfNode rtnode) {
-
-    if (rtnode.edgetypes.get(1).intValue() == 0) {
+    if (rtnode.edgetypes.get(1) == 0) {
       IfNode elsebranch = rtnode.succs.get(1);
       if (elsebranch.succs.size() == 2) {
 
@@ -328,9 +290,7 @@ public class IfHelper {
         }
       }
       else if (elsebranch.succs.size() == 1) {
-
         if (elsebranch.succs.get(0).value == rtnode.succs.get(0).value) {
-
           IfStatement firstif = (IfStatement)rtnode.value;
           Statement second = elsebranch.value;
 
@@ -369,9 +329,7 @@ public class IfHelper {
     return false;
   }
 
-
   private static IfNode buildGraph(IfStatement stat, boolean stsingle) {
-
     if (stat.iftype == IfStatement.IFTYPE_IFELSE) {
       return null;
     }
@@ -433,16 +391,14 @@ public class IfHelper {
     return res;
   }
 
-
   // FIXME: rewrite the entire method!!! keep in mind finally exits!!
   private static boolean reorderIf(IfStatement ifstat) {
-
     if (ifstat.iftype == IfStatement.IFTYPE_IFELSE) {
       return false;
     }
 
-    boolean ifdirect = false, elsedirect = false;
-    boolean noifstat = false, noelsestat = false;
+    boolean ifdirect, elsedirect;
+    boolean noifstat = false, noelsestat;
     boolean ifdirectpath = false, elsedirectpath = false;
 
     Statement parent = ifstat.getParent();
@@ -453,32 +409,20 @@ public class IfHelper {
     if (ifstat.getIfstat() == null) {
       noifstat = true;
 
-      if (ifstat.getIfEdge().getType() == StatEdge.TYPE_FINALLYEXIT) {
-        ifdirect = true;
-      }
-      else {
-        ifdirect = MergeHelper.isDirectPath(from, ifstat.getIfEdge().getDestination());
-      }
+      ifdirect = ifstat.getIfEdge().getType() == StatEdge.TYPE_FINALLYEXIT ||
+                 MergeHelper.isDirectPath(from, ifstat.getIfEdge().getDestination());
     }
     else {
       List<StatEdge> lstSuccs = ifstat.getIfstat().getAllSuccessorEdges();
-      if (!lstSuccs.isEmpty() && lstSuccs.get(0).getType() == StatEdge.TYPE_FINALLYEXIT) {
-        ifdirect = true;
-      }
-      else {
-        ifdirect = hasDirectEndEdge(ifstat.getIfstat(), from);
-      }
+      ifdirect = !lstSuccs.isEmpty() && lstSuccs.get(0).getType() == StatEdge.TYPE_FINALLYEXIT ||
+                 hasDirectEndEdge(ifstat.getIfstat(), from);
     }
 
     Statement last = parent.type == Statement.TYPE_SEQUENCE ? parent.getStats().getLast() : ifstat;
     noelsestat = (last == ifstat);
 
-    if (!last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_FINALLYEXIT) {
-      elsedirect = true;
-    }
-    else {
-      elsedirect = hasDirectEndEdge(last, from);
-    }
+    elsedirect = !last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_FINALLYEXIT ||
+                 hasDirectEndEdge(last, from);
 
     if (!noelsestat && existsPath(ifstat, ifstat.getAllSuccessorEdges().get(0).getDestination())) {
       return false;
@@ -698,9 +642,7 @@ public class IfHelper {
     return false;
   }
 
-
   private static Statement getNextStatement(Statement stat) {
-
     Statement parent = stat.getParent();
     switch (parent.type) {
       case Statement.TYPE_ROOT:
@@ -722,7 +664,6 @@ public class IfHelper {
   }
 
   private static boolean existsPath(Statement from, Statement to) {
-
     for (StatEdge edge : to.getAllPredecessorEdges()) {
       if (from.containsStatementStrict(edge.getSource())) {
         return true;
@@ -734,7 +675,6 @@ public class IfHelper {
 
   private static class IfNode {
     public final Statement value;
-
     public final List<IfNode> succs = new ArrayList<>();
     public final List<Integer> edgetypes = new ArrayList<>();
 

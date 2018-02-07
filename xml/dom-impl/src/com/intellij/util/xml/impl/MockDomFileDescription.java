@@ -44,10 +44,6 @@ public class MockDomFileDescription<T> extends DomFileDescription<T> {
   }
 
   @Override
-  protected void initializeFileDescription() {
-  }
-
-  @Override
   public boolean isAutomaticHighlightingEnabled() {
     return false;
   }

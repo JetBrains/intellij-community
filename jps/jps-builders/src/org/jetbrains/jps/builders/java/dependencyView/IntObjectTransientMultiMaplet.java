@@ -22,7 +22,6 @@ import java.util.Collection;
 
 /**
  * @author: db
- * Date: 08.03.11
  */
 class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 

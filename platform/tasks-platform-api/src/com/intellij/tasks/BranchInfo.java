@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 18.07.13
  */
 @Tag("branch")
 public class BranchInfo {

@@ -18,7 +18,9 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 
 /**
  * @author ven
@@ -56,5 +58,9 @@ public class ConditionalReturnStatementValue implements ReturnValue {
     assert condition != null;
     condition.replace(methodCallExpression);
     return (PsiStatement)CodeStyleManager.getInstance(statement.getManager().getProject()).reformat(statement);
+  }
+
+  public boolean isEmptyOrConstantExpression() {
+    return myReturnValue == null || ExpressionUtils.isNullLiteral(myReturnValue) || PsiUtil.isConstantExpression(myReturnValue);
   }
 }

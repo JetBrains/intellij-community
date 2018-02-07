@@ -161,7 +161,7 @@ public class StubSerializationHelper {
         Logger.getInstance(getClass()).error("Stub root must be PsiFileStub for files with several stub roots");
       }
     }
-    final PsiFileStub[] stubsArray = stubs.toArray(new PsiFileStub[stubs.size()]);
+    final PsiFileStub[] stubsArray = stubs.toArray(PsiFileStub.EMPTY_ARRAY);
     for (PsiFileStub stub : stubsArray) {
       if (stub instanceof PsiFileStubImpl) {
         ((PsiFileStubImpl)stub).setStubRoots(stubsArray);

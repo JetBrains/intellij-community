@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -39,23 +38,19 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.DialogManager;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
-import git4idea.util.GitUIUtil;
 import icons.GithubIcons;
 import org.apache.http.HttpStatus;
 import org.jetbrains.annotations.NonNls;
@@ -360,11 +355,11 @@ public class GithubShareAction extends DumbAwareAction {
       // commit
       LOG.info("Performing commit");
       indicator.setText("Performing commit...");
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
       handler.setStdoutSuppressed(false);
       handler.addParameters("-m", dialog.getCommitMessage());
       handler.endOptions();
-      handler.run();
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
 
       VcsFileUtil.markFilesDirty(project, modified);
     }

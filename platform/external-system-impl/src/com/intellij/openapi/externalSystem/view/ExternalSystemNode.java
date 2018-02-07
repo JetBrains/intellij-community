@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystem
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -212,7 +211,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     for (ExternalSystemNode each : myChildrenList) {
       if (each.isVisible()) visibleNodes.add(each);
     }
-    return visibleNodes.toArray(new ExternalSystemNode[visibleNodes.size()]);
+    return visibleNodes.toArray(new ExternalSystemNode[0]);
   }
 
   public void cleanUpCache() {
@@ -283,7 +282,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
 
     sort(myChildrenList);
     final List<ExternalSystemNode<?>> visibleNodes = ContainerUtil.filter(myChildrenList, node -> node.isVisible());
-    myChildren = visibleNodes.toArray(new ExternalSystemNode[visibleNodes.size()]);
+    myChildren = visibleNodes.toArray(new ExternalSystemNode[0]);
     myExternalProjectsView.updateUpTo(this);
   }
 

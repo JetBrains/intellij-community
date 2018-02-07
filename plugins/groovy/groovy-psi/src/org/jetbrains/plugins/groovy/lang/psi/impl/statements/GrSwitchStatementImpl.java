@@ -59,7 +59,7 @@ public class GrSwitchStatementImpl extends GroovyPsiElementImpl implements GrSwi
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrCaseSection) result.add((GrCaseSection)cur);
     }
-    return result.toArray(new GrCaseSection[result.size()]);
+    return result.toArray(new GrCaseSection[0]);
   }
 
   @Override

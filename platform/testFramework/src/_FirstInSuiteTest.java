@@ -37,7 +37,7 @@ public class _FirstInSuiteTest extends TestCase {
   private static long suiteStarted;
   private static boolean nothingIsCalled;
 
-  public static long getSuiteStartTime() {
+  static long getSuiteStartTime() {
     return suiteStarted;
   }
 
@@ -60,11 +60,8 @@ public class _FirstInSuiteTest extends TestCase {
 
     nothingIsCalled = true;
 
-    // some tests do not initialize Application but want to use parallel streams
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
-
     suiteStarted = System.nanoTime();
-
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.

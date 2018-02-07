@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +18,6 @@ import java.util.List;
  * @since 4/24/13 11:57 AM
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
-
   @Nullable private String myGradleHome;
   @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
   @Nullable private DistributionType distributionType;
@@ -39,7 +25,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
 
-  private boolean storeProjectFilesExternally = false;
+  private ThreeState storeProjectFilesExternally = ThreeState.NO;
 
   @Nullable
   public String getGradleHome() {
@@ -96,7 +82,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   @NotNull
   @Override
-  public ExternalProjectSettings clone() {
+  public GradleProjectSettings clone() {
     GradleProjectSettings result = new GradleProjectSettings();
     copyTo(result);
     result.myGradleHome = myGradleHome;
@@ -109,11 +95,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   }
 
   @Transient
-  public boolean isStoreProjectFilesExternally() {
+  public ThreeState getStoreProjectFilesExternally() {
     return storeProjectFilesExternally;
   }
 
-  public void setStoreProjectFilesExternally(boolean value) {
+  public void setStoreProjectFilesExternally(@NotNull ThreeState value) {
     storeProjectFilesExternally = value;
   }
 
@@ -132,8 +118,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
       myCompositeDefinitionSource = compositeDefinitionSource;
     }
 
-    @AbstractCollection(surroundWithTag = false, elementTag = "build")
-    @OptionTag(tag = "builds", nameAttribute = "")
+    @XCollection(propertyElementName = "builds", elementName = "build")
     @NotNull
     public List<BuildParticipant> getCompositeParticipants() {
       return myCompositeParticipants;

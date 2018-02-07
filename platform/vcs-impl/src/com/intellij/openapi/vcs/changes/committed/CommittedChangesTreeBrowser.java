@@ -113,7 +113,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myProject = project;
     myDecorators = new LinkedList<>();
-    myChangeLists = changeLists;
+    myChangeLists = new ArrayList<>(changeLists);
     myChangesTree = new ChangesBrowserTree();
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
@@ -241,7 +241,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public void setItems(@NotNull List<CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
     myDetailsView.setUseCase(useCase);
-    myChangeLists = items;
+    myChangeLists = new ArrayList<>(items);
     myFilteringStrategy.setFilterBase(items);
     BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
     updateModel();
@@ -427,19 +427,19 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   public void calcData(DataKey key, DataSink sink) {
     if (key.equals(VcsDataKeys.CHANGES)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
-      sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[changes.size()]));
+      sink.put(VcsDataKeys.CHANGES, changes.toArray(new Change[0]));
     } else if (key.equals(VcsDataKeys.HAVE_SELECTED_CHANGES)) {
       final int count = myChangesTree.getSelectionCount();
       sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, count > 0);
     }
     else if (key.equals(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), true);
-      sink.put(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN, changes.toArray(new Change[changes.size()]));
+      sink.put(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN, changes.toArray(new Change[0]));
     }
     else if (key.equals(VcsDataKeys.CHANGE_LISTS)) {
       final List<CommittedChangeList> lists = getSelectedChangeLists();
       if (!lists.isEmpty()) {
-        sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
+        sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[0]));
       }
     }
     else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
@@ -450,7 +450,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);
     } else if (VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.equals(key)) {
       final List<Change> selectedChanges = myDetailsView.getSelectedChanges();
-      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[selectedChanges.size()]));
+      sink.put(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS, selectedChanges.toArray(new Change[0]));
     }
   }
 
@@ -474,9 +474,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void reportLoadedLists(final CommittedChangeListsListener listener) {
+    List<CommittedChangeList> lists = new ArrayList<>(myChangeLists);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       listener.onBeforeStartReport();
-      for (CommittedChangeList list : myChangeLists) {
+      for (CommittedChangeList list : lists) {
         listener.report(list);
       }
       listener.onAfterEndReport();

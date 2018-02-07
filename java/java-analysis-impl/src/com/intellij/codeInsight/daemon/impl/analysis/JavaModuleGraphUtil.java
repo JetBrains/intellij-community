@@ -4,13 +4,13 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -27,8 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphUtil {
@@ -88,12 +88,12 @@ public class JavaModuleGraphUtil {
   private static List<Set<PsiJavaModule>> findCycles(Project project) {
     Set<PsiJavaModule> projectModules = ContainerUtil.newHashSet();
     for (Module module : ModuleManager.getInstance(project).getModules()) {
-      Collection<VirtualFile> files = FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, module.getModuleScope());
-      if (files.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
-      Optional.ofNullable(ContainerUtil.getFirstItem(files))
-        .map(PsiManager.getInstance(project)::findFile)
-        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .ifPresent(projectModules::add);
+      List<PsiJavaModule> descriptors = Stream.of(ModuleRootManager.getInstance(module).getSourceRoots(true))
+        .map(root -> findDescriptorByFile(root, project))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+      if (descriptors.size() > 1) return Collections.emptyList();  // aborts the process when there are incorrect modules in the project
+      if (descriptors.size() == 1) projectModules.add(descriptors.get(0));
     }
 
     if (!projectModules.isEmpty()) {

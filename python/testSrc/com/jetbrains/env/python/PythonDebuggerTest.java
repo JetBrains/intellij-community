@@ -20,10 +20,8 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
-import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -41,7 +39,7 @@ import static org.junit.Assert.*;
 /**
  * @author traff
  */
-
+@Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
   private class BreakpointStopAndEvalTask extends PyDebuggerTask {
     public BreakpointStopAndEvalTask(String scriptName) {
@@ -209,19 +207,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("SyntaxError");
 
         resume();
-      }
-
-      private void consoleExec(String command) {
-        myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
-          @Override
-          public void ok(String value) {
-
-          }
-
-          @Override
-          public void error(PyDebuggerException exception) {
-          }
-        });
       }
     });
   }
@@ -1170,11 +1155,17 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
+      private String getRefWithWordInName(List<String> referrersNames, String word) {
+        return referrersNames.stream().filter(x -> x.contains(word)).findFirst().get();
+      }
+
       @Override
       public void testing() throws Exception {
         waitForPause();
-        int numberOfReferringObjects = getNumberOfReferringObjects("l");
-        assertEquals(3, numberOfReferringObjects);
+        List<String> referrersNames = getNumberOfReferringObjects("l");
+        assertNotNull(getRefWithWordInName(referrersNames, "frame"));
+        assertNotNull(getRefWithWordInName(referrersNames, "module"));
+        assertNotNull(getRefWithWordInName(referrersNames, "dict"));
       }
 
       @NotNull
@@ -1341,12 +1332,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         List<PyDebugValue> frameVariables = loadFrame();
-        assertTrue(findDebugValueByName(frameVariables, "f").isLoadValueAsync());
         String result = computeValueAsync(frameVariables, "f");
         assertEquals("foo", result);
 
         List<PyDebugValue> listChildren = loadChildren(frameVariables, "l");
-        assertTrue(findDebugValueByName(frameVariables, "l").isLoadValueAsync());
         result = computeValueAsync(listChildren, "0");
         assertEquals("list", result);
       }
@@ -1388,7 +1377,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testModuleInterpreterOption() {
     runPythonTest(new BreakpointStopAndEvalTask("test1") {
@@ -1399,6 +1387,65 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setWaitForTermination(false);
 
         myRunConfiguration.setModuleMode(true);
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testShowCommandline() {
+    runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
+        setWaitForTermination(false);
+
+        myRunConfiguration.setShowCommandLineAfterwards(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("z").hasValue("1");
+        resume();
+        consoleExec("z");
+        waitForOutput("2");
+      }
+
+      @Override
+      public void doFinally() {
+        myRunConfiguration.setShowCommandLineAfterwards(false);
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testShowCommandlineModule() {
+    runPythonTest(new PyDebuggerTask("/debug", "test2") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test2.py"), 6);
+        setScriptName("test2");
+        setWaitForTermination(false);
+
+        myRunConfiguration.setShowCommandLineAfterwards(true);
+        myRunConfiguration.setModuleMode(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("z").hasValue("1");
+        resume();
+        consoleExec("foo(3)");
+        waitForOutput("5");
+      }
+
+      @Override
+      public void doFinally() {
+        myRunConfiguration.setShowCommandLineAfterwards(false);
+        myRunConfiguration.setModuleMode(false);
       }
     });
   }

@@ -81,7 +81,7 @@ public class CopyAbstractMethodImplementationHandler {
         PsiClass c2 = o2.getContainingClass();
         return Comparing.compare(c1.getName(), c2.getName());
       });
-      final PsiMethod[] methodArray = mySourceMethods.toArray(new PsiMethod[mySourceMethods.size()]);
+      final PsiMethod[] methodArray = mySourceMethods.toArray(PsiMethod.EMPTY_ARRAY);
       final JList list = new JBList(methodArray);
       list.setCellRenderer(new MethodCellRenderer(true));
       final Runnable runnable = () -> {

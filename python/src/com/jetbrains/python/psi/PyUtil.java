@@ -48,7 +48,6 @@ import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -513,10 +512,7 @@ public class PyUtil {
     }
     // Magic literals are always represented by their string values
     if ((element instanceof PyStringLiteralExpression) && PyMagicLiteralTools.isMagicLiteral(element)) {
-      final String name = ((StringLiteralExpression)element).getStringValue();
-      if (name != null) {
-        return name;
-      }
+      return ((StringLiteralExpression)element).getStringValue();
     }
     if (element instanceof PyElement) {
       final String name = ((PyElement)element).getName();
@@ -528,17 +524,9 @@ public class PyUtil {
   }
 
   public static boolean isOwnScopeComprehension(@NotNull PyComprehensionElement comprehension) {
-    final boolean isAtLeast30 = LanguageLevel.forElement(comprehension).isAtLeast(LanguageLevel.PYTHON30);
+    final boolean isAtLeast30 = !LanguageLevel.forElement(comprehension).isPython2();
     final boolean isListComprehension = comprehension instanceof PyListCompExpression;
     return !isListComprehension || isAtLeast30;
-  }
-
-  public static boolean hasCustomDecorators(@NotNull PyDecoratable decoratable) {
-    return PyKnownDecoratorUtil.hasNonBuiltinDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
-  }
-
-  public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
-    return PyKnownDecoratorUtil.hasAbstractDecorator(decoratable, TypeEvalContext.codeInsightFallback(null));
   }
 
   public static ASTNode createNewName(PyElement element, String name) {
@@ -877,12 +865,17 @@ public class PyUtil {
    */
   @Nullable
   public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
+    return as(getHeaderEndAnchor(container), PsiComment.class);
+  }
+
+  @NotNull
+  public static PsiElement getHeaderEndAnchor(@NotNull PyStatementListContainer container) {
     final PyStatementList statementList = container.getStatementList();
-    return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
+    return ObjectUtils.notNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
   }
 
   public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
-    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON30)) {
+    if (LanguageLevel.forElement(node).isPython2()) {
       if (!node.isQualified()) {
         final String name = node.getName();
         if (PyNames.NONE.equals(name) || PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
@@ -1074,7 +1067,7 @@ public class PyUtil {
     final LanguageLevel level = anchor != null ?
                                 LanguageLevel.forElement(anchor) :
                                 getLanguageLevelForVirtualFile(directory.getProject(), directory.getVirtualFile());
-    if (level.isAtLeast(LanguageLevel.PYTHON33)) {
+    if (!level.isPython2()) {
       return true;
     }
     return checkSetupToolsPackages && isSetuptoolsNamespacePackage(directory);
@@ -1716,7 +1709,10 @@ public class PyUtil {
    * @param expectedPackage package like "django"
    * @param expectedName expected name (i.e. AppConfig)
    * @return true if element in package
+   * @deprecated  use {@link com.jetbrains.python.nameResolver.FQNamesProvider#isNameMatches(PyQualifiedNameOwner)}
+   * Remove in 2018
    */
+  @Deprecated
   public static boolean isSymbolInPackage(@NotNull final PyQualifiedNameOwner symbol,
                                           @NotNull final String expectedPackage,
                                           @NotNull final String expectedName) {

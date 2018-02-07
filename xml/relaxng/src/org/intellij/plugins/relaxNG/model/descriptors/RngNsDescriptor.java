@@ -35,7 +35,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -179,7 +179,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
       }
     }
 
-    return result.toArray(new XmlElementDescriptor[result.size()]);
+    return result.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   protected XmlElementDescriptor initDescriptor(@NotNull XmlElementDescriptor descriptor) {

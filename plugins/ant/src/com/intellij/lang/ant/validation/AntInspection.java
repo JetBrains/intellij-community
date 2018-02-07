@@ -15,7 +15,6 @@
  */
 package com.intellij.lang.ant.validation;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
@@ -32,14 +31,5 @@ public abstract class AntInspection extends BasicDomElementsInspection<AntDomPro
   @NotNull
   public String getGroupDisplayName() {
     return AntBundle.message("ant.inspections.display.name");
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
   }
 }

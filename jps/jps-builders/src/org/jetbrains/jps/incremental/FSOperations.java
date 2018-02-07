@@ -44,7 +44,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 7/8/12
  */
 public class FSOperations {
   public static final GlobalContextKey<Set<File>> ALL_OUTPUTS_KEY = GlobalContextKey.create("_all_project_output_dirs_");

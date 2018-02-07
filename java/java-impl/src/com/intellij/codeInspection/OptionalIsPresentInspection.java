@@ -48,6 +48,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
 
     void registerProblem(@NotNull ProblemsHolder holder, @NotNull PsiExpression condition, OptionalIsPresentCase scenario) {
       if(this != NONE) {
+        if (this == INFO && !holder.isOnTheFly()) {
+          return; //don't register fixes in batch mode
+        }
         holder.registerProblem(condition, "Can be replaced with single expression in functional style",
                                this == INFO ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new OptionalIsPresentFix(scenario));
@@ -138,7 +141,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static PsiReferenceExpression extractOptionalFromIfPresentCheck(PsiExpression expression) {
     if (!(expression instanceof PsiMethodCallExpression)) return null;
     PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-    if (call.getArgumentList().getExpressions().length != 0) return null;
+    if (!call.getArgumentList().isEmpty()) return null;
     if (!"isPresent".equals(call.getMethodExpression().getReferenceName())) return null;
     PsiMethod method = call.resolveMethod();
     if (method == null) return null;
@@ -156,7 +159,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   static boolean isOptionalGetCall(PsiElement element, @NotNull PsiReferenceExpression optionalRef) {
     if (!(element instanceof PsiMethodCallExpression)) return false;
     PsiMethodCallExpression call = (PsiMethodCallExpression)element;
-    if (call.getArgumentList().getExpressions().length != 0) return false;
+    if (!call.getArgumentList().isEmpty()) return false;
     PsiReferenceExpression methodExpression = call.getMethodExpression();
     return "get".equals(methodExpression.getReferenceName()) &&
            areElementsEquivalent(ExpressionUtils.getQualifierOrThis(methodExpression), optionalRef);
@@ -183,9 +186,12 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     if (!hasNoBadRefs) return ProblemType.NONE;
     if (!hasOptionalReference.get() || !(lambdaCandidate instanceof PsiExpression)) return ProblemType.INFO;
     PsiExpression expression = (PsiExpression)lambdaCandidate;
-    if (falseExpression != null && NullnessUtil.getExpressionNullness(expression) != Nullness.NOT_NULL) {
+    if (falseExpression != null &&
+        !ExpressionUtils.isNullLiteral(falseExpression) &&
+        NullnessUtil.getExpressionNullness(expression, true) != Nullness.NOT_NULL) {
       // falseExpression == null is "consumer" case (to be replaced with ifPresent()),
       // in this case we don't care about expression nullness
+      // if falseExpression is null literal, then semantics is preserved
       return ProblemType.INFO;
     }
     return ProblemType.WARNING;

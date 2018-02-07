@@ -224,7 +224,7 @@ abstract class Analysis<Res> {
   final Direction direction;
   final ControlFlowGraph controlFlow;
   final MethodNode methodNode;
-  final Method method;
+  final Member method;
   final DFSTree dfsTree;
 
   final protected List<State>[] computed;
@@ -237,7 +237,7 @@ abstract class Analysis<Res> {
     this.direction = direction;
     controlFlow = richControlFlow.controlFlow;
     methodNode = controlFlow.methodNode;
-    method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
+    method = new Member(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
     aKey = new EKey(method, direction, stable);
     computed = (List<State>[]) new List[controlFlow.transitions.length];

@@ -268,7 +268,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
         handlers.add(processHandler);
       }
     }
-    return handlers == null ? EMPTY_PROCESS_HANDLERS : handlers.toArray(new ProcessHandler[handlers.size()]);
+    return handlers == null ? EMPTY_PROCESS_HANDLERS : handlers.toArray(new ProcessHandler[0]);
   }
 
   @Override
@@ -460,7 +460,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     final RunConfiguration configurationToCheckCompatibility = configurationAndSettings.getConfiguration();
     return getRunningDescriptors(runningConfigurationAndSettings -> {
       RunConfiguration runningConfiguration = runningConfigurationAndSettings == null ? null : runningConfigurationAndSettings.getConfiguration();
-      if (runningConfiguration == null || !(runningConfiguration instanceof CompatibilityAwareRunProfile)) {
+      if (!(runningConfiguration instanceof CompatibilityAwareRunProfile)) {
         return false;
       }
       return ((CompatibilityAwareRunProfile)runningConfiguration).mustBeStoppedToRun(configurationToCheckCompatibility);

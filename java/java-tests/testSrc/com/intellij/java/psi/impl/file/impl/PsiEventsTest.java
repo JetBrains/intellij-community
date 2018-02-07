@@ -18,6 +18,7 @@ package com.intellij.java.psi.impl.file.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -793,8 +794,25 @@ public class PsiEventsTest extends PsiTestCase {
     assertTrue(documentManager.isCommitted(document));
   }
 
-  public void testTreeChangePreprocessorThrowsException() throws Exception {
-    VirtualFile vFile = createFile("a.xml", "<tag/>").getVirtualFile();
+  public void testCopyFile() throws Exception {
+    VirtualFile original = createFile(myModule, mySrcDir1, "a.xml", "<tag/>").getVirtualFile();
+
+    EventsTestListener listener = new EventsTestListener();
+    myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
+
+    PsiDirectory psiDir2 = PsiManager.getInstance(myProject).findDirectory(mySrcDir2);
+    assertNotNull(psiDir2);
+    WriteAction.run(() -> original.copy(this, mySrcDir2, "b.xml"));
+    
+    assertEquals("beforeChildAddition\n" +
+                 "childAdded\n", listener.getEventsString());
+  }
+
+  public void testSuccessfulRecoveryAfterTreeChangePreprocessorThrowsException() throws Exception {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
+    PsiFile psiFile = createFile("a.xml", "<tag/>");
+    VirtualFile vFile = psiFile.getVirtualFile();
     Document document = FileDocumentManager.getInstance().getDocument(vFile);
     assert document != null;
 
@@ -808,7 +826,8 @@ public class PsiEventsTest extends PsiTestCase {
       WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       fail("NPE expected");
-    } catch (NullPointerException ignore) {
+    } catch (AssertionError e) {
+      assertInstanceOf(e.getCause(), NullPointerException.class);
     } finally {
       ((PsiManagerImpl)getPsiManager()).removeTreeChangePreprocessor(preprocessor);
     }
@@ -816,19 +835,5 @@ public class PsiEventsTest extends PsiTestCase {
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
-  }
-
-  public void testCopyFile() throws Exception {
-    VirtualFile original = createFile(myModule, mySrcDir1, "a.xml", "<tag/>").getVirtualFile();
-
-    EventsTestListener listener = new EventsTestListener();
-    myPsiManager.addPsiTreeChangeListener(listener,getTestRootDisposable());
-
-    PsiDirectory psiDir2 = PsiManager.getInstance(myProject).findDirectory(mySrcDir2);
-    assertNotNull(psiDir2);
-    WriteAction.run(() -> original.copy(this, mySrcDir2, "b.xml"));
-    
-    assertEquals("beforeChildAddition\n" +
-                 "childAdded\n", listener.getEventsString());
   }
 }

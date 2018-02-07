@@ -19,12 +19,13 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -39,14 +40,14 @@ import com.intellij.util.CharTable;
 public class ShiftIndentInsideHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.Helper");
 
-  private final CodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings mySettings;
   private final FileType myFileType;
   private final IndentHelper myIndentIndentHelper;
   private final Project myProject;
 
   public ShiftIndentInsideHelper(FileType fileType, Project project) {
     myProject = project;
-    mySettings = CodeStyleSettingsManager.getSettings(project);
+    mySettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE);
     myFileType = fileType;
     myIndentIndentHelper = IndentHelper.getInstance();
   }

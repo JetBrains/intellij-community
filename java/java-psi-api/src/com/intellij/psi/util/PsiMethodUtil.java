@@ -29,6 +29,7 @@ public class PsiMethodUtil {
 
   public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
     if (psiClass instanceof PsiAnonymousClass) return false;
+    if (psiClass.isAnnotationType()) return false;
     if (psiClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(psiClass)) return false;
     return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
   };

@@ -24,7 +24,6 @@ import java.util.Set;
 
 /**
  * @author max
- * Date: Mar 24, 2002
  */
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");
@@ -359,16 +358,15 @@ public class RedundantCastUtil {
             final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
             final PsiCall newCall;
             if (typeByParent != null) {
-              final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-              final String arrayCreationText = "new " + typeByParent.getCanonicalText() + "[] {" + expression.getText() + "}";
-              final PsiExpression arrayDeclaration = elementFactory.createExpressionFromText(arrayCreationText, expression);
-              newCall = (PsiCall)((PsiNewExpression)arrayDeclaration).getArrayInitializer().getInitializers()[0];
+              newCall = (PsiCall)LambdaUtil.copyWithExpectedType(expression, typeByParent);
             }
             else {
               final PsiCall call = LambdaUtil.treeWalkUp(expression);
               if (call != null) {
-                final PsiCall callCopy = (PsiCall)call.copy();
-                newCall = PsiTreeUtil.getParentOfType(callCopy.findElementAt(argumentList.getTextRange().getStartOffset() - call.getTextRange().getStartOffset()), expression.getClass());
+                Object marker = new Object();
+                PsiTreeUtil.mark(argumentList, marker);
+                final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
+                newCall = PsiTreeUtil.getParentOfType(PsiTreeUtil.releaseMark(callCopy, marker), expression.getClass(), false);
               }
               else {
                 newCall = (PsiCall)expression.copy();

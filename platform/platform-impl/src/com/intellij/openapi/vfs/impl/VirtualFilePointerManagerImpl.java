@@ -111,7 +111,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     for (FilePointerPartNode node : nodes) {
       node.addAllPointersTo(list);
     }
-    return list.toArray(new VirtualFilePointer[list.size()]);
+    return list.toArray(VirtualFilePointer.EMPTY_ARRAY);
   }
 
   @TestOnly
@@ -434,7 +434,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         List<VirtualFilePointer> filtered = ContainerUtil.filter(toFirePointers,
                                                                  pointer -> ((VirtualFilePointerImpl)pointer).getListener() == listener);
         if (!filtered.isEmpty()) {
-          EventDescriptor event = new EventDescriptor(listener, filtered.toArray(new VirtualFilePointer[filtered.size()]));
+          EventDescriptor event = new EventDescriptor(listener, filtered.toArray(VirtualFilePointer.EMPTY_ARRAY));
           myEvents.add(event);
         }
       }
@@ -489,7 +489,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
             }
           }
           newNode.addAllPointersTo(myPointers);
-          Object newMyPointers = myPointers.size() == 1 ? myPointers.get(0) : myPointers.toArray(new VirtualFilePointerImpl[myPointers.size()]);
+          Object newMyPointers = myPointers.size() == 1 ? myPointers.get(0) : myPointers.toArray(new VirtualFilePointerImpl[0]);
           newNode.associate(newMyPointers, after);
           newNode.incrementUsageCount(useCount);
         }

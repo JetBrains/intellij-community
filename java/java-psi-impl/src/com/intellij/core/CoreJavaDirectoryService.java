@@ -66,7 +66,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
         ContainerUtil.addAll(classes, psiClasses);
       }
     }
-    return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(new PsiClass[classes.size()]);
+    return classes == null ? PsiClass.EMPTY_ARRAY : classes.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull

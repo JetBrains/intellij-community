@@ -396,11 +396,6 @@ public class RecentProjectPanel extends JPanel {
     }
 
     @Override
-    protected void processMouseEvent(MouseEvent e) {
-      super.processMouseEvent(e);
-    }
-
-    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return mySize == null ? super.getPreferredScrollableViewportSize() : mySize;
     }

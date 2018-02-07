@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 19, 2004
- * Time: 5:36:32 PM
  */
 public class MatchVariableConstraint extends NamedScriptableDefinition {
   private String regExp = "";

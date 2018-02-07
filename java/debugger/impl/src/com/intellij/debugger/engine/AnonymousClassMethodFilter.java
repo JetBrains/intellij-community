@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/26/13
  */
 public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements BreakpointStepMethodFilter{
   @Nullable

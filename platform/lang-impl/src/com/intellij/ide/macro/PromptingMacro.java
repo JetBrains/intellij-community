@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 12/9/11
  */
 public abstract class PromptingMacro extends Macro{
 

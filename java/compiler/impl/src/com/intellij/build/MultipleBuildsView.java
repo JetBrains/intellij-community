@@ -35,6 +35,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -69,6 +70,8 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
   private final AbstractViewManager myViewManager;
   private volatile Content myContent;
   private volatile DefaultActionGroup myToolbarActions;
+  private volatile boolean myDisposed;
+  private final TransferToEDTQueue<Runnable> myLaterInvocator;
 
   public MultipleBuildsView(Project project,
                             BuildContentManager buildContentManager,
@@ -102,11 +105,16 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     myViewMap = ContainerUtil.newConcurrentMap();
     myBuildsMap = ContainerUtil.newConcurrentMap();
     myProgressWatcher = new ProgressWatcher();
+
+    myLaterInvocator = new TransferToEDTQueue<>("Multiple builds view queue", runnable -> {
+      runnable.run();
+      return true;
+    }, o -> myDisposed);
   }
 
   @Override
   public void dispose() {
-
+    myDisposed = true;
   }
 
   public Content getContent() {
@@ -195,13 +203,16 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         if (contentDescriptor != null) {
           boolean activateToolWindow = contentDescriptor.isActivateToolWindowWhenAdded();
           buildInfo.activateToolWindowWhenAdded = activateToolWindow;
+          if (contentDescriptor instanceof BuildContentDescriptor) {
+            buildInfo.activateToolWindowWhenFailed = ((BuildContentDescriptor)contentDescriptor).isActivateToolWindowWhenFailed();
+          }
           boolean focusContent = contentDescriptor.isAutoFocusContent();
           myBuildContentManager.setSelectedContent(
             myContent, focusContent, focusContent, activateToolWindow, contentDescriptor.getActivationCallback());
-          Disposer.register(this, contentDescriptor);
+          Disposer.register(view, contentDescriptor);
         }
         else {
-          myBuildContentManager.setSelectedContent(myContent, true, true, true, null);
+          myBuildContentManager.setSelectedContent(myContent, true, true, false, null);
         }
         buildInfo.content = myContent;
 
@@ -230,7 +241,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         }
         myViewManager.onBuildStart(buildInfo);
         myProgressWatcher.addBuild(buildInfo);
-        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo.content, startBuildEvent.getProcessHandler());
+        ((BuildContentManagerImpl)myBuildContentManager).startBuildNotified(buildInfo, buildInfo.content, startBuildEvent.getProcessHandler());
       }
       else {
         if (event instanceof FinishBuildEvent) {
@@ -238,7 +249,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
           buildInfo.message = event.getMessage();
           buildInfo.result = ((FinishBuildEvent)event).getResult();
           myProgressWatcher.stopBuild(buildInfo);
-          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo.content);
+          ((BuildContentManagerImpl)myBuildContentManager).finishBuildNotified(buildInfo, buildInfo.content);
           myViewManager.onBuildFinish(buildInfo);
         }
         else {
@@ -252,7 +263,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
     if (myContent == null) {
       myPostponedRunnables.addAll(runOnEdt);
       if (isInitializeStarted.compareAndSet(false, true)) {
-        UIUtil.invokeLaterIfNeeded(() -> {
+        myLaterInvocator.offer(() -> {
           myBuildsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
           myBuildsList.addListSelectionListener(new ListSelectionListener() {
             @Override
@@ -308,7 +319,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
       }
     }
     else {
-      UIUtil.invokeLaterIfNeeded(() -> {
+      myLaterInvocator.offer(() -> {
         for (Runnable runnable : runOnEdt) {
           runnable.run();
         }

@@ -69,14 +69,8 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     if (superMethodName != null && !list.contains(superMethodName)) {
       list.add(0, superMethodName);
     }
-    if (!list.contains(initialName)) {
-      list.add(initialName);
-    }
-    else {
-      int i = list.indexOf(initialName);
-      list.remove(i);
-      list.add(initialName);
-    }
+    list.remove(initialName);
+    list.add(initialName);
     ContainerUtil.removeDuplicates(list);
     result.addAll(list);
     return info;

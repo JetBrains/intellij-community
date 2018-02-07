@@ -77,8 +77,8 @@
   <action id="EditorLookupUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="EditorLookupDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
-  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="alt P"/></action>
-  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="alt N"/></action>
+  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
+  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
@@ -1077,5 +1077,12 @@
 
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="control shift T"/>
+  </action>
+
+  <action id="GotoNextElementUnderCaretUsage">
+    <mouse-shortcut keystroke="alt button142"/>
+  </action>
+  <action id="GotoPrevElementUnderCaretUsage">
+    <mouse-shortcut keystroke="alt button143"/>
   </action>
 </keymap>

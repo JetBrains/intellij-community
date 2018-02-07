@@ -29,7 +29,6 @@ import java.util.Vector;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/20/12
  */
 @SuppressWarnings("UseOfObsoleteCollectionType")
 public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCase {

@@ -35,6 +35,7 @@ public class EclipseProjectImportProvider extends ProjectImportProvider {
   public ModuleWizardStep[] createSteps(WizardContext context) {
     final ProjectWizardStepFactory stepFactory = ProjectWizardStepFactory.getInstance();
     return new ModuleWizardStep[]{new EclipseWorkspaceRootStep(context), new SelectEclipseImportedProjectsStep(context),
+      new EclipseCodeStyleImportStep(context),
       stepFactory.createProjectJdkStep(context)/*, stepFactory.createNameAndLocationStep(context)*/};
   }
 

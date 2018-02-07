@@ -65,7 +65,7 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
       }
     }
 
-    return result == null ? EMPTY : result.toArray(new XmlTag[result.size()]);
+    return result == null ? EMPTY : result.toArray(XmlTag.EMPTY);
   }
 
   @Override

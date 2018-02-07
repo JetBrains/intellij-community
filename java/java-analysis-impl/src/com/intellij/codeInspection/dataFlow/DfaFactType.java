@@ -40,7 +40,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    */
   public static final DfaFactType<Boolean> CAN_BE_NULL = new DfaFactType<Boolean>("Can be null") {
     @Override
-    String toString(Boolean fact) {
+    String toString(@NotNull Boolean fact) {
       return fact ? "Nullable" : "NotNull";
     }
 
@@ -74,19 +74,29 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
+  public static final DfaFactType<Mutability> MUTABILITY = new DfaFactType<Mutability>("Mutable") {
+    @Override
+    boolean isUnknown(@NotNull Mutability fact) {
+      return fact == Mutability.UNKNOWN;
+    }
+
+    @NotNull
+    @Override
+    Mutability calcFromVariable(@NotNull DfaVariableValue value) {
+      PsiModifierListOwner variable = value.getPsiVariable();
+      return Mutability.getMutability(variable);
+    }
+  };
+
   /**
    * This fact is applied to the Optional values (like {@link java.util.Optional} or Guava Optional).
    * When its value is true, then optional is known to be present.
    * When its value is false, then optional is known to be empty (absent).
    */
   public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional presense") {
-    @Override
-    public boolean isDistinct(@NotNull Boolean fact, @NotNull Boolean otherFact) {
-      return fact != otherFact;
-    }
 
     @Override
-    String toString(Boolean fact) {
+    String toString(@NotNull Boolean fact) {
       return fact ? "present Optional" : "absent Optional";
     }
   };
@@ -127,7 +137,7 @@ public abstract class DfaFactType<T> extends Key<T> {
       }
       PsiModifierListOwner psiVariable = var.getPsiVariable();
       LongRangeSet fromType = LongRangeSet.fromType(var.getVariableType());
-      return fromType == null ? null : LongRangeSet.fromAnnotation(psiVariable).intersect(fromType);
+      return fromType == null ? null : LongRangeSet.fromPsiElement(psiVariable).intersect(fromType);
     }
 
     @Nullable
@@ -141,11 +151,6 @@ public abstract class DfaFactType<T> extends Key<T> {
     LongRangeSet intersectFacts(@NotNull LongRangeSet left, @NotNull LongRangeSet right) {
       LongRangeSet intersection = left.intersect(right);
       return intersection.isEmpty() ? null : intersection;
-    }
-
-    @Override
-    String toString(LongRangeSet fact) {
-      return fact.toString();
     }
   };
   /**
@@ -205,10 +210,6 @@ public abstract class DfaFactType<T> extends Key<T> {
     return Objects.equals(superFact, subFact);
   }
 
-  boolean isDistinct(@NotNull T fact, @NotNull T otherFact) {
-    return false;
-  }
-
   boolean isUnknown(@NotNull T fact) {
     return false;
   }
@@ -237,7 +238,7 @@ public abstract class DfaFactType<T> extends Key<T> {
     return left.equals(right) ? left : null;
   }
 
-  String toString(T fact) {
+  String toString(@NotNull T fact) {
     return fact.toString();
   }
 

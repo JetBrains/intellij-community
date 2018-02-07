@@ -64,20 +64,25 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
       onSelection(myGraphTable.getSelectedRows());
       startLoading();
 
-      final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+      EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       myLastRequest = indicator;
 
       List<Integer> selectionToLoad = getSelectionToLoad();
-      myLogData.getCommitDetailsGetter()
-        .loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
-          if (myLastRequest == indicator && !(indicator.isCanceled())) {
-            LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
-                           "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
-            myLastRequest = null;
-            onDetailsLoaded(detailsList);
-            stopLoading();
-          }
-        }, indicator);
+      myLogData.getCommitDetailsGetter().loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
+        if (myLastRequest == indicator && !(indicator.isCanceled())) {
+          LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
+                         "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
+          myLastRequest = null;
+          onDetailsLoaded(detailsList);
+          stopLoading();
+        }
+      }, t -> {
+        if (myLastRequest == indicator && !(indicator.isCanceled())) {
+          myLastRequest = null;
+          onError(t);
+          stopLoading();
+        }
+      }, indicator);
     }
   }
 
@@ -86,9 +91,14 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
     return Ints.asList(myGraphTable.getSelectedRows());
   }
 
+  @CalledInAwt
   protected abstract void startLoading();
 
+  @CalledInAwt
   protected abstract void stopLoading();
+
+  @CalledInAwt
+  protected abstract void onError(@NotNull Throwable error);
 
   @CalledInAwt
   protected abstract void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList);

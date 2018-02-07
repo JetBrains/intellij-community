@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.actions.MaximizeActiveDialogAction;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDManagerImpl;
 import com.intellij.ide.plugins.PluginManager;
@@ -22,7 +23,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,9 +41,9 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
@@ -58,11 +58,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static java.awt.event.MouseEvent.MOUSE_MOVED;
-import static java.awt.event.MouseEvent.MOUSE_PRESSED;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladimir Kondratyev
@@ -70,6 +70,7 @@ import static java.awt.event.MouseEvent.MOUSE_PRESSED;
  */
 public class IdeEventQueue extends EventQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue");
+  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance("#com.intellij.ide.IdeEventQueue.runnables");
   private static TransactionGuardImpl ourTransactionGuard;
 
   /**
@@ -113,7 +114,8 @@ public class IdeEventQueue extends EventQueue {
   final AtomicInteger myKeyboardEventsPosted = new AtomicInteger();
   final AtomicInteger myKeyboardEventsDispatched = new AtomicInteger();
   private boolean myIsInInputEvent;
-  private AWTEvent myCurrentEvent;
+  @NotNull
+  private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
   private long myLastActiveTime;
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
@@ -121,11 +123,58 @@ public class IdeEventQueue extends EventQueue {
   private final List<EventDispatcher> myPostProcessors = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Set<Runnable> myReady = ContainerUtil.newHashSet();
   private boolean myKeyboardBusy;
-  private boolean myDispatchingFocusEvent;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
   private final com.intellij.util.EventDispatcher<PostEventHook>
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
+
+  private LinkedHashMap <AWTEvent, ArrayList<Runnable>> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
+
+  public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
+    ifFocusEventsInTheQueue(e -> {
+      if (myRunnablesWaitingFocusChange.containsKey(e)) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
+        myRunnablesWaitingFocusChange.get(e).add(runnable);
+      }
+      else {
+        ArrayList<Runnable> runnables = new ArrayList<>();
+        runnables.add(runnable);
+        myRunnablesWaitingFocusChange.put(e, runnables);
+      }
+    }, runnable);
+  }
+
+  public String runnablesWaitingForFocusChangeState() {
+    return "Focus event list (trying to execute runnable): " + focusEventsList.stream().
+      collect(StringBuilder::new, (builder, event) -> builder.append(", [").append(event.getID()).append("; ")
+        .append(event.getSource().getClass().getName()).append("]"), StringBuilder::append);
+  }
+
+  private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
+    if (!focusEventsList.isEmpty()) {
+
+      FOCUS_AWARE_RUNNABLES_LOG.debug(runnablesWaitingForFocusChangeState());
+
+      // find the latest focus gained
+      Optional<AWTEvent> first = focusEventsList.stream().
+        filter(e ->
+                 e.getID() == FocusEvent.FOCUS_GAINED).
+        findFirst();
+
+      if (first.isPresent()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable saved for : [" + first.get().getID() + "; " + first.get().getSource() + "] -> " + no.getClass().getName());
+        yes.accept(first.get());
+      }
+      else {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
+        UIUtil.invokeLaterIfNeeded(no);
+      }
+    }
+    else {
+      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+      UIUtil.invokeLaterIfNeeded(no);
+    }
+  }
 
   private static class IdeEventQueueHolder {
     private static final IdeEventQueue INSTANCE = new IdeEventQueue();
@@ -157,6 +206,9 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
+    if (Registry.is("keymap.windows.up.to.maximize.dialogs") && SystemInfo.isWin7OrNewer) {
+      addDispatcher(new WindowsUpMaximizer(), null);
+    }
     addDispatcher(new EditingCanceller(), null);
 
     abracadabraDaberBoreh();
@@ -318,6 +370,7 @@ public class IdeEventQueue extends EventQueue {
     myEventCount = evCount;
   }
 
+  @NotNull
   public AWTEvent getTrueCurrentEvent() {
     return myCurrentEvent;
   }
@@ -338,9 +391,17 @@ public class IdeEventQueue extends EventQueue {
     ourAppIsLoaded = false;
   }
 
+  private boolean skipTypedEvents;
+
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
+
+    if (skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
+
+    if (isMetaKeyPressedOnLinux(e)) return;
+
     checkForTimeJump();
+
     if (!appIsLoaded()) {
       try {
         super.dispatchEvent(e);
@@ -352,8 +413,9 @@ public class IdeEventQueue extends EventQueue {
     }
 
     e = mapEvent(e);
-    if (Registry.is("keymap.windows.as.meta")) {
-      e = mapMetaState(e);
+    AWTEvent metaEvent = mapMetaState(e);
+    if (Registry.is("keymap.windows.as.meta") && metaEvent != null) {
+      e = metaEvent;
     }
 
     boolean wasInputEvent = myIsInInputEvent;
@@ -381,6 +443,56 @@ public class IdeEventQueue extends EventQueue {
         maybeReady();
       }
     }
+
+    if (isFocusEvent(e)) {
+      AWTEvent finalEvent = e;
+      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
+        collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+      StreamEx.of(focusEventsList).
+        takeWhileInclusive(entry -> !entry.equals(finalEvent)).
+        collect(Collectors.toList()).stream().map(entry -> {
+          focusEventsList.remove(entry);
+          return myRunnablesWaitingFocusChange.remove(entry);
+        }).
+        filter(lor -> lor != null).
+        flatMap(listOfRunnables -> listOfRunnables.stream()).
+        filter(r -> r != null).
+        filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired())).
+        forEach(runnable -> {
+          try {
+            runnable.run();
+          } catch (Exception exc) {
+            LOG.info(exc);
+          }
+        });
+    }
+  }
+
+  private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
+    if (!Registry.is("keymap.skip.meta.press.on.linux")) return false;
+    boolean metaIsPressed = e instanceof InputEvent && (((InputEvent)e).getModifiersEx() & InputEvent.META_DOWN_MASK) != 0;
+    boolean typedKeyEvent = e.getID() == KeyEvent.KEY_TYPED;
+    return SystemInfo.isLinux && typedKeyEvent && metaIsPressed;
+  }
+
+  private boolean skipTypedKeyEventsIfFocusReturnsToOwner(@NotNull AWTEvent e) {
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+      WindowEvent wfe = (WindowEvent)e;
+      if (wfe.getWindow().getParent() != null && wfe.getWindow().getParent() == wfe.getOppositeWindow()) {
+        skipTypedEvents = true;
+      }
+    }
+
+    if (skipTypedEvents && e instanceof KeyEvent) {
+      if (e.getID() == KeyEvent.KEY_TYPED) {
+        ((KeyEvent)e).consume();
+        return true;
+      } else  {
+        skipTypedEvents = false;
+      }
+    }
+
+    return false;
   }
 
   //As we rely on system time monotonicity in many places let's log anomalies at least.
@@ -484,7 +596,15 @@ public class IdeEventQueue extends EventQueue {
     return e;
   }
 
-  @NotNull
+  /**
+   * Here we try to use 'Windows' key like modifier, so we patch events with modifier 'Meta'
+   * when 'Windows' key was pressed and still is not released.
+   * @param e event to be patched
+   * @return new 'patched' event if need, otherwise null
+   *
+   * Note: As side-effect this method tracks special flag for 'Windows' key state that is valuable on itself
+   */
+  @Nullable
   private AWTEvent mapMetaState(@NotNull AWTEvent e) {
     if (myWinMetaPressed) {
       Application app = ApplicationManager.getApplication();
@@ -493,7 +613,7 @@ public class IdeEventQueue extends EventQueue {
       weAreNotActive |= e instanceof FocusEvent && ((FocusEvent)e).getOppositeComponent() == null;
       if (weAreNotActive) {
         myWinMetaPressed = false;
-        return e;
+        return null;
       }
     }
 
@@ -502,8 +622,7 @@ public class IdeEventQueue extends EventQueue {
       if (ke.getKeyCode() == KeyEvent.VK_WINDOWS) {
         if (ke.getID() == KeyEvent.KEY_PRESSED) myWinMetaPressed = true;
         if (ke.getID() == KeyEvent.KEY_RELEASED) myWinMetaPressed = false;
-        return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx(), KeyEvent.VK_META, ke.getKeyChar(),
-                            ke.getKeyLocation());
+        return null;
       }
       if (myWinMetaPressed) {
         return new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), ke.getModifiers() | ke.getModifiersEx() | InputEvent.META_MASK, ke.getKeyCode(),
@@ -517,7 +636,7 @@ public class IdeEventQueue extends EventQueue {
                             me.getClickCount(), me.isPopupTrigger(), me.getButton());
     }
 
-    return e;
+    return null;
   }
 
   public void _dispatchEvent(@NotNull AWTEvent e, boolean typeAheadFlushing) {
@@ -532,10 +651,6 @@ public class IdeEventQueue extends EventQueue {
 
     if (processAppActivationEvents(e)) return;
 
-    if (!typeAheadFlushing) {
-      fixStickyFocusedComponents(e);
-    }
-
     if (!myPopupManager.isPopupActive()) {
       enterSuspendModeIfNeeded(e);
     }
@@ -546,11 +661,6 @@ public class IdeEventQueue extends EventQueue {
       if (e.getID() == KeyEvent.KEY_RELEASED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_SHIFT) {
         myMouseEventDispatcher.resetHorScrollingTracker();
       }
-    }
-
-    if (!typeAheadFlushing && typeAheadDispatchToFocusManager(e)) {
-      LOG.debug("Typeahead dispatch for event ", e);
-      return;
     }
 
     if (e instanceof WindowEvent) {
@@ -629,11 +739,11 @@ public class IdeEventQueue extends EventQueue {
     }
     else if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
-      if (me.getID() == MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0 ) {
+      if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0 ) {
         // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
         // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
         // So we have to reset this WeakReference with synthetic event just before processing of actual event
-        super.dispatchEvent(new MouseEvent(me.getComponent(), MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+        super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
       }
       if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
         final MouseEvent toDispatch =
@@ -658,104 +768,6 @@ public class IdeEventQueue extends EventQueue {
       }
     }
     return false;
-  }
-
-  private static void fixStickyWindow(@NotNull KeyboardFocusManager mgr, Window wnd, @NotNull String resetMethod) {
-    if (wnd != null && !wnd.isShowing()) {
-      Window showingWindow = wnd;
-      while (showingWindow != null) {
-        if (showingWindow.isShowing()) break;
-        showingWindow = (Window)showingWindow.getParent();
-      }
-
-      if (showingWindow == null) {
-        final Frame[] allFrames = Frame.getFrames();
-        for (Frame each : allFrames) {
-          if (each.isShowing()) {
-            showingWindow = each;
-            break;
-          }
-        }
-      }
-
-
-      if (showingWindow != null && showingWindow != wnd) {
-        final Method setActive = ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(KeyboardFocusManager.class, false), resetMethod, Window.class);
-        if (setActive != null) {
-          try {
-            setActive.invoke(mgr, (Window)showingWindow);
-          }
-          catch (Exception exc) {
-            LOG.info(exc);
-          }
-        }
-      }
-    }
-  }
-
-  public void fixStickyFocusedComponents(@Nullable AWTEvent e) {
-    if (e != null && !(e instanceof InputEvent)) return;
-
-    final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-
-    if (Registry.is("actionSystem.fixStickyFocusedWindows")) {
-      fixStickyWindow(mgr, mgr.getActiveWindow(), "setGlobalActiveWindow");
-      fixStickyWindow(mgr, mgr.getFocusedWindow(), "setGlobalFocusedWindow");
-    }
-
-    if (Registry.is("actionSystem.fixNullFocusedComponent")) {
-      final Component focusOwner = mgr.getFocusOwner();
-      if (focusOwner == null || !focusOwner.isShowing() || focusOwner instanceof JFrame || focusOwner instanceof JDialog) {
-
-        final Application app = ApplicationManager.getApplication();
-        if (app instanceof ApplicationEx && !((ApplicationEx) app).isLoaded()) {
-          return;
-        }
-
-        boolean mouseEventsAhead = isMouseEventAhead(e);
-        boolean focusTransferredNow = IdeFocusManager.getGlobalInstance().isFocusBeingTransferred();
-
-        boolean okToFixFocus = !mouseEventsAhead && !focusTransferredNow;
-
-        if (okToFixFocus) {
-          Window showingWindow = mgr.getActiveWindow();
-          if (showingWindow == null) {
-            Method getNativeFocusOwner = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "getNativeFocusOwner");
-            if (getNativeFocusOwner != null) {
-              try {
-                Object owner = getNativeFocusOwner.invoke(mgr);
-                if (owner instanceof Component) {
-                  showingWindow = UIUtil.getWindow((Component)owner);
-                }
-              }
-              catch (Exception e1) {
-                LOG.debug(e1);
-              }
-            }
-          }
-          if (showingWindow != null) {
-            final IdeFocusManager fm = IdeFocusManager.findInstanceByComponent(showingWindow);
-            ExpirableRunnable maybeRequestDefaultFocus = new ExpirableRunnable() {
-              @Override
-              public void run() {
-                if (getPopupManager().requestDefaultFocus(false)) return;
-
-                final Application app = ApplicationManager.getApplication();
-                if (app != null && app.isActive()) {
-                  fm.requestDefaultFocus(false);
-                }
-              }
-
-              @Override
-              public boolean isExpired() {
-                return !UIUtil.isMeaninglessFocusOwner(mgr.getFocusOwner());
-              }
-            };
-            fm.revalidateFocus(maybeRequestDefaultFocus);
-          }
-        }
-      }
-    }
   }
 
   public static boolean isMouseEventAhead(@Nullable AWTEvent e) {
@@ -814,18 +826,12 @@ public class IdeEventQueue extends EventQueue {
 
   private void defaultDispatchEvent(@NotNull AWTEvent e) {
     try {
-      myDispatchingFocusEvent = e instanceof FocusEvent;
-
       maybeReady();
       fixStickyAlt(e);
-
       super.dispatchEvent(e);
     }
     catch (Throwable t) {
       processException(t);
-    }
-    finally {
-      myDispatchingFocusEvent = false;
     }
   }
 
@@ -863,22 +869,6 @@ public class IdeEventQueue extends EventQueue {
     else if (SystemInfo.isWinXpOrNewer && !SystemInfo.isWinVistaOrNewer && e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
       ((KeyEvent)e).consume();  // IDEA-17359
     }
-  }
-
-  public boolean isDispatchingFocusEvent() {
-    return myDispatchingFocusEvent;
-  }
-
-  private static boolean typeAheadDispatchToFocusManager(@NotNull AWTEvent e) {
-    if (e instanceof KeyEvent) {
-      final KeyEvent event = (KeyEvent)e;
-      if (!event.isConsumed()) {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(event.getComponent());
-        return focusManager.dispatch(event);
-      }
-    }
-
-    return false;
   }
 
   public void flushQueue() {
@@ -1016,9 +1006,6 @@ public class IdeEventQueue extends EventQueue {
     return mySuspendMode;
   }
 
-  public boolean hasFocusEventsPending() {
-    return peekEvent(FocusEvent.FOCUS_GAINED) != null || peekEvent(FocusEvent.FOCUS_LOST) != null;
-  }
 
   private boolean isReady() {
     return !myKeyboardBusy && myKeyEventDispatcher.isReady();
@@ -1027,7 +1014,7 @@ public class IdeEventQueue extends EventQueue {
   public void maybeReady() {
     if (myReady.isEmpty() || !isReady()) return;
 
-    Runnable[] ready = myReady.toArray(new Runnable[myReady.size()]);
+    Runnable[] ready = myReady.toArray(new Runnable[0]);
     myReady.clear();
 
     for (Runnable each : ready) {
@@ -1111,6 +1098,32 @@ public class IdeEventQueue extends EventQueue {
       return !dispatch;
     }
   }
+  //Windows OS doesn't support a Windows+Up/Down shortcut for dialogs, so we provide a workaround
+  private class WindowsUpMaximizer implements EventDispatcher {
+    @SuppressWarnings("SSBasedInspection")
+    @Override
+    public boolean dispatch(@NotNull AWTEvent e) {
+      if (myWinMetaPressed
+          && e instanceof KeyEvent
+          && e.getID() == KeyEvent.KEY_RELEASED
+          && (((KeyEvent)e).getKeyCode() == KeyEvent.VK_UP || ((KeyEvent)e).getKeyCode() == KeyEvent.VK_DOWN)) {
+        Component parent = UIUtil.getWindow(((KeyEvent)e).getComponent());
+        if (parent instanceof JDialog) {
+          final JDialog dialog = (JDialog)parent;
+          SwingUtilities.invokeLater(() -> {
+            if (((KeyEvent)e).getKeyCode() == KeyEvent.VK_UP) {
+              MaximizeActiveDialogAction.maximize(dialog);
+            }
+            else {
+              MaximizeActiveDialogAction.normalize(dialog);
+            }
+          });
+          return true;
+        }
+      }
+      return false;
+    }
+  }
 
   //We have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
   private static class EditingCanceller implements EventDispatcher {
@@ -1148,6 +1161,19 @@ public class IdeEventQueue extends EventQueue {
     doPostEvent(event);
   }
 
+  private static boolean isFocusEvent (AWTEvent e) {
+    return
+      e.getID() == FocusEvent.FOCUS_GAINED ||
+      e.getID() == FocusEvent.FOCUS_LOST ||
+      e.getID() == WindowEvent.WINDOW_ACTIVATED ||
+      e.getID() == WindowEvent.WINDOW_DEACTIVATED ||
+      e.getID() == WindowEvent.WINDOW_LOST_FOCUS ||
+      e.getID() == WindowEvent.WINDOW_GAINED_FOCUS;
+  }
+
+  private ConcurrentLinkedQueue<AWTEvent> focusEventsList =
+      new ConcurrentLinkedQueue<>();
+
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
@@ -1163,6 +1189,11 @@ public class IdeEventQueue extends EventQueue {
     if (isKeyboardEvent(event)) {
       myKeyboardEventsPosted.incrementAndGet();
     }
+
+    if (isFocusEvent(event)) {
+        focusEventsList.add(event);
+    }
+
     super.postEvent(event);
     return true;
   }
@@ -1218,7 +1249,9 @@ public class IdeEventQueue extends EventQueue {
     myPostEventListeners.addListener(listener, parentDisposable);
   }
 
-  private static Ref<Method> unsafeNonBlockingExecuteRef;
+  private static class Holder {
+    private static final Method unsafeNonBlockingExecuteRef = ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class);
+  }
 
   /**
    * Must be called on the Event Dispatching thread.
@@ -1229,13 +1262,10 @@ public class IdeEventQueue extends EventQueue {
    */
   public static void unsafeNonblockingExecute(Runnable r) {
     assert EventQueue.isDispatchThread();
-    if (unsafeNonBlockingExecuteRef == null) {
-      // The method is available in JBSDK.
-      unsafeNonBlockingExecuteRef = Ref.create(ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class));
-    }
-    if (unsafeNonBlockingExecuteRef.get() != null) {
+    // The method is available in JBSDK.
+    if (Holder.unsafeNonBlockingExecuteRef != null) {
       try {
-        unsafeNonBlockingExecuteRef.get().invoke(Toolkit.getDefaultToolkit(), r);
+        Holder.unsafeNonBlockingExecuteRef.invoke(Toolkit.getDefaultToolkit(), r);
         return;
       }
       catch (Exception ignore) {

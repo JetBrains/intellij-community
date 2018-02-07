@@ -129,7 +129,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
     for (int i =0; i<size; i++) {
       templates.add(myModel.getElementAt(i));
     }
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override

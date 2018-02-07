@@ -169,7 +169,7 @@ public class CodeInsightTestUtil {
   public static void doSmartEnterTest(@NotNull final CodeInsightTestFixture fixture,
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.forKey(fixture.getFile().getLanguage());
+    final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.allForLanguage(fixture.getFile().getLanguage());
     new WriteCommandAction(fixture.getProject()) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {

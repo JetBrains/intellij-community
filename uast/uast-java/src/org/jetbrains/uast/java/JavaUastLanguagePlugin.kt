@@ -19,9 +19,12 @@ package org.jetbrains.uast.java
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.*
+import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
+import org.jetbrains.uast.java.kinds.JavaSpecialExpressionKinds
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
   override val priority = 0
@@ -175,13 +178,15 @@ internal object JavaConverter {
         is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
         is PsiExpression -> convertExpression(el, givenParent, requiredType)
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
-        is PsiIdentifier -> el<USimpleNameReferenceExpression> {
-          JavaUSimpleNameReferenceExpression(el, el.text, givenParent)
-        }
+        is PsiIdentifier -> el<USimpleNameReferenceExpression> { JavaUSimpleNameReferenceExpression(el, el.text, givenParent) }
+                            ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
         is PsiNameValuePair -> el<UNamedExpression>(build(::JavaUNamedExpression))
         is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
         is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
+        is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
+            el<UExpression> { JavaUAnnotationCallExpression(it, givenParent) }
+          }
         else -> null
       }
     }
@@ -281,10 +286,10 @@ internal object JavaConverter {
     return with(requiredType) {
       when (el) {
         is PsiDeclarationStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement()!!)
+          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
         }
         is PsiExpressionListStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement()!!)
+          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
         }
         is PsiBlockStatement -> expr<UBlockExpression>(build(::JavaUBlockExpression))
         is PsiLabeledStatement -> expr<ULabeledExpression>(build(::JavaULabeledExpression))
@@ -302,13 +307,22 @@ internal object JavaConverter {
         is PsiThrowStatement -> expr<UThrowExpression>(build(::JavaUThrowExpression))
         is PsiSynchronizedStatement -> expr<UBlockExpression>(build(::JavaUSynchronizedExpression))
         is PsiTryStatement -> expr<UTryExpression>(build(::JavaUTryExpression))
-        is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression }
+        is PsiEmptyStatement -> expr<UExpression> { UastEmptyExpression(el.parent?.toUElement()) }
+        is PsiSwitchLabelStatement -> expr<UExpression> {
+          when {
+            givenParent is UExpressionList && givenParent.kind == JavaSpecialExpressionKinds.SWITCH -> findUSwitchEntry(givenParent, el)
+            givenParent == null -> PsiTreeUtil.getParentOfType(el, PsiSwitchStatement::class.java)?.let {
+              findUSwitchEntry(JavaUSwitchExpression(it, null).body, el)
+            }
+            else -> null
+          }
+        }
         else -> expr<UExpression>(build(::UnknownJavaExpression))
       }
     }
   }
 
-  private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement): UDeclarationsExpression {
+  private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement?): UDeclarationsExpression {
     return JavaUDeclarationsExpression(parent).apply {
       val declarations = mutableListOf<UDeclaration>()
       for (element in elements) {
@@ -324,11 +338,11 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(statement: PsiStatement?, parent: UElement?): UExpression {
-    return statement?.let { convertStatement(it, parent, null) } ?: UastEmptyExpression
+    return statement?.let { convertStatement(it, parent, null) } ?: UastEmptyExpression(parent)
   }
 
   internal fun convertOrEmpty(expression: PsiExpression?, parent: UElement?): UExpression {
-    return expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression
+    return expression?.let { convertExpression(it, parent) } ?: UastEmptyExpression(parent)
   }
 
   internal fun convertOrNull(expression: PsiExpression?, parent: UElement?): UExpression? {
@@ -336,6 +350,6 @@ internal object JavaConverter {
   }
 
   internal fun convertOrEmpty(block: PsiCodeBlock?, parent: UElement?): UExpression {
-    return if (block != null) convertBlock(block, parent) else UastEmptyExpression
+    return if (block != null) convertBlock(block, parent) else UastEmptyExpression(parent)
   }
 }

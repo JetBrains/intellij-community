@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -31,21 +31,21 @@ import java.util.*
 
 private val LOG = logger<RunnerAndConfigurationSettings>()
 
-private val RUNNER_ID = "RunnerId"
+private const val RUNNER_ID = "RunnerId"
 
-private val CONFIGURATION_TYPE_ATTRIBUTE = "type"
-private val FACTORY_NAME_ATTRIBUTE = "factoryName"
-private val FOLDER_NAME = "folderName"
-val NAME_ATTR = "name"
-val DUMMY_ELEMENT_NAME = "dummy"
-private val TEMPORARY_ATTRIBUTE = "temporary"
-private val EDIT_BEFORE_RUN = "editBeforeRun"
-private val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
+private const val CONFIGURATION_TYPE_ATTRIBUTE = "type"
+private const val FACTORY_NAME_ATTRIBUTE = "factoryName"
+private const val FOLDER_NAME = "folderName"
+const val NAME_ATTR = "name"
+const val DUMMY_ELEMENT_NAME = "dummy"
+private const val TEMPORARY_ATTRIBUTE = "temporary"
+private const val EDIT_BEFORE_RUN = "editBeforeRun"
+private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 
-private val TEMP_CONFIGURATION = "tempConfiguration"
-internal val TEMPLATE_FLAG_ATTRIBUTE = "default"
+private const val TEMP_CONFIGURATION = "tempConfiguration"
+internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
-val SINGLETON = "singleton"
+const val SINGLETON = "singleton"
 
 enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
@@ -56,6 +56,14 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
                                                                    private var isTemplate: Boolean = false,
                                                                    private var singleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  companion object {
+    @Suppress("DEPRECATION")
+    @JvmStatic
+    fun getUniqueIdFor(configuration: RunConfiguration): String {
+      return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+    }
+  }
+
   private val runnerSettings = object : RunnerItem<RunnerSettings>("RunnerSettings") {
     override fun createSettings(runner: ProgramRunner<*>) = runner.createConfigurationData(InfoProvider(runner))
   }
@@ -118,7 +126,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
-      result = getUniqueIDFor(configuration)
+      result = getUniqueIdFor(configuration)
       uniqueId = result
     }
     return result
@@ -502,11 +510,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         return null
       }
     }
-  }
-  companion object {
-    @JvmStatic
-    fun getUniqueIDFor(configuration: RunConfiguration) =
-      "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 }
 

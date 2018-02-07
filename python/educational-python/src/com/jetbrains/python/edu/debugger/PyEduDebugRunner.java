@@ -9,7 +9,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.actions.CloseAction;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -129,6 +128,8 @@ public class PyEduDebugRunner extends PyDebugRunner {
           }
         };
         content.setActions(new DefaultActionGroup(action), ActionPlaces.DEBUGGER_TOOLBAR, view.getPreferredFocusableComponent());
+        //TODO: return proper helpID
+        content.setHelpId(executor.getHelpId());
       }
       patchLeftToolbar(session, ui);
     }
@@ -146,8 +147,6 @@ public class PyEduDebugRunner extends PyDebugRunner {
 
     Executor executor = PyEduDebugExecutor.getInstance();
     newLeftToolbar.add(new CloseAction(executor, session.getRunContentDescriptor(), session.getProject()));
-    //TODO: return proper helpID
-    newLeftToolbar.add(new ContextHelpAction(executor.getHelpId()));
 
     ui.getOptions().setLeftToolbar(newLeftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
   }

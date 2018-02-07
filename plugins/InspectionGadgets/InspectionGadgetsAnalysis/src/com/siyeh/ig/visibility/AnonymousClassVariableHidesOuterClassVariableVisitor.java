@@ -109,7 +109,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectio
         return EMPTY_VARIABLE_LIST;
       }
       else {
-        return variableList.toArray(new PsiVariable[variableList.size()]);
+        return variableList.toArray(new PsiVariable[0]);
       }
     }
   }

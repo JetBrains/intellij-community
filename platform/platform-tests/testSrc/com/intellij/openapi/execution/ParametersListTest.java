@@ -203,6 +203,23 @@ public class ParametersListTest {
   }
 
   @Test
+  public void addEmptyProperties() {
+    ParametersList params = new ParametersList();
+    params.addProperty("foo.null", null);
+    params.addProperty("foo.empty", "");
+    params.addProperty("foo.value.less");
+    params.defineProperty("def.null", null);
+    params.defineProperty("def.empty", "");
+    params.defineProperty("foo.value.less", "anyway");
+    params.addNotEmptyProperty("empty.null", null);
+    params.addNotEmptyProperty("empty.empty", "");
+    params.addNotEmptyProperty("empty.spaces", "   \t\t\t");
+    assertTrue(params.hasProperty("foo.value.less"));
+    assertTrue(params.hasProperty("foo.empty"));
+    assertEquals("{foo.empty=, foo.value.less=, def.empty=}", params.getProperties().toString());
+  }
+
+  @Test
   public void redefineProperty() {
     ParametersList params = new ParametersList();
     params.defineProperty("sample", "foo");
@@ -238,7 +255,7 @@ public class ParametersListTest {
     params.replaceOrPrepend("-Dp27=", "-Dp27=27");
     params.replaceOrPrepend("-Dp1st", "-Dp1st");
     params.add("-Dsimple");
-    assertEquals("-Dp1st -Dp8=8 -DpX -Dsimple.prop -Dsimple -Dfoo=$foo.foo -Dbar=$bar -Dp27=27 -Dsimple", params.getParametersString());
+    assertEquals("-Dp1st -Dp8=8 -DpX -Dsimple.prop -Dsimple -Dfoo -Dbar=$bar -Dp27=27 -Dsimple", params.getParametersString());
   }
 
   @Before

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -241,5 +242,11 @@ import static foo.bar.ClassWithoutPropertyMethods.someProp
     assert element instanceof PsiField
     assert element.name == 'someProp'
     assert element.containingClass.qualifiedName == 'foo.bar.ClassWithoutPropertyMethods'
+  }
+
+  void 'test resolve property via static getter import with caches'() {
+    fixture.enableInspections GrUnresolvedAccessInspection
+    configureByText "import static foo.bar.Baz.getSomeProp; someProp"
+    fixture.checkHighlighting()
   }
 }

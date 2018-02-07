@@ -82,11 +82,7 @@ public class PsiDocumentNavigator extends DefaultNavigator {
     }
 
 
-    public Iterator getNamespaceAxisIterator(Object contextNode) throws UnsupportedAxisException {
-        return super.getNamespaceAxisIterator(contextNode);
-    }
-
-    public Object getDocumentNode(Object contextNode) {
+  public Object getDocumentNode(Object contextNode) {
         if (contextNode instanceof XmlDocument) {
             return contextNode;
         }

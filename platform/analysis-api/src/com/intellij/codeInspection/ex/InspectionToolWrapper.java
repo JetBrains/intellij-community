@@ -34,7 +34,6 @@ import java.net.URL;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/28/11
  */
 public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E extends InspectionEP> {
   public static final InspectionToolWrapper[] EMPTY_ARRAY = new InspectionToolWrapper[0];

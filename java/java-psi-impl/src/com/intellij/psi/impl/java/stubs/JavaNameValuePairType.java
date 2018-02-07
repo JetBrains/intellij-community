@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
  */
 public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairStub, PsiNameValuePair> {
 

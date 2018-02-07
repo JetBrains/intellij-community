@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -54,20 +53,8 @@ public class WSLDistribution {
   private final String myExeName;
   @NotNull
   private final String myPresentableName;
-
-  private final AtomicNullableLazyValue<Path> myExecutableProvider = AtomicNullableLazyValue.createValue(() -> {
-    if (!SystemInfo.isWin10OrNewer) {
-      return null;
-    }
-
-    Path rootPath = getExecutableRootPath();
-    if (rootPath == null || !(Files.exists(rootPath) && Files.isDirectory(rootPath))) {
-      return null;
-    }
-    Path fullPath = rootPath.resolve(getExeName());
-
-    return Files.exists(fullPath, LinkOption.NOFOLLOW_LINKS) ? fullPath : null;
-  });
+  @Nullable
+  private final Path myRootPath;
 
   /**
    * @return root for WSL executable or null if unavailable
@@ -87,6 +74,7 @@ public class WSLDistribution {
     myMsId = msId;
     myExeName = exeName;
     myPresentableName = presentableName;
+    myRootPath = getExecutableRootPath();
   }
 
   public boolean isAvailable() {
@@ -103,7 +91,35 @@ public class WSLDistribution {
    */
   @Nullable
   public Path getExecutablePath() {
-    return myExecutableProvider.getValue();
+    if (!SystemInfo.isWin10OrNewer) {
+      return null;
+    }
+
+    if (myRootPath == null || !(Files.exists(myRootPath) && Files.isDirectory(myRootPath))) {
+      return null;
+    }
+    Path fullPath = myRootPath.resolve(getExeName());
+
+    return Files.exists(fullPath, LinkOption.NOFOLLOW_LINKS) ? fullPath : null;
+  }
+
+  @Nullable
+  public String readReleaseInfo() {
+    try {
+      final String key = "PRETTY_NAME";
+      final String releaseInfo = "/etc/os-release"; // available for all distributions
+      final ProcessOutput output = executeOnWsl(1000, "cat", releaseInfo);
+      for (String line : output.getStdoutLines(true)) {
+        if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
+          final String prettyName = line.substring(key.length() + 1);
+          return  StringUtil.nullize(StringUtil.unquoteString(prettyName));
+        }
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
+    return null;
   }
 
   /**
@@ -283,10 +299,10 @@ public class WSLDistribution {
    * @return actual file name
    */
   @NotNull
-  public String resolveSymlink(@NotNull String path, int timeoutInMillisecondss) {
+  public String resolveSymlink(@NotNull String path, int timeoutInMilliseconds) {
 
     try {
-      final ProcessOutput output = executeOnWsl(timeoutInMillisecondss, "readlink", "-f", path);
+      final ProcessOutput output = executeOnWsl(timeoutInMilliseconds, "readlink", "-f", path);
       if (output.getExitCode() == 0) {
         String stdout = output.getStdout().trim();
         if (output.getExitCode() == 0 && StringUtil.isNotEmpty(stdout)) {

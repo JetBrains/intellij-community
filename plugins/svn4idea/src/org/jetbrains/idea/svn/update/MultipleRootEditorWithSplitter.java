@@ -36,8 +36,6 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 1/14/11
- *         Time: 1:17 PM
  */
 public class MultipleRootEditorWithSplitter extends JPanel {
   private JList myList;

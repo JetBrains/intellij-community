@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -181,18 +180,18 @@ public abstract class AbstractToolsUsagesCollector extends AbstractProjectsUsage
   private static Set<String> getRepositoryPluginIds() {
     final Project project = DefaultProjectFactory.getInstance().getDefaultProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      List<IdeaPluginDescriptor> plugins;
+      List<IdeaPluginDescriptor> plugins = Collections.emptyList();
       try {
         final List<IdeaPluginDescriptor> cached = RepositoryHelper.loadCachedPlugins();
         if (cached != null) {
           plugins = cached;
         }
         else {
-          plugins = ApplicationManager.getApplication().executeOnPooledThread(() -> RepositoryHelper.loadPlugins(null)).get();
+          // schedule plugins loading, will take them the next time
+          ApplicationManager.getApplication().executeOnPooledThread(() -> RepositoryHelper.loadPlugins(null));
         }
       }
-      catch (final IOException | ExecutionException | InterruptedException e) {
-        plugins = Collections.emptyList();
+      catch (final IOException ignored) {
       }
       final Set<String> ids = StreamEx.of(plugins).map(PluginDescriptor::getPluginId).nonNull().map(PluginId::getIdString).toSet();
       return CachedValueProvider.Result.create(ids, new DelayModificationTracker(1, TimeUnit.HOURS));

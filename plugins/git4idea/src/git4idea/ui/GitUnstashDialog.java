@@ -20,7 +20,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -147,10 +146,9 @@ public class GitUnstashDialog extends DialogWrapper {
           ProgressManager.getInstance().run(new Task.Modal(myProject, "Removing stash " + stash.getStash(), true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              final GitSimpleHandler h = dropHandler(stash.getStash());
+              final GitLineHandler h = dropHandler(stash.getStash());
               try {
-                h.run();
-                h.unsilence();
+                Git.getInstance().runCommand(h).getOutputOrThrow();
               }
               catch (final VcsException ex) {
                 ApplicationManager.getApplication().invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
@@ -162,8 +160,8 @@ public class GitUnstashDialog extends DialogWrapper {
         }
       }
 
-      private GitSimpleHandler dropHandler(String stash) {
-        GitSimpleHandler h = new GitSimpleHandler(myProject, getGitRoot(), GitCommand.STASH);
+      private GitLineHandler dropHandler(String stash) {
+        GitLineHandler h = new GitLineHandler(myProject, getGitRoot(), GitCommand.STASH);
         h.addParameters("drop", stash);
         return h;
       }
@@ -174,11 +172,11 @@ public class GitUnstashDialog extends DialogWrapper {
         String resolvedStash;
         String selectedStash = getSelectedStash().getStash();
         try {
-          GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.REV_LIST);
+          GitLineHandler h = new GitLineHandler(project, root, GitCommand.REV_LIST);
           h.setSilent(true);
           h.addParameters("--timestamp", "--max-count=1", selectedStash);
           h.endOptions();
-          final String output = h.run();
+          final String output = Git.getInstance().runCommand(h).getOutputOrThrow();
           resolvedStash = GitRevisionNumber.parseRevlistOutputAsRevisionNumber(h, output).asString();
         }
         catch (VcsException ex) {

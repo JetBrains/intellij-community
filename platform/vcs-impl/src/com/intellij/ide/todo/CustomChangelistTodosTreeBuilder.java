@@ -35,8 +35,6 @@ import java.util.*;
 
 /**
  * @author irengrig
- *         Date: 2/21/11
- *         Time: 5:14 PM
  */
 public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];
@@ -99,7 +97,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
         buildMap(worker.inOneList());
 
         final Set<PsiFile> files = myMap.keySet();
-        return files.toArray(new PsiFile[files.size()]);
+        return files.toArray(PsiFile.EMPTY_ARRAY);
       }
 
       @NotNull
@@ -134,7 +132,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
             result.add(todoItem);
           }
         }
-        return result.isEmpty() ? EMPTY_ITEMS : result.toArray(new TodoItem[result.size()]);
+        return result.isEmpty() ? EMPTY_ITEMS : result.toArray(new TodoItem[0]);
       }
 
       @Override
@@ -169,7 +167,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       }
     }
     final Collection<TodoItem> todoItems = myMap.get(file);
-    return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[todoItems.size()]);
+    return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
   }
 
   @NotNull

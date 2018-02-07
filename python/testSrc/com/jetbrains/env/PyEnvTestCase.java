@@ -16,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.packaging.PyPackage;
@@ -34,33 +33,22 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author traff
- *
-*  All inhertors must be in {@link com.jetbrains.env.}.*
+ * <p>
+ * All inhertors must be in {@link com.jetbrains.env}.*
+ * <p>
+ * See "community/python/setup-test-environment/build.gradle"
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
   private static final String TAGS_FILE = "tags.txt";
-  /**
-   * Platform-specific separated list of python interpreters
-   */
-  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
-  /**
-   * Folder with virtual envs (python interpreters).
-   */
-  private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
 
-  protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
-
-
-  public static final boolean RUN_REMOTE = SystemProperties.getBooleanProperty("pycharm.run_remote", false);
-
-  public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
-
-  private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false);
+  @NotNull
+  protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
 
 
   /**
@@ -90,6 +78,10 @@ public abstract class PyEnvTestCase {
     }
   };
 
+  static {
+    LOG.warn("Using following config\n" + SETTINGS.reportConfiguration());
+  }
+
   /**
    * Escape test output to prevent python test be processed as test result
    */
@@ -99,6 +91,9 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
+      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
+        return true;
+      }
       if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
         return true;
       }
@@ -190,10 +185,9 @@ public abstract class PyEnvTestCase {
   }
 
   public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
-    Assume.assumeFalse("Running under teamcity but not by Env configuration. Skipping.", notEnvConfiguration());
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
-      checkStaging();
-    }
+    Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
+                       UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
+    checkStaging();
 
     List<String> roots = getPythonRoots();
 
@@ -215,38 +209,37 @@ public abstract class PyEnvTestCase {
      *</p>
      */
     Assume.assumeFalse(testName +
-                       ": environments are not defined. Skipping. \nSpecify either " +
-                       PYCHARM_PYTHON_ENVS +
-                       " or " +
-                       PYCHARM_PYTHON_VIRTUAL_ENVS +
-                       " environment variable.",
+                       ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
                        roots.isEmpty());
     doRunTests(testTask, testName, roots);
   }
 
-  protected void checkStaging() {
+  protected final void checkStaging() {
+    if (!SETTINGS.isUnderTeamCity()) {
+      return; // Its ok to run staging tests locally
+    }
     Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
-                      myStaging == STAGING_ENV);
+                      myStaging == SETTINGS.isStagingMode());
   }
 
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
-    if (RUN_LOCAL) {
-      PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
+    Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-      final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-      EnvTestTagsRequired methodAnnotation = null;
-      try {
-        final Method method = getClass().getMethod(myTestName.getMethodName());
-        methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
-      }
-      catch (final NoSuchMethodException e) {
-        throw new AssertionError("No such method", e);
-      }
-      final String[] classTags = getTags(classAnnotation);
-      final String[] methodTags = getTags(methodAnnotation);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
 
-      taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
+    final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
+    EnvTestTagsRequired methodAnnotation = null;
+    try {
+      final Method method = getClass().getMethod(myTestName.getMethodName());
+      methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
+    catch (final NoSuchMethodException e) {
+      throw new AssertionError("No such method", e);
+    }
+    final String[] classTags = getTags(classAnnotation);
+    final String[] methodTags = getTags(methodAnnotation);
+
+    taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
   @NotNull
@@ -259,44 +252,10 @@ public abstract class PyEnvTestCase {
     }
   }
 
-  public static boolean notEnvConfiguration() {
-    return UsefulTestCase.IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;
-  }
-
   public static List<String> getPythonRoots() {
-    List<String> roots = Lists.newArrayList();
-
-    String envs = System.getenv(PYCHARM_PYTHON_ENVS);
-    if (envs != null) {
-      roots.addAll(Lists.newArrayList(envs.split(File.pathSeparator)));
-    }
-
-    String virtualEnvs = System.getenv(PYCHARM_PYTHON_VIRTUAL_ENVS);
-
-    if (virtualEnvs != null) {
-      roots.addAll(readVirtualEnvRoots(virtualEnvs));
-    }
-    return roots;
+    return SETTINGS.getPythons().stream().map(File::getAbsolutePath).collect(Collectors.toList());
   }
 
-  protected static List<String> readVirtualEnvRoots(@NotNull String envs) {
-    List<String> result = Lists.newArrayList();
-    String[] roots = envs.split(File.pathSeparator);
-    for (String root : roots) {
-      File virtualEnvRoot = new File(root);
-      File[] virtualenvs = virtualEnvRoot.listFiles();
-      if (virtualenvs != null) {
-        for (File f : virtualenvs) {
-          result.add(f.getAbsolutePath());
-        }
-      }
-      else {
-        LOG.error(root + " is not a directory of doesn't exist");
-      }
-    }
-
-    return result;
-  }
 
   public static List<String> loadEnvTags(String env) {
     List<String> envTags;

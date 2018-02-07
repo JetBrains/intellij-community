@@ -193,7 +193,9 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testSafeInvocationInClassQualifier() {
-    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy")
+    final PsiReference ref = configureByFile(getTestName(true) + "/SafeInvocationInClassQualifier.groovy")
+    assertInstanceOf(ref, GrReferenceExpression.class)
+    assertNull(((GrReferenceExpression)ref).type)
   }
 
   void testReturnTypeFromMethodClosure() {
@@ -740,6 +742,37 @@ def foo(List list) {
     doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
   }
 
+
+  void testClassReference() {
+    doExprTest '[].class', "java.lang.Class<java.util.List>"
+    doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
+    doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+
+    doCSExprTest '[].class', "java.lang.Class<java.util.List>"
+    doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
+    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+  }
+
+  void testMapClassReference() {
+    doExprTest '[:].class', null
+    doExprTest '[class : 1].class', 'java.lang.Integer'
+    doExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
+    doExprTest 'new HashMap().class', null
+
+    doCSExprTest '[:].class', null
+    doCSExprTest '[class : 1].class', 'java.lang.Integer'
+    doCSExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
+    doCSExprTest 'new HashMap().class', null
+  }
+
+  void testUnknownClass() {
+    doExprTest 'a.class', null
+    doCSExprTest 'a.class', 'java.lang.Class'
+
+    doExprTest 'a().class', null
+    doCSExprTest 'a().class', 'java.lang.Class'
+  }
+
   void 'test list literal type'() {
     doExprTest '[]', 'java.util.List'
     doExprTest '[null]', 'java.util.List'
@@ -813,5 +846,19 @@ def bar() {
     l<caret>l
 }
 ''', 'java.util.List<java.util.List<java.io.Serializable>>'
+  }
+
+  void 'test enum values() type'() {
+    doExprTest 'enum E {}; E.values()', 'E[]'
+  }
+
+  void 'test closure owner type'() {
+    doTest '''\
+class W {
+  def c = {
+    <caret>owner
+  }
+}
+''', 'W'
   }
 }

@@ -286,7 +286,7 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testSuperPy3k() {  // PY-1330
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () -> {
         final PyFunction pyFunction = assertResolvesTo(PyFunction.class, "foo");
         assertEquals("A", pyFunction.getContainingClass().getName());
@@ -398,11 +398,11 @@ public class PyResolveTest extends PyResolveTestCase {
   }
 
   public void testStarUnpacking() {  // PY-1459
-    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "heads");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyTargetExpression.class, "heads");
   }
 
   public void testStarUnpackingInLoop() {  // PY-1525
-    assertResolvesTo(LanguageLevel.PYTHON30, PyTargetExpression.class, "bbb");
+    assertResolvesTo(LanguageLevel.PYTHON34, PyTargetExpression.class, "bbb");
   }
 
   public void testBuiltinVsClassMember() {  // PY-1654
@@ -1235,5 +1235,16 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testSOEDecoratingFunctionWithSameNameDecorator() {
     final PyFunction function = assertInstanceOf(doResolve(), PyFunction.class);
     assertEquals(4, function.getTextOffset());
+  }
+
+  // PY-23259
+  public void testTypingListInheritor() {
+    assertResolvesTo(PyFunction.class, "append");
+  }
+
+  // PY-23259
+  public void testImportedTypingListInheritor() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+    assertResolvesTo(PyFunction.class, "append");
   }
 }

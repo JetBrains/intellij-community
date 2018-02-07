@@ -250,6 +250,7 @@ public class InstancesWindow extends DialogWrapper {
 
     private void updateInstances() {
       cancelFilteringTask();
+      final XExpression filteringExpression = myFilterConditionEditor.getExpression();
 
       myDebugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(myDebugProcess.getDebuggerContext()) {
         @Override
@@ -275,7 +276,7 @@ public class InstancesWindow extends DialogWrapper {
 
           if (evaluationContext != null) {
             synchronized (myFilteringTaskLock) {
-              myFilteringTask = new MyFilteringWorker(instances, myFilterConditionEditor.getExpression(), evaluationContext);
+              myFilteringTask = new MyFilteringWorker(instances, filteringExpression, evaluationContext);
               myFilteringTask.execute();
             }
           }
@@ -318,7 +319,13 @@ public class InstancesWindow extends DialogWrapper {
       public void sessionPaused() {
         ApplicationManager.getApplication().invokeLater(() -> {
           myProgress.setVisible(true);
-          myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, myTreeState);
+          final XDebuggerTreeState state = myTreeState;
+          if (state != null) {
+            myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, state);
+          }
+          else {
+            myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES);
+          }
         });
       }
     }

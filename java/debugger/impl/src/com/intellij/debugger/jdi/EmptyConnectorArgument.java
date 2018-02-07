@@ -2,39 +2,45 @@
 package com.intellij.debugger.jdi;
 
 import com.sun.jdi.connect.Connector;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author egor
  */
 public class EmptyConnectorArgument implements Connector.Argument {
+  private final String myName;
+
+  public EmptyConnectorArgument(@NotNull String name) {
+    myName = name;
+  }
+
   @Override
   public String name() {
-    return null;
+    return myName;
   }
 
   @Override
   public String label() {
-    return null;
+    return "";
   }
 
   @Override
   public String description() {
-    return null;
+    return "";
   }
 
   @Override
   public String value() {
-    return null;
+    return "";
   }
 
   @Override
   public void setValue(String s) {
-
   }
 
   @Override
   public boolean isValid(String s) {
-    return false;
+    return true;
   }
 
   @Override

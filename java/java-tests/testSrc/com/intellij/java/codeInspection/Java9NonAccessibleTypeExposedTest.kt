@@ -30,6 +30,7 @@ class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTes
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(ClassEscapesItsScopeInspection())
+
     addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
     addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)
     add("apiPkg", "PublicApi", "public class PublicApi {}")

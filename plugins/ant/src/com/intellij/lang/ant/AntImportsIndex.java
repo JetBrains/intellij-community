@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 28, 2008
  */
 public class AntImportsIndex extends ScalarIndexExtension<Integer>{
   public static final ID<Integer, Void> INDEX_NAME = ID.create("ant-imports");
@@ -58,24 +57,6 @@ public class AntImportsIndex extends ScalarIndexExtension<Integer>{
             }
           }
         }
-
-        @Override
-        public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
-          //if (myAttributes != null) {
-          //  myAttributes.add(key);
-          //}
-        }
-
-        @Override
-        public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
-          //if (myAttributes != null) {
-          //  if (!(myAttributes.contains("name") && myAttributes.contains("default"))) {
-          //    stop();
-          //  }
-          //  myAttributes = null;
-          //}
-        }
-
       });
       return map;
     }

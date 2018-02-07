@@ -28,6 +28,12 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UClass : UDeclaration, PsiClass {
   override val psi: PsiClass
 
+  override fun getQualifiedName(): String?
+
+  override fun isInterface(): Boolean
+
+  override fun isAnnotationType(): Boolean
+
   /**
    * Returns a [UClass] wrapper of the superclass of this class, or null if this class is [java.lang.Object].
    */
@@ -91,4 +97,9 @@ interface UClass : UDeclaration, PsiClass {
 
 interface UAnonymousClass : UClass, PsiAnonymousClass {
   override val psi: PsiAnonymousClass
+}
+
+@Deprecated("transitional interface, don't rely on it", ReplaceWith("UClass"))
+interface UClassTypeSpecific : UClass {
+  override val javaPsi: PsiClass
 }

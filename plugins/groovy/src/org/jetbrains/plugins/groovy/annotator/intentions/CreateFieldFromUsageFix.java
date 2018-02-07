@@ -63,11 +63,6 @@ public class CreateFieldFromUsageFix extends GrCreateFromUsageBaseFix {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
     return super.canBeTargetClass(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
   }

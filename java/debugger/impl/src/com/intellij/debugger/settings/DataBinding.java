@@ -17,7 +17,6 @@ package com.intellij.debugger.settings;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Apr 12, 2005
  */
 public interface DataBinding {
   void loadData(Object from);

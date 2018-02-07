@@ -17,8 +17,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
-import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
@@ -61,7 +59,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @SuppressWarnings("UseDPIAwareInsets")
   private final Insets insets = new Insets(0, 0, 0, 0);
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
-  protected final JTextField myTextField;
   private final Handler handler = new Handler();
   private boolean monospaced;
   private Object variant;
@@ -82,10 +79,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
         insets.bottom += ui.insets.bottom;
       }
     }
-  }
-
-  public TextFieldWithPopupHandlerUI(JTextField textField) {
-    myTextField = textField;
   }
 
   /**
@@ -162,6 +155,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
+  @SuppressWarnings("unused")
   protected SearchAction getActionUnder(@NotNull Point p) {
     return null;
   }
@@ -312,9 +306,9 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (!icons.isEmpty()) {
         handleMouse(e, false);
       }
-      else if (getComponent() != null && isSearchField(myTextField)) {
+      else if (getComponent() != null && isSearchField(getComponent())) {
         SearchAction action = getActionUnder(e.getPoint());
-        if (action == SearchAction.POPUP && !isSearchFieldWithHistoryPopup(myTextField)) {
+        if (action == SearchAction.POPUP && !isSearchFieldWithHistoryPopup(getComponent())) {
           action = null;
         }
         setCursor(action != null ? Cursor.HAND_CURSOR : Cursor.TEXT_CURSOR);
@@ -326,7 +320,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
       if (!icons.isEmpty()) {
         handleMouse(e, true);
       }
-      else if (isSearchField(myTextField)) {
+      else if (isSearchField(getComponent())) {
         final SearchAction action = getActionUnder(e.getPoint());
         if (action != null) {
           switch (action) {
@@ -334,16 +328,16 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
               showSearchPopup();
               break;
             case CLEAR:
-              Object listener = myTextField.getClientProperty("JTextField.Search.CancelAction");
+              Object listener = getComponent().getClientProperty("JTextField.Search.CancelAction");
               if (listener instanceof ActionListener) {
-                ((ActionListener)listener).actionPerformed(new ActionEvent(myTextField, ActionEvent.ACTION_PERFORMED, "action"));
+                ((ActionListener)listener).actionPerformed(new ActionEvent(getComponent(), ActionEvent.ACTION_PERFORMED, "action"));
               }
-              myTextField.setText("");
+              getComponent().setText("");
               break;
             case NEWLINE: {
-              AbstractAction newLineAction = getNewLineAction(myTextField);
+              AbstractAction newLineAction = getNewLineAction(getComponent());
               if (newLineAction != null) {
-                newLineAction.actionPerformed(new ActionEvent(myTextField, ActionEvent.ACTION_PERFORMED, "action"));
+                newLineAction.actionPerformed(new ActionEvent(getComponent(), ActionEvent.ACTION_PERFORMED, "action"));
               }
               break;
             }
@@ -369,18 +363,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   public Dimension getMinimumSize(JComponent c) {
     Dimension size = super.getMinimumSize(c);
-    if (size != null) updatePreferredSize(size);
+    if (size != null) updatePreferredSize(c, size);
     return size;
   }
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    if (size != null) updatePreferredSize(size);
+    if (size != null) updatePreferredSize(c, size);
     return size;
   }
 
-  protected void updatePreferredSize(Dimension size) {
+  protected void updatePreferredSize(JComponent c, Dimension size) {
     size.height = Math.max(size.height, getMinimumHeight());
     JBInsets.addTo(size, insets);
   }
@@ -494,14 +488,14 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
           }
         }
       }
-      else if ("search".equals(variant) && (this instanceof MacIntelliJTextFieldUI || this instanceof WinIntelliJTextFieldUI)) {
+      else if ("search".equals(variant)) {
         addExtension(new SearchExtension());
         addExtension(new ClearExtension());
       }
     }
   }
 
-  private void addExtension(Extension extension) {
+  protected void addExtension(Extension extension) {
     icons.put(extension.toString(), new IconHolder(extension));
     if (extension.isIconBeforeText()) {
       insets.left += extension.getPreferredSpace();

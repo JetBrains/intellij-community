@@ -30,10 +30,7 @@ import git4idea.GitFormatException;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
 import org.jetbrains.annotations.NotNull;
@@ -102,8 +99,8 @@ class GitNewChangesCollector extends GitChangesCollector {
 
   // calls 'git status' and parses the output, feeding myChanges.
   private void collectChanges(Collection<FilePath> dirtyPaths) throws VcsException {
-    GitSimpleHandler handler = statusHandler(dirtyPaths);
-    String output = handler.run();
+    GitLineHandler handler = statusHandler(dirtyPaths);
+    String output = myGit.runCommand(handler).getOutputOrThrow();
     parseOutput(output, handler);
   }
 
@@ -117,15 +114,15 @@ class GitNewChangesCollector extends GitChangesCollector {
     }
   }
 
-  private GitSimpleHandler statusHandler(Collection<FilePath> dirtyPaths) {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
+  private GitLineHandler statusHandler(Collection<FilePath> dirtyPaths) {
+    GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
     final String[] params = {"--porcelain", "-z", "--untracked-files=no"};   // untracked files are stored separately
     handler.addParameters(params);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
     if (handler.isLargeCommandLine()) {
       // if there are too much files, just get all changes for the project
-      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.STATUS);
+      handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.STATUS);
       handler.addParameters(params);
       handler.endOptions();
     }

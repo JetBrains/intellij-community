@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
@@ -98,35 +96,27 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testGenericMethod() {
-    configure """\
+    doTestCtrlHoverDoc("""\
       class Bar<T> { java.util.List<T> foo(T param); }
 
       class Foo {{
         new Bar<String>().f<caret>oo();
-      }}""".stripIndent()
-
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
-
-    assert doc == "Bar\n List&lt;String&gt; foo(String param)"
+      }}""",
+    "Bar\n List&lt;String&gt; foo(String param)")
   }
 
   void testGenericField() {
-    configure """\
+    doTestCtrlHoverDoc("""\
       class Bar<T> { T field; }
 
       class Foo {{
         new Bar<Integer>().fi<caret>eld
-      }}""".stripIndent()
-
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
-
-    assert doc == "Bar\n Integer field"
+      }}""",
+      "Bar\n Integer field")
   }
 
   void testMethodInAnonymousClass() {
-    configure """\
+    doTestCtrlHoverDoc("""\
       class Foo {{
         new Runnable() {
           @Override
@@ -136,11 +126,23 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
           private void m() {}
         }.run();
-      }}""".stripIndent()
+      }}""",
+      "private void m()")
+  }
 
-    def doc = CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration)
-
-    assert doc == "private void m()"
+  void testInnerClass() {
+    doTestCtrlHoverDoc("""\
+      class C {
+        Outer.Inner field;
+        
+        void m() {
+          <caret>field.hashCode();
+        }
+      }
+      class Outer {
+        class Inner {}
+      }""",
+      "C\n Outer.Inner field")
   }
 
   void testAsterisksFiltering() {
@@ -259,5 +261,11 @@ class Bar {
 
   private void configure(String text) {
     myFixture.configureByText 'a.java', text
+  }
+
+  void doTestCtrlHoverDoc(String inputFile, String expectedDoc) {
+    configure inputFile.stripIndent()
+    String doc = CtrlMouseHandler.getInfo(myFixture.editor, CtrlMouseHandler.BrowseMode.Declaration)
+    assert doc == expectedDoc
   }
 }

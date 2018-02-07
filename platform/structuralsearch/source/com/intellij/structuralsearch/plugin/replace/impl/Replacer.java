@@ -44,8 +44,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 4, 2004
- * Time: 9:19:34 PM
  */
 public class Replacer {
   private final Project project;
@@ -167,11 +165,10 @@ public class Replacer {
       }
     }
 
-    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       SSRBundle.message("structural.replace.title"),
       project,
       null,
-      "Stop",
       indicator -> {
         indicator.setIndeterminate(false);
         try {

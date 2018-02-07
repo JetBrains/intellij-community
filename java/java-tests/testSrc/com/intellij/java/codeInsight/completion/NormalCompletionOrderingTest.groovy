@@ -809,4 +809,44 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'a', 'b', 'a, b'
   }
 
+  void "test selecting static field after static method"() {
+    myFixture.configureByText 'a.java', 'class Foo { { System.<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('ex\n2);\n') // select 'exit'
+    
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'exit'
+    myFixture.type('ou\n;\n') // select 'out'
+
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'out', 'exit'    
+  }
+
+  void testPreferTypeToGeneratedMethod() {
+    checkPreferredItems 0, 'String', 'public String getZoo', 'public String toString'
+  }
+
+  void testPreferExceptionsInCatch() {
+    myFixture.configureByText 'a.java', 'class Foo { { Enu<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('m\n') // select 'Enum'
+    myFixture.type('; try {} catch(E')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'Exception', 'Error' 
+  }
+
+  void testPreferExceptionsInThrowsList() {
+    checkPreferredItems 0, 'IllegalStateException', 'IllegalAccessException', 'IllegalArgumentException'
+  }
+
+  void testPreferExceptionsInJavadocThrows() {
+    checkPreferredItems 0, 'IllegalArgumentException', 'IllegalAccessException', 'IllegalStateException'
+  }
+
+  void testPreferExpectedTypeArguments() {
+    checkPreferredItems 0, 'BlaOperation'
+  }
+
 }

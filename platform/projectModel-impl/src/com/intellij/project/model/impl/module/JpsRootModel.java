@@ -17,7 +17,9 @@ package com.intellij.project.model.impl.module;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.RootModelBase;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.project.model.impl.module.content.JpsContentEntry;
@@ -70,7 +72,7 @@ public class JpsRootModel extends RootModelBase implements ModuleRootModel {
   @NotNull
   @Override
   public OrderEntry[] getOrderEntries() {
-    return myOrderEntries.toArray(new OrderEntry[myOrderEntries.size()]);
+    return myOrderEntries.toArray(OrderEntry.EMPTY_ARRAY);
   }
 
   @Override

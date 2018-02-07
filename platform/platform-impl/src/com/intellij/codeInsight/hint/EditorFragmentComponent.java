@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.hint;
 
@@ -59,27 +47,29 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   private void doInit(Component anchorComponent, EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    Document doc = editor.getDocument();
-    int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
     boolean newRendering = editor instanceof EditorImpl;
-    int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
-    int textImageWidth = Math.min(
-      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
-      getWidthLimit(editor)
-    );
+    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
+    int textImageWidth;
+    int markersImageWidth;
+    int textImageHeight;
+    BufferedImage textImage;
+    BufferedImage markersImage;
+    JComponent rowHeader;
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
     if (!showFolding) {
       foldingModel.setFoldingEnabled(false);
     }
-    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
-    int textImageHeight;
-    JComponent rowHeader;
-    BufferedImage markersImage;
-    BufferedImage textImage;
-    int markersImageWidth;
     try {
+      Document doc = editor.getDocument();
+      int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
+      int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
+      textImageWidth = Math.min(
+        editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
+        getWidthLimit(editor)
+      );
+
       Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
       Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
       int y1 = p1.y;

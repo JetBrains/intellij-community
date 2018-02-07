@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -16,7 +16,6 @@ import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -141,7 +140,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartActions = AnAction.EMPTY_ARRAY;
     }
     else {
-      restartActions = restartActionsList.toArray(new AnAction[restartActionsList.size()]);
+      restartActions = restartActionsList.toArray(AnAction.EMPTY_ARRAY);
     }
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
@@ -217,9 +216,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public void rebuildViews() {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
       if (mySession != null) {
-        for (XDebugView view : myViews.values()) {
-          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, mySession);
-        }
+        mySession.rebuildViews();
       }
     });
   }
@@ -246,6 +243,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    consoleContent.setHelpId(debugExecutor.getHelpId());
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       List<AnAction> additionalRestartActions = session.getRestartActions();
@@ -276,7 +274,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
     leftToolbar.add(new CloseAction(myEnvironment != null ? myEnvironment.getExecutor() : debugExecutor, myRunContentDescriptor, myProject));
-    leftToolbar.add(new ContextHelpAction(debugExecutor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
     topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));

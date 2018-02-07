@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +11,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -34,23 +24,19 @@ import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
+import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
-// TODO: Many tests in this class are written with direct SVNKit usage - could not utilize it for svn 1.8
 public class SvnMergeInfoTest extends Svn17TestCase {
 
   private static final String CONTENT1 = "123\n456\n123";
@@ -89,11 +75,10 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     myProjectLevelVcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
 
     VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
-    Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myBranchUrl), SVNURL.parseURIEncoded(myRepoUrl));
+    Node node = new Node(vcsRoot, createUrl(myBranchUrl), createUrl(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, Depth.INFINITY);
-    myMergeContext =
-      new MergeContext(SvnVcs.getInstance(myProject), parseUrl(myTrunkUrl, false), myWCInfo, SVNPathUtil.tail(myTrunkUrl), vcsRoot);
+    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), parseUrl(myTrunkUrl, false), myWCInfo, Url.tail(myTrunkUrl), vcsRoot);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
 
     myVcs = SvnVcs.getInstance(myProject);
@@ -102,7 +87,7 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    final String repoUrl = SVNURL.parseURIDecoded(myRepoUrl).toString();
+    final String repoUrl = createUrl(myRepoUrl, false).toString();
     myWCInfoWithBranches = new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot,
                                                   new WCInfoWithBranches.Branch(repoUrl + "/trunk"));
     myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl + "/branch"));
@@ -356,17 +341,16 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     waitTime();
   }
 
-  private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SVNException {
-    // TODO: Replace with ClientFactory model
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
-    final SVNWCClient wcClient = vcs.getSvnKitManager().createWCClient();
-    final SVNPropertyData data = wcClient.doGetProperty(file, "svn:mergeinfo", SVNRevision.UNDEFINED, SVNRevision.WORKING);
-    assert data != null && data.getValue() != null;
+  private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SvnBindException {
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    PropertyValue propertyValue =
+      vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING);
+    assert propertyValue != null;
 
     boolean result = false;
 
     for (String value : values) {
-      result |= value.equals(data.getValue().getString());
+      result |= value.equals(propertyValue.toString());
     }
 
     assert result;

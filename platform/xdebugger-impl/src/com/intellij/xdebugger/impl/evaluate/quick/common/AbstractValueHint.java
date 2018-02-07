@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -38,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
+import java.util.Objects;
 
 /**
  * @author nik
@@ -329,8 +332,19 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    Point point = new Point(myPoint.x, myPoint.y + myEditor.getLineHeight());
-    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), myHideRunnable);
+    createHighlighter();
+    setHighlighterAttributes();
+
+    // align the popup with the bottom of the line
+    Point point = myEditor.visualPositionToXY(myEditor.xyToVisualPosition(myPoint));
+    point.translate(0, myEditor.getLineHeight());
+
+    DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), () -> {
+      disposeHighlighter();
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
+    });
   }
 
   @Override
@@ -350,10 +364,6 @@ public abstract class AbstractValueHint {
 
   @Override
   public int hashCode() {
-    int result = myProject.hashCode();
-    result = 31 * result + myEditor.hashCode();
-    result = 31 * result + myType.hashCode();
-    result = 31 * result + (myCurrentRange != null ? myCurrentRange.hashCode() : 0);
-    return result;
+    return Objects.hash(myProject, myEditor, myType, myCurrentRange);
   }
 }

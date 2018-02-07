@@ -255,7 +255,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         return true;
       }
     }, node);
-    return result.toArray(new XmlTag[result.size()]);
+    return result.toArray(XmlTag.EMPTY);
   }
 
   protected boolean containsTag(final PsiElement tag) {

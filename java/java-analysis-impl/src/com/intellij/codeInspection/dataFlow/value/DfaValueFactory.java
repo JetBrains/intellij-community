@@ -23,10 +23,10 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,6 +85,17 @@ public class DfaValueFactory {
   }
 
   @NotNull
+  public <T> DfaValue withFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType, @Nullable T factValue) {
+    if(value instanceof DfaUnknownValue) {
+      return getFactFactory().createValue(DfaFactMap.EMPTY.with(factType, factValue));
+    }
+    if(value instanceof DfaFactMapValue) {
+      return ((DfaFactMapValue)value).withFact(factType, factValue);
+    }
+    return DfaUnknownValue.getInstance();
+  }
+
+  @NotNull
   public DfaPsiType createDfaType(@NotNull PsiType psiType) {
     int dimensions = psiType.getArrayDimensions();
     psiType = psiType.getDeepComponentType();
@@ -96,7 +107,7 @@ public class DfaValueFactory {
     }
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
-      myDfaTypes.put(psiType, dfaType = new DfaPsiType(psiType, myAssignableCache, myConvertibleCache));
+      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, myAssignableCache, myConvertibleCache));
     }
     return dfaType;
   }
@@ -108,6 +119,11 @@ public class DfaValueFactory {
 
   public DfaValue getValue(int id) {
     return myValues.get(id);
+  }
+
+  @NotNull
+  public DfaPsiType getType(int id) {
+    return StreamEx.ofValues(myDfaTypes).findFirst(t -> t.getID() == id).orElseThrow(IllegalArgumentException::new);
   }
 
   @Nullable
@@ -161,11 +177,13 @@ public class DfaValueFactory {
 
     if(dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
       if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
-        boolean isSuperState = ((DfaFactMapValue)dfaRight).getFacts().isSuperStateOf(((DfaFactMapValue)dfaLeft).getFacts());
+        DfaFactMap leftFacts = ((DfaFactMapValue)dfaLeft).getFacts();
+        DfaFactMap rightFacts = ((DfaFactMapValue)dfaRight).getFacts();
+        boolean isSuperState = rightFacts.isSuperStateOf(leftFacts);
         if (isSuperState) {
           return getBoolean(relationType == RelationType.IS);
         }
-        boolean isDistinct = ((DfaFactMapValue)dfaRight).getFacts().isDistinct(((DfaFactMapValue)dfaLeft).getFacts());
+        boolean isDistinct = rightFacts.intersect(leftFacts) == null;
         if (isDistinct) {
           return getBoolean(relationType == RelationType.IS_NOT);
         }
@@ -207,20 +225,6 @@ public class DfaValueFactory {
     return Collections.unmodifiableCollection(myValues);
   }
 
-  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = refExpression.getQualifierExpression();
-    if (qualifier == null) {
-      return true;
-    }
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
-      if (thisQualifier == null) return true;
-      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      return innerMostClass == thisQualifier.resolve();
-    }
-    return false;
-  }
-
   @NotNull
   public DfaControlTransferValue controlTransfer(TransferTarget kind, FList<Trap> traps) {
     return myControlTransfers.get(Pair.create(kind, traps));
@@ -259,4 +263,7 @@ public class DfaValueFactory {
   public DfaFactMapValue.Factory getFactFactory() {
     return myFactFactory;
   }
+
+  @NotNull
+  public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 }

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.spellchecker.dictionary;
 
@@ -23,14 +11,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
+import com.intellij.spellchecker.util.SPFileUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
@@ -50,8 +41,14 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     super.setUp();
     settings = SpellCheckerSettings.getInstance(getProject());
     spellCheckerManager = SpellCheckerManager.getInstance(getProject());
-    oldPaths = settings.getDictionaryFoldersPaths();
-    settings.setDictionaryFoldersPaths(Collections.singletonList(getTestDictDirectory()));
+    oldPaths = settings.getCustomDictionariesPaths();
+    List<String> testDictionaries = new ArrayList<>();
+    SPFileUtil.processFilesRecursively(getTestDictDirectory(), file -> {
+      if(extensionEquals(file, "dic")){
+        testDictionaries.add(file);
+      }
+    });
+    settings.setCustomDictionariesPaths(testDictionaries);
     spellCheckerManager.fullConfigurationReload();
   }
 
@@ -59,7 +56,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   protected void tearDown() throws Exception {
     //noinspection SuperTearDownInFinally
     super.tearDown();
-    settings.setDictionaryFoldersPaths(oldPaths);
+    settings.setCustomDictionariesPaths(oldPaths);
   }
 
   @Override
@@ -123,6 +120,24 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     }
   }
 
+  private void doLoadTest() throws IOException {
+    final VirtualFile file = findFileByIoFile(Paths.get(getTestDictDirectory(), TEST_DIC_AFTER).toFile(), true);
+    final String new_test_dic = toSystemIndependentName(file.getParent().getPath() + File.separator + NEW_TEST_DIC);
+    settings.getCustomDictionariesPaths().add(new_test_dic);
+    spellCheckerManager.fullConfigurationReload();
+    try {
+      doBeforeCheck();
+      WriteAction.run(() -> file.copy(this, file.getParent(), NEW_TEST_DIC));
+      doAfterCheck();
+    }
+    finally {
+      //back to initial state
+      WriteAction.run(() -> file.getParent().findChild(NEW_TEST_DIC).delete(this));
+      settings.getCustomDictionariesPaths().remove(new_test_dic);
+      spellCheckerManager.fullConfigurationReload();
+    }
+  }
+
   private void doRemoveDictTest() throws IOException {
     try {
       doBeforeCheck();
@@ -175,19 +190,19 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   }
 
   public void testUtf8Dict() throws IOException {
-    doNewDictTest();
+    doLoadTest();
   }
 
   public void testUtf16BEDict() throws IOException {
-    doNewDictTest();
+    doLoadTest();
   }
 
   public void testUtf16DictFirstWordToCheck() throws IOException {
-    doNewDictTest();
+    doLoadTest();
   }
 
   public void testUtf16LEDict() throws IOException {
-    doNewDictTest();
+    doLoadTest();
   }
 
   public void testMoveDict() throws IOException {

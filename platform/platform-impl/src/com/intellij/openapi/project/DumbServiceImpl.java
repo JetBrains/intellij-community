@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -54,10 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -84,6 +67,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private final StartupManager myStartupManager;
+  private volatile ProgressSuspender myCurrentSuspender;
+  private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
   public DumbServiceImpl(Project project, StartupManager startupManager) {
     myProject = project;
@@ -128,6 +113,47 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
+  public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    String reason = "Indexing paused due to " + activityName;
+    synchronized (myRequestedSuspensions) {
+      myRequestedSuspensions.add(reason);
+    }
+
+    suspendCurrentTask(reason);
+    try {
+      activity.run();
+    } finally {
+      synchronized (myRequestedSuspensions) {
+        myRequestedSuspensions.remove(reason);
+      }
+      resumeAutoSuspendedTask(reason);
+    }
+  }
+
+  private void suspendCurrentTask(String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && !currentSuspender.isSuspended()) {
+      currentSuspender.suspendProcess(reason);
+    }
+  }
+
+  private void resumeAutoSuspendedTask(@NotNull String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
+      currentSuspender.resumeProcess();
+    }
+  }
+
+  private void suspendIfRequested(ProgressSuspender suspender) {
+    synchronized (myRequestedSuspensions) {
+      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
+      if (suspendedReason != null) {
+        suspender.suspendProcess(suspendedReason);
+      }
+    }
+  }
+
+  @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
     Integer oldValue = myAlternativeResolution.get();
     int newValue = (oldValue == null ? 0 : oldValue) + (enabled ? 1 : -1);
@@ -158,7 +184,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void runWhenSmart(@NotNull Runnable runnable) {
+  public void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable) {
     myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
@@ -274,7 +300,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     return !myProject.isDisposed();
   }
 
-  @Debugger.Insert(keyExpression = "runnable", group = "com.intellij.openapi.project.DumbService.runWhenSmart")
   private void updateFinished() {
     if (!WriteAction.compute(this::switchToSmartMode)) return;
 
@@ -295,16 +320,21 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           }
           runnable = myRunWhenSmartQueue.pullFirst();
         }
-        try {
-          runnable.run();
-        }
-        catch (ProcessCanceledException e) {
-          LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
-        }
-        catch (Throwable e) {
-          LOG.error("Error executing task " + runnable, e);
-        }
+        doRun(runnable);
       }
+    }
+  }
+
+  // Extracted to have a capture point
+  private static void doRun(@Debugger.Insert Runnable runnable) {
+    try {
+      runnable.run();
+    }
+    catch (ProcessCanceledException e) {
+      LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
+    }
+    catch (Throwable e) {
+      LOG.error("Error executing task " + runnable, e);
     }
   }
 
@@ -419,7 +449,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    myCurrentSuspender = suspender;
+    suspendIfRequested(suspender);
 
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();
@@ -456,6 +488,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       shutdownTracker.unregisterStopperThread(self);
+      myCurrentSuspender = null;
     }
   }
 

@@ -11,6 +11,6 @@ class ConditionalCondition {
 
 
     if<caret> (s != null ? !s.equals(condition.s) : condition.s != null) return false;
-    return t.equals(condition.t);
+    return t.equals(condition.t);//end line comment
   }
 }

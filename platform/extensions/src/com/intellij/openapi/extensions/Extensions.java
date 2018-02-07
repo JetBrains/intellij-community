@@ -46,11 +46,19 @@ public class Extensions {
     return rootArea;
   }
 
+  /**
+   * @return instance containing application-level extensions
+   */
   @NotNull
   public static ExtensionsArea getRootArea() {
     return ourRootArea;
   }
 
+  /**
+   * If {@code areaInstance} is a project returns instance containing project-level extensions for that project
+   * if {@code areaInstance} is a module returns instance containing module-level extensions for that module,
+   * if {@code areaInstance} is {@code null} returns instance containing application-level extensions.
+   */
   @NotNull
   public static ExtensionsArea getArea(@Nullable("null means root") AreaInstance areaInstance) {
     if (areaInstance == null) {
@@ -68,13 +76,10 @@ public class Extensions {
     final ExtensionsAreaImpl oldRootArea = (ExtensionsAreaImpl)getRootArea();
     final ExtensionsAreaImpl newArea = createRootArea();
     ourRootArea = newArea;
-    oldRootArea.notifyAreaReplaced();
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ourRootArea = oldRootArea;
-        newArea.notifyAreaReplaced();
-      }
+    oldRootArea.notifyAreaReplaced(newArea);
+    Disposer.register(parentDisposable, () -> {
+      ourRootArea = oldRootArea;
+      newArea.notifyAreaReplaced(oldRootArea);
     });
   }
 
@@ -178,7 +183,7 @@ public class Extensions {
   }
 
   private static boolean equals(@Nullable Object object1, @Nullable Object object2) {
-    return object1 == object2 || object1 != null && object2 != null && object1.equals(object2);
+    return object1 == object2 || object1 != null && object1.equals(object2);
   }
 
   public static void setLogProvider(@NotNull LogProvider logProvider) {

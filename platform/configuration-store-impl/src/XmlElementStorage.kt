@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -76,7 +62,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
   }
 
   fun setDefaultState(element: Element) {
@@ -118,12 +104,12 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     override fun createSaveSession() = if (copiedStates == null || storage.checkIsSavingDisabled()) null else this
 
     override fun setSerializedState(componentName: String, element: Element?) {
-      element?.normalizeRootName()
+      val normalized = element?.normalizeRootName()
       if (copiedStates == null) {
-        copiedStates = setStateAndCloneIfNeed(componentName, element, originalStates, newLiveStates)
+        copiedStates = setStateAndCloneIfNeed(componentName, normalized, originalStates, newLiveStates)
       }
       else {
-        updateState(copiedStates!!, componentName, element, newLiveStates)
+        updateState(copiedStates!!, componentName, normalized, newLiveStates)
       }
     }
 
@@ -223,6 +209,7 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
     // name attribute should be first
     val elementAttributes = element.attributes
     var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
+    @Suppress("SuspiciousEqualsCombination")
     if (nameAttribute != null && nameAttribute === elementAttributes.get(0) && componentName == nameAttribute.value) {
       // all is OK
     }
@@ -250,12 +237,24 @@ private fun save(states: StateMap, rootElementName: String?, newLiveStates: Map<
 }
 
 internal fun Element.normalizeRootName(): Element {
-  if (!org.jdom.JDOMInterner.isInterned(this) && parent != null) {
-    LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
-    detach()
+  if (org.jdom.JDOMInterner.isInterned(this)) {
+    if (FileStorageCoreUtil.COMPONENT == name) {
+      return this
+    }
+    else {
+      val clone = clone()
+      clone.name = FileStorageCoreUtil.COMPONENT
+      return clone
+    }
   }
-  name = FileStorageCoreUtil.COMPONENT
-  return this
+  else {
+    if (parent != null) {
+      LOG.warn("State element must not have parent ${JDOMUtil.writeElement(this)}")
+      detach()
+    }
+    name = FileStorageCoreUtil.COMPONENT
+    return this
+  }
 }
 
 // newStorageData - myStates contains only live (unarchived) states

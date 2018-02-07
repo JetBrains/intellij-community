@@ -69,7 +69,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
           }
         }
         //noinspection unchecked
-        return result.toArray(new ProviderBinding[result.size()]);
+        return result.toArray(new ProviderBinding[0]);
       }
     );
   }

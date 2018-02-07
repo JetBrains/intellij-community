@@ -46,7 +46,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = Comparator.comparing(Language::getID);
 
-  public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
+  public static boolean isUnderPsiRoot(@NotNull PsiFile root, @NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == root) return true;
     for (PsiFile psiRoot : root.getPsiRoots()) {
@@ -133,14 +133,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
           lang = language;
         }
         else if (lang != language) {
-          // correctly process the case when leaf element is a part of embedded fragment, but it is totally contained inside
-          // "parent" language
-          Language finalLang = lang;
-          final TextRange range = new TextRange(start, end);
-          final PsiElement wrappingParent = PsiTreeUtil.findFirstParent(
-            elt, false, element -> file.equals(element.getContainingFile()) && finalLang.equals(element.getLanguage()),
-            element -> element.getTextRange() != null && !range.contains(element.getTextRange()));
-          if (wrappingParent == null) return null;
+          return null;
         }
       }
       TextRange range = elt.getTextRange();

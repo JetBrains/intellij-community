@@ -5,7 +5,7 @@
 4(5,55) element: PyTryPart
 5(6,55) element: PyAssignmentStatement
 6(7,55) WRITE ACCESS: b
-7(8,53,55) element: PyForStatement
+7(8,55) element: PyForStatement
 8(9,55) element: PyTargetExpression: x
 9(10,55) WRITE ACCESS: x
 10(11,55) element: PyTryExceptStatement

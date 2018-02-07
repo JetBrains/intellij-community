@@ -38,7 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Constructor;
 
 public interface JavaDocElementType {
-  @SuppressWarnings("deprecation")
   class JavaDocCompositeElementType extends IJavaDocElementType implements ICompositeElementType {
     private final Constructor<? extends ASTNode> myConstructor;
 
@@ -81,7 +80,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser, false, LanguageLevel.JDK_1_3);
     }
   };
@@ -96,7 +95,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser, false, LanguageLevel.JDK_1_3);
     }
   };
@@ -116,7 +115,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
 

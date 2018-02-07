@@ -36,9 +36,9 @@ import java.util.List;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 9, 2010
 */
 class AntReferenceInjector implements DomReferenceInjector {
+  @Override
   public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
     // todo: speed optimization: disable string resolution in places where it is not applicable
     if (unresolvedText == null) {
@@ -48,6 +48,7 @@ class AntReferenceInjector implements DomReferenceInjector {
     return AntStringResolver.computeString(element, unresolvedText);
   }
 
+  @Override
   @NotNull
   public PsiReference[] inject(@Nullable String unresolvedText, @NotNull PsiElement element, @NotNull ConvertContext context) {
     if (element instanceof XmlAttributeValue) {

@@ -1,9 +1,12 @@
 <component name="libraryTable">
-  <library name="jcip">
+  <library name="jcip" type="repository">
+    <properties maven-id="net.jcip:jcip-annotations:1.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jcip-annotations.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

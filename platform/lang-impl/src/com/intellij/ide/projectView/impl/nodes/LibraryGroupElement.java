@@ -22,8 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Sep 17, 2003
- * Time: 7:08:03 PM
  */
 public final class LibraryGroupElement {
   public static final DataKey<LibraryGroupElement[]> ARRAY_DATA_KEY = DataKey.create("libraryGroup.array");

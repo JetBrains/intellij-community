@@ -19,7 +19,6 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +28,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Jul 3, 2009
- *         Time: 2:47:10 PM
  */
 class BlockUtil {
   private BlockUtil() {
@@ -147,16 +144,12 @@ class BlockUtil {
         }
         else {
           Block original = f.getOriginal();
-          List<DataLanguageBlockWrapper> children = buildChildWrappers(original);
-          if (!children.isEmpty()) {
+          if (!original.getSubBlocks().isEmpty()) {
             foreignBlocks.remove(fInd);
-            foreignBlocks.addAll(fInd, children);
+            foreignBlocks.addAll(fInd, buildChildWrappers(original));
           } else {
-            result.addAll(splitLeafDataBlock(original, tlBlocks));
-            fInd++;
-            while (vInd < tlBlocks.size() && tlBlocks.get(vInd).getTextRange().getEndOffset() < original.getTextRange().getEndOffset()) {
-              vInd++;
-            }
+            result.add(new ErrorLeafBlock(f.getTextRange().getStartOffset(), getEndOffset(tlBlocks, foreignBlocks)));
+            return result;
           }
         }
       }
@@ -170,84 +163,9 @@ class BlockUtil {
     return result;
   }
 
-  private static List<Block> splitLeafDataBlock(Block block, List<TemplateLanguageBlock> allTlBlocks) {
-    TextRange range = block.getTextRange();
-    List<TemplateLanguageBlock> coveredTlBlocks = ContainerUtil.filter(allTlBlocks, b -> range.contains(b.getTextRange().getStartOffset()));
-
-    List<Block> result = new ArrayList<>();
-    int dataStart = range.getStartOffset();
-    for (TemplateLanguageBlock tlBlock : coveredTlBlocks) {
-      int dataEnd = tlBlock.getTextRange().getStartOffset();
-      if (dataStart < dataEnd) {
-        result.add(createLeafFragmentBlock(dataStart, dataEnd));
-      }
-      dataStart = tlBlock.getTextRange().getEndOffset();
-      if (dataStart < range.getEndOffset()) {
-        result.add(tlBlock);
-      }
-    }
-
-    if (dataStart < range.getEndOffset()) {
-      result.add(createLeafFragmentBlock(dataStart, range.getEndOffset()));
-    }
-    return result;
-  }
-
-  @NotNull
-  private static Block createLeafFragmentBlock(int dataStart, int dataEnd) {
-    return new Block() {
-      @NotNull
-      @Override
-      public TextRange getTextRange() {
-        return TextRange.create(dataStart, dataEnd);
-      }
-
-      @NotNull
-      @Override
-      public List<Block> getSubBlocks() {
-        return Collections.emptyList();
-      }
-
-      @Nullable
-      @Override
-      public Wrap getWrap() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Indent getIndent() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Alignment getAlignment() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public ChildAttributes getChildAttributes(int newChildIndex) {
-        return ChildAttributes.DELEGATE_TO_NEXT_CHILD;
-      }
-
-      @Override
-      public boolean isIncomplete() {
-        return true;
-      }
-
-      @Override
-      public boolean isLeaf() {
-        return true;
-      }
-    };
+  private static int getEndOffset(@NotNull List<TemplateLanguageBlock> tlBlocks, @NotNull List<DataLanguageBlockWrapper> foreignBlocks) {
+    return Math.max(foreignBlocks.get(foreignBlocks.size() - 1).getTextRange().getEndOffset(),
+                    tlBlocks.get(tlBlocks.size() - 1).getTextRange().getEndOffset());
   }
 
   @NotNull

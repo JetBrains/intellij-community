@@ -15,18 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.execution.Location;
-import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.openapi.diff.LineTokenizer;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -36,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 public class GradleSMTestProxy extends SMTestProxy {
 
   @Nullable private final String myClassName;
-  @Nullable private String myStacktrace;
   @Nullable private String myParentId;
 
   public GradleSMTestProxy(String testName, boolean isSuite, @Nullable String locationUrl, @Nullable String className) {
@@ -48,48 +40,15 @@ public class GradleSMTestProxy extends SMTestProxy {
   public void addStdOutput(String output, Key outputType) {
     addLast(new Printable() {
       public void printOn(final Printer printer) {
-        printer.printWithAnsiColoring(output, ConsoleViewContentType.getConsoleViewType(outputType));
-      }
-    });
-  }
-
-  @Override
-  public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
-    setStacktraceIfNotSet(stackTrace);
-    super.setTestFailed(localizedMessage, stackTrace, testError);
-  }
-
-  @Override
-  public void setTestComparisonFailed(@NotNull String localizedMessage,
-                                      @Nullable String stackTrace,
-                                      @NotNull String actualText,
-                                      @NotNull String expectedText) {
-    setStacktraceIfNotSet(stackTrace);
-    super.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
-  }
-
-  @Override
-  public void setTestIgnored(@Nullable String ignoreComment, @Nullable String stackTrace) {
-    setStacktraceIfNotSet(stackTrace);
-    super.setTestIgnored(ignoreComment, stackTrace);
-  }
-
-  @Nullable
-  @Override
-  public Location getLocation(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    if (getLocationUrl() != null) {
-      if (isDefect() && myStacktrace != null) {
-        final String[] stackTrace = new LineTokenizer(myStacktrace).execute();
-        for (String aStackTrace : stackTrace) {
-          final StackTraceLine line = new StackTraceLine(project, aStackTrace);
-          if (getName().equals(line.getMethodName()) && StringUtil.equals(myClassName, line.getClassName())) {
-            return line.getMethodLocation(project);
-          }
+        ConsoleViewContentType contentType = ConsoleViewContentType.getConsoleViewType(outputType);
+        if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
+          printer.printWithAnsiColoring(output, contentType);
+        }
+        else {
+          printer.print(output, contentType);
         }
       }
-    }
-
-    return super.getLocation(project, searchScope);
+    });
   }
 
   @Nullable
@@ -104,9 +63,5 @@ public class GradleSMTestProxy extends SMTestProxy {
   @Nullable
   public String getClassName() {
     return myClassName;
-  }
-
-  private void setStacktraceIfNotSet(@Nullable String stacktrace) {
-    if (myStacktrace == null) myStacktrace = stacktrace;
   }
 }

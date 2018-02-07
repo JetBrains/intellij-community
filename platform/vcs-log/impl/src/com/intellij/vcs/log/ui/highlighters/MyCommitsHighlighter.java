@@ -65,7 +65,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
   // returns true if filtered by "me"
   private static boolean isFilteredByCurrentUser(@NotNull VcsLogFilterCollection filters) {
-    VcsLogUserFilter userFilter = filters.getUserFilter();
+    VcsLogUserFilter userFilter = filters.get(VcsLogFilterCollection.USER_FILTER);
     if (userFilter == null) return false;
     Collection<String> filterByName = ((VcsLogUserFilterImpl)userFilter).getUserNamesForPresentation();
     if (Collections.singleton(VcsLogUserFilterImpl.ME).containsAll(filterByName)) return true;

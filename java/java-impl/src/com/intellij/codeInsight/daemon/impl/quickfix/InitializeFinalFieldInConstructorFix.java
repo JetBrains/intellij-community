@@ -188,7 +188,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
         result.remove(PsiTreeUtil.getParentOfType(element, PsiMethod.class));
       }
     }
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,12 +26,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.hash.HashSet;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Set;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
@@ -84,7 +87,7 @@ public class TestUtils {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();
-    return parameterList.getParametersCount() == 0;
+    return parameterList.isEmpty();
   }
 
   public static boolean isJUnit3TestMethod(@Nullable PsiMethod method) {
@@ -94,7 +97,7 @@ public class TestUtils {
     final String methodName = method.getName();
     @NonNls final String test = "test";
     if (!methodName.startsWith(test) ||
-        !method.hasModifierProperty(PsiModifier.PUBLIC) && method.getParameterList().getParametersCount() > 0) {
+        !method.hasModifierProperty(PsiModifier.PUBLIC) && !method.getParameterList().isEmpty()) {
       return false;
     }
     final PsiClass containingClass = method.getContainingClass();
@@ -148,11 +151,21 @@ public class TestUtils {
    * @return true if class is annotated with {@code @TestInstance(TestInstance.Lifecycle.PER_CLASS)}
    */
   public static boolean testInstancePerClass(@NotNull PsiClass containingClass) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(containingClass, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE);
+    return testInstancePerClass(containingClass, new HashSet<>());
+  }
+
+  private static boolean testInstancePerClass(@NotNull PsiClass containingClass, HashSet<PsiClass> classes) {
+    PsiAnnotation annotation = MetaAnnotationUtil.findMetaAnnotations(containingClass, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INSTANCE))
+      .findFirst().orElse(null);
     if (annotation != null) {
       PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value != null && value.getText().contains("PER_CLASS")) {
         return true;
+      }
+    }
+    else {
+      for (PsiClass superClass : containingClass.getSupers()) {
+        if (classes.add(superClass) && testInstancePerClass(superClass, classes)) return true;
       }
     }
     return false;

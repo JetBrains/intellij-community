@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains
 
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -55,21 +53,20 @@ class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
       dialog.showDialog()
       val element = dialog.selected
       if (element is PyQualifiedNameOwner) {
-        childComponent.text = element.qualifiedName
+        childComponent.setText(element.qualifiedName)
       }
       if (element is PyFile) {
-        childComponent.text = element.getQName()?.toString()
+        childComponent.setText(element.getQName()?.toString())
       }
     }
   }
 
   override fun setText(text: String?) {
-    childComponent.text = text
+    childComponent.setText(text)
   }
 
-  override fun getText() = childComponent.text!!
+  override fun getText() = childComponent.text
 }
-
 
 private fun PyType.getVariants(element: PsiElement): Array<LookupElement> =
   this.getCompletionVariants("", element, ProcessingContext()).filterIsInstance(LookupElement::class.java).toTypedArray()

@@ -19,7 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,6 @@ import java.util.Map;
 
 /**
  * @author db
- * Date: 27.06.2003
  */
 public class TypeEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeEvaluator");

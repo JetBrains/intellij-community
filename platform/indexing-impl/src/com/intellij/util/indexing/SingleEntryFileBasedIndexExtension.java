@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
  * Base implementation for indices that produce single value per single file
  *
  * @author Eugene Zhuravlev
- *         Date: Feb 18, 2009
  */
 public abstract class SingleEntryFileBasedIndexExtension<V> extends FileBasedIndexExtension<Integer, V>{
   @NotNull

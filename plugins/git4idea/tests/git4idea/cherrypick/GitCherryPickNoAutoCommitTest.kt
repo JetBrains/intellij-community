@@ -135,7 +135,7 @@ class GitCherryPickNoAutoCommitTest : GitCherryPickTest() {
     file(initialName).create("This file has name $initialName").addCommit("Create $initialName")
 
     val renamed = "renamed.txt"
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
     git("mv $initialName $renamed")
     commit("Rename $initialName to $renamed")
     val commit = file(renamed).write("This file has name $renamed").addCommit("Modify the file").hash()

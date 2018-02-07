@@ -12,6 +12,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -124,7 +124,7 @@ public class JavaKeywordCompletion {
   }
 
   private static PsiElement prevSignificantLeaf(PsiElement position) {
-    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> PsiTreeUtil.getNonStrictParentOfType(e, PsiComment.class) != null).first();
+    return FilterPositionUtil.searchNonSpaceNonCommentBack(position);
   }
 
   private void addKeyword(LookupElement element) {
@@ -479,11 +479,11 @@ public class JavaKeywordCompletion {
         addKeyword(new OverridableSpace(createKeyword(s), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
 
-      PsiExpression expression = PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class);
-      if (expression != null && expression.getParent() instanceof PsiExpressionStatement) {
+      if (psiElement().insideStarting(psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
-      if (expression == null && PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
+      if (PsiTreeUtil.getParentOfType(myPosition, PsiExpression.class, true, PsiMember.class) == null && 
+          PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
         if (PsiUtil.isLanguageLevel5OrHigher(myPosition)) {
@@ -640,6 +640,9 @@ public class JavaKeywordCompletion {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
         }
       }
+      if (expressionPosition && !session.isKeywordAlreadyProcessed(PsiKeyword.VOID)) {
+        result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
+      }
     }
     if (declaration) {
       LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID);
@@ -674,7 +677,7 @@ public class JavaKeywordCompletion {
       if (parent instanceof PsiVariable) parent = parent.getParent();
       return parent instanceof PsiCatchSection || parent instanceof PsiResourceList;
     }
-    return false;
+    return psiElement().insideStarting(psiElement(PsiResourceExpression.class)).accepts(position);
   }
 
   private void addBreakContinue() {
@@ -792,7 +795,7 @@ public class JavaKeywordCompletion {
     if (superClass != null) {
       for (final PsiMethod psiMethod : superClass.getConstructors()) {
         final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-        if (resolveHelper.isAccessible(psiMethod, method, null) && psiMethod.getParameterList().getParameters().length > 0) {
+        if (resolveHelper.isAccessible(psiMethod, method, null) && !psiMethod.getParameterList().isEmpty()) {
           return true;
         }
       }

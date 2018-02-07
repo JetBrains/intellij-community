@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
@@ -209,6 +209,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           if (reference instanceof PsiJavaReference) {
             PsiJavaReference psiJavaReference = (PsiJavaReference)reference;
             myRefCountHolder.registerReference(psiJavaReference, psiJavaReference.advancedResolve(false));
+          }
+          else if (reference instanceof PsiPolyVariantReference &&
+                   reference instanceof ResolvingHint && ((ResolvingHint)reference).canResolveTo(PsiClass.class)) {
+            ResolveResult[] resolve = ((PsiPolyVariantReference)reference).multiResolve(false);
+            if (resolve.length == 1 && resolve[0] instanceof JavaResolveResult) {
+              myRefCountHolder.registerReference(reference, (JavaResolveResult)resolve[0]);
+            }
           }
         }
       }
@@ -644,7 +651,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
-      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_X)) {
+      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
         myHolder.add(HighlightClassUtil.checkVarClassConflict(aClass, identifier));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
@@ -1301,6 +1308,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         type = ((PsiCapturedWildcardType)type).getUpperBound();
       }
       PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass == null && qualifierExpression instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+        if (resolve instanceof PsiClass) {
+          psiClass = (PsiClass)resolve;
+        }
+      }
       if (psiClass != null) {
         if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkClassSupersAccessibility(psiClass, expression));
         if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkMemberSignatureTypesAccessibility(expression));
@@ -1681,6 +1694,13 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitConditionalExpression(PsiConditionalExpression expression) {
     super.visitConditionalExpression(expression);
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8) && PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+       if (element instanceof PsiExpressionList) {
+         PsiElement parent = element.getParent();
+         if (parent instanceof PsiCall && !((PsiCall)parent).resolveMethodGenerics().isValidResult()) {
+          return;
+        }
+       }
       final PsiExpression thenExpression = expression.getThenExpression();
       final PsiExpression elseExpression = expression.getElseExpression();
       if (thenExpression != null && elseExpression != null) {

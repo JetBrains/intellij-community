@@ -465,12 +465,6 @@ public class LightToolWindow extends JPanel {
     ToggleWindowedModeAction() {
       super(ToolWindowType.WINDOWED, InternalDecorator.TOGGLE_WINDOWED_MODE_ACTION_ID);
     }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabledAndVisible(!SystemInfo.isMac);
-    }
   }
 
   private class ToggleTypeModeAction extends ToggleAction {

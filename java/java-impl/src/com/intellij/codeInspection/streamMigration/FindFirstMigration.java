@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -36,8 +37,8 @@ class FindFirstMigration extends BaseStreamApiMigration {
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiStatement loopStatement = tb.getStreamSourceStatement();
+    CommentTracker ct = new CommentTracker();
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
@@ -46,12 +47,11 @@ class FindFirstMigration extends BaseStreamApiMigration {
       if (nextReturnStatement == null) return null;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
-      String stream = generateOptionalUnwrap(tb, value, orElseExpression, PsiTypesUtil.getMethodReturnType(returnStatement));
-      restoreComments(loopStatement, body);
+      String stream = generateOptionalUnwrap(ct, tb, value, orElseExpression, PsiTypesUtil.getMethodReturnType(returnStatement));
       boolean sibling = nextReturnStatement.getParent() == loopStatement.getParent();
-      PsiElement replacement = loopStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", loopStatement));
+      PsiElement replacement = ct.replaceAndRestoreComments(loopStatement, "return " + stream + ";");
       if(sibling || !ControlFlowUtils.isReachable(nextReturnStatement)) {
-        nextReturnStatement.delete();
+        new CommentTracker().deleteAndRestoreComments(nextReturnStatement);
       }
       return replacement;
     }
@@ -62,9 +62,8 @@ class FindFirstMigration extends BaseStreamApiMigration {
       if (assignment == null) {
         if(!(statements[0] instanceof PsiExpressionStatement)) return null;
         PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-        restoreComments(loopStatement, body);
-        return loopStatement.replace(elementFactory.createStatementFromText(
-          tb.generate() + ".findFirst().ifPresent(" + LambdaUtil.createLambda(tb.getVariable(), expression) + ");", loopStatement));
+        return ct.replaceAndRestoreComments(
+          loopStatement, tb.generate(ct) + ".findFirst().ifPresent(" + ct.lambdaText(tb.getVariable(), expression) + ");");
       }
       PsiReferenceExpression lValue = tryCast(assignment.getLExpression(), PsiReferenceExpression.class);
       if (lValue == null) return null;
@@ -72,7 +71,6 @@ class FindFirstMigration extends BaseStreamApiMigration {
       if (var == null) return null;
       PsiExpression value = assignment.getRExpression();
       if (value == null) return null;
-      restoreComments(loopStatement, body);
       InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(var, loopStatement);
       PsiExpression initializer = var.getInitializer();
       PsiExpression falseExpression = lValue;
@@ -83,19 +81,20 @@ class FindFirstMigration extends BaseStreamApiMigration {
         PsiElement maybeAssignment = PsiTreeUtil.skipWhitespacesAndCommentsBackward(loopStatement);
         PsiExpression prevRValue = ExpressionUtils.getAssignmentTo(maybeAssignment, var);
         if (prevRValue != null) {
-          maybeAssignment.delete();
+          ct.delete(maybeAssignment);
           falseExpression = prevRValue;
         }
       }
-      String replacementText = generateOptionalUnwrap(tb, value, falseExpression, var.getType());
-      return replaceInitializer(loopStatement, var, initializer, replacementText, status);
+      String replacementText = generateOptionalUnwrap(ct, tb, value, falseExpression, var.getType());
+      return replaceInitializer(loopStatement, var, initializer, replacementText, status, ct);
     }
   }
 
-  private static String generateOptionalUnwrap(TerminalBlock tb,
+  private static String generateOptionalUnwrap(CommentTracker ct, TerminalBlock tb,
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType) {
-    String qualifier = tb.generate() + ".findFirst()";
-    return OptionalUtil.generateOptionalUnwrap(qualifier, tb.getVariable(), trueExpression, falseExpression, targetType, false);
+    String qualifier = tb.generate(ct) + ".findFirst()";
+    return OptionalUtil.generateOptionalUnwrap(
+      qualifier, tb.getVariable(), ct.markUnchanged(trueExpression), ct.markUnchanged(falseExpression), targetType, false);
   }
 }

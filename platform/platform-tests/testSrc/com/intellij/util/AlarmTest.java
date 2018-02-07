@@ -22,15 +22,19 @@ package com.intellij.util;
  import com.intellij.util.ui.UIUtil;
  import org.jetbrains.annotations.NotNull;
 
- import java.util.*;
+ import java.util.Arrays;
+ import java.util.HashMap;
+ import java.util.List;
+ import java.util.Map;
  import java.util.concurrent.ExecutionException;
  import java.util.concurrent.Future;
  import java.util.concurrent.TimeUnit;
  import java.util.concurrent.TimeoutException;
  import java.util.concurrent.atomic.AtomicInteger;
  import java.util.stream.Collectors;
+ import java.util.stream.Stream;
 
-public class AlarmTest extends PlatformTestCase {
+ public class AlarmTest extends PlatformTestCase {
   public void testTwoAddsWithZeroDelayMustExecuteSequentially() throws Exception {
     Alarm alarm = new Alarm(getTestRootDisposable());
     assertRequestsExecuteSequentially(alarm);
@@ -81,37 +85,41 @@ public class AlarmTest extends PlatformTestCase {
 
   public void testOneAlarmDoesNotStartTooManyThreads() {
     Alarm alarm = new Alarm(getTestRootDisposable());
-    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    for (int i = 0; i < N; i++) {
-      alarm.addRequest(executed::incrementAndGet, 10);
-    }
-    while (executed.get() != N) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+    checkNotTooManyThreadsCreatedIn(()->{
+      for (int i = 0; i < N; i++) {
+        alarm.addRequest(executed::incrementAndGet, 10);
+      }
+      while (executed.get() != N) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    });
+  }
+
+  private static void checkNotTooManyThreadsCreatedIn(Runnable runnable) {
+    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
+    runnable.run();
     Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
     Map<Thread, List<StackTraceElement>> diff = new HashMap<>();
     after.forEach((key, value) -> diff.put(key, Arrays.asList(value)));
-    before.keySet().forEach(diff::remove);
+    diff.keySet().removeAll(before.keySet());
     if (!(after.size() - before.size() < 10)) {
-      fail("before: "+before.size()+"; after: "+after.size()+"Diff:\n"+diff);
+      fail("before: "+before.size()+"; after: "+after.size()+"; Diff:\n"+diff);
     }
   }
 
   public void testManyAlarmsDoNotStartTooManyThreads() {
-    Map<Thread, StackTraceElement[]> before = Thread.getAllStackTraces();
-    AtomicInteger executed = new AtomicInteger();
-    int N = 100000;
-    List<Alarm> alarms = Collections.nCopies(N, "").stream().map(__ -> new Alarm(getTestRootDisposable())).collect(Collectors.toList());
-    alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 10));
+    checkNotTooManyThreadsCreatedIn(()->{
+      AtomicInteger executed = new AtomicInteger();
+      int N = 100000;
+      List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).collect(Collectors.toList());
+      alarms.forEach(alarm -> alarm.addRequest(executed::incrementAndGet, 10));
 
-    while (executed.get() != N) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    Map<Thread, StackTraceElement[]> after = Thread.getAllStackTraces();
-    LOG.debug("before: "+before.size()+"; after: "+after.size());
-    assertTrue(after.size() - before.size() < 10);
+      while (executed.get() != N) {
+        UIUtil.dispatchAllInvocationEvents();
+      }
+    });
   }
 
   public void testOrderIsPreservedAfterModalitySwitching() {

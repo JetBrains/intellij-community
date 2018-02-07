@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.lang.impl;
 
@@ -993,7 +981,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     DiffLog diffLog = new DiffLog();
     DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog);
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
-    ShallowNodeComparator<ASTNode, LighterASTNode> comparator = new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), treeStructure);
+    final List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(myFile);
+    ShallowNodeComparator<ASTNode, LighterASTNode> comparator =
+      new MyComparator(getUserDataUnprotected(CUSTOM_COMPARATOR), customLanguageASTComparators, treeStructure);
 
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     BlockSupportImpl.diffTrees(oldRoot, builder, comparator, treeStructure, indicator == null ? new EmptyProgressIndicator() : indicator,
@@ -1009,6 +999,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     // build tree only once to avoid threading issues in read-only PSI
     StartMarker rootMarker = (StartMarker)Objects.requireNonNull(myProduction.getStartingMarkerAt(0));
     if (rootMarker.myFirstChild != null) return rootMarker;
+
+    myOptionalData.compact();
 
     myTokenTypeChecked = true;
     balanceWhiteSpaces();
@@ -1291,11 +1283,14 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private static class MyComparator implements ShallowNodeComparator<ASTNode, LighterASTNode> {
     private final TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom;
+    @NotNull private final List<CustomLanguageASTComparator> myCustomLanguageASTComparators;
     private final MyTreeStructure myTreeStructure;
 
     private MyComparator(TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> custom,
+                         @NotNull List<CustomLanguageASTComparator> customLanguageASTComparators,
                          @NotNull MyTreeStructure treeStructure) {
       this.custom = custom;
+      myCustomLanguageASTComparators = customLanguageASTComparators;
       myTreeStructure = treeStructure;
     }
 
@@ -1312,12 +1307,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         return Comparing.equal(e1.getErrorDescription(), getErrorMessage(newNode)) ? ThreeState.UNSURE : ThreeState.NO;
       }
 
-      if (custom != null) {
-        ThreeState customResult = custom.fun(oldNode, newNode, myTreeStructure);
-
-        if (customResult != ThreeState.UNSURE) {
-          return customResult;
-        }
+      final ThreeState customResult = customCompare(oldNode, newNode);
+      if (customResult != ThreeState.UNSURE) {
+        return customResult;
       }
       if (newNode instanceof Token) {
         final IElementType type = newNode.getTokenType();
@@ -1354,6 +1346,25 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
       }
 
+      return ThreeState.UNSURE;
+    }
+
+    @NotNull
+    private ThreeState customCompare(@NotNull final ASTNode oldNode, @NotNull final LighterASTNode newNode) {
+      for (CustomLanguageASTComparator comparator : myCustomLanguageASTComparators) {
+        final ThreeState customComparatorResult = comparator.compareAST(oldNode, newNode, myTreeStructure);
+        if (customComparatorResult != ThreeState.UNSURE) {
+          return customComparatorResult;
+        }
+      }
+
+      if (custom != null) {
+        ThreeState customResult = custom.fun(oldNode, newNode, myTreeStructure);
+
+        if (customResult != ThreeState.UNSURE) {
+          return customResult;
+        }
+      }
       return ThreeState.UNSURE;
     }
 

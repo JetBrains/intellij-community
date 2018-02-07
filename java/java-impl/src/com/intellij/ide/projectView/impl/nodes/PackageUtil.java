@@ -46,7 +46,7 @@ public class PackageUtil {
         result.add(psiPackage);
       }
     }
-    return result.toArray(new PsiPackage[result.size()]);
+    return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
   public static void addPackageAsChild(@NotNull Collection<AbstractTreeNode> children,

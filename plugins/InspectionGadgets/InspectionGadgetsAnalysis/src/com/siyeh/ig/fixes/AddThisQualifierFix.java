@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,13 +70,14 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
     if (expression.getQualifierExpression() != null) {
       return;
     }
     final PsiExpression thisQualifier = ExpressionUtils.getQualifierOrThis(expression);
-    @NonNls final String newExpression = thisQualifier.getText() + "." + expression.getText();
-    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression);
+    CommentTracker commentTracker = new CommentTracker();
+    @NonNls final String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
+    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
   }
 }

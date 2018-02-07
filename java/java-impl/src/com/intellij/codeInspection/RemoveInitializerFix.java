@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
@@ -25,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.BlockUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -92,6 +92,12 @@ public class RemoveInitializerFix implements LocalQuickFix {
         }
         else {
           elementToDelete.delete();
+          if (declaration instanceof PsiClass) {
+            PsiClassInitializer initializer = factory.createClassInitializer();
+            initializer = (PsiClassInitializer)declaration.addAfter(initializer, variable);
+            initializer.getBody().add(statementFromText);
+            return;
+          }
           PsiElement grandParent = declaration.getParent();
           BlockUtils.addBefore(((PsiStatement) (grandParent instanceof PsiForStatement ? grandParent : declaration)), statementFromText);
         }

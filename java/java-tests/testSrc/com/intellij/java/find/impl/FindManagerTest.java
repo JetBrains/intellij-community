@@ -602,7 +602,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
       PlatformTestUtil.startPerformanceTest("find usages in global", 400, test).attempts(2).usesAllCPUCores().assertTiming();
 
       findModel.setCustomScope(new LocalSearchScope(psiFile));
-      PlatformTestUtil.startPerformanceTest("find usages in local", 120, test).attempts(2).usesAllCPUCores().assertTiming();
+      PlatformTestUtil.startPerformanceTest("find usages in local", 200, test).attempts(2).usesAllCPUCores().assertTiming();
     }
     finally {
       fixture.tearDown();

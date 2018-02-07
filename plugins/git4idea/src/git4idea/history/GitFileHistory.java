@@ -15,12 +15,9 @@
  */
 package git4idea.history;
 
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
@@ -31,14 +28,10 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.Semaphore;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
-import git4idea.commands.GitLineHandlerAdapter;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +104,7 @@ public class GitFileHistory {
       GitLineHandler handler = createLogHandler(logParser, currentPath, firstCommitParent, parameters);
       GitLogOutputSplitter splitter = new GitLogOutputSplitter(handler, logParser, recordConsumer);
 
-      handler.runInCurrentThread(null);
+      Git.getInstance().runCommandWithoutCollectingOutput(handler);
       if (splitter.hasErrors()) {
         return;
       }
@@ -144,7 +137,7 @@ public class GitFileHistory {
                                                                      @NotNull FilePath filePath) throws VcsException {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
-    GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.SHOW);
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.SHOW);
     GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setStdoutSuppressed(true);
     h.addParameters("-M", "--name-status", parser.getPretty(), "--encoding=UTF-8", commit);
@@ -156,7 +149,7 @@ public class GitFileHistory {
     else {
       h.endOptions();
     }
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogRecord> records = parser.parse(output);
 
     if (records.isEmpty()) return null;

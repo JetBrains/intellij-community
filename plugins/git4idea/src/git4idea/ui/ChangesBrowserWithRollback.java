@@ -18,14 +18,13 @@ package git4idea.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.RemoteStatusChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +48,7 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
 
     new RollbackDialogAction().registerCustomShortcutSet(this, null);
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
     myViewer.rebuildTree();
@@ -57,12 +56,6 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
 
   @Override
   public void dispose() {
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
   @NotNull
@@ -101,17 +94,7 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
     }
 
     @Override
-    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesAdded(Collection<Change> changes, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    public void changeListsChanged() {
       doUpdate();
     }
   }

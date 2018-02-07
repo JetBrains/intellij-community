@@ -22,14 +22,13 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 01.03.11
  */
 public abstract class Difference {
 
-  public static boolean weakerAccess(final int me, final int then) {
-    return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||
-           ((me & Opcodes.ACC_PROTECTED) > 0 && (then & Opcodes.ACC_PUBLIC) > 0) ||
-           (isPackageLocal(me) && (then & Opcodes.ACC_PROTECTED) > 0);
+  public static boolean weakerAccess(final int me, final int than) {
+    return ((me & Opcodes.ACC_PRIVATE) > 0 && (than & Opcodes.ACC_PRIVATE) == 0) ||
+           ((me & Opcodes.ACC_PROTECTED) > 0 && (than & Opcodes.ACC_PUBLIC) > 0) ||
+           (isPackageLocal(me) && (than & (Opcodes.ACC_PROTECTED | Opcodes.ACC_PUBLIC)) > 0);
   }
 
   private static boolean isPackageLocal(final int access) {
@@ -162,7 +161,7 @@ public abstract class Difference {
 
   public abstract boolean no();
 
-  public abstract boolean weakedAccess();
+  public abstract boolean accessRestricted();
 
   public abstract int addedModifiers();
 

@@ -28,7 +28,7 @@ import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorI
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -47,8 +47,8 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -161,7 +161,7 @@ public class GenerationNode extends UserDataHolderBase {
     if (callback.isInInjectedFragment()) {
       Editor editor = callback.getEditor();
       Document document = editor.getDocument();
-      if (document instanceof DocumentWindowImpl && ((DocumentWindowImpl)document).isOneLine()) {
+      if (document instanceof DocumentWindow && ((DocumentWindow)document).isOneLine()) {
         /* 
          * If document is one-line that in the moment of inserting text,
          * new line chars will be filtered (see DocumentWindowImpl#insertString).

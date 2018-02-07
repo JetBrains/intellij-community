@@ -89,12 +89,6 @@ class GitSingleRepoUpdateTest : GitUpdateBaseTest() {
     assertFalse("Stash shouldn't be called for clean working tree", stashCalled)
   }
 
-  private fun createBroRepo(broName: String, parentRepo: File): File {
-    cd(testRoot)
-    git("clone " + parentRepo.name + " " + broName)
-    return File(testRoot, broName)
-  }
-
   private fun updateWithRebase(): GitUpdateResult {
     return GitUpdateProcess(project, EmptyProgressIndicator(), listOf(repo), UpdatedFiles.create(), false, true).update(UpdateMethod.REBASE)
   }

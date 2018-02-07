@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.highlighter
 
 import com.intellij.lang.annotation.AnnotationHolder
@@ -42,30 +28,30 @@ class GroovyKeywordAnnotator : Annotator, DumbAware {
       holder.createInfoAnnotation(element, null).enforcedTextAttributes = TextAttributes.ERASE_MARKER
     }
   }
+}
 
-  private fun shouldBeErased(element: PsiElement): Boolean {
-    val tokenType = element.node.elementType
-    if (tokenType !in TokenSets.KEYWORDS) return false // do not touch other elements
+fun shouldBeErased(element: PsiElement): Boolean {
+  val tokenType = element.node.elementType
+  if (tokenType !in TokenSets.KEYWORDS) return false // do not touch other elements
 
-    val parent = element.parent
-    if (parent is GrArgumentLabel) {
-      // don't highlight: print (void:'foo')
-      return true
-    }
-    else if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement::class.java) != null) {
-      if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(tokenType)) {
-        return true // it is allowed to name packages 'as', 'in', 'def' or 'trait'
-      }
-    }
-    else if (tokenType === GroovyTokenTypes.kDEF && element.parent is GrAnnotationNameValuePair) {
-      return true
-    }
-    else if (parent is GrReferenceExpression && element === parent.referenceNameElement) {
-      if (tokenType === GroovyTokenTypes.kSUPER && parent.qualifier == null) return false
-      if (tokenType === GroovyTokenTypes.kTHIS && parent.qualifier == null) return false
-      return true // don't highlight foo.def
-    }
-
-    return false
+  val parent = element.parent
+  if (parent is GrArgumentLabel) {
+    // don't highlight: print (void:'foo')
+    return true
   }
+  else if (PsiTreeUtil.getParentOfType(element, GrCodeReferenceElement::class.java) != null) {
+    if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(tokenType)) {
+      return true // it is allowed to name packages 'as', 'in', 'def' or 'trait'
+    }
+  }
+  else if (tokenType === GroovyTokenTypes.kDEF && element.parent is GrAnnotationNameValuePair) {
+    return true
+  }
+  else if (parent is GrReferenceExpression && element === parent.referenceNameElement) {
+    if (tokenType === GroovyTokenTypes.kSUPER && parent.qualifier == null) return false
+    if (tokenType === GroovyTokenTypes.kTHIS && parent.qualifier == null) return false
+    return true // don't highlight foo.def
+  }
+
+  return false
 }

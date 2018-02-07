@@ -124,7 +124,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
         @Override
         public void visitPyCallExpression(PyCallExpression node) {
           super.visitPyCallExpression(node);
-          if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON30) && node.isCalleeText(PyNames.SUPER)) {
+          if (!LanguageLevel.forElement(node).isPython2() && node.isCalleeText(PyNames.SUPER)) {
             mayBeStatic[0] = false;
           }
         }

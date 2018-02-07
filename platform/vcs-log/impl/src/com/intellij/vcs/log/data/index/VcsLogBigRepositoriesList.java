@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -7,7 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     synchronized (myLock) {
       myState = new State(state);
     }
@@ -63,7 +63,7 @@ public class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLo
   }
 
   public static class State {
-    @AbstractCollection(surroundWithTag = false, elementTag = "repository", elementValueAttribute = "path")
+    @XCollection(elementName = "repository", valueAttributeName = "path")
     public SortedSet<String> REPOSITORIES = ContainerUtil.newTreeSet();
 
     public State() {

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.resolve
 
@@ -417,8 +419,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   void testUnboxBigDecimal() {
     myFixture.addClass("package java.math; public class BigDecimal {}")
     PsiReference ref = configureByFile("unboxBigDecimal/A.groovy")
-    PsiElement resolved = ref.resolve()
-    assertNull(resolved)
+    assertTrue(ref.resolve() instanceof PsiMethod)
   }
 
   void testGrvy1157() {
@@ -1968,8 +1969,7 @@ def abc(String s) { print 'hjk' }
   }
 
 
-  //IDEA-125331
-  void _testScriptMethodVSStaticImportInsideClosure() {
+  void testScriptMethodVSStaticImportInsideClosure() {
     def method = resolveByText '''
 import static C.abc
 

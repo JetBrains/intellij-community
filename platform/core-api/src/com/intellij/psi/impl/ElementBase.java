@@ -85,10 +85,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     try {
       return computeIcon(flags);
     }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (IndexNotReadyException e) {
+    catch (ProcessCanceledException | IndexNotReadyException e) {
       throw e;
     }
     catch (Exception e) {

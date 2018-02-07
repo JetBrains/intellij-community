@@ -41,6 +41,8 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
 
   open fun isAnyFirstLineBreakpoint(breakpoint: Breakpoint) = false
 
+  open protected fun unregisterAnyFirstLineBreakpoint(breakpoint: Breakpoint) {}
+
   private val breakpointResolvedListenerAdded = ContainerUtil.createConcurrentWeakMap<Vm, Unit>()
 
   fun setBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>) {
@@ -190,7 +192,23 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
       promiseRef?.set(resolvedPromise(it))
       return it
     }
-    return breakpointManager.setBreakpoint(target, location.line, location.column, location.url, breakpoint?.conditionExpression?.expression, promiseRef = promiseRef)
+
+    val setBreakpointResult = breakpointManager.setBreakpoint(target, location.line, location.column, location.url,
+                                                              breakpoint?.conditionExpression?.expression)
+    return when (setBreakpointResult) {
+      is BreakpointManager.BreakpointExist -> {
+        unregisterAnyFirstLineBreakpoint(setBreakpointResult.existingBreakpoint)
+        promiseRef?.set(resolvedPromise(setBreakpointResult.existingBreakpoint))
+        setBreakpointResult.existingBreakpoint
+      }
+      is BreakpointManager.BreakpointCreated -> {
+        promiseRef?.set(setBreakpointResult.isResolved)
+        setBreakpointResult.breakpoint
+      }
+      else -> {
+        throw AssertionError(setBreakpointResult.javaClass)
+      }
+    }
   }
 
   protected abstract fun createTarget(breakpoint: XLineBreakpoint<*>?, breakpointManager: BreakpointManager, location: Location, isTemporary: Boolean): BreakpointTarget

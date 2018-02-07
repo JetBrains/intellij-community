@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.completion;
 
@@ -25,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -102,10 +91,12 @@ import java.util.List;
  * from execution, and the user will never see their so useful and precious completion variants, so please be careful with this method.<p>
  *
  * Q: How are lookup elements sorted?<br>
- * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}. But some of the elements
- * may be considered more relevant, i.e. having a bigger probability of being chosen by user. Such elements (no more than 5) may be moved to
- * the top of lookup and highlighted with green background. This is done by hooking into lookup elements comparator via creating your own
- * {@link CompletionWeigher} and registering it as a "weigher" extension under "completion" key.<p>
+ * A: Basically in lexicographic order, ascending, by lookup string ({@link LookupElement#getLookupString()}).
+ * Also there's a number of "weigher" extensions under "completion" key (see {@link CompletionWeigher}) that bubble up the most relevant
+ * items. To control lookup elements order you may implement {@link CompletionWeigher} or use {@link PrioritizedLookupElement}.<br>
+ * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
+ * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the the Clipboard.
+ * <p>
  *
  * Q: My completion is not working! How do I debug it?<br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
@@ -231,14 +222,18 @@ public abstract class CompletionContributor {
   public static List<CompletionContributor> forParameters(@NotNull final CompletionParameters parameters) {
     return ReadAction.compute(() -> {
       PsiElement position = parameters.getPosition();
-      List<CompletionContributor> all = forLanguage(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()));
-      return DumbService.getInstance(position.getProject()).filterByDumbAwareness(all);
+      return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()), position.getProject());
     });
   }
 
   @NotNull
   public static List<CompletionContributor> forLanguage(@NotNull Language language) {
     return INSTANCE.forKey(language);
+  }
+
+  @NotNull
+  public static List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
+    return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 
   private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtension<CompletionContributor>("com.intellij.completion.contributor") {

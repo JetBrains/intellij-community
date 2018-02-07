@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Nov 21, 2006
 */
 class PsiMethodListPopupStep implements ListPopupStep<SmartStepTarget> {
   private final List<SmartStepTarget> myTargets;

@@ -70,7 +70,7 @@ abstract class FileTemplateTab {
 
   @NotNull 
   public FileTemplate[] getTemplates() {
-    return myTemplates.toArray(new FileTemplate[myTemplates.size()]);
+    return myTemplates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   public abstract void addTemplate(FileTemplate newTemplate);

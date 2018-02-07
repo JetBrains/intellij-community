@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -22,10 +8,12 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
@@ -60,6 +48,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
+  private boolean myShowWelcomeScreen = !PlatformUtils.isDatabaseIDE();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
 
@@ -212,7 +201,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   @Override
-  public void loadState(GeneralSettings state) {
+  public void loadState(@NotNull GeneralSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
@@ -240,6 +229,14 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   public void setConfirmExit(boolean confirmExit) {
     myConfirmExit = confirmExit;
+  }
+
+  public boolean isShowWelcomeScreen() {
+    return myShowWelcomeScreen;
+  }
+
+  public void setShowWelcomeScreen(boolean show) {
+    myShowWelcomeScreen = show;
   }
 
   @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})

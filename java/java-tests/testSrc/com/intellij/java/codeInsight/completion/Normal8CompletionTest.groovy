@@ -17,13 +17,13 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 /**
  * @author anna
  */
-class Normal8CompletionTest extends LightFixtureCompletionTestCase {
+class Normal8CompletionTest extends NormalCompletionTestCase {
   final LightProjectDescriptor projectDescriptor = JAVA_8
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/"
 
@@ -170,7 +170,14 @@ class Test88 {
 
   void testInheritorConstructorRef() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList'
+    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList', 'CopyOnWriteArrayList::new'
+
+    def constructorRef = myFixture.lookupElements[0]
+    def p = LookupElementPresentation.renderElement(constructorRef)
+    assert p.tailText == ' (java.util)'
+    assert p.tailFragments[0].grayed
+
+    assert (constructorRef.psiElement as PsiClass).qualifiedName == ArrayList.name
   }
 
   void "test constructor ref without start"() {
@@ -231,6 +238,13 @@ class Test88 {
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
+    checkResultByFileName()
+  }
+
+  void testCollectorsInsideCollect() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'toCollection', 'toList', 'toSet'
+    selectItem(myItems[1])
     checkResultByFileName()
   }
 
@@ -308,7 +322,21 @@ class Test88 {
 
   void testPreferLambdaToConstructorReference() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, '() -> ', 'AbstractMethodError::new'
+    myFixture.assertPreferredCompletionItems 0, '() -> ', 'Exception::new'
+  }
+
+  void testPreferLambdaToTooGenericLocalVariables() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
+  }
+
+  void testPreferLambdaToRecentSelections() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'String'
+    myFixture.type('\n str;\n') // select 'String'
+    myFixture.type('s.reduce(')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> ', 's', 'str', 'String'
   }
 
   private checkResultByFileName() {

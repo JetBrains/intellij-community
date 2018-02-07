@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -23,7 +11,6 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -39,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -411,46 +397,14 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   @Override
   public String getEventMessage(LocatableEvent event) {
     final Location location = event.location();
-    String sourceName;
-    try {
-      sourceName = location.sourceName();
-    }
-    catch (AbsentInformationException e) {
-      sourceName = getFileName();
-    }
+    String sourceName = DebuggerUtilsEx.getSourceName(location, e -> getFileName());
 
-    final boolean printFullTrace = Registry.is("debugger.breakpoint.message.full.trace");
-
-    StringBuilder builder = new StringBuilder();
-    if (printFullTrace) {
-      builder.append(DebuggerBundle.message(
-        "status.line.breakpoint.reached.full.trace",
-        DebuggerUtilsEx.getLocationMethodQName(location))
-      );
-      try {
-        final List<StackFrame> frames = event.thread().frames();
-        renderTrace(frames, builder);
-      }
-      catch (IncompatibleThreadStateException e) {
-        builder.append("Stacktrace not available: ").append(e.getMessage());
-      }
-    }
-    else {
-      builder.append(DebuggerBundle.message(
-        "status.line.breakpoint.reached",
-        DebuggerUtilsEx.getLocationMethodQName(location),
-        sourceName,
-        getLineIndex() + 1
-      ));
-    }
-    return builder.toString();
-  }
-
-  private static void renderTrace(List<StackFrame> frames, StringBuilder buffer) {
-    for (final StackFrame stackFrame : frames) {
-      final Location location = stackFrame.location();
-      buffer.append("\n\t  ").append(ThreadDumpAction.renderLocation(location));
-    }
+    return DebuggerBundle.message(
+      "status.line.breakpoint.reached",
+      DebuggerUtilsEx.getLocationMethodQName(location),
+      sourceName,
+      getLineIndex() + 1
+    );
   }
 
   @Override

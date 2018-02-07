@@ -84,9 +84,7 @@ interface ULabeled : UElement {
  *
  * Use [UastEmptyExpression] in this case.
  */
-object UastEmptyExpression : UExpression, JvmDeclarationUElement {
-  override val uastParent: UElement?
-    get() = null
+open class UastEmptyExpression(override val uastParent: UElement?) : UExpression, JvmDeclarationUElement {
 
   override val annotations: List<UAnnotation>
     get() = emptyList()
@@ -95,4 +93,17 @@ object UastEmptyExpression : UExpression, JvmDeclarationUElement {
     get() = null
 
   override fun asLogString() = log()
+
+  override fun hashCode(): Int = uastParent?.hashCode() ?: super.hashCode()
+
+  override fun equals(other: Any?): Boolean =
+    if (other is UastEmptyExpression) other.uastParent == uastParent
+    else false
+
+  @Deprecated("create class instance instead")
+  companion object : UastEmptyExpression(null) {
+    @JvmField
+    val INSTANCE: UastEmptyExpression = this
+  }
+
 }

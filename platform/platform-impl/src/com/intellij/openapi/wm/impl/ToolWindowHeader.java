@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -26,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -41,6 +29,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
@@ -112,10 +101,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
     eastPanel.setBorder(BorderFactory.createEmptyBorder(0, 3, 0, 3));
     add(eastPanel, BorderLayout.EAST);
 
-    myGearButton = new ActionButton(new AnAction() {
-      {
-        getTemplatePresentation().setText("Show Options menu");
-      }
+    myGearButton = new ActionButton(new DumbAwareAction("Show Options menu") {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final InputEvent inputEvent = e.getInputEvent();
@@ -129,7 +115,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
           x = ((MouseEvent)inputEvent).getX();
           y = ((MouseEvent)inputEvent).getY();
         }
-
+        ToolbarClicksCollector.record("Show Options", "ToolWindowHeader");
         popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
       }
     }, AllIcons.General.Gear) {
@@ -351,6 +337,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics g) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g));
+  }
+
+  @Override
   protected void paintComponent(Graphics g) {
     Rectangle r = getBounds();
     Graphics2D g2d = (Graphics2D)g;
@@ -384,7 +375,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private static BufferedImage drawToBuffer(Graphics2D g2d, boolean active, int height, boolean floating) {
     final int width = 150;
 
-    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_ARGB);
+    BufferedImage image = UIUtil.createImage(g2d, width, height, BufferedImage.TYPE_INT_RGB);
     Graphics2D g = image.createGraphics();
     UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true);
     g.dispose();

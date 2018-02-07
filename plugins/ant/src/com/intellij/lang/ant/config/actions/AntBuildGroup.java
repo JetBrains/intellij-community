@@ -56,7 +56,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
       }
     }
 
-    return children.toArray(new AnAction[children.size()]);
+    return children.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static void fillGroup(final AntBuildFile buildFile, final DefaultActionGroup group, final AntConfiguration antConfiguration) {

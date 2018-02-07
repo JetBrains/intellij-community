@@ -31,8 +31,8 @@ public class TestWriteActionUnderProgress extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
 
-    boolean success = app.runWriteActionWithProgressInDispatchThread(
-      "Progress", null, null, null,
+    boolean success = app.runWriteActionWithNonCancellableProgressInDispatchThread(
+      "Progress", null, null, 
       TestWriteActionUnderProgress::runIndeterminateProgress);
     assert success;
 

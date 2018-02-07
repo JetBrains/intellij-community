@@ -52,7 +52,6 @@ import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/12
  */
 public class ImportModuleAction extends AnAction {
 
@@ -199,7 +198,7 @@ public class ImportModuleAction extends AnAction {
       path = ProjectImportProvider.getDefaultPath(file);
     }
 
-    ProjectImportProvider[] availableProviders = available.toArray(new ProjectImportProvider[available.size()]);
+    ProjectImportProvider[] availableProviders = available.toArray(new ProjectImportProvider[0]);
 
     return dialogParent == null
            ? new AddModuleWizard(project, path, availableProviders)

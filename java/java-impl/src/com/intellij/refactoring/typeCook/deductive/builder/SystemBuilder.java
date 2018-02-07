@@ -32,7 +32,7 @@ import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.PsiTypeVariableFactory;
 import com.intellij.refactoring.typeCook.deductive.util.VictimCollector;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.Arrays;
 import java.util.HashSet;

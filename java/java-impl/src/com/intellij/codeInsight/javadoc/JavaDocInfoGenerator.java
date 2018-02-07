@@ -472,13 +472,13 @@ public class JavaDocInfoGenerator {
     if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
-
     PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
       generateCommonSection(buffer, comment);
       generateTypeParametersSection(buffer, aClass);
     }
+
+    new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
@@ -626,14 +626,14 @@ public class JavaDocInfoGenerator {
     generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
-
     ColorUtil.appendColorPreview(field, buffer);
 
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
       generateCommonSection(buffer, comment);
     }
+
+    new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
@@ -908,8 +908,6 @@ public class JavaDocInfoGenerator {
     buffer.append("</b>");
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations();
-
     final PsiElement method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class, PsiLambdaExpression.class);
 
     if (method instanceof PsiMethod) {
@@ -926,6 +924,8 @@ public class JavaDocInfoGenerator {
         }
       }
     }
+
+    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
@@ -964,8 +964,6 @@ public class JavaDocInfoGenerator {
     generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
-
     PsiDocComment comment = getMethodDocComment(method);
 
     generateMethodDescription(buffer, method, comment);
@@ -988,6 +986,8 @@ public class JavaDocInfoGenerator {
       generateSeeAlsoSection(buffer, comment);
     }
 
+    new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
+
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
 
@@ -997,7 +997,7 @@ public class JavaDocInfoGenerator {
       String qName = parentClass.getQualifiedName();
       if (qName != null) {
         buffer.append("<small><b>");
-        generateLink(buffer, qName, qName, member, false);
+        generateLink(buffer, qName, qName + generateTypeParameters(parentClass, true), member, false);
         buffer.append("</b></small>");
       }
     }
@@ -1078,7 +1078,7 @@ public class JavaDocInfoGenerator {
     PsiClass parentClass = method.getContainingClass();
     if (parentClass != null && parentClass.isEnum()) {
       PsiParameterList parameterList = method.getParameterList();
-      if (method.getName().equals("values") && parameterList.getParametersCount() == 0) {
+      if (method.getName().equals("values") && parameterList.isEmpty()) {
         return loadSyntheticDocComment(method, "/javadoc/EnumValues.java.template");
       }
       if (method.getName().equals("valueOf") &&
@@ -1886,7 +1886,7 @@ public class JavaDocInfoGenerator {
         return text.length();
       }
 
-      String name = useShortNames ? ((PsiClassType)type).rawType().getPresentableText() : qName;
+      String name = useShortNames ? getClassNameWithOuterClasses(psiClass) : qName;
 
       int length;
       if (generateLink) {
@@ -1963,7 +1963,18 @@ public class JavaDocInfoGenerator {
     return 0;
   }
 
-  private static String generateTypeParameters(PsiTypeParameterListOwner owner, boolean useShortNames) {
+  private static String getClassNameWithOuterClasses(@NotNull PsiClass cls) {
+    StringBuilder result = new StringBuilder();
+    for (; cls != null; cls = cls.getContainingClass()) {
+      String name = cls.getName();
+      if (name == null) break;
+      if (result.length() > 0) result.insert(0, '.');
+      result.insert(0, name);
+    }
+    return result.toString();
+  }
+
+  public static String generateTypeParameters(PsiTypeParameterListOwner owner, boolean useShortNames) {
     if (owner.hasTypeParameters()) {
       PsiTypeParameter[] parameters = owner.getTypeParameters();
 

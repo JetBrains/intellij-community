@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.classMembers;
 
 import com.intellij.psi.PsiClass;
@@ -22,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -51,23 +38,25 @@ public abstract class GrClassMemberReferenceVisitor extends GroovyRecursiveEleme
       }
     }
 
-    PsiElement resolved = ref.resolve();
+    GroovyResolveResult resolveResult = ref.advancedResolve();
+    PsiElement resolved = resolveResult.getElement();
     if (resolved instanceof GrMember) {
       PsiClass containingClass = ((GrMember)resolved).getContainingClass();
       if (isPartOf(myClass, containingClass)) {
-        visitClassMemberReferenceElement((GrMember)resolved, ref);
+        visitClassMemberReferenceElement(ref, (GrMember)resolved, resolveResult);
       }
     }
   }
 
   @Override
   public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement reference) {
-    PsiElement referencedElement = reference.resolve();
+    GroovyResolveResult resolveResult = reference.advancedResolve();
+    PsiElement referencedElement = resolveResult.getElement();
     if (referencedElement instanceof GrTypeDefinition) {
       final GrTypeDefinition referencedClass = (GrTypeDefinition)referencedElement;
       if (PsiTreeUtil.isAncestor(myClass, referencedElement, true) ||
           isPartOf(myClass, referencedClass.getContainingClass())) {
-        visitClassMemberReferenceElement((GrMember)referencedElement, reference);
+        visitClassMemberReferenceElement(reference, (GrMember)referencedElement, resolveResult);
       }
     }
   }
@@ -77,5 +66,11 @@ public abstract class GrClassMemberReferenceVisitor extends GroovyRecursiveEleme
     return aClass.equals(containingClass) || aClass.isInheritor(containingClass, true);
   }
 
-  protected abstract void visitClassMemberReferenceElement(GrMember resolved, GrReferenceElement ref);
+  protected void visitClassMemberReferenceElement(GrReferenceElement<?> ref, GrMember member, GroovyResolveResult resolveResult) {
+    visitClassMemberReferenceElement(member, ref);
+  }
+
+  protected void visitClassMemberReferenceElement(GrMember resolved, GrReferenceElement ref) {
+    throw new RuntimeException("Override one of visitClassMemberReferenceElement() methods");
+  }
 }

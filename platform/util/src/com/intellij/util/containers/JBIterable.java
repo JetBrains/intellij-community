@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.util.containers;
 
@@ -527,11 +515,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> unique(@NotNull final Function<? super E, ?> identity) {
     return filter(new SCond<E>() {
-      HashSet<Object> visited;
+      java.util.HashSet<Object> visited;
 
       @Override
       public boolean value(E e) {
-        if (visited == null) visited = new HashSet<Object>();
+        if (visited == null) visited = new java.util.HashSet<Object>();
         return visited.add(identity.fun(e));
       }
     });
@@ -589,7 +577,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @Nullable
   public final <T> T first(@NotNull Class<T> type) {
     E first = first();
-    return type.isInstance(first) ? (T)first : null;
+    return first != null && type.isInstance(first) ? (T)first : null;
   }
 
   /**
@@ -598,7 +586,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @Nullable
   public final E first(@NotNull Condition<? super E> condition) {
     E first = first();
-    return condition.value(first) ? first : null;
+    return first != null && condition.value(first) ? first : null;
   }
 
   /**
@@ -887,7 +875,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   /**
    * Returns a {@code Map} for which the keys and values are defined by the specified converters.
-   * {@code {@link java.util.LinkedHashMap}} is used, so the order is preserved.
+   * {@code {@link LinkedHashMap}} is used, so the order is preserved.
    */
   @NotNull
   public final <K, V> Map<K, V> toMap(@NotNull Convertor<E, K> toKey, @NotNull Convertor<E, V> toValue) {

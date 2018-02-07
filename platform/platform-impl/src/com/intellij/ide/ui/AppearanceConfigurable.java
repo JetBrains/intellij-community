@@ -244,8 +244,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       update = true;
       shouldUpdateUI = false;
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo, true);
     }
 
     if (shouldUpdateUI) {

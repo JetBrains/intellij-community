@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.Collection;
@@ -76,10 +62,6 @@ public class FastSparseSetFactory<E> {
 
   public int getLastBlock() {
     return lastBlock;
-  }
-
-  public int getLastMask() {
-    return lastMask;
   }
 
   private VBStyleCollection<int[], E> getInternalValuesCollection() {
@@ -165,30 +147,6 @@ public class FastSparseSetFactory<E> {
       changeNext(next, block, next[block], block);
     }
 
-    public void setAllElements() {
-
-      int lastblock = factory.getLastBlock();
-      int lastmask = factory.getLastMask();
-
-      if (lastblock >= data.length) {
-        ensureCapacity(lastblock);
-      }
-
-      for (int i = lastblock - 1; i >= 0; i--) {
-        data[i] = 0xFFFFFFFF;
-        next[i] = i + 1;
-      }
-
-      data[lastblock] = lastmask | (lastmask - 1);
-      next[lastblock] = 0;
-    }
-
-    public void addAll(Set<E> set) {
-      for (E element : set) {
-        add(element);
-      }
-    }
-
     public void remove(E element) {
       int[] index = colValuesInternal.getWithKey(element);
 
@@ -206,12 +164,6 @@ public class FastSparseSetFactory<E> {
       }
     }
 
-    public void removeAll(Set<E> set) {
-      for (E element : set) {
-        remove(element);
-      }
-    }
-
     public boolean contains(E element) {
       int[] index = colValuesInternal.getWithKey(element);
 
@@ -220,27 +172,6 @@ public class FastSparseSetFactory<E> {
       }
 
       return index[0] < data.length && ((data[index[0]] & index[1]) != 0);
-    }
-
-    public boolean contains(FastSparseSet<E> set) {
-      int[] extdata = set.getData();
-      int[] intdata = data;
-
-      int minlength = Math.min(extdata.length, intdata.length);
-
-      for (int i = minlength - 1; i >= 0; i--) {
-        if ((extdata[i] & ~intdata[i]) != 0) {
-          return false;
-        }
-      }
-
-      for (int i = extdata.length - 1; i >= minlength; i--) {
-        if (extdata[i] != 0) {
-          return false;
-        }
-      }
-
-      return true;
     }
 
     private void setNext() {
@@ -307,29 +238,6 @@ public class FastSparseSetFactory<E> {
       setNext();
     }
 
-    public void symdiff(FastSparseSet<E> set) {
-      int[] extdata = set.getData();
-      int[] intdata = data;
-
-      int minlength = Math.min(extdata.length, intdata.length);
-
-      for (int i = minlength - 1; i >= 0; i--) {
-        intdata[i] ^= extdata[i];
-      }
-
-      boolean expanded = false;
-      for (int i = extdata.length - 1; i >= minlength; i--) {
-        if (extdata[i] != 0) {
-          if (!expanded) {
-            intdata = ensureCapacity(extdata.length - 1);
-          }
-          intdata[i] = extdata[i];
-        }
-      }
-
-      setNext();
-    }
-
     public void complement(FastSparseSet<E> set) {
 
       int[] extdata = set.getData();
@@ -355,7 +263,7 @@ public class FastSparseSetFactory<E> {
 
     public boolean equals(Object o) {
       if (o == this) return true;
-      if (o == null || !(o instanceof FastSparseSet)) return false;
+      if (!(o instanceof FastSparseSet)) return false;
 
       int[] longdata = ((FastSparseSet)o).getData();
       int[] shortdata = data;
@@ -438,37 +346,12 @@ public class FastSparseSetFactory<E> {
       return toPlainSet().toString();
     }
 
-    public String toBinary() {
-
-      StringBuilder buffer = new StringBuilder();
-      int[] intdata = data;
-
-      for (int i = 0; i < intdata.length; i++) {
-        buffer.append(" ").append(Integer.toBinaryString(intdata[i]));
-      }
-
-      return buffer.toString();
-    }
-
     private int[] getData() {
       return data;
     }
 
     private int[] getNext() {
       return next;
-    }
-
-    public int[] getLoad() {
-      int[] intdata = data;
-      int notempty = 0;
-
-      for (int i = 0; i < intdata.length; i++) {
-        if (intdata[i] != 0) {
-          notempty++;
-        }
-      }
-
-      return new int[]{intdata.length, notempty};
     }
 
     public FastSparseSetFactory<E> getFactory() {

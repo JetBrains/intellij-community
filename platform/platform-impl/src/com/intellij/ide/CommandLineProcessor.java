@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ide;
 
@@ -110,46 +98,45 @@ public class CommandLineProcessor {
 
   @Nullable
   public static Project processExternalCommandLine(List<String> args, @Nullable String currentDirectory) {
-    if (args.size() > 0) {
-      LOG.info("External command line:");
-      LOG.info("Dir: " + currentDirectory);
-      for (String arg : args) {
-        LOG.info(arg);
-      }
-    }
+    LOG.info("External command line:");
+    LOG.info("Dir: " + currentDirectory);
+    for (String arg : args) LOG.info(arg);
     LOG.info("-----");
+    if (args.isEmpty()) return null;
 
-    if (args.size() > 0) {
-      final String command = args.get(0);
-      for (ApplicationStarter starter : Extensions.getExtensions(ApplicationStarter.EP_NAME)) {
-        if (command.equals(starter.getCommandName()) &&
-            starter instanceof ApplicationStarterEx &&
-            ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
+    String command = args.get(0);
+    for (ApplicationStarter starter : Extensions.getExtensions(ApplicationStarter.EP_NAME)) {
+      if (command.equals(starter.getCommandName())) {
+        if (starter instanceof ApplicationStarterEx && ((ApplicationStarterEx)starter).canProcessExternalCommandLine()) {
           LOG.info("Processing command with " + starter);
           ((ApplicationStarterEx)starter).processExternalCommandLine(ArrayUtil.toStringArray(args), currentDirectory);
           return null;
         }
-      }
-
-      if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
-        try {
-          final String url = URLDecoder.decode(command, "UTF-8");
-          JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-          ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
+        else {
+          String title = "Cannot execute command '" + command + "'";
+          String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
+          Messages.showErrorDialog(message, title);
+          return null;
         }
-        catch (UnsupportedEncodingException e) {
-          LOG.error(e);
-        }
-
-        return null;
       }
+    }
+    if (command.startsWith(JetBrainsProtocolHandler.PROTOCOL)) {
+      try {
+        String url = URLDecoder.decode(command, "UTF-8");
+        JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
+        ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
+      }
+      catch (UnsupportedEncodingException e) {
+        LOG.error(e);
+      }
+      return null;
     }
 
     Project lastOpenedProject = null;
     int line = -1;
     boolean tempProject = false;
 
-    for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
+    for (int i = 0; i < args.size(); i++) {
       String arg = args.get(i);
       if (arg.equals(StartupUtil.NO_SPLASH)) {
         continue;

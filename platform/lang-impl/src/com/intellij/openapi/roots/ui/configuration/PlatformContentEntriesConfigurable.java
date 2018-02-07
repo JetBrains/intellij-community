@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -73,17 +72,12 @@ public class PlatformContentEntriesConfigurable implements Configurable {
         public ModifiableRootModel getRootModel() {
           return myModifiableModel;
         }
-
-        @Override
-        public FacetsProvider getFacetsProvider() {
-          return DefaultFacetsProvider.INSTANCE;
-        }
       };
     myEditor = new CommonContentEntriesEditor(myModule.getName(), moduleConfigurationState, true, myRootTypes) {
       @Override
       protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
         List<ContentEntry> entries = super.addContentEntries(files);
-        addContentEntryPanels(entries.toArray(new ContentEntry[entries.size()]));
+        addContentEntryPanels(entries.toArray(new ContentEntry[0]));
         return entries;
       }
     };

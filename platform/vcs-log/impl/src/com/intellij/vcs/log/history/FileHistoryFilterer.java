@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.DataPack;
@@ -51,6 +52,7 @@ import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.CommitCountStage;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -67,14 +69,16 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
   @NotNull private final Project myProject;
   @NotNull private final FilePath myFilePath;
+  @Nullable private final Hash myHash;
   @NotNull private final IndexDataGetter myIndexDataGetter;
   @NotNull private final VirtualFile myRoot;
 
-  public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath) {
+  public FileHistoryFilterer(@NotNull VcsLogData logData, @NotNull FilePath filePath, @Nullable Hash hash) {
     super(logData.getLogProviders(), logData.getStorage(), logData.getTopCommitsCache(), logData.getCommitDetailsGetter(),
           logData.getIndex());
     myProject = logData.getProject();
     myFilePath = filePath;
+    myHash = hash;
     myIndexDataGetter = ObjectUtils.assertNotNull(myIndex.getDataGetter());
     myRoot = ObjectUtils.assertNotNull(VcsUtil.getVcsRootFor(myProject, myFilePath));
   }
@@ -140,7 +144,12 @@ class FileHistoryFilterer extends VcsLogFilterer {
                                          @NotNull PermanentGraph.SortType sortType,
                                          @NotNull VcsLogFilterCollection filters) throws VcsException {
     VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter();
-    provider.reportAppendableHistory(myFilePath, partner);
+    if (provider instanceof VcsHistoryProviderEx && myHash != null) {
+      ((VcsHistoryProviderEx)provider).reportAppendableHistory(myFilePath, VcsLogUtil.convertToRevisionNumber(myHash), partner);
+    }
+    else {
+      provider.reportAppendableHistory(myFilePath, partner);
+    }
 
     Map<Integer, FilePath> pathsMap = ContainerUtil.newHashMap();
     for (VcsFileRevision revision : partner.getSession().getRevisionList()) {
@@ -212,15 +221,24 @@ class FileHistoryFilterer extends VcsLogFilterer {
                             @NotNull IndexDataGetter.FileNamesData fileIndexData) {
     PermanentGraph<Integer> permanentGraph = pack.getPermanentGraph();
     if (permanentGraph instanceof PermanentGraphImpl) {
-      CompressedRefs refs = pack.getRefsModel().getAllRefsByRoot().get(myRoot);
-      Optional<VcsRef> headOptional = refs.streamBranches().filter(br -> br.getName().equals("HEAD")).findFirst();
-      if (headOptional.isPresent()) {
-        VcsRef head = headOptional.get();
-        assert head.getRoot().equals(myRoot);
-        return findAncestorRowAffectingFile((PermanentGraphImpl<Integer>)permanentGraph, head.getCommitHash(), visibleGraph, fileIndexData);
+      Hash hash = myHash != null ? myHash : getHead(pack);
+      if (hash != null) {
+        return findAncestorRowAffectingFile((PermanentGraphImpl<Integer>)permanentGraph, hash, visibleGraph, fileIndexData);
       }
     }
-    return -1;
+    return 0;
+  }
+
+  @Nullable
+  private Hash getHead(@NotNull DataPack pack) {
+    CompressedRefs refs = pack.getRefsModel().getAllRefsByRoot().get(myRoot);
+    Optional<VcsRef> headOptional = refs.streamBranches().filter(br -> br.getName().equals("HEAD")).findFirst();
+    if (headOptional.isPresent()) {
+      VcsRef head = headOptional.get();
+      assert head.getRoot().equals(myRoot);
+      return head.getCommitHash();
+    }
+    return null;
   }
 
   private int findAncestorRowAffectingFile(@NotNull PermanentGraphImpl<Integer> permanentGraph,

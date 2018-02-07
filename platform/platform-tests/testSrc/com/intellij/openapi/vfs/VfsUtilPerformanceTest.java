@@ -210,7 +210,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     Ref<Throwable> ex = Ref.create();
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[JobSchedulerImpl.CORES_COUNT]), ProgressManager.getInstance().getProgressIndicator(), false,
+      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), false,
       o -> {
         try {
           doAsyncRefreshTest();

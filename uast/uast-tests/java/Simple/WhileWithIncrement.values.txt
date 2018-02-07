@@ -17,6 +17,6 @@ UFile (package = ) [public class WhileWithIncrement {...]
                                     ULiteralExpression (value = 42) [42] = 42
                                 ULiteralExpression (value = 0) [0] = 0
                             UBreakExpression (label = null) [break] = Nothing(break)
-                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                            UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UReturnExpression [return i] = Nothing
                     USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)

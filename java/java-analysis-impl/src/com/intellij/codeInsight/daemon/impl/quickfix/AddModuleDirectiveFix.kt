@@ -40,11 +40,21 @@ class AddExportsDirectiveFix(module: PsiJavaModule,
     if (existing == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.EXPORTS + ' ' + packageName)
     }
-    else {
+    else if (!targetName.isEmpty()) {
       val targets = existing.moduleReferences.map { it.referenceText }
       if (!targets.isEmpty() && targetName !in targets) {
         existing.add(PsiElementFactory.SERVICE.getInstance(project).createModuleReferenceFromText(targetName))
       }
+    }
+  }
+}
+
+class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
+  override fun getText() = QuickFixBundle.message("module.info.add.uses.name", svcName)
+
+  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+    if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
+      PsiUtil.addModuleStatement(module, PsiKeyword.USES + ' ' + svcName)
     }
   }
 }

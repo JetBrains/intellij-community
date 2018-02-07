@@ -78,7 +78,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
 
   @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
 
-  protected abstract boolean showMembersFromDefaultPackage();
+  protected abstract boolean toAddStaticImports();
 
   public static boolean isExcluded(PsiMember method) {
     String name = PsiUtil.getMemberQualifiedName(method);

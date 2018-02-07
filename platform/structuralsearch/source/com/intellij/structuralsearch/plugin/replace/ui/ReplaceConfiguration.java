@@ -10,8 +10,6 @@ import org.jdom.Element;
 
 /**
  * @author Maxim.Mossienko
- * Date: Apr 14, 2004
- * Time: 4:41:37 PM
  */
 public class ReplaceConfiguration extends Configuration {
 

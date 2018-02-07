@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -89,10 +75,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   private AsyncState getAsyncState() {
-    //if (!myInitialized) { // memory barrier
-    //  //throw new IndexNotReadyException();
-    //  LOG.error("Unexpected initialization problem");
-    //}
     AsyncState state = myState; // memory barrier
     if (state == null) {
       try {
@@ -328,7 +310,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
         if (file == null || scope != null && !scope.contains(file)) {
           return true;
         }
-        return myStubProcessingHelper.processStubsInFile(project, file, value, processor, requiredClass);
+        return myStubProcessingHelper.processStubsInFile(project, file, value, processor, scope, requiredClass);
       }
     });
   }
@@ -414,6 +396,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
     try {
       myAccessValidator.startedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
+      FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
       return index.processAllKeys(processor, scope, idFilter);
     }
     catch (StorageException e) {
@@ -426,6 +409,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
       }
       throw e;
     } finally {
+      FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       myAccessValidator.stoppedProcessingActivityForIndex(StubUpdatingIndex.INDEX_ID);
     }
     return true;
@@ -467,8 +451,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   @Override
   public void initComponent() {
     long started = System.nanoTime();
-    StubIndexExtension<?, ?>[] extensions = initExtensions();
-    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000);
+    StubIndexExtension<?, ?>[] extensions = IndexInfrastructure.hasIndices() ? initExtensions() : new StubIndexExtension[0];
+    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.length);
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensions));
@@ -490,13 +474,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     for(StubIndexExtension extension:extensions) extension.getKey();
     return extensions;
   }
-
-  //@Override
-  //public void dispose() {
-    // This index must be disposed only after StubUpdatingIndex is disposed
-    // To ensure this, disposing is done explicitly from StubUpdatingIndex by calling dispose() method
-    // do not call this method here to avoid double-disposal
-  //}
 
   public void dispose() {
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
@@ -541,7 +518,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   private boolean dropUnregisteredIndices(AsyncState state) {
-    if (ApplicationManager.getApplication().isDisposed()) {
+    if (ApplicationManager.getApplication().isDisposed() || !IndexInfrastructure.hasIndices()) {
       return false;
     }
 
@@ -569,7 +546,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   @Override
-  public void loadState(final StubIndexState state) {
+  public void loadState(@NotNull final StubIndexState state) {
     myPreviouslyRegistered = state;
   }
 
@@ -598,7 +575,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     public MyIndex(IndexExtension<K, StubIdList, Void> extension, IndexStorage<K, StubIdList> storage) throws IOException {
-      super(extension, storage);
+      super(extension, storage, null);
     }
 
     @Override

@@ -49,14 +49,17 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
+  @SuppressWarnings("unused")
   private static final Logger LOG = Logger.getInstance(TabbedLanguageCodeStylePanel.class);
 
   private CodeStyleAbstractPanel myActiveTab;
@@ -239,11 +242,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
-  }
-
-  @Override
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
@@ -358,16 +356,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         result.add(codeStyle);
       }
     }
-    return result.toArray(new PredefinedCodeStyle[result.size()]);
+    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
   }
 
 
   private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
-    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(currProject);
     CodeStyleSettings targetSettings = getSettings();
-    if (rootSettings.getCommonSettings(lang) == null || targetSettings.getCommonSettings(getDefaultLanguage()) == null) 
-      return;
 
     applyLanguageSettings(lang, rootSettings, targetSettings);
     reset(targetSettings);

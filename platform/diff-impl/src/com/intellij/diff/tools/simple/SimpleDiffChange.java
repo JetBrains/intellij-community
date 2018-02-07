@@ -40,6 +40,7 @@ public class SimpleDiffChange {
 
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
+  private final boolean myIsSkipped;
 
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
   @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
@@ -50,11 +51,13 @@ public class SimpleDiffChange {
 
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
                           @NotNull LineFragment fragment,
-                          @Nullable LineFragment previousFragment) {
+                          @Nullable LineFragment previousFragment,
+                          boolean isSkipped) {
     myViewer = viewer;
 
     myFragment = fragment;
     myInnerFragments = fragment.getInnerFragments();
+    myIsSkipped = isSkipped;
 
     installHighlighter(previousFragment);
   }
@@ -108,6 +111,7 @@ public class SimpleDiffChange {
   }
 
   private void doInstallActionHighlighters() {
+    if (myIsSkipped) return;
     myOperations.add(createOperation(Side.LEFT));
     myOperations.add(createOperation(Side.RIGHT));
   }
@@ -119,10 +123,12 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsSkipped, false, false));
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
+    if (myIsSkipped) return;
+
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
     TextDiffType type = DiffUtil.getDiffType(fragment);
@@ -172,6 +178,10 @@ public class SimpleDiffChange {
   @NotNull
   public TextDiffType getDiffType() {
     return DiffUtil.getLineDiffType(myFragment);
+  }
+
+  public boolean isSkipped() {
+    return myIsSkipped;
   }
 
   public boolean isValid() {

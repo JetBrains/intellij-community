@@ -181,7 +181,7 @@ public class JavaGenerateMemberCompletionContributor {
         }
       }
 
-      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(new PsiElement[elements.size()]));
+      GlobalInspectionContextBase.cleanupElements(context.getProject(), null, elements.toArray(PsiElement.EMPTY_ARRAY));
       newInfos.get(0).positionCaret(context.getEditor(), true);
     }
   }
@@ -201,7 +201,8 @@ public class JavaGenerateMemberCompletionContributor {
     }
 
     PsiType type = substitutor.substitute(prototype.getReturnType());
-    String signature = modifiers + (type == null ? "" : type.getPresentableText() + " ") + methodName;
+    String typeAndName = (type == null ? "" : type.getPresentableText() + " ") + methodName;
+    String signature = modifiers + typeAndName;
 
     String parameters = "(" + StringUtil.join(prototype.getParameterList().getParameters(),
                                               p -> getShortParameterName(substitutor, p) + " " + p.getName(),
@@ -209,6 +210,7 @@ public class JavaGenerateMemberCompletionContributor {
 
     String overrideSignature = " @Override " + signature; // leading space to make it a middle match, under all annotation suggestions
     LookupElementBuilder element = LookupElementBuilder.create(prototype, signature).withLookupString(methodName).
+      withLookupString(typeAndName).
       withLookupString(signature).withLookupString(overrideSignature).withInsertHandler(insertHandler).
       appendTailText(parameters, false).appendTailText(" {...}", true).withTypeText(typeText).withIcon(icon);
     if (prototype.isDeprecated()) {

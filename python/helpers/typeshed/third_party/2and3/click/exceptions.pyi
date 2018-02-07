@@ -20,10 +20,10 @@ class ClickException(Exception):
 class UsageError(ClickException):
     ctx: Optional[Context]
 
-    def __init__(self, message: str, ctx: Optional[Context] = None) -> None:
+    def __init__(self, message: str, ctx: Optional[Context] = ...) -> None:
         ...
 
-    def show(self, file: Optional[IO] = None) -> None:
+    def show(self, file: Optional[IO] = ...) -> None:
         ...
 
 
@@ -34,9 +34,9 @@ class BadParameter(UsageError):
     def __init__(
         self,
         message: str,
-        ctx: Optional[Context] = None,
-        param: Optional[Parameter] = None,
-        param_hint: Optional[str] = None
+        ctx: Optional[Context] = ...,
+        param: Optional[Parameter] = ...,
+        param_hint: Optional[str] = ...
     ) -> None:
         ...
 
@@ -46,11 +46,11 @@ class MissingParameter(BadParameter):
 
     def __init__(
         self,
-        message: Optional[str] = None,
-        ctx: Optional[Context] = None,
-        param: Optional[Parameter] = None,
-        param_hint: Optional[str] = None,
-        param_type: Optional[str] = None
+        message: Optional[str] = ...,
+        ctx: Optional[Context] = ...,
+        param: Optional[Parameter] = ...,
+        param_hint: Optional[str] = ...,
+        param_type: Optional[str] = ...
     ) -> None:
         ...
 
@@ -62,20 +62,20 @@ class NoSuchOption(UsageError):
     def __init__(
         self,
         option_name: str,
-        message: Optional[str] = None,
-        possibilities: Optional[List[str]] = None,
-        ctx: Optional[Context] = None
+        message: Optional[str] = ...,
+        possibilities: Optional[List[str]] = ...,
+        ctx: Optional[Context] = ...
     ) -> None:
         ...
 
 
 class BadOptionUsage(UsageError):
-    def __init__(self, message: str, ctx: Optional[Context] = None) -> None:
+    def __init__(self, message: str, ctx: Optional[Context] = ...) -> None:
         ...
 
 
 class BadArgumentUsage(UsageError):
-    def __init__(self, message: str, ctx: Optional[Context] = None) -> None:
+    def __init__(self, message: str, ctx: Optional[Context] = ...) -> None:
         ...
 
 
@@ -83,7 +83,7 @@ class FileError(ClickException):
     ui_filename: str
     filename: str
 
-    def __init__(self, filename: str, hint: Optional[str] = None) -> None:
+    def __init__(self, filename: str, hint: Optional[str] = ...) -> None:
         ...
 
 

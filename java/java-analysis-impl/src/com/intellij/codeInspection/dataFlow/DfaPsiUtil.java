@@ -34,7 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -106,7 +106,7 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
-    if (owner instanceof PsiMethod && isMapGet((PsiMethod)owner)) {
+    if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
       return Nullness.UNKNOWN;
     }
 
@@ -127,10 +127,11 @@ public class DfaPsiUtil {
     return Nullness.UNKNOWN;
   }
 
-  private static boolean isMapGet(@NotNull PsiMethod method) {
-    if (!"get".equals(method.getName())) return false;
+  private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {
+    String name = method.getName();
+    if (!"get".equals(name) && !"remove".equals(name)) return false;
     PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
-    return "java.util.Map.get".equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
+    return ("java.util.Map." + name).equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
   }
 
   @NotNull

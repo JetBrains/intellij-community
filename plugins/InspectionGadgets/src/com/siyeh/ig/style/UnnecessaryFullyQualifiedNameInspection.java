@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -107,7 +106,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement referenceElement;
       if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
@@ -132,7 +131,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       file.accept(qualificationRemover);
       if (isOnTheFly()) {
         final Collection<PsiElement> shortenedElements = qualificationRemover.getShortenedElements();
-        HighlightUtils.highlightElements(shortenedElements);
+        if (isOnTheFly()) {
+          HighlightUtils.highlightElements(shortenedElements);
+        }
         showStatusMessage(file.getProject(), shortenedElements.size());
       }
     }

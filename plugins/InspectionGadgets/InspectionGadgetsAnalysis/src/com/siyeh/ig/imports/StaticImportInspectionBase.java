@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ig.imports;
 
@@ -22,12 +10,12 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -80,7 +68,7 @@ public class StaticImportInspectionBase extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiImportStaticStatement importStatement = (PsiImportStaticStatement)descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {
@@ -91,8 +79,7 @@ public class StaticImportInspectionBase extends BaseInspection {
         return;
       }
       final boolean onDemand = importStatement.isOnDemand();
-      final StaticImportFix.StaticImportReferenceCollector
-        referenceCollector = new StaticImportFix.StaticImportReferenceCollector(importTargets, onDemand);
+      final StaticImportReferenceCollector referenceCollector = new StaticImportReferenceCollector(importTargets, onDemand);
       final PsiJavaFile file = (PsiJavaFile)importStatement.getContainingFile();
       file.accept(referenceCollector);
       final List<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();
@@ -105,7 +92,7 @@ public class StaticImportInspectionBase extends BaseInspection {
           referenceTargetMap.put(reference, member);
         }
       }
-      importStatement.delete();
+      new CommentTracker().deleteAndRestoreComments(importStatement);
       for (Map.Entry<PsiJavaCodeReferenceElement, PsiMember> entry : referenceTargetMap.entrySet()) {
         removeReference(entry.getKey(), entry.getValue());
       }
@@ -120,18 +107,18 @@ public class StaticImportInspectionBase extends BaseInspection {
       if (aClass == null) {
         return;
       }
+      CommentTracker tracker = new CommentTracker();
       final String qualifiedName = aClass.getQualifiedName();
-      final String text = reference.getText();
+      final String text = tracker.text(reference);
       final String referenceText = qualifiedName + '.' + text;
       if (reference instanceof PsiReferenceExpression) {
-        final PsiExpression newReference = factory.createExpressionFromText(referenceText, reference);
-        final PsiElement insertedElement = reference.replace(newReference);
+        final PsiElement insertedElement = tracker.replaceAndRestoreComments(reference, referenceText);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
       }
       else {
         final PsiJavaCodeReferenceElement referenceElement =
           factory.createReferenceElementByFQClassName(referenceText, reference.getResolveScope());
-        final PsiElement insertedElement = reference.replace(referenceElement);
+        final PsiElement insertedElement = tracker.replaceAndRestoreComments(reference, referenceElement);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
       }
     }

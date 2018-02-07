@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author max
- * Date: Oct 21, 2001
  */
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
@@ -291,7 +290,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.isEmpty()));
 
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
@@ -610,7 +609,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
       if (element != null) result.add(element);
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 

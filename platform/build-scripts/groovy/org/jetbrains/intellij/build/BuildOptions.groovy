@@ -56,7 +56,7 @@ class BuildOptions {
   static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build macOS artifacts. */
   static final MAC_ARTIFACTS_STEP = "mac_artifacts"
-  /** Build .dmg file for macOS. If skipped; only .sit archive will be produced. */
+  /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
   /** Sign additional binary files in macOS distribution. */
   static final MAC_SIGN_STEP = "mac_sign"

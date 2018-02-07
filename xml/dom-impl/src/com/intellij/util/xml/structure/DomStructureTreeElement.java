@@ -83,7 +83,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
       }
     };
     DomUtil.acceptAvailableChildren(myElement, elementVisitor);
-    return result.toArray(new TreeElement[result.size()]);
+    return result.toArray(TreeElement.EMPTY_ARRAY);
   }
 
   protected StructureViewTreeElement createChildElement(final DomElement element) {

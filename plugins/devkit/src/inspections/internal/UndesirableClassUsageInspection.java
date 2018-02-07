@@ -89,6 +89,6 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
       }
     });
 
-    return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.isEmpty() ? null : descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

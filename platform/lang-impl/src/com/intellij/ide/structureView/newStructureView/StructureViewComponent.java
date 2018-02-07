@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.structureView.newStructureView;
@@ -21,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -30,7 +19,6 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -90,8 +78,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
-    Experiments.isFeatureEnabled("structure.view.async.tree.model");
+  private final boolean myUseATM = true; //todo inline & remove
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
@@ -120,7 +107,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
 
-  public StructureViewComponent(FileEditor editor,
+  public StructureViewComponent(@Nullable FileEditor editor,
                                 @NotNull StructureViewModel structureViewModel,
                                 @NotNull Project project,
                                 boolean showRootNode) {
@@ -165,8 +152,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Disposer.register(this, () -> myTreeModelWrapper.dispose());
       Disposer.register(this, myAsyncTreeModel);
 
-      myAsyncTreeModel.addTreeModelListener(new MyExpandListener(
-        myTree, ObjectUtils.tryCast(myTreeModel, StructureViewModel.ExpandInfoProvider.class)));
+      registerAutoExpandListener(myTree, myTreeModel);
 
       myUpdateAlarm = new SingleAlarm(this::rebuild, 200, this);
       myTreeBuilder = null;
@@ -188,11 +174,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setRootVisible(showRootNode);
     myTree.getEmptyText().setText("Structure is empty");
 
+    final ModelListener modelListener = () -> queueUpdate();
+    myTreeModelWrapper.addModelListener(modelListener);
 
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
         storeState();
+        myTreeModelWrapper.removeModelListener(modelListener);
       }
     });
 
@@ -204,6 +193,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     setToolbar(createToolbar());
     setupTree();
+  }
+
+  public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
+    tree.getModel().addTreeModelListener(new MyExpandListener(
+      tree, ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class)));
   }
 
   @NotNull
@@ -242,9 +236,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setCellRenderer(new NodeRenderer());
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
-    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
-      PsiManager.getInstance(myProject).getModificationTracker(), this::queueUpdate);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener, this);
+    registerPsiListener(myProject, this, this::queueUpdate);
 
     myAutoScrollToSourceHandler.install(myTree);
     myAutoScrollFromSourceHandler.install();
@@ -259,6 +251,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     addTreeKeyListener();
     addTreeMouseListeners();
     restoreState();
+  }
+
+  public static void registerPsiListener(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onChange) {
+    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
+      PsiManager.getInstance(project).getModificationTracker(), onChange);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(psiListener, disposable);
   }
 
   @NotNull
@@ -343,19 +341,23 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
     myStructureViewState = TreeState.createOn(myTree, new TreePath(root));
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    if (myFileEditor != null) {
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    }
   }
 
   @Override
   public void restoreState() {
-    myStructureViewState = myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    myStructureViewState = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (myStructureViewState == null) {
       TreeUtil.expand(getTree(), 2);
     }
     else {
       myStructureViewState.applyTo(myTree);
-      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       myStructureViewState = null;
+      if (myFileEditor != null) {
+        myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
+      }
     }
   }
 
@@ -733,8 +735,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
       return TreeVisitor.Action.CONTINUE;
     };
-    myStructureTreeModel.getInvoker().invokeLater(() ->
-      myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null)));
+    myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
     return result;
   }
 
@@ -1028,7 +1029,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
       if (provider != null) {
         Object value = unwrapWrapper(nodeDescriptor.getElement());
-        if (value instanceof StructureViewTreeElement) {
+        if (value instanceof CustomRegionTreeElement) {
+          return true;
+        }
+        else if (value instanceof StructureViewTreeElement) {
           return provider.isAutoExpand((StructureViewTreeElement)value);
         }
         else if (value instanceof GroupWrapper) {

@@ -593,7 +593,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         });
       }
 
-      return result.toArray(new ActionWrapper[result.size()]);
+      return result.toArray(new ActionWrapper[0]);
     }
 
     @Override
@@ -790,7 +790,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
 
       final Object o = getListModel().get(index);
-      if (o != null && o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
+      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
         deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
@@ -803,6 +803,11 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           onChildSelectedFor(values.get(index - 1));
         }
       }
+    }
+
+    @Override
+    protected boolean isResizable() {
+      return true;
     }
   }
 
@@ -1019,7 +1024,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
     }
     result.addAll(wrappedExisting.values());
-    return result.toArray(new ItemWrapper[result.size()]);
+    return result.toArray(new ItemWrapper[0]);
   }
 
   @NotNull

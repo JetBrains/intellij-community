@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
@@ -20,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -45,18 +32,17 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -69,15 +55,19 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import static com.intellij.openapi.actionSystem.Presentation.*;
+import static com.intellij.openapi.actionSystem.Presentation.PROP_TEXT;
+import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -228,7 +218,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Runnable myDisposeCallback;
     private final Component myComponent;
     private final String myActionPlace;
-    private IconHoverListener myIconsHoverListener;
 
     public ActionGroupPopup(final String title,
                             @NotNull ActionGroup actionGroup,
@@ -317,16 +306,28 @@ public class PopupFactoryImpl extends JBPopupFactory {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
-      final ActionStepBuilder builder =
+      List<ActionItem> items =
+        getActionItems(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace);
+
+      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+                                 preselectActionCondition, autoSelection, showDisabledActions);
+    }
+
+    @NotNull
+    public static List<ActionItem> getActionItems(@NotNull ActionGroup actionGroup,
+                                                  @NotNull DataContext dataContext,
+                                                  boolean showNumbers,
+                                                  boolean useAlphaAsNumbers,
+                                                  boolean showDisabledActions,
+                                                  boolean honorActionMnemonics,
+                                                  @Nullable String actionPlace) {
+      ActionStepBuilder builder =
         new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
       if (actionPlace != null) {
         builder.setActionPlace(actionPlace);
       }
       builder.buildGroup(actionGroup);
-      final List<ActionItem> items = builder.getItems();
-
-      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                                 preselectActionCondition, autoSelection, showDisabledActions);
+      return builder.getItems();
     }
 
     @Override
@@ -334,8 +335,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (myDisposeCallback != null) {
         myDisposeCallback.run();
       }
-      getList().removeMouseMotionListener(myIconsHoverListener);
-      getList().removeListSelectionListener(myIconsHoverListener);
       ActionMenu.showDescriptionInStatusBar(true, myComponent, null);
       super.dispose();
     }
@@ -380,61 +379,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
       getList().repaint();
     }
 
-    public void installOnHoverIconsSupport(@NotNull IconListPopupRenderer iconListPopupRenderer) {
-      //OnHover icons listener should be installed once
-      assert myIconsHoverListener == null;
-      myIconsHoverListener = new IconHoverListener(iconListPopupRenderer);
-    }
-
-    @Override
-    protected boolean beforeShow() {
-      getList().addMouseMotionListener(myIconsHoverListener);
-      getList().addListSelectionListener(myIconsHoverListener);
-      return super.beforeShow();
-    }
-
     @Nullable
     private static <T> T getActionByClass(@Nullable Object value, @NotNull ActionPopupStep actionPopupStep, @NotNull Class<T> actionClass) {
       ActionItem item = value instanceof ActionItem ? (ActionItem)value : null;
       if (item == null) return null;
       if (!actionPopupStep.isSelectable(item)) return null;
       return actionClass.isInstance(item.getAction()) ? actionClass.cast(item.getAction()) : null;
-    }
-
-    private class IconHoverListener extends MouseMotionAdapter implements ListSelectionListener {
-      @NotNull private IconListPopupRenderer myRenderer;
-
-      public IconHoverListener(@NotNull IconListPopupRenderer renderer) {
-        myRenderer = renderer;
-      }
-
-      @Override
-      public void mouseMoved(MouseEvent e) {
-        Point point = e.getPoint();
-        int index = getList().locationToIndex(point);
-        Rectangle bounds = getList().getCellBounds(index, index);
-        Object selectedValue = getList().getSelectedValue();
-        if (selectedValue instanceof ActionItem) {
-          ((ActionItem)selectedValue).setIconHovered(myRenderer.isIconAt(point));
-        }
-        if (bounds != null) {
-          getList().repaint(bounds);
-        }
-      }
-
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (!e.getValueIsAdjusting()) {
-          int selected = getSelectedIndex();
-          int unselected = e.getFirstIndex() == selected ? e.getLastIndex() : e.getFirstIndex();
-          Object elementAt = getList().getModel().getElementAt(unselected);
-          if (elementAt instanceof ActionItem) {
-            ActionItem actionItem = (ActionItem)elementAt;
-            actionItem.setIconHovered(false);
-            getList().repaint();
-          }
-        }
-      }
     }
   }
 
@@ -645,8 +595,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       int[] selectionRows = tree.getSelectionRows();
       if (selectionRows != null) {
         Arrays.sort(selectionRows);
-        for (int i = 0; i < selectionRows.length; i++) {
-          int row = selectionRows[i];
+        for (int row : selectionRows) {
           Rectangle rowBounds = tree.getRowBounds(row);
           if (visibleRect.contains(rowBounds)) {
             popupMenuPoint = new Point(rowBounds.x + 2, rowBounds.y + rowBounds.height - 1);
@@ -659,8 +608,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
           int bestRow = -1;
           Point rowCenter;
           double distance;
-          for (int i = 0; i < selectionRows.length; i++) {
-            int row = selectionRows[i];
+          for (int row : selectionRows) {
             Rectangle rowBounds = tree.getRowBounds(row);
             rowCenter = new Point(rowBounds.x + rowBounds.width / 2, rowBounds.y + rowBounds.height / 2);
             distance = visibleCenter.distance(rowCenter);
@@ -729,10 +677,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
-    Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
+    final int lineHeight = editor.getLineHeight();
+    Point p = editor.visualPositionToXY(visualPosition);
+    p.y += lineHeight;
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - editor.getLineHeight())
+    return !visibleArea.contains(p) && !visibleArea.contains(p.x, p.y - lineHeight)
            ? null : p;
   }
 
@@ -745,7 +695,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final AnAction myAction;
     private String myText;
     private final boolean myIsEnabled;
-    @Nullable private ActionStepBuilder.IconWrapper myIcon;
+    private final Icon myIcon;
+    private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
     private final String mySeparatorText;
     private final String myDescription;
@@ -754,34 +705,26 @@ public class PopupFactoryImpl extends JBPopupFactory {
                        @NotNull String text,
                        @Nullable String description,
                        boolean enabled,
-                       @Nullable ActionStepBuilder.IconWrapper icon,
+                       @Nullable Icon icon,
+                       @Nullable Icon selectedIcon,
                        final boolean prependWithSeparator,
                        String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
       myIcon = icon;
+      mySelectedIcon = selectedIcon;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
       myDescription = description;
       myAction.getTemplatePresentation().addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == PROP_ICON || evt.getPropertyName() == PROP_HOVERED_ICON) {
-            updateIcons();
-          }
-          else if (evt.getPropertyName() == PROP_TEXT) {
+          if (evt.getPropertyName() == PROP_TEXT) {
             myText = myAction.getTemplatePresentation().getText();
           }
         }
       });
-    }
-
-    private void updateIcons() {
-      // we can't set icons if it hasn't existed before, because alignment will be destroyed; use IconWrapper with null icon instead of null
-      if (myIcon == null) return;
-      Presentation presentation = myAction.getTemplatePresentation();
-      myIcon.setIcons(presentation.getIcon(), presentation.getHoveredIcon());
     }
 
     @NotNull
@@ -795,8 +738,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     @Nullable
-    public ActionStepBuilder.IconWrapper getIcon() {
-      return myIcon;
+    public Icon getIcon(boolean selected) {
+      return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
     }
 
     public boolean isPrependWithSeparator() {
@@ -823,15 +766,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public String toString() {
       return myText;
     }
-
-    public void setIconHovered(boolean isHovered) {
-      if (myIcon != null) {
-        myIcon.setHovered(isHovered);
-      }
-    }
   }
 
-  private static class ActionPopupStep implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
+  public static class ActionPopupStep
+    implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
     private final List<ActionItem> myItems;
     private final String myTitle;
     private final Component myContext;
@@ -842,7 +780,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private Runnable myFinalRunnable;
     @Nullable private final Condition<AnAction> myPreselectActionCondition;
 
-    private ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
+    public ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
                             @Nullable Condition<AnAction> preselectActionCondition, final boolean autoSelection, boolean showDisabledActions) {
       myItems = items;
       myTitle = title;
@@ -895,7 +833,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     @Override
     public Icon getIconFor(final ActionItem aValue) {
-      return aValue.getIcon();
+      return aValue.getIcon(false);
+    }
+
+    @Override
+    public Icon getSelectedIconFor(ActionItem value) {
+      return value.getIcon(true);
     }
 
     @Override
@@ -1020,7 +963,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   @NotNull
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
-    return FocusTrackback.getChildPopups(component);
+
+    return AbstractPopup.all.toStrongList().stream().filter(popup -> {
+      Component owner = popup.getOwner();
+      while (owner != null) {
+        if (owner.equals(component)) {
+          return true;
+        }
+        owner = owner.getParent();
+      }
+      return false;
+    }).collect(Collectors.toList());
   }
 
   @Override
@@ -1038,7 +991,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private       boolean                         myPrependWithSeparator;
     private       String                          mySeparatorText;
     private final boolean                         myHonorActionMnemonics;
-    private IconWrapper myEmptyIcon;
+    private Icon myEmptyIcon;
     private int myMaxIconWidth  = -1;
     private int myMaxIconHeight = -1;
     @NotNull private String myActionPlace;
@@ -1069,12 +1022,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public void buildGroup(@NotNull ActionGroup actionGroup) {
       calcMaxIconSize(actionGroup);
-      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? createWrapper(null) : null;
+      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
 
       appendActionsFromGroup(actionGroup);
 
       if (myListModel.isEmpty()) {
-        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, false, null));
+        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null));
       }
     }
 
@@ -1091,7 +1044,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
 
         Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon == null && action instanceof Toggleable) icon = PlatformIcons.CHECK_ICON;
+        if (icon == null && action instanceof Toggleable) icon = EmptyIcon.ICON_16;
         if (icon != null) {
           final int width = icon.getIconWidth();
           final int height = icon.getIconHeight();
@@ -1136,7 +1089,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
       AnActionEvent event = createActionEvent(action);
 
       ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
-      if ((myShowDisabled || presentation.isEnabled()) && presentation.isVisible()) {
+      boolean enabled = presentation.isEnabled();
+      if ((myShowDisabled || enabled) && presentation.isVisible()) {
         String text = presentation.getText();
         if (myShowNumbers) {
           if (myCurrentNumber < 9) {
@@ -1151,76 +1105,37 @@ public class PopupFactoryImpl extends JBPopupFactory {
           myCurrentNumber++;
         }
         else if (myHonorActionMnemonics) {
-          text = Presentation.restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
+          text = restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
         }
 
-        Icon icon = presentation.isEnabled() ? presentation.getIcon() : IconLoader.getDisabledIcon(presentation.getIcon());
-        IconWrapper iconWrapper;
-        if (icon == null && presentation.getHoveredIcon() == null) {
+        Icon icon = presentation.getIcon();
+        Icon selectedIcon = presentation.getSelectedIcon();
+        Icon disabledIcon = presentation.getDisabledIcon();
+        if (icon == null && selectedIcon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
           if (actionId != null && actionId.startsWith("QuickList.")) {
-            iconWrapper = createWrapper(AllIcons.Actions.QuickList);
+            icon = AllIcons.Actions.QuickList;
           }
-          else if (action instanceof Toggleable) {
-            boolean toggled = Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
-            iconWrapper = toggled ? createWrapper(PlatformIcons.CHECK_ICON) : myEmptyIcon;
-          }
-          else {
-            iconWrapper = myEmptyIcon;
+          else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
+            icon = MacIntelliJIconCache.getIcon("checkmark", false, false, true);
+            selectedIcon = MacIntelliJIconCache.getIcon("checkmark", true, false, true);
+            disabledIcon = MacIntelliJIconCache.getIcon("checkmark", false, false, false);
           }
         }
-        else {
-          iconWrapper = new IconWrapper(icon, presentation.getHoveredIcon(), myMaxIconWidth, myMaxIconHeight);
+        if (!enabled) {
+          icon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(icon);
+          selectedIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
         }
+        if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
         boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
         assert text != null : action + " has no presentation";
         myListModel.add(
-          new ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY), presentation.isEnabled(), iconWrapper,
-                         prependSeparator, mySeparatorText));
+          new ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
+                         enabled, icon, selectedIcon, prependSeparator, mySeparatorText));
         myPrependWithSeparator = false;
         mySeparatorText = null;
       }
     }
-
-    /**
-     * Adjusts icon size to maximum, so that icons with different sizes were aligned correctly.
-     */
-    public static class IconWrapper extends IconUtil.IconSizeWrapper {
-
-      @Nullable private Icon myIcon;
-      @Nullable private Icon myHoverIcon;
-
-      private boolean isHovered;
-
-      public IconWrapper(@Nullable Icon icon, @Nullable Icon hoverIcon, int width, int height) {
-        super(null, width, height);
-        setIcons(icon, hoverIcon);
-      }
-
-      @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
-        paintIcon(myHoverIcon != null && isHovered ? myHoverIcon : myIcon, c, g, x, y);
-      }
-
-      public boolean isHovered() {
-        return isHovered;
-      }
-
-      public void setHovered(boolean hovered) {
-        isHovered = hovered;
-      }
-
-      public void setIcons(@Nullable Icon icon, @Nullable Icon hoveredIcon) {
-        myIcon = icon;
-        myHoverIcon = hoveredIcon;
-      }
-    }
-
-    @NotNull
-    public IconWrapper createWrapper(@Nullable Icon icon) {
-      return new IconWrapper(icon, null, myMaxIconWidth, myMaxIconHeight);
-    }
-
   }
 
   @NotNull
@@ -1267,11 +1182,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     final JPanel content = new NonOpaquePanel(new BorderLayout((int)(label.getIconTextGap() * 1.5), (int)(label.getIconTextGap() * 1.5)));
 
     final NonOpaquePanel textWrapper = new NonOpaquePanel(new GridBagLayout());
-    JScrollPane scrolledText = new JScrollPane(text);
+    JScrollPane scrolledText = ScrollPaneFactory.createScrollPane(text, true);
     scrolledText.setBackground(fillColor);
     scrolledText.getViewport().setBackground(fillColor);
-    scrolledText.getViewport().setBorder(null);
-    scrolledText.setBorder(null);
     textWrapper.add(scrolledText);
     content.add(textWrapper, BorderLayout.CENTER);
 

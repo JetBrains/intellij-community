@@ -28,7 +28,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 09-May-17
  */
 public class LaunchJShellConsoleAction extends AnAction{
   public LaunchJShellConsoleAction() {
@@ -64,10 +63,5 @@ public class LaunchJShellConsoleAction extends AnAction{
     catch (Exception ex) {
       JShellDiagnostic.notifyError(ex, project);
     }
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
   }
 }

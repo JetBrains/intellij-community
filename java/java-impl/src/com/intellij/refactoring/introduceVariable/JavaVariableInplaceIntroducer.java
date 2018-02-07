@@ -95,7 +95,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
 
     final List<RangeMarker> rangeMarkers = getOccurrenceMarkers();
     editor.putUserData(ReassignVariableUtil.OCCURRENCES_KEY,
-                       rangeMarkers.toArray(new RangeMarker[rangeMarkers.size()]));
+                       rangeMarkers.toArray(new RangeMarker[0]));
     myReplaceSelf = myExpr.getParent() instanceof PsiExpressionStatement;
     mySkipTypeExpressionOnStart = !(myExpr instanceof PsiFunctionalExpression && myReplaceSelf);
   }
@@ -109,13 +109,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         myEditor.getCaretModel().moveToOffset(typeElement.getTextOffset());
       }
     }
-    super.beforeTemplateStart();
-  }
-
-  @Override
-  protected void onRenameTemplateStarted() {
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    super.beforeTemplateStart();
   }
 
   @Nullable

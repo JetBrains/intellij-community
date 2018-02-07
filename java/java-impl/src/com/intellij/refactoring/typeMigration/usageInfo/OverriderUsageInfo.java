@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * Date: 27-Mar-2008
  */
 public class OverriderUsageInfo extends TypeMigrationUsageInfo{
   private final PsiMethod myBaseMethod;

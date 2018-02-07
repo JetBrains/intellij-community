@@ -1,23 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
-import gnu.trove.THashMap;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Text;
@@ -28,14 +19,16 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 abstract class AbstractCollectionBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
-  private Map<Class<?>, Binding> itemBindings;
+  private List<Binding> itemBindings;
 
   protected final Class<?> itemType;
   @Nullable
-  protected final AbstractCollection annotation;
+  private final AbstractCollection annotation;
+  @Nullable
+  protected final XCollection newAnnotation;
+
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Serializer serializer;
 
@@ -43,7 +36,12 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     super(accessor);
 
     itemType = elementType;
-    annotation = accessor == null ? null : accessor.getAnnotation(AbstractCollection.class);
+    newAnnotation = accessor == null ? null : accessor.getAnnotation(XCollection.class);
+    annotation = newAnnotation == null ? (accessor == null ? null : accessor.getAnnotation(AbstractCollection.class)) : null;
+  }
+
+  protected boolean isSortOrderedSet() {
+    return annotation == null || annotation.sortOrderedSet();
   }
 
   @Override
@@ -54,37 +52,42 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @Override
   public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     this.serializer = serializer;
+  }
 
-    if (annotation == null || annotation.surroundWithTag()) {
-      return;
-    }
-
-    if (StringUtil.isEmpty(annotation.elementTag()) ||
-        (annotation.elementTag().equals(Constants.OPTION) && serializer.getBinding(itemType) == null)) {
-      throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
-    }
+  private boolean isSurroundWithTag() {
+    return newAnnotation == null && (annotation == null || annotation.surroundWithTag());
   }
 
   @NotNull
-  private synchronized Map<Class<?>, Binding> getElementBindings() {
+  private Class<?>[] getElementTypes() {
+    if (newAnnotation != null) {
+      return newAnnotation.elementTypes();
+    }
+    return annotation == null ? ArrayUtil.EMPTY_CLASS_ARRAY : annotation.elementTypes();
+  }
+
+  @NotNull
+  private synchronized List<Binding> getElementBindings() {
     if (itemBindings == null) {
       Binding binding = serializer.getBinding(itemType);
-      if (annotation == null || annotation.elementTypes().length == 0) {
-        itemBindings = binding == null ? Collections.<Class<?>, Binding>emptyMap() : Collections.<Class<?>, Binding>singletonMap(itemType, binding);
+      Class<?>[] elementTypes = getElementTypes();
+      if (elementTypes.length == 0) {
+        itemBindings = binding == null ? Collections.<Binding>emptyList() : Collections.singletonList(binding);
       }
       else {
-        itemBindings = new THashMap<Class<?>, Binding>();
+        itemBindings = new SmartList<Binding>();
         if (binding != null) {
-          itemBindings.put(itemType, binding);
+          itemBindings.add(binding);
         }
-        for (Class aClass : annotation.elementTypes()) {
+
+        for (Class<?> aClass : elementTypes) {
           Binding b = serializer.getBinding(aClass);
-          if (b != null) {
-            itemBindings.put(aClass, b);
+          if (b != null && !itemBindings.contains(b)) {
+            itemBindings.add(b);
           }
         }
         if (itemBindings.isEmpty()) {
-          itemBindings = Collections.emptyMap();
+          itemBindings = Collections.emptyList();
         }
       }
     }
@@ -93,7 +96,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
   @Nullable
   private Binding getElementBinding(@NotNull Element element) {
-    for (Binding binding : getElementBindings().values()) {
+    for (Binding binding : getElementBindings()) {
       if (binding.isBoundTo(element)) {
         return binding;
       }
@@ -173,8 +176,13 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     Binding binding = serializer.getBinding(value.getClass());
     if (binding == null) {
-      Element serializedItem = new Element(annotation == null ? Constants.OPTION : annotation.elementTag());
-      String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
+      String elementName = getElementName();
+      if (StringUtil.isEmpty(elementName)) {
+        throw new Error("elementName must be not empty");
+      }
+
+      Element serializedItem = new Element(elementName);
+      String attributeName = getValueAttributeName();
       String serialized = XmlSerializerImpl.convertToString(value);
       if (attributeName.isEmpty()) {
         if (!serialized.isEmpty()) {
@@ -194,7 +202,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   private Object deserializeItem(@NotNull Element node, @Nullable Object context) {
     Binding binding = getElementBinding(node);
     if (binding == null) {
-      String attributeName = annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
+      String attributeName = getValueAttributeName();
       String value;
       if (attributeName.isEmpty()) {
         value = XmlSerializerImpl.getTextValue(node, "");
@@ -207,6 +215,22 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     else {
       return binding.deserializeUnsafe(context, node);
     }
+  }
+
+  @NotNull
+  private String getElementName() {
+    if (newAnnotation != null) {
+      return newAnnotation.elementName();
+    }
+    return annotation == null ? Constants.OPTION : annotation.elementTag();
+  }
+
+  @NotNull
+  private String getValueAttributeName() {
+    if (newAnnotation != null) {
+      return newAnnotation.valueAttributeName();
+    }
+    return annotation == null ? Constants.VALUE : annotation.elementValueAttribute();
   }
 
   @Override
@@ -253,22 +277,21 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @Override
   public boolean isBoundTo(@NotNull Element element) {
     String tagName = getTagName(element);
-    if (tagName == null) {
-      if (element.getName().equals(annotation == null ? Constants.OPTION : annotation.elementTag())) {
-        return true;
-      }
-
-      if (getElementBinding(element) != null) {
-        return true;
-      }
+    if (tagName != null) {
+      return element.getName().equals(tagName);
     }
 
-    return element.getName().equals(tagName);
+    if (getElementBindings().isEmpty()) {
+      return element.getName().equals(getElementName());
+    }
+    else {
+      return getElementBinding(element) != null;
+    }
   }
 
   @Nullable
   private String getTagName(@Nullable Object target) {
-    return annotation == null || annotation.surroundWithTag() ? getCollectionTagName(target) : null;
+    return isSurroundWithTag() ? getCollectionTagName(target) : null;
   }
 
   protected abstract String getCollectionTagName(@Nullable Object target);

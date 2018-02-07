@@ -36,7 +36,7 @@ public class ApplyFilePatchFactory {
     return new ApplyBinaryShelvedFilePatch(patch);
   }
 
-  public static ApplyFilePatchBase createGeneral(final FilePatch patch) {
+  public static ApplyFilePatchBase<?> createGeneral(final FilePatch patch) {
     if (patch instanceof TextFilePatch) {
       return create((TextFilePatch) patch);
     } else if (patch instanceof BinaryFilePatch) {

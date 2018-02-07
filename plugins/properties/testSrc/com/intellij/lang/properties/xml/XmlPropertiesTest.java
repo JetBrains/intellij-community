@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/26/11
  */
 public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
 

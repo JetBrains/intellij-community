@@ -45,12 +45,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
@@ -225,7 +225,13 @@ public class MavenExternalParameters {
       marker = MavenArtifactResolvedM3RtMarker.class;
     }
     else {
-      marker = MavenArtifactResolvedM2RtMarker.class;
+      try {
+        marker = Class.forName("org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker");
+      }
+      catch (ClassNotFoundException e) {
+        LOG.error("Cannot find Maven2 artifact resolved, falling back to Maven3", e);
+        marker = MavenArtifactResolvedM3RtMarker.class;
+      }
     }
 
     File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
@@ -349,15 +355,11 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = System.getenv("JAVA_HOME");
+      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }
-      final Sdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
-      if (jdk == null) {
-        throw new ExecutionException(RunnerBundle.message("maven.java.home.invalid", javaHome));
-      }
-      return jdk;
+      return JavaSdk.getInstance().createJdk("", javaHome);
     }
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -401,6 +403,11 @@ public class MavenExternalParameters {
 
     for (String goal : parameters.getGoals()) {
       parametersList.add(goal);
+    }
+
+    if (parameters.getPomFileName() != null) {
+      parametersList.add("-f");
+      parametersList.add(parameters.getPomFileName());
     }
 
     addOption(parametersList, "P", encodeProfiles(parameters.getProfilesMap()));

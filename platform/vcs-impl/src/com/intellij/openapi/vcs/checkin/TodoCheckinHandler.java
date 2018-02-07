@@ -62,8 +62,6 @@ import static com.intellij.util.ui.UIUtil.getWarningIcon;
 
 /**
  * @author irengrig
- *         Date: 2/17/11
- *         Time: 5:54 PM
  */
 public class TodoCheckinHandler extends CheckinHandler {
   private final Project myProject;

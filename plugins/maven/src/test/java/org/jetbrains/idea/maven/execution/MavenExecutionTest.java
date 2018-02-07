@@ -21,11 +21,20 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -37,16 +46,71 @@ import java.util.Collections;
 @SuppressWarnings({"ConstantConditions"})
 public class MavenExecutionTest extends MavenImportingTestCase {
 
+  private static final String JDK_NAME = "MavenExecutionTestJDK";
+  private String myJdkHome;
+
   @Override
   protected boolean runInDispatchThread() {
     return false;
   }
 
+  @Override
+  public void setUp() throws Exception {
+    edt(() -> {
+      myJdkHome = IdeaTestUtil.requireRealJdkHome();
+      VfsRootAccess.allowRootAccess(getTestRootDisposable(), myJdkHome);
+      super.setUp();
+
+      new WriteAction() {
+        @Override
+        protected void run(@NotNull Result result) {
+          Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(JDK_NAME);
+          if (oldJdk != null) {
+            ProjectJdkTable.getInstance().removeJdk(oldJdk);
+          }
+          VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
+          Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, JDK_NAME);
+          assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
+          ProjectJdkTable.getInstance().addJdk(jdk);
+          ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
+          if (projectRootManager.getProjectSdk() == null) {
+            projectRootManager.setProjectSdk(jdk);
+          }
+        }
+      }.execute();
+    });
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    edt(() -> {
+      if (myJdkHome == null) {
+        //super.setUp() wasn't called
+        return;
+      }
+      Sdk jdk = ProjectJdkTable.getInstance().findJdk(JDK_NAME);
+      if (jdk != null) {
+        new WriteAction() {
+          @Override
+          protected void run(@NotNull Result result) {
+            ProjectJdkTable.getInstance().removeJdk(jdk);
+          }
+        }.execute();
+      }
+
+      super.tearDown();
+    });
+  }
+
   public void testExternalExecutor() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}");
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    edt(() -> {
+      WriteAction.run(() -> {
+        VfsUtil.saveText(createProjectSubFile("src/main/java/A.java"), "public class A {}");
+      });
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    });
 
     new WriteAction<Object>() {
       @Override
@@ -59,7 +123,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     assertFalse(new File(getProjectPath(), "target").exists());
 
-    execute(new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.emptyList()));
+    execute(new MavenRunnerParameters(true, getProjectPath(), (String)null, Arrays.asList("compile"), Collections.emptyList()));
 
     assertTrue(new File(getProjectPath(), "target").exists());
   }
@@ -84,38 +148,38 @@ public class MavenExecutionTest extends MavenImportingTestCase {
     assertModules("project");
     assertExcludes("project", "target");
 
-    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), Arrays.asList("compile"), Collections.emptyList());
+    MavenRunnerParameters params = new MavenRunnerParameters(true, getProjectPath(), (String)null, Arrays.asList("compile"), Collections.emptyList());
     execute(params);
 
     SwingUtilities.invokeAndWait(() -> {
     });
 
-    assertSources("project",
-                  "src/main/java",
-                  "target/generated-sources/foo");
-    assertResources("project",
-                    "src/main/resources");
+    assertSources("project", "src/main/java");
+    assertResources("project", "src/main/resources");
 
-    assertExcludes("project",
-                   "target/bar",
-                   "target/classes",
-                   "target/classes"); // output dirs are collected twice for exclusion and for compiler output
+    assertExcludes("project", "target");
   }
 
   private void execute(final MavenRunnerParameters params) {
     final Semaphore sema = new Semaphore();
     sema.down();
-    UIUtil.invokeLaterIfNeeded(() -> MavenRunConfigurationType.runConfiguration(
+    edt(() -> MavenRunConfigurationType.runConfiguration(
       myProject, params, getMavenGeneralSettings(),
       new MavenRunnerSettings(),
       new ProgramRunner.Callback() {
         @Override
         public void processStarted(final RunContentDescriptor descriptor) {
           descriptor.getProcessHandler().addProcessListener(new ProcessAdapter() {
+
+            @Override
+            public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+              System.out.println(event.getText());
+            }
+
             @Override
             public void processTerminated(@NotNull ProcessEvent event) {
               sema.up();
-              UIUtil.invokeLaterIfNeeded(() -> Disposer.dispose(descriptor));
+              edt(() -> Disposer.dispose(descriptor));
             }
           });
         }

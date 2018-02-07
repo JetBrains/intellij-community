@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
@@ -63,9 +49,9 @@ public class CaptionPanel extends JPanel {
     Graphics2D g2d = (Graphics2D) g;
 
     g.setColor(myActive ? TOP_FLICK_ACTIVE : TOP_FLICK_PASSIVE);
-    g.drawLine(0, 0, getWidth(), 0);
+    UIUtil.drawLine(g, 0, 0, getWidth(), 0);
     g.setColor(myActive ? BOTTOM_FLICK_ACTIVE : BOTTOM_FLICK_PASSIVE);
-    g.drawLine(0, getHeight() - 1, getWidth(), getHeight() - 1);
+    UIUtil.drawLine(g, 0, getHeight() - 1, getWidth(), getHeight() - 1);
     g2d.setPaint(myActive ? UIUtil.getGradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR) :
                             UIUtil.getGradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
 

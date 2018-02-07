@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -8,7 +11,6 @@ import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.coverage.CoverageConfigurable;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
@@ -120,11 +122,6 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
   @Override
   public void cleanUserData(RunConfigurationBase runConfiguration) {
      runConfiguration.putCopyableUserData(CoverageEnabledConfiguration.COVERAGE_KEY, null);
-  }
-
-  @Override
-  public void validateConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, boolean isExecution)
-    throws RuntimeConfigurationException {
   }
 
   @Override

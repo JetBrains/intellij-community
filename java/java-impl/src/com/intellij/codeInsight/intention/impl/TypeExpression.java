@@ -91,7 +91,7 @@ public class TypeExpression extends Expression {
         result.add(PsiTypeLookupItem.createLookupItem(type, null));
       }
     }
-    return result.toArray(new LookupElement[result.size()]);
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 
 }

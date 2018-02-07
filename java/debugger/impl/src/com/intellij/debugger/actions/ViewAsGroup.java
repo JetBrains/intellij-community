@@ -149,7 +149,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
     children.addAll(renderers);
 
-    return children.toArray(new AnAction[children.size()]);
+    return children.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public void update(final AnActionEvent event) {

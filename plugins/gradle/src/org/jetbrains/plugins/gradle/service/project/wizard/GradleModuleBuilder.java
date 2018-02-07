@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -6,10 +6,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
@@ -50,9 +47,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
@@ -62,7 +59,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -109,7 +105,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @NotNull
   @Override
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
-    throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
+    throws InvalidDataException, ConfigurationException {
     LOG.assertTrue(getName() != null);
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
@@ -272,10 +268,12 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     myWizardContext = wizardContext;
+    GradleProjectSettings settings = getExternalProjectSettings().clone();
+    settings.setStoreProjectFilesExternally(ThreeState.UNSURE);
     return new ModuleWizardStep[]{
       new GradleModuleWizardStep(this, wizardContext),
       new ExternalModuleSettingsStep<>(
-        wizardContext, this, new GradleProjectSettingsControl(getExternalProjectSettings()))
+        wizardContext, this, new GradleProjectSettingsControl(settings))
     };
   }
 
@@ -346,8 +344,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
                                                     @NotNull VirtualFile modelContentRootDir,
                                                     String projectName,
                                                     String moduleName,
-                                                    boolean renderNewFile)
-    throws ConfigurationException {
+                                                    boolean renderNewFile) throws ConfigurationException {
     final VirtualFile file = getOrCreateExternalProjectConfigFile(rootProjectPath, GradleConstants.SETTINGS_FILE_NAME);
     if (file == null) return null;
 
@@ -362,7 +359,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     }
     else {
       char separatorChar = file.getParent() == null || !VfsUtilCore.isAncestor(file.getParent(), modelContentRootDir, true) ? '/' : ':';
-      String modulePath = VfsUtil.getPath(file, modelContentRootDir, separatorChar);
+      String modulePath = VfsUtilCore.findRelativePath(file, modelContentRootDir, separatorChar);
 
       Map<String, String> attributes = ContainerUtil.newHashMap();
       attributes.put(TEMPLATE_ATTRIBUTE_MODULE_NAME, moduleName);
@@ -454,11 +451,11 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     if (settingsStep instanceof ProjectSettingsStep) {
       final ProjectSettingsStep projectSettingsStep = (ProjectSettingsStep)settingsStep;
       if (myProjectId != null) {
-        final JTextField moduleNameField = settingsStep.getModuleNameField();
-        if (moduleNameField != null) {
-          moduleNameField.setText(myProjectId.getArtifactId());
+        final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
+        String artifactId = myProjectId.getArtifactId();
+        if (nameLocationSettings != null && artifactId != null) {
+          nameLocationSettings.setModuleName(artifactId);
         }
-        projectSettingsStep.setModuleName(myProjectId.getArtifactId());
       }
       projectSettingsStep.bindModuleSettings();
     }
@@ -490,12 +487,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Nullable
   @Override
   public Project createProject(String name, String path) {
-    Project project = super.createProject(name, path);
-    if (project != null) {
-      GradleProjectSettings settings = getExternalProjectSettings();
-      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(settings.isStoreProjectFilesExternally());
-    }
-    return project;
+    return ExternalProjectsManagerImpl.setupCreatedProject(super.createProject(name, path));
   }
 
   public void setUseKotlinDsl(boolean useKotlinDSL) {

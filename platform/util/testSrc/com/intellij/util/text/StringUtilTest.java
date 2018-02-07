@@ -8,10 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import jetCheck.Generator;
-import jetCheck.PropertyChecker;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Test;
 
 import java.nio.CharBuffer;
@@ -110,7 +110,7 @@ public class StringUtilTest {
     assertEquals("Inherits", StringUtil.unpluralize("Inheritses"));
     assertEquals("s", StringUtil.unpluralize("ss"));
     assertEquals("I", StringUtil.unpluralize("Is"));
-    assertEquals(null, StringUtil.unpluralize("s"));
+    assertNull(StringUtil.unpluralize("s"));
     assertEquals("z", StringUtil.unpluralize("zs"));
     // normal
     assertEquals("case", StringUtil.unpluralize("cases"));
@@ -448,9 +448,9 @@ public class StringUtilTest {
 
   @Test
   public void testDetectSeparators() {
-    assertEquals(null, StringUtil.detectSeparators(""));
-    assertEquals(null, StringUtil.detectSeparators("asd"));
-    assertEquals(null, StringUtil.detectSeparators("asd\t"));
+    assertNull(StringUtil.detectSeparators(""));
+    assertNull(StringUtil.detectSeparators("asd"));
+    assertNull(StringUtil.detectSeparators("asd\t"));
 
     assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\n"));
     assertEquals(LineSeparator.LF, StringUtil.detectSeparators("asd\nads\r"));
@@ -467,12 +467,12 @@ public class StringUtilTest {
 
   @Test
   public void testFindStartingLineSeparator() {
-    assertEquals(null, StringUtil.getLineSeparatorAt("", -1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("", 0));
-    assertEquals(null, StringUtil.getLineSeparatorAt("", 1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", -1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("\nHello", 1));
-    assertEquals(null, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 6));
+    assertNull(StringUtil.getLineSeparatorAt("", -1));
+    assertNull(StringUtil.getLineSeparatorAt("", 0));
+    assertNull(StringUtil.getLineSeparatorAt("", 1));
+    assertNull(StringUtil.getLineSeparatorAt("\nHello", -1));
+    assertNull(StringUtil.getLineSeparatorAt("\nHello", 1));
+    assertNull(StringUtil.getLineSeparatorAt("\nH\rel\nlo", 6));
 
     assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nHello", 0));
     assertEquals(LineSeparator.LF, StringUtil.getLineSeparatorAt("\nH\rel\nlo", 5));
@@ -650,5 +650,16 @@ public class StringUtilTest {
     assertFalse(StringUtil.isLatinAlphanumeric(""));
     assertFalse(StringUtil.isLatinAlphanumeric(null));
     assertFalse(StringUtil.isLatinAlphanumeric("'"));
+  }
+
+  @Test
+  public void testIsShortNameOf() {
+    assertTrue(StringUtil.isShortNameOf("a.b.c", "c"));
+    assertTrue(StringUtil.isShortNameOf("foo", "foo"));
+    assertFalse(StringUtil.isShortNameOf("foo", ""));
+    assertFalse(StringUtil.isShortNameOf("", "foo"));
+    assertFalse(StringUtil.isShortNameOf("a.b.c", "d"));
+    assertFalse(StringUtil.isShortNameOf("x.y.zzz", "zz"));
+    assertFalse(StringUtil.isShortNameOf("x", "a.b.x"));
   }
 }

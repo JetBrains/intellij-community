@@ -2,7 +2,7 @@
   <artifact type="jar" name="debugger-agent-storage">
     <output-path>$PROJECT_DIR$/out/artifacts/debugger_agent</output-path>
     <root id="archive" name="debugger-agent-storage.jar">
-      <element id="module-output" name="debugger-agent-storage" />
+      <element id="module-output" name="intellij.java.debugger.agent.storage" />
     </root>
   </artifact>
 </component>

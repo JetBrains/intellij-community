@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
-import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PlatformUtils
 
 fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, includeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
   var result = url
@@ -47,6 +35,9 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
     }
   }
 
+  if (PlatformUtils.isCidr() || PlatformUtils.isRider()) // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
+    return result
+
   val module = ModuleUtilCore.findModuleForFile(file, project)
   return when {
     module == null -> result
@@ -55,13 +46,12 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
   }
 }
 
-interface ProjectFileStoreOptionManager {
-  val isStoredExternally: Boolean
-}
-
 val Project.isExternalStorageEnabled: Boolean
   get() {
-    val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
-    val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
-    return manager.isStoredExternally || Registry.`is`("store.imported.project.elements.separately", false) || IS_EXTERNAL_STORAGE_ENABLED
+    if (projectFilePath?.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) == true) {
+      return false
+    }
+
+    val manager = ServiceManager.getService(this, ExternalStorageConfigurationManager::class.java) ?: return false
+    return manager.isEnabled() || (ApplicationManager.getApplication()?.isUnitTestMode ?: false)
   }

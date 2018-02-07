@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
@@ -38,8 +39,6 @@
                         serviceImplementation="com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.progress.ProgressManager"
                         serviceImplementation="com.intellij.openapi.progress.impl.ProgressManagerImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.application.PermanentInstallationID"
-                        serviceImplementation="com.intellij.openapi.application.PermanentInstallationIDImpl"/>
 
     <applicationService serviceImplementation="com.intellij.ide.ui.customization.CustomActionsSchema"/>
 
@@ -151,6 +150,8 @@
     <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
                         serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
+
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
     <applicationService serviceInterface="com.intellij.reporting.FreezeLogger"
@@ -202,8 +203,10 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector"/>
+    <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
+        serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -282,6 +285,8 @@
 
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
 
+    <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
                              instance="com.intellij.ide.GeneralSettingsConfigurable"/>
@@ -356,6 +361,7 @@
                         serviceImplementation="com.intellij.ide.RemoteDesktopDetector"/>
 
     <projectService serviceInterface="com.intellij.execution.RunManager" serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.execution.impl.IprRunManagerImpl"/>
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
@@ -380,13 +386,21 @@
     <statistics.usagesCollector implementation="com.intellij.ide.plugins.DisabledPluginsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.ide.plugins.NonBundledPluginsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.featureStatistics.FeaturesUsageCollector"/>
+
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.ProductivityUsageCollector"/>
+
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsOptionsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsStatsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$MyCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.UsageTrigger$FUSCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector$ToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector$ShortcutUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector$ActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollectorImpl$ActionUsagesCollectorNew"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.IntentionsCollector$IntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ExperimentalFeaturesUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.RegistryUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector$MainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ui.LaFUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.os.OsNameUsageCollector"/>
@@ -406,9 +420,6 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$DisabledPlugins"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesUsagesCollector"/>
-
-    <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
-                             displayName="Usage Statistics"/>
 
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 
@@ -528,9 +539,6 @@
     </experimentalFeature>
     <experimentalFeature id="project.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="true">
       <description>New implementation of Project View based on AsyncTreeModel + StructureTreeModel</description>
-    </experimentalFeature>
-    <experimentalFeature id="structure.view.async.tree.model" internalFeature="false" percentOfUsers="100" requireRestart="false">
-      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
     </experimentalFeature>
     <experimentalFeature id="inline.browse.button" internalFeature="true" percentOfUsers="0">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>

@@ -2,6 +2,8 @@ from typing import (
     Any, Iterable, Mapping, Optional, Sequence, Tuple, Type, Union,
 )
 
+from wsgiref.types import WSGIEnvironment
+
 from .datastructures import (
     CombinedMultiDict, EnvironHeaders, Headers, ImmutableMultiDict,
     MultiDict, TypeConversionDict,
@@ -18,9 +20,9 @@ class BaseRequest:
     form_data_parser_class = ...  # type: Type
     trusted_hosts = ...  # type: Optional[Sequence[unicode]]
     disable_data_descriptor = ...  # type: Any
-    environ = ...  # type: Mapping[str, object]
+    environ: WSGIEnvironment = ...
     shallow = ...  # type: Any
-    def __init__(self, environ: Mapping[basestring, object], populate_request: bool=True, shallow: bool=False) -> None: ...
+    def __init__(self, environ: WSGIEnvironment, populate_request: bool = ..., shallow: bool = ...) -> None: ...
     @property
     def url_charset(self) -> str: ...
     @classmethod
@@ -36,8 +38,9 @@ class BaseRequest:
     def stream(self): ...
     input_stream = ...  # type: Any
     args = ...  # type: ImmutableMultiDict
-    def data(self): ...
-    def get_data(self, cache: bool=True, as_text: bool=False, parse_form_data: bool=False) -> str: ...
+    @property
+    def data(self) -> str: ...
+    def get_data(self, cache: bool = ..., as_text: bool = ..., parse_form_data: bool = ...) -> str: ...
     form = ...  # type: ImmutableMultiDict
     values = ...  # type: CombinedMultiDict
     files = ...  # type: MultiDict
@@ -77,14 +80,14 @@ class BaseResponse:
     direct_passthrough = ...  # type: bool
     response = ...  # type: Iterable[str]
     def __init__(self,
-                 response: Optional[Union[Iterable[str], str]] = None,
-                 status: Optional[Union[basestring, int]] = None,
+                 response: Optional[Union[Iterable[str], str]] = ...,
+                 status: Optional[Union[basestring, int]] = ...,
                  headers: Optional[Union[Headers,
                                          Mapping[basestring, basestring],
                                          Sequence[Tuple[basestring, basestring]]]] = None,
-                 mimetype: Optional[basestring] = None,
-                 content_type: Optional[basestring] = None,
-                 direct_passthrough: Optional[bool] = False) -> None: ...
+                 mimetype: Optional[basestring] = ...,
+                 content_type: Optional[basestring] = ...,
+                 direct_passthrough: Optional[bool] = ...) -> None: ...
     def call_on_close(self, func): ...
     @classmethod
     def force_type(cls, response, environ=None): ...

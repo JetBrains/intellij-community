@@ -26,6 +26,7 @@ public class ImplicitNumericConversionFixTest extends IGQuickFixesTestCase {
 
   public void testOperatorAssignment() { doTest(); }
   public void testHexadecimalLiteral() { doTest(); }
+  public void testPrecedence() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.impl;
 
+import com.intellij.application.UtilKt;
 import com.intellij.application.options.editor.CodeFoldingConfigurable;
 import com.intellij.codeHighlighting.*;
 import com.intellij.codeInsight.EditorInfo;
@@ -119,6 +106,7 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import gnu.trove.THashSet;
+import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -186,7 +174,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void runStartupActivities() {
-
   }
 
   private static void typeInAlienEditor(Editor alienEditor, char c) {
@@ -195,7 +182,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     action.actionPerformed(alienEditor, c, dataContext);
   }
-
 
   public void testHighlightersUpdate() throws Exception {
     configureByFile(BASE_PATH + "HighlightersUpdate.java");
@@ -291,7 +277,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         LocalInspectionTool e = ((LocalInspectionToolWrapper)tool).getTool();
         locals.add(e);
       });
-      return locals.toArray(new LocalInspectionTool[locals.size()]);
+      return locals.toArray(LocalInspectionTool.EMPTY_ARRAY);
     }
     return new LocalInspectionTool[]{
       new FieldCanBeLocalInspection(),
@@ -1318,19 +1304,18 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     GeneralSettings settings = GeneralSettings.getInstance();
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     boolean frameSave = settings.isSaveOnFrameDeactivation();
-    boolean appSave = application.isDoNotSave();
-
     settings.setSaveOnFrameDeactivation(true);
-    application.doNotSave(false);
-    try {
-      StoreUtil.saveDocumentsAndProjectsAndApp();
+    UtilKt.runInAllowSaveMode(() -> {
+      try {
+        StoreUtil.saveDocumentsAndProjectsAndApp(false);
 
-      checkDaemonReaction(false, StoreUtil::saveDocumentsAndProjectsAndApp);
-    }
-    finally {
-      application.doNotSave(appSave);
-      settings.setSaveOnFrameDeactivation(frameSave);
-    }
+        checkDaemonReaction(false, () -> StoreUtil.saveDocumentsAndProjectsAndApp(false));
+      }
+      finally {
+        settings.setSaveOnFrameDeactivation(frameSave);
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   public void testApplyLocalQuickFix() {
@@ -2186,11 +2171,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testModificationInWorkspaceXmlDoesNotCauseRehighlight() {
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    boolean appSave = application.isDoNotSave();
-    application.doNotSave(false);
-    try {
-      application.saveAll();
-      VirtualFile workspaceFile = ObjectUtils.assertNotNull(getProject().getWorkspaceFile());
+    UtilKt.runInAllowSaveMode(() -> {
+      application.saveAll(true);
+      VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
       PsiFile excluded = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
 
       List<HighlightInfo> errors = highlightErrors();
@@ -2207,10 +2190,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       UIUtil.dispatchAllInvocationEvents();
       scope = me.getFileDirtyScope(getEditor().getDocument(), Pass.UPDATE_ALL);
       assertNull(scope);
-    }
-    finally {
-      application.doNotSave(appSave);
-    }
+      return Unit.INSTANCE;
+    });
   }
 
   public void testLightBulbDoesNotUpdateIntentionsInEDT() {

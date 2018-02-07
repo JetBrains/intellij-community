@@ -15,29 +15,40 @@
  */
 package com.intellij.openapi.externalSystem.service.ui;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.ColoredListCellRendererWrapper;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
  */
-public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
+public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSystemJdkComboBox.JdkComboBoxItem> {
 
   private static final int MAX_PATH_LENGTH = 50;
 
@@ -51,21 +62,20 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
   public ExternalSystemJdkComboBox(@Nullable Project project) {
     myProject = project;
-    setRenderer(new ColoredListCellRendererWrapper() {
+    setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
 
       @Override
-      protected void doCustomize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        JdkComboBoxItem item = (JdkComboBoxItem)value;
+      protected void customizeCellRenderer(@NotNull JList list, JdkComboBoxItem value, int index, boolean selected, boolean hasFocus) {
         CompositeAppearance appearance = new CompositeAppearance();
         SdkType sdkType = JavaSdk.getInstance();
         appearance.setIcon(sdkType.getIcon());
-        SimpleTextAttributes attributes = getTextAttributes(item.valid, selected);
+        SimpleTextAttributes attributes = getTextAttributes(value.valid, selected);
         CompositeAppearance.DequeEnd ending = appearance.getEnding();
 
-        ending.addText(item.label, attributes);
-        if (item.comment != null && !item.comment.equals(item.jdkName)) {
+        ending.addText(value.label, attributes);
+        if (value.comment != null && !value.comment.equals(value.jdkName)) {
           final SimpleTextAttributes textAttributes;
-          if (!item.valid) {
+          if (!value.valid) {
             textAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;
           }
           else {
@@ -74,7 +84,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
                              : SimpleTextAttributes.GRAY_ATTRIBUTES;
           }
 
-          ending.addComment(item.comment, textAttributes);
+          ending.addComment(value.comment, textAttributes);
         }
 
         final CompositeAppearance compositeAppearance = ending.getAppearance();
@@ -92,6 +102,63 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     myProject = project;
   }
 
+  public void setSetupButton(@NotNull JButton setUpButton,
+                             @NotNull ProjectSdksModel jdksModel,
+                             @Nullable String actionGroupTitle,
+                             @Nullable Condition<SdkTypeId> creationFilter) {
+    setSetupButton(setUpButton, jdksModel, actionGroupTitle, creationFilter, null);
+  }
+
+  public void setSetupButton(@NotNull JButton setUpButton,
+                             @NotNull ProjectSdksModel jdksModel,
+                             @Nullable String actionGroupTitle,
+                             @Nullable Condition<SdkTypeId> creationFilter,
+                             @Nullable WizardContext wizardContext) {
+    Arrays.stream(setUpButton.getActionListeners()).forEach(setUpButton::removeActionListener);
+
+    setUpButton.addActionListener(e -> {
+      DefaultActionGroup group = new DefaultActionGroup();
+      jdksModel.createAddActions(group, this, getSelectedJdk(), jdk -> {
+        Sdk existingJdk = Arrays.stream(ProjectJdkTable.getInstance().getAllJdks())
+          .filter(sdk -> StringUtil.equals(sdk.getHomePath(), jdk.getHomePath()))
+          .findFirst().orElse(null);
+
+        String jdkName;
+        if (existingJdk == null) {
+          SdkConfigurationUtil.addSdk(jdk);
+          jdkName = jdk.getName();
+        }
+        else {
+          jdkName = existingJdk.getName();
+        }
+        refreshData(jdkName, wizardContext != null ? wizardContext.getProjectJdk() : null);
+      }, creationFilter);
+      final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      if (group.getChildrenCount() > 1) {
+        JBPopupFactory.getInstance()
+          .createActionGroupPopup(actionGroupTitle, group, dataContext, JBPopupFactory.ActionSelectionAid.MNEMONICS, false)
+          .showUnderneathOf(setUpButton);
+      }
+      else {
+        final AnActionEvent event =
+          new AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, new Presentation(""), ActionManager.getInstance(), 0);
+        group.getChildren(event)[0].actionPerformed(event);
+      }
+    });
+  }
+
+  @Nullable
+  public Sdk getSelectedJdk() {
+    String jdkName = getSelectedValue();
+    Sdk jdk = null;
+    try {
+      jdk = ExternalSystemJdkUtil.getJdk(myProject, jdkName);
+    }
+    catch (ExternalSystemJdkException ignore) {
+    }
+    return jdk;
+  }
+
   @NotNull
   public ExternalSystemJdkComboBox withoutJre() {
     suggestJre = false;
@@ -99,7 +166,11 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
   }
 
   public void refreshData(@Nullable String selectedValue) {
-    Map<String, JdkComboBoxItem> jdkMap = collectComboBoxItem();
+    refreshData(selectedValue, null);
+  }
+
+  public void refreshData(@Nullable String selectedValue, @Nullable Sdk projectJdk) {
+    Map<String, JdkComboBoxItem> jdkMap = collectComboBoxItem(projectJdk);
     if (selectedValue != null && !jdkMap.containsKey(selectedValue)) {
       assert selectedValue.length() > 0;
       jdkMap.put(selectedValue, new JdkComboBoxItem(selectedValue, selectedValue, "", false));
@@ -107,19 +178,19 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
 
     removeAllItems();
 
+    ComboBoxModel<JdkComboBoxItem> comboBoxModel = getModel();
     for (Map.Entry<String, JdkComboBoxItem> entry : jdkMap.entrySet()) {
-      //noinspection unchecked
-      ((DefaultComboBoxModel)getModel()).addElement(entry.getValue());
+      ((MutableComboBoxModel<JdkComboBoxItem>)comboBoxModel).addElement(entry.getValue());
     }
 
-    select((DefaultComboBoxModel)getModel(), selectedValue);
+    select(comboBoxModel, selectedValue);
   }
 
-  private static void select(DefaultComboBoxModel model, Object value) {
+  private static void select(ComboBoxModel<JdkComboBoxItem> model, Object value) {
     for (int i = 0; i < model.getSize(); i++) {
-      JdkComboBoxItem comboBoxUtil = (JdkComboBoxItem)model.getElementAt(i);
-      if (comboBoxUtil.jdkName.equals(value)) {
-        model.setSelectedItem(comboBoxUtil);
+      JdkComboBoxItem item = model.getElementAt(i);
+      if (item.jdkName.equals(value)) {
+        model.setSelectedItem(item);
         return;
       }
     }
@@ -135,16 +206,19 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     return item != null ? ((JdkComboBoxItem)item).jdkName : null;
   }
 
-  private Map<String, JdkComboBoxItem> collectComboBoxItem() {
+  private Map<String, JdkComboBoxItem> collectComboBoxItem(@Nullable Sdk projectSdk) {
     Map<String, JdkComboBoxItem> result = new LinkedHashMap<>();
 
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-      String name = projectJdk.getName();
-      String comment = buildComment(projectJdk);
-      result.put(name, new JdkComboBoxItem(name, name, comment, ((SdkType)projectJdk.getSdkType()).sdkHasValidPath(projectJdk)));
+    for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
+      if (!((SdkType)sdk.getSdkType()).sdkHasValidPath(sdk)) {
+        continue;
+      }
+      String name = sdk.getName();
+      String comment = buildComment(sdk);
+      result.put(name, new JdkComboBoxItem(name, name, comment, true));
     }
 
-    if(suggestJre) {
+    if (suggestJre) {
       final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       assert internalJdk.getHomePath() != null;
       result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
@@ -156,24 +230,25 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
                  ));
     }
 
-    if (myProject != null && !myProject.isDisposed()) {
-      final Sdk projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-      result.put(ExternalSystemJdkUtil.USE_PROJECT_JDK,
-                 new JdkComboBoxItem(
-                   ExternalSystemJdkUtil.USE_PROJECT_JDK, "Use Project JDK",
-                   projectSdk == null ? "not defined yet" : buildComment(projectSdk), projectSdk != null
-                 ));
+    if (projectSdk == null) {
+      if (myProject != null && !myProject.isDisposed()) {
+        projectSdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+      }
     }
 
-    String javaHomePath = System.getenv("JAVA_HOME");
-    String javaHomeLabel = ExternalSystemBundle.message("external.system.java.home.env");
+    if (projectSdk != null) {
+      result.put(ExternalSystemJdkUtil.USE_PROJECT_JDK,
+                 new JdkComboBoxItem(ExternalSystemJdkUtil.USE_PROJECT_JDK, "Use Project JDK", buildComment(projectSdk), true));
+    }
 
-    result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
-               new JdkComboBoxItem(
-                 ExternalSystemJdkUtil.USE_JAVA_HOME, javaHomeLabel,
-                 javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath), javaHomePath != null
-               ));
-
+    String javaHomePath = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
+    if (ExternalSystemJdkUtil.isValidJdk(javaHomePath)) {
+      result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
+                 new JdkComboBoxItem(
+                   ExternalSystemJdkUtil.USE_JAVA_HOME, ExternalSystemBundle.message("external.system.java.home.env"),
+                   truncateLongPath(javaHomePath), true
+                 ));
+    }
     return result;
   }
 
@@ -213,7 +288,7 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup {
     }
   }
 
-  private static class JdkComboBoxItem {
+  static class JdkComboBoxItem {
     private String jdkName;
     private String label;
     private String comment;

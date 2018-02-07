@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.search;
 
@@ -43,8 +31,9 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,7 +66,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     SearchScope scope;
     SearchScope useScope;
-    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, parameters.getScope(), project);
+    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
     if (info == null) {
       scope = parameters.getScope();
       useScope = ReadAction.compute(baseClass::getUseScope);
@@ -275,23 +264,23 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       }
     }
 
-    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {
     return ReadAction.compute(() -> PsiUtil.getJarFile(aClass));
   }
 
+  @Nullable
   private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                               @NotNull SearchScope useScope,
                                                                                @NotNull Project project) {
-    if (!(useScope instanceof GlobalSearchScope)) return null;
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
 
     CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    if (compilerReferenceService == null) return null; //This is possible in CLion, where Java compiler is not defined
+
     return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters),
-                                                        (GlobalSearchScope)useScope,
                                                         (GlobalSearchScope)scope,
                                                         JavaFileType.INSTANCE);
   }

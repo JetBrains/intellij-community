@@ -89,7 +89,7 @@ public class JsonSchemaReader {
   @Nullable
   public static String readSchemaId(@NotNull final Project project, @NotNull final VirtualFile schemaFile) {
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
-    if (psiFile == null || !(psiFile instanceof JsonFile)) return null;
+    if (!(psiFile instanceof JsonFile)) return null;
 
     final CachedValueProvider<String> provider = () -> {
       final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);

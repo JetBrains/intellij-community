@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.i18n;
 
@@ -358,13 +360,13 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      final ProblemDescriptor[] descriptors = checkElement(initializer.getBody(), manager, isOnTheFly);
       if (descriptors != null) {
         ContainerUtil.addAll(result, descriptors);
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -396,7 +398,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -452,6 +454,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     }
 
     @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+    }
+
+    @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
@@ -492,7 +498,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
           }
         }
 
-        LocalQuickFix[] farr = fixes.toArray(new LocalQuickFix[fixes.size()]);
+        LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description, myOnTheFly, farr,
                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -618,11 +624,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     }
 
     return JavaPsiFacade.getInstance(expression.getProject()).findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
   }
 
   private static boolean isClassNonNls(@NotNull PsiClass clazz) {
@@ -833,7 +834,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
     return TO_STRING.equals(method.getName())
-           && method.getParameterList().getParametersCount() == 0
+           && method.getParameterList().isEmpty()
            && returnType != null
            && "java.lang.String".equals(returnType.getCanonicalText());
   }

@@ -25,10 +25,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.MouseEventHandler;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +45,20 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     @Override
     protected void paintComponent(Graphics g) {
       Insets insets = getInsets();
-      UIUtil.drawImage(g, myImage, insets.left, insets.top, null);
+      Graphics2D g2d = (Graphics2D)g;
+      double scale = (double)JBUI.sysScale((Graphics2D)g);
+      double devTop = insets.top * scale;
+      // A workaround for IDEA-183253. If insets.top is *.5 in device space, then move up the image by one device pixel.
+      if (devTop + 0.5 == Math.floor(devTop + 0.5)) {
+        g2d = (Graphics2D)g2d.create();
+        double devPix = 1 / scale;
+        g2d.translate(0, -devPix);
+      }
+      try {
+        UIUtil.drawImage(g2d, myImage, insets.left, insets.top, null);
+      } finally {
+        if (g2d != g) g2d.dispose();
+      }
     }
   };
 
@@ -232,8 +242,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
            myComponent.isEnabled() &&
            myComponent.isShowing() &&
            myComponent.getVisibleRect().intersects(getVisibleRect(selected)) &&
-           (processIfUnfocused || myComponent.isFocusOwner()) &&
-           !isPopup();
+           (processIfUnfocused || myComponent.isFocusOwner());
   }
 
   private void doHandleSelectionChange(@NotNull KeyType selected, boolean processIfUnfocused) {
@@ -252,6 +261,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
       myPopup.setBounds(bounds);
+      myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
       repaintKeyItem();
     }

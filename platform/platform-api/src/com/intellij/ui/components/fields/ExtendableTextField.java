@@ -59,12 +59,6 @@ public class ExtendableTextField extends JBTextField {
     setExtensions(asList(extensions));
   }
 
-  public void addExtension(@NotNull Extension extension) {
-    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
-    extensions.add(extension);
-    setExtensions(extensions);
-  }
-
   public void setExtensions(Collection<Extension> extensions) {
     setExtensions(new ArrayList<>(extensions));
   }
@@ -74,6 +68,17 @@ public class ExtendableTextField extends JBTextField {
     this.extensions = unmodifiableList(extensions);
     putClientProperty("JTextField.variant", VARIANT);
   }
+
+  public void addExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.add(extension)) setExtensions(extensions);
+  }
+
+  public void removeExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.remove(extension)) setExtensions(extensions);
+  }
+
 
   public interface Extension {
     Icon getIcon(boolean hovered);
@@ -114,17 +119,15 @@ public class ExtendableTextField extends JBTextField {
   @Deprecated
   public void setUI(TextUI ui) {
     TextUI suggested = ui;
-    String name = ui == null ? null : ui.getClass().getSuperclass().getName();
-    if (!"com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI".equals(name)) {
-      try {
+    try {
+      if (ui == null || !Class.forName("com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI").isAssignableFrom(ui.getClass())) {
         ui = (TextUI)Class
           .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI")
           .getDeclaredMethod("createUI", JComponent.class)
           .invoke(null, this);
       }
-      catch (Exception ignore) {
-      }
-    }
+    } catch (Exception ignore) {}
+
     super.setUI(ui);
     if (ui != suggested) {
       try {

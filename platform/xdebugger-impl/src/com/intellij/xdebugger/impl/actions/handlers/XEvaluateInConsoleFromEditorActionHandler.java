@@ -47,7 +47,7 @@ public class XEvaluateInConsoleFromEditorActionHandler extends XAddToWatchesFrom
   @Override
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor == null || !(editor instanceof EditorEx)) {
+    if (!(editor instanceof EditorEx)) {
       return;
     }
 

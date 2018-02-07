@@ -1,34 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.net.HttpProxyConfigurable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.config.SvnConfigureProxiesDialog;
-import org.jetbrains.idea.svn.svnkit.SvnKitManager;
 
 import javax.swing.*;
 
@@ -47,7 +30,6 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   private JBRadioButton mySSLv3RadioButton;
   private JBRadioButton myTLSv1RadioButton;
   private JBRadioButton myAllRadioButton;
-  private JLabel mySSLExplicitly;
 
   private JButton myEditProxiesButton;
 
@@ -72,25 +54,9 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     bg.add(mySSLv3RadioButton);
     bg.add(myTLSv1RadioButton);
     bg.add(myAllRadioButton);
-    if (SvnKitManager.isSSLProtocolExplicitlySet()) {
-      mySSLv3RadioButton.setEnabled(false);
-      myTLSv1RadioButton.setEnabled(false);
-      myAllRadioButton.setEnabled(false);
-      mySSLExplicitly.setVisible(true);
-      mySSLExplicitly.setText("Set explicitly to: " + SvnKitManager.getExplicitlySetSslProtocols());
-    }
-    else {
-      mySSLv3RadioButton.setEnabled(true);
-      myTLSv1RadioButton.setEnabled(true);
-      myAllRadioButton.setEnabled(true);
-      mySSLExplicitly.setVisible(false);
-      final String version = SystemInfo.JAVA_RUNTIME_VERSION;
-      final boolean jdkBugFixed = version.startsWith("1.7") || version.startsWith("1.8");
-      if (!jdkBugFixed) {
-        mySSLExplicitly.setVisible(true);
-        mySSLExplicitly.setText("Setting 'All' value in this JDK version (" + version + ") is not recommended.");
-      }
-    }
+    mySSLv3RadioButton.setEnabled(true);
+    myTLSv1RadioButton.setEnabled(true);
+    myAllRadioButton.setEnabled(true);
   }
 
   @NotNull
@@ -142,7 +108,6 @@ public class NetworkSettingsPanel implements ConfigurableUi<SvnConfiguration> {
     configuration.setSshReadTimeout(((SpinnerNumberModel)mySSHReadTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setHttpTimeout(((SpinnerNumberModel)myHttpTimeout.getModel()).getNumber().longValue() * 1000);
     configuration.setSslProtocols(getSelectedSSL());
-    SvnVcs.getInstance(myProject).getSvnKitManager().refreshSSLProperty();
   }
 
   private SvnConfiguration.SSLProtocols getSelectedSSL() {

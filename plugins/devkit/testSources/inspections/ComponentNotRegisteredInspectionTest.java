@@ -70,6 +70,12 @@ public class ComponentNotRegisteredInspectionTest extends PluginModuleTestCase {
     myFixture.testHighlighting("RegisteredAction.java");
   }
 
+  public void testRegisteredInIncludedFileAction() {
+    setPluginXml("ActionXInclude.xml");
+    myFixture.copyFileToProject("ActionXInclude_included.xml", "META-INF/ActionXInclude_included.xml");
+    myFixture.testHighlighting("ActionXInclude.java");
+  }
+
   public void testUnregisteredAction() {
     setPluginXml("unregisteredAction-plugin.xml");
     myFixture.testHighlighting("UnregisteredAction.java");

@@ -1,4 +1,4 @@
-# Stubs for argparse (Python 3.4)
+# Stubs for argparse (Python 2.7 and 3.4)
 
 from typing import (
     Any, Callable, Iterable, List, IO, Optional, Sequence, Tuple, Type, Union,
@@ -23,6 +23,20 @@ ZERO_OR_MORE = ...  # type: str
 class ArgumentError(Exception): ...
 
 class ArgumentParser:
+    prog = ...  # type: _Text
+    usage = ...  # type: Optional[_Text]
+    description = ...  # type: Optional[_Text]
+    epilog = ...  # type: Optional[_Text]
+    formatter_class = ...  # type: Type[HelpFormatter]
+    prefix_chars = ...  # type: _Text
+    fromfile_prefix_chars = ...  # type: Optional[_Text]
+    argument_default = ...  # type: Optional[_Text]
+    conflict_handler = ...  # type: _Text
+    add_help = ...  # type: bool
+
+    if sys.version_info >= (3, 5):
+        allow_abbrev = ...  # type: bool
+
     if sys.version_info >= (3, 5):
         def __init__(self,
                      prog: Optional[str] = ...,

@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 2/1/12
  *
  */
 @SupportedAnnotationTypes("*")

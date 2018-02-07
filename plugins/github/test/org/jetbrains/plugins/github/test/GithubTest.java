@@ -75,6 +75,11 @@ public abstract class GithubTest extends GitPlatformTest {
     VfsTestUtil.createDir (projectRoot, "folder/empty_folder");
   }
 
+  @Override
+  protected boolean hasRemoteGitOperation() {
+    return true;
+  }
+
   protected void checkNotification(@NotNull NotificationType type, @Nullable String title, @Nullable String content) {
     Notification actualNotification = vcsNotifier.getLastNotification();
     assertNotNull("No notification was shown", actualNotification);

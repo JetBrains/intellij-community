@@ -67,10 +67,7 @@ public class Main {
 
     setFlags(args);
 
-    if (isHeadless()) {
-      System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
-    }
-    else if (!checkGraphics()) {
+    if (!isHeadless() && !checkGraphics()) {
       System.exit(NO_GRAPHICS);
     }
 
@@ -94,9 +91,12 @@ public class Main {
   public static void setFlags(String[] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isCommandLine(args);
+    if (isHeadless()) {
+      System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
+    }
   }
 
-  private static boolean isHeadless(String[] args) {
+  public static boolean isHeadless(String[] args) {
     if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
       return true;
     }
@@ -125,7 +125,9 @@ public class Main {
   }
 
   public static boolean isApplicationStarterForBuilding(final String[] args) {
-    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") || Comparing.strEqual(args[0], "listBundledPlugins"));
+    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") ||
+                               Comparing.strEqual(args[0], "listBundledPlugins") ||
+                               Comparing.strEqual(args[0], "buildAppcodeCache"));
   }
 
   public static void showMessage(String title, Throwable t) {

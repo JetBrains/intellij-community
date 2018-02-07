@@ -38,7 +38,6 @@ import java.util.UUID;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 4/25/12
 */
 class AutoMakeMessageHandler extends DefaultMessageHandler {
   private static final Key<Notification> LAST_AUTO_MAKE_NOFITICATION = Key.create("LAST_AUTO_MAKE_NOFITICATION");
@@ -58,10 +57,6 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
 
   public boolean unprocessedFSChangesDetected() {
     return myUnprocessedFSChangesDetected;
-  }
-
-  @Override
-  public void buildStarted(UUID sessionId) {
   }
 
   @Override

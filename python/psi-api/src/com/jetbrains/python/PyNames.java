@@ -108,6 +108,7 @@ public class PyNames {
 
   public static final String CLASSMETHOD = "classmethod";
   public static final String STATICMETHOD = "staticmethod";
+  public static final String OVERLOAD = "overload";
 
   public static final String PROPERTY = "property";
   public static final String SETTER = "setter";
@@ -190,6 +191,7 @@ public class PyNames {
   public static final String BYTES = "__bytes__";
   public static final String ABS = "__abs__";
   public static final String ROUND = "__round__";
+  public static final String CLASS_GETITEM = "__class_getitem__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -198,7 +200,8 @@ public class PyNames {
   public static final String CALLABLE_BUILTIN = "callable";
   public static final String NAMEDTUPLE = "namedtuple";
   public static final String COLLECTIONS = "collections";
-  public static final String COLLECTIONS_NAMEDTUPLE = COLLECTIONS + "." + NAMEDTUPLE;
+  public static final String COLLECTIONS_NAMEDTUPLE_PY2 = COLLECTIONS + "." + NAMEDTUPLE;
+  public static final String COLLECTIONS_NAMEDTUPLE_PY3 = COLLECTIONS + "." + INIT + "." + NAMEDTUPLE;
 
   public static final String FORMAT = "format";
 
@@ -461,19 +464,43 @@ public class PyNames {
     .put("__fspath__", _only_self_descr)
     .build();
 
+  public static final ImmutableMap<String, BuiltinDescription> PY37_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(PY36_BUILTIN_METHODS)
+    .put(CLASS_GETITEM, new BuiltinDescription("(cls, item)"))
+    .put("__mro_entries__", new BuiltinDescription("(self, bases)"))
+    .build();
+
+  @NotNull
+  private static final ImmutableMap<String, BuiltinDescription> PY37_MODULE_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .put("__getattr__", new BuiltinDescription("(name)"))
+    .put("__dir__", new BuiltinDescription("()"))
+    .build();
+
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
-    if (level.isAtLeast(LanguageLevel.PYTHON36)) {
+    if (level.isAtLeast(LanguageLevel.PYTHON37)) {
+      return PY37_BUILTIN_METHODS;
+    }
+    else if (level.isAtLeast(LanguageLevel.PYTHON36)) {
       return PY36_BUILTIN_METHODS;
     }
     else if (level.isAtLeast(LanguageLevel.PYTHON35)) {
       return PY35_BUILTIN_METHODS;
     }
-    else if (level.isAtLeast(LanguageLevel.PYTHON30)) {
+    else if (!level.isPython2()) {
       return PY3_BUILTIN_METHODS;
     }
     else {
       return PY2_BUILTIN_METHODS;
     }
+  }
+
+  @NotNull
+  public static ImmutableMap<String, BuiltinDescription> getModuleBuiltinMethods(@NotNull LanguageLevel level) {
+    if (level.isAtLeast(LanguageLevel.PYTHON37)) {
+      return PY37_MODULE_BUILTIN_METHODS;
+    }
+
+    return ImmutableMap.of();
   }
 
   // canonical names, not forced by interpreter

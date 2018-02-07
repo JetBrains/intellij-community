@@ -74,7 +74,7 @@ public class TokenSet {
             list.add(type);
           }
         }
-        types = list.toArray(new IElementType[list.size()]);
+        types = list.toArray(IElementType.EMPTY_ARRAY);
       }
       myTypes = types;
     }

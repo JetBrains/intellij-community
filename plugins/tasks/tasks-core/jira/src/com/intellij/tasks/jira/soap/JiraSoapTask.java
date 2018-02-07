@@ -22,7 +22,6 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.TaskType;
 import com.intellij.tasks.jira.JiraTask;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +111,7 @@ class JiraSoapTask extends JiraTask {
 
   @NotNull
   public Comment[] getComments() {
-    return myComments.toArray(new Comment[myComments.size()]);
+    return myComments.toArray(Comment.EMPTY_ARRAY);
   }
 
   @Nullable

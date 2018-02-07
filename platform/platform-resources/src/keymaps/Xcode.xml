@@ -8,24 +8,22 @@
     <keyboard-shortcut first-keystroke="meta 1"/>
   </action>
   <action id="ActivateStructureToolWindow">
-    <keyboard-shortcut first-keystroke="meta 2"/>
-  </action>
-  <action id="ActivateFindToolWindow">
     <keyboard-shortcut first-keystroke="meta 3"/>
   </action>
+  <action id="ActivateFindToolWindow" />
   <action id="ActivateMessagesToolWindow">
-    <keyboard-shortcut first-keystroke="meta 4"/>
+    <keyboard-shortcut first-keystroke="meta 5" />
+    <keyboard-shortcut first-keystroke="meta 9" />
   </action>
   <action id="ActivateRunToolWindow">
-    <keyboard-shortcut first-keystroke="meta 5"/>
+    <keyboard-shortcut first-keystroke="meta 6" />
   </action>
   <action id="ActivateDebugToolWindow">
-    <keyboard-shortcut first-keystroke="meta shift Y"/>
-    <keyboard-shortcut first-keystroke="meta 6"/>
+    <keyboard-shortcut first-keystroke="meta 7" />
+    <keyboard-shortcut first-keystroke="shift meta Y" />
   </action>
   <action id="ActivateVersionControlToolWindow">
-    <keyboard-shortcut first-keystroke="meta 9"/>
-    <keyboard-shortcut first-keystroke="meta shift 9"/>
+    <keyboard-shortcut first-keystroke="meta 2" />
   </action>
   <action id="FileStructurePopup">
     <keyboard-shortcut first-keystroke="control 6"/>
@@ -47,7 +45,7 @@
     <keyboard-shortcut first-keystroke="alt shift meta K"/>
   </action>
   <action id="CloseProject">
-    <keyboard-shortcut first-keystroke="meta alt W"/>
+    <keyboard-shortcut first-keystroke="shift control meta W"/>
   </action>
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="control SPACE"/>
@@ -82,7 +80,10 @@
     <keyboard-shortcut first-keystroke="BACK_SPACE"/>
     <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
   </action>
-
+  <action id="PasteMultiple">
+    <keyboard-shortcut first-keystroke="shift meta V"/>
+    <keyboard-shortcut first-keystroke="alt meta V"/>
+  </action>
   <action id="EditorDelete">
     <keyboard-shortcut first-keystroke="DELETE"/>
   </action>
@@ -250,18 +251,32 @@
     <keyboard-shortcut first-keystroke="shift meta SEMICOLON"/>
   </action>
   <action id="GotoFile">
-    <keyboard-shortcut first-keystroke="meta alt O"/>
+    <keyboard-shortcut first-keystroke="meta O"/>
+  </action>
+  <action id="GotoClass">
+    <keyboard-shortcut first-keystroke="meta alt O" />
+  </action>
+  <action id="GotoSymbol">
+    <keyboard-shortcut first-keystroke="shift meta O"/>
   </action>
   <action id="GotoSuperMethod">
     <keyboard-shortcut first-keystroke="control U"/>
   </action>
-  <action id="GotoSymbol">
-    <keyboard-shortcut first-keystroke="shift meta O"/>
-    <keyboard-shortcut first-keystroke="shift meta alt N"/>
-  </action>
   <action id="GotoTypeDeclaration">
     <keyboard-shortcut first-keystroke="alt shift B"/>
     <mouse-shortcut keystroke="ctrl shift button1"/>
+  </action>
+  <action id="CallHierarchy">
+    <keyboard-shortcut first-keystroke="ctrl alt H" />
+    <keyboard-shortcut first-keystroke="shift ctrl meta H" />
+  </action>
+  <action id="FindInPath">
+    <keyboard-shortcut first-keystroke="shift meta F" />
+    <keyboard-shortcut first-keystroke="meta 4" />
+  </action>
+  <action id="FindUsages">
+    <keyboard-shortcut first-keystroke="alt F7" />
+    <keyboard-shortcut first-keystroke="shift ctrl meta F" />
   </action>
   <action id="tasks.open.in.browser"/><!-- conflicts with GotoTypeDeclaration  -->
   <action id="HelpTopics">
@@ -305,12 +320,23 @@
   </action>
   <action id="NextEditorTab"/>
   <action id="NextProjectWindow"/>
-
+  <action id="Refactorings.QuickListPopupAction">
+    <keyboard-shortcut first-keystroke="ctrl meta alt T" />
+  </action>
+  <action id="IntroduceParameter">
+    <keyboard-shortcut first-keystroke="ctrl meta alt P" />
+  </action>
+  <action id="IntroduceVariable">
+    <keyboard-shortcut first-keystroke="ctrl meta alt V" />
+  </action>
   <action id="IntroduceField">
-    <keyboard-shortcut first-keystroke="meta alt I"/>
+    <keyboard-shortcut first-keystroke="ctrl meta alt F" />
   </action>
   <action id="IntroduceConstant">
-    <keyboard-shortcut first-keystroke="meta alt S"/>
+    <keyboard-shortcut first-keystroke="ctrl meta alt C" />
+  </action>
+  <action id="ExtractMethod">
+    <keyboard-shortcut first-keystroke="ctrl meta alt M" />
   </action>
   <action id="OpenFile">
   </action>
@@ -350,32 +376,32 @@
     <keyboard-shortcut first-keystroke="alt F1"/>
   </action>
   <action id="ShowNavBar">
-    <keyboard-shortcut first-keystroke="control 5"/>
-    <keyboard-shortcut first-keystroke="alt HOME"/>
-  </action>
-  <action id="Rerun">
+    <keyboard-shortcut first-keystroke="ctrl 4" />
+    <keyboard-shortcut first-keystroke="ctrl 5" />
+    <keyboard-shortcut first-keystroke="alt HOME" />
+  </action>  <action id="Rerun">
     <keyboard-shortcut first-keystroke="control alt meta G"/>
   </action>
   <action id="RerunFailedTests">
     <keyboard-shortcut first-keystroke="alt meta G"/>
   </action>
   <action id="Run">
-    <keyboard-shortcut first-keystroke="meta R"/>
+    <keyboard-shortcut first-keystroke="shift meta alt R" />
   </action>
   <action id="RunClass">
-    <keyboard-shortcut first-keystroke="control alt meta R"/>
+    <keyboard-shortcut first-keystroke="meta alt U" />
   </action>
   <action id="Debug">
-    <keyboard-shortcut first-keystroke="meta U"/>
+    <keyboard-shortcut first-keystroke="meta R" />
   </action>
   <action id="DebugClass">
-    <keyboard-shortcut first-keystroke="control alt meta U"/>
+    <keyboard-shortcut first-keystroke="meta U" />
   </action>
   <action id="ChooseRunConfiguration">
-    <keyboard-shortcut first-keystroke="alt meta R"/>
+    <keyboard-shortcut first-keystroke="shift ctrl meta alt R"/>
   </action>
   <action id="ChooseDebugConfiguration">
-    <keyboard-shortcut first-keystroke="alt meta U"/>
+    <keyboard-shortcut first-keystroke="meta alt R"/>
   </action>
   <action id="Pause">
     <keyboard-shortcut first-keystroke="control meta Y"/>
@@ -404,9 +430,7 @@
   <action id="RunToCursor">
     <keyboard-shortcut first-keystroke="control meta C"/>
   </action>
-  <action id="ForceRunToCursor">
-    <keyboard-shortcut first-keystroke="alt control meta C"/>
-  </action>
+  <action id="ForceRunToCursor"/>
   <action id="Stop">
     <keyboard-shortcut first-keystroke="meta PERIOD"/>
     <keyboard-shortcut first-keystroke="meta F2"/>
@@ -424,9 +448,7 @@
     <keyboard-shortcut first-keystroke="control 2"/>
     <keyboard-shortcut first-keystroke="control 3"/>
   </action>
-  <action id="RecentChangedFiles">
-    <keyboard-shortcut first-keystroke="control 4"/>
-  </action>
+  <action id="RecentChangedFiles" />
   <action id="ToggleLineBreakpoint">
     <keyboard-shortcut first-keystroke="meta BACK_SLASH"/>
     <keyboard-shortcut first-keystroke="meta F8"/>
@@ -438,8 +460,8 @@
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
   <action id="ViewBreakpoints">
-    <keyboard-shortcut first-keystroke="meta 7"/>
-    <keyboard-shortcut first-keystroke="control shift F8"/>
+    <keyboard-shortcut first-keystroke="meta 8" />
+    <keyboard-shortcut first-keystroke="shift ctrl F8" />
   </action>
   <action id="XDebugger.MuteBreakpoints">
     <keyboard-shortcut first-keystroke="meta Y"/>

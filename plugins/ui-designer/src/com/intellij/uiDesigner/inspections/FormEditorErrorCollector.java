@@ -52,7 +52,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
   }
 
   public ErrorInfo[] result() {
-    return myResults == null ? null : myResults.toArray(new ErrorInfo[myResults.size()]);
+    return myResults == null ? null : myResults.toArray(ErrorInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -71,7 +71,7 @@ public class FormEditorErrorCollector extends FormErrorCollector {
 
     final ErrorInfo errorInfo = new ErrorInfo(myComponent, prop == null ? null : prop.getName(), errorMessage,
                                               myProfile.getErrorLevel(HighlightDisplayKey.find(inspectionId), myFormPsiFile),
-                                              quickFixes.toArray(new QuickFix[quickFixes.size()]));
+                                              quickFixes.toArray(new QuickFix[0]));
     errorInfo.setInspectionId(inspectionId);
     myResults.add(errorInfo);
   }

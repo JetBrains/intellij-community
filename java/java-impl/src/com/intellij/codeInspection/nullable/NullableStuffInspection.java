@@ -150,5 +150,10 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
           }
         }, false, false, presentation, null);
     }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
   };
 }

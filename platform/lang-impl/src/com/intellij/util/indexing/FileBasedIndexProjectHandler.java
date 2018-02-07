@@ -23,7 +23,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,10 +30,12 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +53,6 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
 
     if (ApplicationManager.getApplication().isInternal()) {
       project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void enteredDumbMode() { }
 
         @Override
         public void exitDumbMode() {
@@ -121,20 +120,30 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndex i = FileBasedIndex.getInstance();
-    if (!(i instanceof FileBasedIndexImpl)) {
+    if (!(i instanceof FileBasedIndexImpl) || !IndexInfrastructure.hasIndices()) {
       return null;
     }
 
-    final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
-    if (index.getChangedFileCount() < ourMinFilesToStartDumMode) {
-      if (index.getChangedFilesSize() < ourMinFilesSizeToStartDumMode) return null;
+    FileBasedIndexImpl index = (FileBasedIndexImpl)i;
+    
+    if (index.processChangedFiles(project, new Processor<VirtualFile>() {
+      int filesInProjectToBeIndexed;
+      int sizeOfFilesToBeIndexed;
+      @Override
+      public boolean process(VirtualFile file) {
+        ++filesInProjectToBeIndexed;
+        if (file.isValid() && !file.isDirectory()) sizeOfFilesToBeIndexed += file.getLength();
+        return filesInProjectToBeIndexed < ourMinFilesToStartDumMode && sizeOfFilesToBeIndexed < ourMinFilesSizeToStartDumMode;
+      }
+    })) {
+      return null;
     }
 
     return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         long start = System.currentTimeMillis();
-        Collection<VirtualFile> files = ReadAction.compute(() -> index.getFilesToUpdate(project));
+        Collection<VirtualFile> files = index.getFilesToUpdate(project);
         long calcDuration = System.currentTimeMillis() - start;
 
         indicator.setIndeterminate(false);
@@ -150,7 +159,25 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
 
       @Override
       public String toString() {
-        return getClass().getName() + "[" + index.dumpSomeChangedFiles() + "]";
+        StringBuilder sampleOfChangedFilePathsToBeIndexed = new StringBuilder();
+        
+        index.processChangedFiles(project, new Processor<VirtualFile>() {
+          int filesInProjectToBeIndexed;
+          String projectBasePath = project.getBasePath();
+          
+          @Override
+          public boolean process(VirtualFile file) {
+            if (filesInProjectToBeIndexed != 0) sampleOfChangedFilePathsToBeIndexed.append(", ");
+            
+            String filePath = file.getPath();
+            sampleOfChangedFilePathsToBeIndexed.append(
+              projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : filePath
+            );
+            
+            return ++filesInProjectToBeIndexed < ourMinFilesToStartDumMode;
+          }
+        });
+        return super.toString() + " [" + project + ", " + sampleOfChangedFilePathsToBeIndexed + "]";
       }
     };
   }

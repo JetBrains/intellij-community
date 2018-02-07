@@ -117,7 +117,7 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void selectSourceAndDo() {
     // GUI part
-    ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[mySources.size()]); // silly JList can't handle modern collections
+    ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[0]); // silly JList can't handle modern collections
     final JList list = new JBList(items);
     list.setCellRenderer(new CellRenderer(myName));
 

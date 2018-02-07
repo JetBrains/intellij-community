@@ -67,11 +67,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     }
 
     @Override
-    public void visitField(PsiField field) {
-      super.visitField(field);
-    }
-
-    @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       @NonNls final String methodName = method.getName();
@@ -79,7 +74,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
+      if (!parameterList.isEmpty()) {
         return;
       }
       final PsiType returnType = method.getReturnType();

@@ -38,7 +38,7 @@ public class ConvertToJBInsetsQuickFix extends LocalQuickFixBase {
     final PsiNewExpression newExpression = (PsiNewExpression)descriptor.getPsiElement();
     PsiExpressionList list = newExpression.getArgumentList();
     String text = null;
-    if ( list != null && list.getExpressions().length == 4) {
+    if ( list != null && list.getExpressionCount() == 4) {
       String top = list.getExpressions()[0].getText();
       String left = list.getExpressions()[1].getText();
       String bottom = list.getExpressions()[2].getText();

@@ -207,7 +207,10 @@ public class IndexInfrastructure {
     private void executeNestedInitializationTask(ThrowableRunnable callable, CountDownLatch proceedLatch) {
       Application app = ApplicationManager.getApplication();
       try {
-        if (app.isDisposed() || app.isDisposeInProgress()) return;
+        // To correctly apply file removals in indices's shutdown hook we should process all initialization tasks
+        // Todo: make processing removed files more robust because ignoring 'dispose in progress' delays application exit and
+        // may cause memory leaks IDEA-183718, IDEA-169374,
+        if (app.isDisposed() /*|| app.isDisposeInProgress()*/) return;
         callable.run();
       }
       catch (Throwable t) {
@@ -217,5 +220,9 @@ public class IndexInfrastructure {
         proceedLatch.countDown();
       }
     }
+  }
+
+  public static boolean hasIndices() {
+    return !SystemProperties.is("idea.skip.indices.initialization");
   }
 }

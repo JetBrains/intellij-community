@@ -57,7 +57,7 @@ public class GrLightParameterListBuilder extends LightElement implements GrParam
         myCachedParameters = GrParameter.EMPTY_ARRAY;
       }
       else {
-        myCachedParameters = myParameters.toArray(new GrParameter[myParameters.size()]);
+        myCachedParameters = myParameters.toArray(GrParameter.EMPTY_ARRAY);
       }
     }
     

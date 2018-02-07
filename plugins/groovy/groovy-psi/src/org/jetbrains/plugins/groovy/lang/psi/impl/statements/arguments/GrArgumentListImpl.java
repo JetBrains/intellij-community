@@ -65,7 +65,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrNamedArgument) result.add((GrNamedArgument)cur);
     }
-    return result.toArray(new GrNamedArgument[result.size()]);
+    return result.toArray(GrNamedArgument.EMPTY_ARRAY);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (cur instanceof GrExpression) result.add((GrExpression)cur);
     }
-    return result.toArray(new GrExpression[result.size()]);
+    return result.toArray(GrExpression.EMPTY_ARRAY);
   }
 
   @NotNull

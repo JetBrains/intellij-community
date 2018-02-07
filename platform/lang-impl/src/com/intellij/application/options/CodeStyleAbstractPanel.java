@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -180,23 +179,21 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }
 
     Project project = ProjectUtil.guessCurrentProject(getPanel());
-    TransactionGuard.submitTransaction(project, () -> {
-      if (myEditor.isDisposed()) return;
-      
-      if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
-        myTextToReformat = myEditor.getDocument().getText();
-      }
-      else if (useDefaultSample || myTextToReformat == null) {
-        myTextToReformat = getPreviewText();
-      }
+    if (myEditor.isDisposed()) return;
 
-      int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
-      CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
+    if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
+      myTextToReformat = myEditor.getDocument().getText();
+    }
+    else if (useDefaultSample || myTextToReformat == null) {
+      myTextToReformat = getPreviewText();
+    }
 
-      myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
-      myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
-      myEditor.getScrollingModel().scrollVertically(currOffs);
-    });
+    int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
+    CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
+
+    myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
+    myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
+    myEditor.getScrollingModel().scrollVertically(currOffs);
   }
 
   private int getAdjustedRightMargin() {
@@ -245,6 +242,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void applySettingsToModel() {
+    if (((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
         apply(mySettings);
@@ -387,6 +385,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     myShouldUpdatePreview = false;
     try {
       resetImpl(settings);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
     finally {
       myShouldUpdatePreview = true;
@@ -600,7 +601,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings);
-    resetImpl(mySettings);
+    ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
       myModel.fireAfterCurrentSettingsChanged();
     }

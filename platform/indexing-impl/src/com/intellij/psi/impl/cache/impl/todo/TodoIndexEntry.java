@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2008
  */
 public class TodoIndexEntry {
   final String pattern;

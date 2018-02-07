@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,8 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
     else if (options.HIGHLIGHT_NON_ACTIVE_CHANGELIST) {
       FileStatus status = myChangeListManager.getStatus(virtualFile);
       if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) {
-        if (!myConflictTracker.isFromActiveChangelist(virtualFile)) {
+        if (myConflictTracker.shouldDetectConflictsFor(virtualFile) &&
+            !myConflictTracker.isFromActiveChangelist(virtualFile)) {
           return status == FileStatus.MODIFIED ? MODIFIED_OUTSIDE : ADDED_OUTSIDE;
         }
       }

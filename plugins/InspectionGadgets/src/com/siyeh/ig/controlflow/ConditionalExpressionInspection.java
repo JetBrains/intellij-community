@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -31,10 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,10 +119,11 @@ public class ConditionalExpressionInspection extends BaseInspection {
       PsiExpression thenExpression = ParenthesesUtils.stripParentheses(expression.getThenExpression());
       PsiExpression elseExpression = ParenthesesUtils.stripParentheses(expression.getElseExpression());
       final PsiExpression condition = ParenthesesUtils.stripParentheses(expression.getCondition());
+      CommentTracker tracker = new CommentTracker();
       final StringBuilder newStatement = new StringBuilder();
       newStatement.append("if(");
       if (condition != null) {
-        newStatement.append(condition.getText());
+        newStatement.append(tracker.text(condition));
       }
       newStatement.append(')');
       if (variable != null) {
@@ -147,15 +144,16 @@ public class ConditionalExpressionInspection extends BaseInspection {
             elseExpression = expression.getElseExpression();
           }
         }
-        appendElementTextWithoutParentheses(initializer, expression, thenExpression, newStatement);
+        appendElementTextWithoutParentheses(initializer, expression, thenExpression, newStatement, tracker);
         newStatement.append("; else ").append(name).append('=');
-        appendElementTextWithoutParentheses(initializer, expression, elseExpression, newStatement);
+        appendElementTextWithoutParentheses(initializer, expression, elseExpression, newStatement, tracker);
         newStatement.append(';');
-        initializer.delete();
+        tracker.delete(initializer);
         final PsiManager manager = statement.getManager();
         final PsiStatement ifStatement = JavaPsiFacade.getElementFactory(project).createStatementFromText(newStatement.toString(), statement);
         final PsiElement parent = statement.getParent();
         final PsiElement addedElement = parent.addAfter(ifStatement, statement);
+        tracker.insertCommentsBefore(addedElement);
         final CodeStyleManager styleManager = CodeStyleManager.getInstance(manager.getProject());
         styleManager.reformat(addedElement);
       }
@@ -164,7 +162,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (addBraces || thenExpression == null) {
           newStatement.append('{');
         }
-        appendElementTextWithoutParentheses(statement, expression, thenExpression, newStatement);
+        appendElementTextWithoutParentheses(statement, expression, thenExpression, newStatement, tracker);
         if (addBraces) {
           newStatement.append("} else {");
         }
@@ -177,32 +175,39 @@ public class ConditionalExpressionInspection extends BaseInspection {
             newStatement.append('{');
           }
         }
-        appendElementTextWithoutParentheses(statement, expression, elseExpression, newStatement);
+        appendElementTextWithoutParentheses(statement, expression, elseExpression, newStatement, tracker);
         if (addBraces || elseExpression == null) {
           newStatement.append('}');
         }
-        PsiReplacementUtil.replaceStatement(statement, newStatement.toString());
+        PsiReplacementUtil.replaceStatement(statement, newStatement.toString(), tracker);
       }
     }
 
-    private static void appendElementTextWithoutParentheses(@NotNull PsiElement element, @NotNull PsiExpression expressionToReplace,
-                                                            @Nullable PsiExpression replacementExpression, @NotNull StringBuilder out) {
+    private static void appendElementTextWithoutParentheses(@NotNull PsiElement element,
+                                                            @NotNull PsiExpression expressionToReplace,
+                                                            @Nullable PsiExpression replacementExpression,
+                                                            @NotNull StringBuilder out,
+                                                            CommentTracker tracker) {
       final PsiElement expressionParent = expressionToReplace.getParent();
       if (expressionParent instanceof PsiParenthesizedExpression) {
         final PsiElement grandParent = expressionParent.getParent();
         if (replacementExpression == null || !(grandParent instanceof PsiExpression) ||
             !ParenthesesUtils.areParenthesesNeeded(replacementExpression, (PsiExpression) grandParent, false)) {
-          appendElementTextWithoutParentheses(element, (PsiExpression)expressionParent, replacementExpression, out);
+          appendElementTextWithoutParentheses(element, (PsiExpression)expressionParent, replacementExpression, out, tracker);
           return;
         }
       }
       final boolean needsCast =
         replacementExpression != null && MethodCallUtils.isNecessaryForSurroundingMethodCall(expressionToReplace, replacementExpression);
-      appendElementText(element, expressionToReplace, replacementExpression, needsCast, out);
+      appendElementText(element, expressionToReplace, replacementExpression, needsCast, out, tracker);
     }
 
-    private static void appendElementText(@NotNull PsiElement element, @NotNull PsiExpression elementToReplace,
-                                          @Nullable PsiExpression replacementExpression, boolean insertCast, @NotNull StringBuilder out) {
+    private static void appendElementText(@NotNull PsiElement element,
+                                          @NotNull PsiExpression elementToReplace,
+                                          @Nullable PsiExpression replacementExpression,
+                                          boolean insertCast,
+                                          @NotNull StringBuilder out,
+                                          CommentTracker tracker) {
       if (element.equals(elementToReplace)) {
         final String replacementText = (replacementExpression == null) ? "" : replacementExpression.getText();
         final PsiType type = GenericsUtil.getVariableTypeByExpressionType(ExpectedTypeUtils.findExpectedType(elementToReplace, true));
@@ -214,18 +219,12 @@ public class ConditionalExpressionInspection extends BaseInspection {
       }
       final PsiElement[] children = element.getChildren();
       if (children.length == 0) {
-        out.append(element.getText());
-        if (element instanceof PsiComment) {
-          final PsiComment comment = (PsiComment)element;
-          final IElementType tokenType = comment.getTokenType();
-          if (tokenType == JavaTokenType.END_OF_LINE_COMMENT) {
-            out.append('\n');
-          }
+        if (!(element instanceof PsiComment)) {
+          out.append(tracker.text(element));
         }
-        return;
       }
       for (PsiElement child : children) {
-        appendElementText(child, elementToReplace, replacementExpression, insertCast, out);
+        appendElementText(child, elementToReplace, replacementExpression, insertCast, out, tracker);
       }
     }
   }
@@ -260,6 +259,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
             parent instanceof PsiLambdaExpression) {
           return;
         }
+        if (!isOnTheFly()) return;
         registerError(expression, ProblemHighlightType.INFORMATION, Boolean.TRUE);
       }
       else {

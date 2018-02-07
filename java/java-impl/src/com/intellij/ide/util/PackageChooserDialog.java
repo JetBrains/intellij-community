@@ -224,10 +224,6 @@ public class PackageChooserDialog extends PackageChooser {
     return group;
   }
 
-  protected void doOKAction(){
-    super.doOKAction();
-  }
-
   public String getDimensionServiceKey(){
     return "#com.intellij.ide.util.PackageChooserDialog";
   }

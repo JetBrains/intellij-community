@@ -26,7 +26,6 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
 public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Value, Input> {
 

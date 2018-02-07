@@ -16,6 +16,7 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
@@ -25,6 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -97,8 +99,16 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
       super.visitLocalVariable(variable);
       if (m_ignoreAnnotatedVariablesNew) {
         final PsiModifierList list = variable.getModifierList();
-        if (list != null && list.getAnnotations().length > 0) {
-          return;
+        if (list != null) {
+          int length = list.getAnnotations().length;
+          if (length > 0) {
+            PsiAnnotation annotation = list.findAnnotation(SuppressWarnings.class.getName());
+            if (annotation == null ||
+                !JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation(list)
+                                    .contains(UnnecessaryLocalVariableInspectionBase.this.getSuppressId())) {
+              return;
+            }
+          }
         }
       }
       if (isCopyVariable(variable)) {
@@ -119,7 +129,13 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
     }
 
     private boolean isCopyVariable(PsiVariable variable) {
-      final PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
+      PsiExpression initializer = ParenthesesUtils.stripParentheses(variable.getInitializer());
+      if (initializer instanceof PsiTypeCastExpression) {
+        PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
+        if (operand instanceof PsiReferenceExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)initializer)) {
+          initializer = operand;
+        }
+      }
       if (!(initializer instanceof PsiReferenceExpression)) {
         return false;
       }

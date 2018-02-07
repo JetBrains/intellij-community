@@ -17,7 +17,6 @@ package org.jetbrains.jps.javac;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10-Feb-17
  */
 public final class JpsInfoDiagnostic extends PlainMessageDiagnostic{
   public JpsInfoDiagnostic(String message) {

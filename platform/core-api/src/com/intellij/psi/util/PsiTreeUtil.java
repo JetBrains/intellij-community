@@ -360,20 +360,11 @@ public class PsiTreeUtil {
 
   @Nullable
   public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict, Condition<PsiElement> condition) {
-    //noinspection unchecked
-    return findFirstParent(element, strict, condition, Condition.FALSE);
-  }
-
-  @Nullable
-  public static PsiElement findFirstParent(@Nullable PsiElement element, boolean strict,
-                                           @NotNull final Condition<PsiElement> condition,
-                                           @NotNull final Condition<PsiElement> stopCondition) {
     if (strict && element != null) {
       element = element.getParent();
     }
 
     while (element != null) {
-      if (stopCondition.value(element)) return null;
       if (condition.value(element)) {
         return element;
       }

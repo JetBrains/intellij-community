@@ -29,6 +29,7 @@ class Main {
         <error descr="Cannot infer type: lambda expression requires an explicit target type">var</error> f = () -> "hello";
         <error descr="Cannot infer type: method reference requires an explicit target type">var</error> m = Main::localVariableDeclaration;
         <error descr="Cannot infer type: variable initializer is 'null'">var</error> g = null;
+        var runnable = true ? <error descr="Lambda expression not expected here">() -> {}</error> : <error descr="Lambda expression not expected here">() -> {}</error>;
     }
 
    private void forEachType(String[] strs, Iterable<String> it, Iterable raw) {

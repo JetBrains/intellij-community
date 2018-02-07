@@ -51,6 +51,6 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
   }
 
   public SMTestLocator getUrlProvider() {
-    return GradleUrlProvider.INSTANCE;
+    return GradleConsoleProperties.GRADLE_TEST_LOCATOR;
   }
 }

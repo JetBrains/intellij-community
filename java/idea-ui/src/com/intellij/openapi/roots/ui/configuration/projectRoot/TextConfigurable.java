@@ -18,8 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -58,23 +56,6 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
   @Override
   public void apply() throws ConfigurationException {
     //do nothing
-  }
-
-  @Override
-  public void reset() {
-    //do nothing
-  }
-
-  @Override
-  public void disposeUIResources() {
-    //do nothing
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return null;
   }
 
   @Override

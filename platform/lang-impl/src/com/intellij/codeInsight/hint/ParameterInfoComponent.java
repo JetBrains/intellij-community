@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.hint;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -120,7 +119,7 @@ public class ParameterInfoComponent extends JPanel {
 
     String upShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_UP);
     String downShortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_METHOD_OVERLOAD_SWITCH_DOWN);
-    if (!allowSwitchLabel || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() || 
+    if (!allowSwitchLabel || editor instanceof EditorWindow || myObjects.length <= 1 || !myHandler.supportsOverloadSwitching() || 
         upShortcut.isEmpty() && downShortcut.isEmpty()) {
       myShortcutLabel = null;
     }
@@ -140,9 +139,9 @@ public class ParameterInfoComponent extends JPanel {
 
   @Override
   public Dimension getPreferredSize() {
-    int size = myPanels.length;
+    long visibleRows = Stream.of(myPanels).filter(Component::isVisible).count();
     final Dimension preferredSize = super.getPreferredSize();
-    if (size >= 0 && size <= 20) {
+    if (visibleRows <= 20) {
       return preferredSize;
     }
     else {
@@ -442,7 +441,7 @@ public class ParameterInfoComponent extends JPanel {
       add(component, new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
       components.add(component);
-      myOneLineComponents = components.toArray(new OneLineComponent[components.size()]);
+      myOneLineComponents = components.toArray(new OneLineComponent[0]);
       return buf.toString();
     }
   }

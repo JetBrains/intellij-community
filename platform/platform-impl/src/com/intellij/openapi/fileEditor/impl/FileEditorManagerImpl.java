@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
@@ -33,7 +19,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -63,9 +48,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -159,9 +142,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
 
       @Override
       public void exitDumbMode() {
@@ -499,7 +479,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       ContainerUtil.addAll(windows, eachList);
     }
 
-    return windows.toArray(new EditorWindow[windows.size()]);
+    return windows.toArray(new EditorWindow[0]);
   }
 
   @Override
@@ -988,8 +968,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
       if (editorList.isEmpty()) return null;
-      editors = editorList.toArray(new FileEditor[editorList.size()]);
-      providers = providerList.toArray(new FileEditorProvider[providerList.size()]);
+      editors = editorList.toArray(new FileEditor[0]);
+      providers = providerList.toArray(new FileEditorProvider[0]);
     }
     return new EditorWithProviderComposite(file, editors, providers, this);
   }
@@ -1107,35 +1087,38 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   @NotNull
-  public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
+  public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertDispatchThread();
+    OpenFileDescriptor realDescriptor;
     if (descriptor.getFile() instanceof VirtualFileWindow) {
       VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
       int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
-      OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
+      realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
       realDescriptor.setUseCurrentWindow(descriptor.isUseCurrentWindow());
-      return openEditor(realDescriptor, focusEditor);
+    }
+    else {
+      realDescriptor = descriptor;
     }
 
     final List<FileEditor> result = new SmartList<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      VirtualFile file = descriptor.getFile();
-      final FileEditor[] editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow());
+      VirtualFile file = realDescriptor.getFile();
+      final FileEditor[] editors = openFile(file, focusEditor, !realDescriptor.isUseCurrentWindow());
       ContainerUtil.addAll(result, editors);
 
       boolean navigated = false;
       for (final FileEditor editor : editors) {
         if (editor instanceof NavigatableFileEditor &&
-            getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
-          navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor);
+            getSelectedEditor(realDescriptor.getFile()) == editor) { // try to navigate opened editor
+          navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, realDescriptor);
           if (navigated) break;
         }
       }
 
       if (!navigated) {
         for (final FileEditor editor : editors) {
-          if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) != editor) { // try other editors
-            if (navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor)) {
+          if (editor instanceof NavigatableFileEditor && getSelectedEditor(realDescriptor.getFile()) != editor) { // try other editors
+            if (navigateAndSelectEditor((NavigatableFileEditor)editor, realDescriptor)) {
               break;
             }
           }
@@ -1196,6 +1179,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return editor;
   }
 
+  /**
+   * Unlike {@link #openTextEditor(OpenFileDescriptor, boolean)}
+   * do not check for injected editor because it can be ridiculously expensive thing to in EDT in e.g. CLion.
+   */
+  @Override
+  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    assertDispatchThread();
+    final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
+    for (FileEditor fileEditor : fileEditors) {
+      if (fileEditor instanceof TextEditor) {
+        setSelectedEditor(descriptor.getFile(), TextEditorProvider.getInstance().getEditorTypeId());
+        return;
+      }
+    }
+  }
+
   @Override
   public Editor getSelectedTextEditor() {
     return getSelectedTextEditor(false);
@@ -1254,7 +1253,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
 
-    return selectedEditors.toArray(new FileEditor[selectedEditors.size()]);
+    return selectedEditors.toArray(new FileEditor[0]);
   }
 
   @Override
@@ -1330,7 +1329,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     for (EditorWithProviderComposite composite : editorComposites) {
       ContainerUtil.addAll(editors, composite.getEditors());
     }
-    return editors.toArray(new FileEditor[editors.size()]);
+    return editors.toArray(new FileEditor[0]);
   }
 
   @Nullable
@@ -1365,7 +1364,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         ContainerUtil.addAll(result, editors);
       }
     }
-    return result.toArray(new FileEditor[result.size()]);
+    return result.toArray(new FileEditor[0]);
   }
 
   @Override
@@ -1494,7 +1493,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     getMainSplitters().readExternal(state);
   }
 
@@ -1657,13 +1656,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     public void beforeFileDeletion(@NotNull VirtualFileEvent e) {
       assertDispatchThread();
 
-      boolean moveFocus = moveFocusOnDelete();
-
       final VirtualFile file = e.getFile();
       final VirtualFile[] openFiles = getOpenFiles();
       for (int i = openFiles.length - 1; i >= 0; i--) {
         if (VfsUtilCore.isAncestor(file, openFiles[i], false)) {
-          closeFile(openFiles[i], moveFocus, true);
+          closeFile(openFiles[i],true, true);
         }
       }
     }
@@ -1709,18 +1706,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
     }
-  }
-
-  private static boolean moveFocusOnDelete() {
-    final Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    if (window != null) {
-      final Component component = FocusTrackback.getFocusFor(window);
-      if (component != null) {
-        return component instanceof EditorComponentImpl;
-      }
-      return window instanceof IdeFrameImpl;
-    }
-    return true;
   }
 
   @Override

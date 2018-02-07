@@ -23,6 +23,7 @@ import git4idea.config.GitVersion
 import git4idea.test.GitPlatformTest
 import git4idea.test.git
 import git4idea.test.registerRepo
+import git4idea.test.setupDefaultUsername
 import org.junit.Assume.assumeTrue
 import java.io.File
 
@@ -44,6 +45,7 @@ abstract class GitWorkTreeBaseTest : GitPlatformTest() {
     val gitDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(projectPath, GitUtil.DOT_GIT))
     assertNotNull(gitDir)
     myRepo = registerRepo(project, projectPath)
+    setupDefaultUsername()
     assertEquals(1, repositoryManager.repositories.size)
     assertNotNull(repositoryManager.getRepositoryForRoot(projectRoot))
   }

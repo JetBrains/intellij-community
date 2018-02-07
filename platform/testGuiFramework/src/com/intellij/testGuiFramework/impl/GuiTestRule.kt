@@ -65,6 +65,8 @@ import java.util.concurrent.TimeUnit
 
 class GuiTestRule : TestRule {
 
+  var CREATE_NEW_PROJECT_ACTION_NAME = "Create New Project"
+
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
   private var myProjectPath: File? = null
@@ -78,7 +80,7 @@ class GuiTestRule : TestRule {
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
-    .around(Timeout(10, TimeUnit.MINUTES))!!
+    .around(Timeout(20, TimeUnit.MINUTES))!!
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
@@ -156,12 +158,12 @@ class GuiTestRule : TestRule {
     }
 
     private fun returnToTheFirstStepOfWelcomeFrame() {
-      val welcomeFrameFixture = WelcomeFrameFixture.find(robot());
+      val welcomeFrameFixture = WelcomeFrameFixture.find(robot())
       val tenSec = org.fest.swing.timing.Timeout.timeout(10, TimeUnit.SECONDS)
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = ActionLinkFixture.findActionLinkByName("Create New Project", robot(), welcomeFrameFixture.target(), tenSec)
+          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(), welcomeFrameFixture.target(), tenSec)
           actionLinkFixture.target().isShowing
         } catch (componentLookupException: ComponentLookupException) {
           false
@@ -179,6 +181,7 @@ class GuiTestRule : TestRule {
         emptyList()
       }
       catch (e: Throwable) {
+        ScreenshotOnFailure.takeScreenshot("$myTestName.thrownFromRunning")
         listOf(e)
       }
 
@@ -193,6 +196,8 @@ class GuiTestRule : TestRule {
         errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
         modalDialog = getActiveModalDialog()
       }
+      if (!errors.isEmpty())
+        ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
       return errors
     }
 

@@ -22,8 +22,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.RawCommandLineEditor;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 
 import javax.swing.*;
@@ -53,13 +51,6 @@ public class EclipseCompilerConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return null;
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
     return null;
   }
 
@@ -98,9 +89,4 @@ public class EclipseCompilerConfigurable implements Configurable {
     myAdditionalOptionsField.setText(myCompilerSettings.ADDITIONAL_OPTIONS_STRING);
     myOptionsOverride.setModuleOptionsMap(myCompilerSettings.ADDITIONAL_OPTIONS_OVERRIDE);
   }
-
-  public void disposeUIResources() {
-
-  }
-
 }

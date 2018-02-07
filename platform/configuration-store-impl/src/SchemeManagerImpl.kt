@@ -52,6 +52,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
 import org.jdom.Document
 import org.jdom.Element
+import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -134,7 +135,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
               continue@eventLoop
             }
 
-            val oldCurrentScheme = currentScheme
+            val oldCurrentScheme = activeScheme
             val changedScheme = findExternalizableSchemeByFileName(fileName)
 
             if (callSchemeContentChangedIfSupported(changedScheme, fileName, event.file)) {
@@ -171,7 +172,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
             }
           }
           is VFileDeleteEvent -> {
-            val oldCurrentScheme = currentScheme
+            val oldCurrentScheme = activeScheme
             if (event.file.isDirectory) {
               val dir = virtualDirectory
               if (event.file == dir) {
@@ -236,14 +237,14 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     private fun updateCurrentScheme(oldScheme: T?, newScheme: T? = null) {
-      if (currentScheme != null) {
+      if (activeScheme != null) {
         return
       }
 
-      if (oldScheme != currentScheme) {
+      if (oldScheme != activeScheme) {
         val scheme = newScheme ?: schemes.firstOrNull()
         currentPendingSchemeName = null
-        currentScheme = scheme
+        activeScheme = scheme
         // must be equals by reference
         if (oldScheme !== scheme) {
           processor.onCurrentSchemeSwitched(oldScheme, scheme)
@@ -388,10 +389,10 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
         continue
       }
 
-      currentScheme?.let {
+      activeScheme?.let {
         if (scheme === it) {
           currentPendingSchemeName = processor.getSchemeKey(it)
-          currentScheme = null
+          activeScheme = null
         }
       }
 
@@ -482,7 +483,14 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
-        val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
+        val attributeProvider = Function<String, String?> {
+          if (parser.eventType == XmlPullParser.START_TAG) {
+            parser.getAttributeValue(null, it)
+          }
+          else {
+            null
+          }
+        }
         val schemeName = name ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
         if (schemeName == null) {
           throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")

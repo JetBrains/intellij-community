@@ -230,7 +230,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   @Override
   protected ProjectViewTree createTree(final DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
       public String toString() {
         return myDescriptor.getFramework().getDisplayName() + " " + super.toString();
       }
@@ -261,7 +261,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
       final List<Module> moduleList = ContainerUtil.findAll(getSelectedElements(), Module.class);
       if (!moduleList.isEmpty()) {
-        return moduleList.toArray(new Module[moduleList.size()]);
+        return moduleList.toArray(Module.EMPTY_ARRAY);
       }
       return null;
     }

@@ -7,7 +7,6 @@ import com.intellij.refactoring.rename.PsiElementRenameHandler;
 
 /**
  * @author lene
- *         Date: 30.09.11
  */
 public class ProjectFolderRenameHandler extends PsiElementRenameHandler implements TitledHandler {
   @Override

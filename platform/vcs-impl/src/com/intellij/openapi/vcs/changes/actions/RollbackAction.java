@@ -138,7 +138,7 @@ public class RollbackAction extends AnAction implements DumbAware {
           changesList.addAll(clManager.getChangesIn(vf));
         }
         if (!changesList.isEmpty()) {
-          changes = changesList.toArray(new Change[changesList.size()]);
+          changes = changesList.toArray(new Change[0]);
         }
       }
     }

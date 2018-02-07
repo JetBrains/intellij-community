@@ -31,7 +31,10 @@ import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
-import com.intellij.refactoring.util.*;
+import com.intellij.refactoring.util.CanonicalTypes;
+import com.intellij.refactoring.util.InlineUtil;
+import com.intellij.refactoring.util.RefactoringUIUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -77,6 +80,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     myCallingBlock = PsiTreeUtil.getTopmostParentOfType(myMethodCall, PsiCodeBlock.class);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return InlineParameterHandler.REFACTORING_NAME;
@@ -169,14 +173,14 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
     PsiType returnType = myMethod.getReturnType();
     myChangeInfo = new JavaChangeInfoImpl(VisibilityUtil.getVisibilityModifier(myMethod.getModifierList()), myMethod, myMethod.getName(),
                                           returnType != null ? CanonicalTypes.createTypeWrapper(returnType) : null,
-                                          psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()]),
+                                          psiParameters.toArray(new ParameterInfoImpl[0]),
                                           null,
                                           false,
                                           Collections.emptySet(),
                                           Collections.emptySet() );
     myChangeSignatureUsages = ChangeSignatureProcessorBase.findUsages(myChangeInfo);
 
-    final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 

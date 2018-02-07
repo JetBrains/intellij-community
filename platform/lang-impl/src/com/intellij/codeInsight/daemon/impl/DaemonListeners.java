@@ -28,6 +28,7 @@ import com.intellij.facet.FacetManagerAdapter;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -397,6 +398,7 @@ public class DaemonListeners implements Disposable {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
     if (file instanceof PsiCodeFragment) return true;
+    if (ScratchUtil.isScratch(virtualFile)) return listeners.canUndo(virtualFile);
     if (!ModuleUtilCore.projectContainsFile(project, virtualFile, false)) return false;
     Result vcs = listeners.vcsThinksItChanged(virtualFile);
     if (vcs == Result.CHANGED) return true;
@@ -633,7 +635,8 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
+  // needed for Rider
+  public static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!project.isInitialized()) return;
     final Document document = editor.getDocument();

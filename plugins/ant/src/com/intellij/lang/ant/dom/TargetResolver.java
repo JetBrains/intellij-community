@@ -16,7 +16,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public class TargetResolver extends PropertyProviderFinder {
 

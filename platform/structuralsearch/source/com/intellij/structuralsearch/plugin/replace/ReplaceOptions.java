@@ -14,8 +14,6 @@ import java.util.*;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 5, 2004
- * Time: 7:51:38 PM
  */
 public class ReplaceOptions implements JDOMExternalizable {
   private final Map<String, ReplacementVariableDefinition> variableDefs;

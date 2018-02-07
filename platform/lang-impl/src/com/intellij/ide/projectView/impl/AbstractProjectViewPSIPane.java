@@ -151,7 +151,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
-    myTree.setSelectionPath(new TreePath(myTree.getModel().getRoot()));
 
     EditSourceOnDoubleClickHandler.install(myTree);
 

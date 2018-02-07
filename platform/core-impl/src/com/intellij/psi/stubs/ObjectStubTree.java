@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
  */
 public class ObjectStubTree<T extends Stub> {
   protected static final Key<ObjectStubTree> STUB_TO_TREE_REFERENCE = Key.create("stub to tree reference");

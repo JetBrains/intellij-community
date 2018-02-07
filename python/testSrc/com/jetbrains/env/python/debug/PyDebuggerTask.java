@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
@@ -28,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.xdebugger.*;
 import com.jetbrains.env.python.PythonDebuggerTest;
@@ -76,7 +63,8 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     return Sets.newHashSet("python2.6", "python2.7", "python3.5", "python3.6", "jython", "IronPython", "pypy");
   }
 
-  public void runTestOn(String sdkHome) throws Exception {
+  @Override
+  public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
     final Project project = getProject();
 
     final ConfigurationFactory factory = PythonConfigurationType.getInstance().getConfigurationFactories()[0];
@@ -96,7 +84,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
       @Override
       protected void run(@NotNull Result result) {
         RunManager runManager = RunManager.getInstance(project);
-        runManager.addConfiguration(settings, false);
+        runManager.addConfiguration(settings);
         runManager.setSelectedConfiguration(settings);
         Assert.assertSame(settings, runManager.getSelectedConfiguration());
       }
@@ -133,7 +121,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     setProcessCanTerminate(false);
 
     myTerminateSemaphore = new Semaphore(0);
-    
+
     new WriteAction<ExecutionResult>() {
       @Override
       protected void run(@NotNull Result<ExecutionResult> result) throws Throwable {
@@ -184,7 +172,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
 
     myPausedSemaphore = new Semaphore(0);
-    
+
 
     mySession.addSessionListener(new XDebugSessionListener() {
       @Override

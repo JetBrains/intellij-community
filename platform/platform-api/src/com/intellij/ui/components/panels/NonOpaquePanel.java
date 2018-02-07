@@ -33,6 +33,7 @@ public class NonOpaquePanel extends Wrapper {
 
   public NonOpaquePanel(boolean isDoubleBuffered) {
     super(isDoubleBuffered);
+    setFocusable(false);
     setOpaque(false);
   }
 

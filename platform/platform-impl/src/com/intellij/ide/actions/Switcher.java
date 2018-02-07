@@ -101,7 +101,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (shortcut.equals(recentFiles)) continue;
       shortcuts.add(shortcut);
     }
-    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(new Shortcut[shortcuts.size()]));
+    TW_SHORTCUT = new CustomShortcutSet(shortcuts.toArray(Shortcut.EMPTY_ARRAY));
 
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
       @Override
@@ -110,7 +110,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (SWITCHER != null && event instanceof KeyEvent && !SWITCHER.isPinnedMode()) {
           final KeyEvent keyEvent = (KeyEvent)event;
           if (event.getID() == KEY_RELEASED && keyEvent.getKeyCode() == CTRL_KEY) {
-            SwingUtilities.invokeLater(CHECKER);
+            ApplicationManager.getApplication().invokeLater(CHECKER, ModalityState.current());
           }
           else if (event.getID() == KEY_PRESSED && event != INIT_EVENT
                    && (tw = SWITCHER.twShortcuts.get(String.valueOf((char)keyEvent.getKeyCode()))) != null) {
@@ -321,7 +321,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(@NotNull Graphics g) {
           super.paintComponent(g);
           g.setColor(UIUtil.isUnderDarcula() ? SEPARATOR_COLOR : BORDER_COLOR);
-          g.drawLine(0, 0, getWidth(), 0);
+          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
         }
       };
 
@@ -391,7 +391,7 @@ public class Switcher extends AnAction implements DumbAware {
         protected void paintComponent(@NotNull Graphics g) {
           super.paintComponent(g);
           g.setColor(SEPARATOR_COLOR);
-          g.drawLine(0, 0, 0, getHeight());
+          UIUtil.drawLine(g, 0, 0, 0, getHeight());
         }
       };
       separator.setBackground(toolWindows.getBackground());
@@ -958,7 +958,7 @@ public class Switcher extends AnAction implements DumbAware {
       if (gotoFile != null && !StringUtil.isEmpty(fileName)) {
         myPopup.cancel();
         final AnAction action = gotoFile;
-        SwingUtilities.invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
+        ApplicationManager.getApplication().invokeLater(() -> DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
           final DataContext dataContext = new DataContext() {
             @Nullable
             @Override
@@ -973,7 +973,7 @@ public class Switcher extends AnAction implements DumbAware {
             new AnActionEvent(e, dataContext, ActionPlaces.EDITOR_POPUP, new PresentationFactory().getPresentation(action),
                               ActionManager.getInstance(), 0);
           action.actionPerformed(event);
-        }));
+        }), ModalityState.current());
       }
     }
 
@@ -1115,12 +1115,15 @@ public class Switcher extends AnAction implements DumbAware {
       protected void selectElement(final Object element, String selectedText) {
         if (element instanceof FileInfo) {
           if (!toolWindows.isSelectionEmpty()) toolWindows.clearSelection();
-          IdeFocusManager.findInstanceByComponent(files).requestFocus(files, true).doWhenDone(() -> files.setSelectedValue(element, true));
+          files.clearSelection();
+          files.setSelectedValue(element, true);
+          files.requestFocusInWindow();
         }
         else {
           if (!files.isSelectionEmpty()) files.clearSelection();
-          IdeFocusManager.findInstanceByComponent(toolWindows).requestFocus(toolWindows, true).doWhenDone(
-            () -> toolWindows.setSelectedValue(element, true));
+          toolWindows.clearSelection();
+          toolWindows.setSelectedValue(element, true);
+          toolWindows.requestFocusInWindow();
         }
       }
 
@@ -1147,6 +1150,7 @@ public class Switcher extends AnAction implements DumbAware {
           files.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
           toolWindows.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
         }
+        refreshSelection();
       }
     }
 

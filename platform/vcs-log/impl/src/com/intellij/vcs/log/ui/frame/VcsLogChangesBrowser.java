@@ -34,6 +34,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
@@ -52,6 +53,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
@@ -72,6 +74,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private final Set<VirtualFile> myRoots = ContainerUtil.newHashSet();
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
+  @NotNull private final Wrapper myToolbarWrapper;
 
   public VcsLogChangesBrowser(@NotNull Project project,
                               @NotNull MainVcsLogUiProperties uiProperties,
@@ -94,10 +97,22 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
     Disposer.register(parent, this);
 
+    myToolbarWrapper = new Wrapper(getToolbar().getComponent());
+
     init();
 
     getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
     myViewer.rebuildTree();
+  }
+
+  @NotNull
+  @Override
+  protected JComponent createToolbarComponent() {
+    return myToolbarWrapper;
+  }
+
+  public void setToolbarHeightReferent(@NotNull JComponent referent) {
+    myToolbarWrapper.setVerticalSizeReferent(referent);
   }
 
   @Override
@@ -216,7 +231,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     List<Change> selectedChanges = VcsTreeModelData.selected(myViewer).userObjects(Change.class);
     Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(selectedChanges, myProject);
     if (selectedVcs.size() == 1) return notNull(getFirstItem(selectedVcs));
-    
+
     return null;
   }
 

@@ -75,6 +75,9 @@ processed incorrectly by a type checker. It is also helpful to add
 links to online documentation or to the implementation of the code
 you are changing.
 
+Also, do not squash your commits after you have submitted a pull request, as this
+erases context during review. We will squash commits when the pull request is merged.
+
 At present the core developers are (alphabetically):
 * David Fisher (@ddfisher)
 * Łukasz Langa (@ambv)
@@ -112,18 +115,58 @@ message where you received permission**.
 Make sure your changes pass the tests (the [README](README.md#running-the-tests)
 has more information).
 
+### What to include
+
+Stubs should include all public objects (classes, functions, constants,
+etc.) in the module they cover. Omitting objects can confuse users,
+because users who see an error like "module X has no attribute Y" will
+not know whether the error appeared because their code had a bug or
+because the stub is wrong. If you are submitting stubs to typeshed and
+you are unable to provide fully typed stubs for some of the objects in
+the library, you can use stubgen (see below) to generate untyped stubs.
+Although we prefer having exact types for all stubs, such stubs are
+better than nothing.
+
+What counts as a "public object" is not always clear. Use your judgment,
+but objects that are listed in the module's documentation, that are
+included in ``__all__`` (if present), and whose names do not start with an
+underscore are more likely to merit inclusion in a stub. If in doubt, err
+on the side of including more objects.
+
 ### Using stubgen
 
 Mypy includes a tool called [stubgen](https://github.com/python/mypy/blob/master/mypy/stubgen.py)
 that you can use as a starting point for your stubs.  Note that this
 generator is currently unable to determine most argument and return
 types and omits them or uses ``Any`` in their place.  Fill out the types
-that you know.  Leave out modules that you are not using at all.  It's
-strictly better to provide partial stubs that have detailed type
-information than to submit unmodified ``stubgen`` output for an entire
-library.
+that you know.
 
 ### Stub file coding style
+
+#### Syntax example
+
+The below is an excerpt from the types for the `datetime` module.
+
+```python
+MAXYEAR: int
+MINYEAR: int
+
+class date:
+    def __init__(self, year: int, month: int, day: int) -> None: ...
+    @classmethod
+    def fromtimestamp(cls, timestamp: float) -> date: ...
+    @classmethod
+    def today(cls) -> date: ...
+    @classmethod
+    def fromordinal(cls, ordinal: int) -> date: ...
+    @property
+    def year(self) -> int: ...
+    def replace(self, year: int = ..., month: int = ..., day: int = ...) -> date: ...
+    def ctime(self) -> str: ...
+    def weekday(self) -> int: ...
+```
+
+#### Conventions
 
 Stub files are *like* Python files and you should generally expect them
 to look the same.  Your tools should be able to successfully treat them
@@ -142,7 +185,24 @@ rule is that they should be as concise as possible.  Specifically:
 * use a single blank line between top-level class definitions, or none
   if the classes are very small;
 * do not use docstrings;
+* use variable annotations instead of type comments, even for stubs
+  that target older versions of Python;
 * for arguments with a type and a default, use spaces around the `=`.
+
+Stub files should only contain information necessary for the type
+checker, and leave out unnecessary detail:
+* for arguments with a default, use `...` instead of the actual
+  default;
+* for arguments that default to `None`, use `Optional[]` explicitly
+  (see below for details);
+* use `float` instead of `Union[int, float]`.
+
+Some further tips for good type hints:
+* avoid invariant collection types (`List`, `Dict`) in argument
+  positions, in favor of covariant types like `Mapping` or `Sequence`;
+* avoid Union return types: https://github.com/python/mypy/issues/1693;
+* in Python 2, whenever possible, use `unicode` if that's the only
+  possible type, and `Text` if it can be either `unicode` or `bytes`.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:
@@ -237,7 +297,7 @@ project's tracker to fix their documentation.
 ## Issue-tracker conventions
 
 We aim to reply to all new issues promptly.  We'll assign one or more
-labels to to indicate we've triaged an issue, but most typeshed issues
+labels to indicate we've triaged an issue, but most typeshed issues
 are relatively simple (stubs for a given module or package are
 missing, incomplete or incorrect) and we won't add noise to the
 tracker by labeling all of them.  Here's what our labels mean.  (We

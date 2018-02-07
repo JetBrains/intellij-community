@@ -258,7 +258,7 @@ public class RunnerLayout  {
     myDefaultFocus.put(condition, Pair.create(id, policy));
   }
 
-  void clearDefaultToFocus(@NotNull String condition) {
+  void cancelDefaultFocusBy(@NotNull String condition) {
     myDefaultFocus.remove(condition);
   }
 

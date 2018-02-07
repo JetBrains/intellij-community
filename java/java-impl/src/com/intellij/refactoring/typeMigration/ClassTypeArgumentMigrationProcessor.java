@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author anna
- * Date: 19-Apr-2008
  */
 public class ClassTypeArgumentMigrationProcessor {
   private static final Logger LOG = Logger.getInstance(ClassTypeArgumentMigrationProcessor.class);
@@ -129,7 +128,7 @@ public class ClassTypeArgumentMigrationProcessor {
 
       final List<PsiReference> refs = TypeMigrationLabeler.filterReferences(psiClass, ReferencesSearch.search(element, psiClass.getUseScope()));
 
-      roots.put(element, Pair.create(myLabeler.markRootUsages(element, memberType, refs.toArray(new PsiReference[refs.size()])), memberType));
+      roots.put(element, Pair.create(myLabeler.markRootUsages(element, memberType, refs.toArray(PsiReference.EMPTY_ARRAY)), memberType));
     }
   }
 

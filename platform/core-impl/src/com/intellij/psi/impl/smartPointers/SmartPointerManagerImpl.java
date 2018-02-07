@@ -82,7 +82,9 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     }
     SmartPointerTracker.processQueue();
     SmartPsiElementPointerImpl<E> pointer = getCachedPointer(element);
-    if (pointer != null && pointer.incrementAndGetReferenceCount(1) > 0) {
+    if (pointer != null &&
+        (!(pointer.getElementInfo() instanceof SelfElementInfo) || ((SelfElementInfo)pointer.getElementInfo()).isForInjected() == forInjected) &&
+        pointer.incrementAndGetReferenceCount(1) > 0) {
       return pointer;
     }
 
@@ -201,6 +203,11 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
   public void updatePointerTargetsAfterReparse(@NotNull VirtualFile file) {
     SmartPointerTracker list = getTracker(file);
     if (list != null) list.updatePointerTargetsAfterReparse();
+  }
+
+  @TestOnly
+  public void clearPointers(@NotNull VirtualFile file) {
+    file.putUserData(POINTERS_KEY, null);
   }
 
   Project getProject() {

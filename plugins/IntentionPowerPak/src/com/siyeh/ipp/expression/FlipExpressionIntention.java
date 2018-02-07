@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,11 @@ import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class FlipExpressionIntention extends MutablyNamedIntention {
@@ -64,21 +65,23 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = polyadicExpression.getOperands();
     final StringBuilder newExpression = new StringBuilder();
+    CommentTracker commentTracker = new CommentTracker();
     String prevOperand = null;
     final String tokenText = token.getText() + ' '; // 2- -1 without the space is not legal
     for (PsiExpression operand : operands) {
       final PsiJavaToken token1 = polyadicExpression.getTokenBeforeOperand(operand);
       if (token == token1) {
-        newExpression.append(operand.getText()).append(tokenText);
+        newExpression.append(commentTracker.text(operand)).append(tokenText);
         continue;
       }
       if (prevOperand != null) {
         newExpression.append(prevOperand).append(tokenText);
       }
-      prevOperand = operand.getText();
+      prevOperand = commentTracker.text(operand);
     }
     newExpression.append(prevOperand);
-    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
+
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), commentTracker);
   }
 
   @Override

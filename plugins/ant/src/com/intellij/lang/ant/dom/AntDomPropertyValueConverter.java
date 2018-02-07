@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 25, 2010
  */
 public class AntDomPropertyValueConverter extends WrappingConverter{
 

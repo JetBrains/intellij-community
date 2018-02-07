@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 02-Oct-17
  */
 class DifferenceImpl extends Difference{
 
@@ -23,8 +22,8 @@ class DifferenceImpl extends Difference{
     return myDelegate.no();
   }
 
-  public boolean weakedAccess() {
-    return myDelegate.weakedAccess();
+  public boolean accessRestricted() {
+    return myDelegate.accessRestricted();
   }
 
   public int addedModifiers() {

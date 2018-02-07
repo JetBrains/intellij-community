@@ -100,23 +100,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   }
 
   @Override
-  public PsiElement addRange(PsiElement first, PsiElement last) throws IncorrectOperationException {
-    return SharedImplUtil.addRange(this, first, last, null, null);
-  }
-
-  @Override
-  public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.TRUE);
-  }
-
-  @Override
-  public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor)
-    throws IncorrectOperationException {
-    return SharedImplUtil.addRange(this, first, last, SourceTreeToPsiMap.psiElementToTree(anchor), Boolean.FALSE);
-  }
-
-  @Override
   public void delete() throws IncorrectOperationException {
     ASTNode treeElement = calcTreeElement();
     LOG.assertTrue(treeElement.getTreeParent() != null);
@@ -151,11 +134,6 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
     if (navigatable != null) {
       navigatable.navigate(requestFocus);
     }
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return PsiNavigationSupport.getInstance().canNavigate(this);
   }
 
   @Override

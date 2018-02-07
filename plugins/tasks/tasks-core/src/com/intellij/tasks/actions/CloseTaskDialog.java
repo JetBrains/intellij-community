@@ -56,6 +56,8 @@ public class CloseTaskDialog extends DialogWrapper {
     super(project, false);
     myProject = project;
     myTask = task;
+    myStateCombo.setProject(myProject);
+    myStateCombo.setTask(myTask);
 
     setTitle("Close Task");
     myTaskLabel.setText(TaskUtil.getTrimmedSummary(task));
@@ -119,7 +121,7 @@ public class CloseTaskDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myStateCombo = new TaskStateCombo(myProject, myTask) {
+    myStateCombo = new TaskStateCombo() {
       @Nullable
       @Override
       protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {

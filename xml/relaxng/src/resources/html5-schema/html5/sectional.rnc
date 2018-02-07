@@ -15,6 +15,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h1.inner =
@@ -32,6 +33,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h2.inner =
@@ -49,6 +51,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h3.inner =
@@ -66,6 +69,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h4.inner =
@@ -83,6 +87,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h5.inner =
@@ -100,6 +105,7 @@
 			|	common.attrs.aria.role.heading
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-subtitle
 			)?
 		)
 	h6.inner =

@@ -37,7 +37,7 @@ public class ShowShortenNames extends ActionGroup {
     for (ShortNameType type : ShortNameType.values()) {
       kids.add(new SetShortNameTypeAction(type));
     }
-    myChildren = kids.toArray(new AnAction[kids.size()]);
+    myChildren = kids.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -46,6 +46,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.myOverrideIdeShortcuts = state.myOverrideIdeShortcuts
     myState.myShellIntegration = state.myShellIntegration
     myState.myShellPath = state.myShellPath
+    myState.myHighlightHyperlinks = state.myHighlightHyperlinks
   }
 
   fun closeSessionOnLogout(): Boolean {
@@ -92,6 +93,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myPasteOnMiddleMouseButton = true
     var myOverrideIdeShortcuts = true
     var myShellIntegration = true
+    var myHighlightHyperlinks = true
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -120,6 +122,14 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   fun setPasteOnMiddleMouseButton(pasteOnMiddleMouseButton: Boolean) {
     myState.myPasteOnMiddleMouseButton = pasteOnMiddleMouseButton
+  }
+
+  fun highlightHyperlinks(): Boolean {
+    return myState.myHighlightHyperlinks;
+  }
+
+  fun setHighlightHyperlinks(highlight: Boolean) {
+    myState.myHighlightHyperlinks = highlight
   }
 
   val defaultShellPath: String

@@ -348,6 +348,7 @@ public class CommitHelper {
       myAction.finish();
       if (!myProject.isDisposed()) {
         // after vcs refresh is completed, outdated notifiers should be removed if some exists...
+        VcsDirtyScopeManager.getInstance(myProject).filePathsDirty(getPathsToRefresh(), null);
         ChangeListManager clManager = ChangeListManager.getInstance(myProject);
         clManager.invokeAfterUpdate(
           () -> {
@@ -359,8 +360,7 @@ public class CommitHelper {
             // in background since commit must have authorized
             cache.refreshAllCachesAsync(false, true);
             cache.refreshIncomingChangesAsync();
-          }, InvokeAfterUpdateMode.SILENT, null, vcsDirtyScopeManager -> vcsDirtyScopeManager.filePathsDirty(getPathsToRefresh(), null),
-          null);
+          }, InvokeAfterUpdateMode.SILENT, null, null);
 
         LocalHistory.getInstance().putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
       }

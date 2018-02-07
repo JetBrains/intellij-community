@@ -1,21 +1,8 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +130,9 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @Override
   public JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath) {
-    String version = JdkVersionDetector.getInstance().detectJdkVersion(homePath);
+    JdkVersionDetector.JdkVersionInfo jdkInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(homePath);
+    assert jdkInfo != null : homePath;
+    String version = JdkVersionDetector.formatVersionString(jdkInfo.version);
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
     File homeDir = new File(FileUtil.toSystemDependentName(homePath));
     List<File> roots = JavaSdkUtil.getJdkClassesRoots(homeDir, false);
@@ -240,12 +229,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @NotNull
   @Override
-  public JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project, @NotNull File storageRoot) {
-    final JpsElementContainer container = project.getContainer();
-    final JavaModuleIndex index = container.getChild(JavaModuleIndexRole.INSTANCE);
-    if (index != null) {
-      return index;
+  public JavaModuleIndex getJavaModuleIndex(@NotNull JpsProject project) {
+    JpsElementContainer container = project.getContainer();
+    JavaModuleIndex index = container.getChild(JavaModuleIndexRole.INSTANCE);
+    if (index == null) {
+      index = container.setChild(JavaModuleIndexRole.INSTANCE, getOrCreateCompilerConfiguration(project).getCompilerExcludes());
     }
-    return container.setChild(JavaModuleIndexRole.INSTANCE, Pair.create(getOrCreateCompilerConfiguration(project), storageRoot));
+    return index;
   }
 }

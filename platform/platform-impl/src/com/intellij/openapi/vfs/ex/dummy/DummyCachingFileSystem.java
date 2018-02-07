@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,8 @@ import java.util.stream.Collectors;
  */
 public abstract class DummyCachingFileSystem<T extends VirtualFile> extends DummyFileSystem {
   private final String myProtocol;
-  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(this::findFileByPathInner);
+  private final ConcurrentMap<String, T> myCachedFiles = ConcurrentFactoryMap.createMap(
+    this::findFileByPathInner, ContainerUtil::createConcurrentWeakValueMap);
 
   public DummyCachingFileSystem(String protocol) {
     myProtocol = protocol;

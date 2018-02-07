@@ -216,7 +216,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
     final List<UsageInfo> usages = new ArrayList<>();
     inferrer.collect(usages);
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected boolean isAnnotateLocalVariables() {
@@ -289,7 +289,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
 
     final Runnable refactoringRunnable = applyRunnable(project, () -> {
       final Set<UsageInfo> infos = UsageViewUtil.getNotExcludedUsageInfos(usageView);
-      return infos.toArray(new UsageInfo[infos.size()]);
+      return infos.toArray(UsageInfo.EMPTY_ARRAY);
     });
 
     String canNotMakeString = "Cannot perform operation.\nThere were changes in code after usages have been found.\nPlease perform operation search again.";

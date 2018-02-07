@@ -35,7 +35,6 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -1098,7 +1097,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
-      if (newParent == null || !(newParent instanceof ReadOnlyColorsScheme)) {
+      if (!(newParent instanceof ReadOnlyColorsScheme)) {
         throw new InvalidDataException(parentName);
       }
       myParentScheme = newParent;

@@ -108,6 +108,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.width,
       size.height
     );
+
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(false);
+    }
+
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
     doWhenFirstShown(this, this::pack);
@@ -140,9 +145,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
-
-    // open project from welcome screen show progress dialog and call FocusTrackback.register()
-    FocusTrackback.release(this);
   }
 
   private static void saveLocation(Rectangle location) {
@@ -524,7 +526,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       logo.setBorder(JBUI.Borders.empty(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
-      JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
+      final String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
+                                     ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+                                     : ApplicationNamesInfo.getInstance().getFullProductName();
+      JLabel appName = new JLabel(applicationName);
       Font font = getProductFont();
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(JBUI.scale(36f)).deriveFont(Font.PLAIN));
@@ -919,9 +924,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
                                         @NotNull JPanel bottomPanel,
                                         @Nullable Runnable backAction) {
     bottomPanel.removeAll();
-    bottomPanel.setPreferredSize(JBUI.size(-1, UIUtil.isUnderDarcula() ? 44 : 40));
 
-    if (SystemInfoRt.isUnix) {
+    if (SystemInfoRt.isMac) {
       addCancelButton(bottomPanel, backAction);
       addActionButton(bottomPanel, actionWithPanel, currentPanel);
     }
@@ -947,11 +951,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   @Nullable
-  private static JComponent createCancelButton(@Nullable Runnable backAction) {
-    if (backAction == null) return null;
+  private static JComponent createCancelButton(@Nullable Runnable cancelAction) {
+    if (cancelAction == null) return null;
 
     JButton cancelButton = new JButton("Cancel");
-    cancelButton.addActionListener(e -> backAction.run());
+    cancelButton.addActionListener(e -> cancelAction.run());
 
     return cancelButton;
   }

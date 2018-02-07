@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
@@ -11,7 +12,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.JavaCodeFragmentFactory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.LightPlatformTestCase
@@ -1953,16 +1953,17 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testWrapParamsOnEveryItem() {
-    val codeStyleSettings = CodeStyleSettingsManager.getSettings(LightPlatformTestCase.getProject())
+    val codeStyleSettings = CodeStyle.getSettings(getProject())
 
-    val oldMargin = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN
-    val oldKeep = codeStyleSettings.KEEP_LINE_BREAKS
-    val oldWrap = codeStyleSettings.METHOD_PARAMETERS_WRAP
+    val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
+    val oldMargin = javaSettings.RIGHT_MARGIN
+    val oldKeep = javaSettings.KEEP_LINE_BREAKS
+    val oldWrap = javaSettings.METHOD_PARAMETERS_WRAP
 
     try {
       codeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 80)
-      codeStyleSettings.KEEP_LINE_BREAKS = false
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+      javaSettings.KEEP_LINE_BREAKS = false
+      javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
 
       doClassTest(
         "public void foo(String p1,\n" +
@@ -1986,14 +1987,14 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     }
     finally {
       codeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, oldMargin)
-      codeStyleSettings.KEEP_LINE_BREAKS = oldKeep
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = oldWrap
+      javaSettings.KEEP_LINE_BREAKS = oldKeep
+      javaSettings.METHOD_PARAMETERS_WRAP = oldWrap
     }
 
   }
 
   fun testCommentAfterDeclaration() {
-    val codeStyleSettings = CodeStyleSettingsManager.getSettings(LightPlatformTestCase.getProject())
+    val codeStyleSettings = CodeStyle.getSettings(LightPlatformTestCase.getProject())
     val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
 
     val oldMargin = codeStyleSettings.defaultRightMargin
@@ -3397,6 +3398,48 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       "     *\n" +
       "     */\n" +
       "}\n"
+    )
+  }
+
+  fun testIdea183193() {
+    doTextTest(
+      "package de.tarent.bugreport;\n" +
+      "\n" +
+      "        /*-\n" +
+      "         * This is supposed\n" +
+      "         * to be a copyright comment\n" +
+      "         * and thus not wrapped.\n" +
+      "         */\n" +
+      "\n" +
+      "        /*\n" +
+      "         * This is supposed\n" +
+      "         * to be wrapped.\n" +
+      "         */\n" +
+      "\n" +
+      "/**\n" +
+      " * This is JavaDoc.\n" +
+      " */\n" +
+      "public class IndentBugReport {\n" +
+      "}",
+
+      "package de.tarent.bugreport;\n" +
+      "\n" +
+      "/*-\n" +
+      " * This is supposed\n" +
+      " * to be a copyright comment\n" +
+      " * and thus not wrapped.\n" +
+      " */\n" +
+      "\n" +
+      "/*\n" +
+      " * This is supposed\n" +
+      " * to be wrapped.\n" +
+      " */\n" +
+      "\n" +
+      "/**\n" +
+      " * This is JavaDoc.\n" +
+      " */\n" +
+      "public class IndentBugReport {\n" +
+      "}"
     )
   }
 }

@@ -17,7 +17,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/26/11
  */
 public class XmlProperty implements IProperty, PomRenameableTarget, PsiTarget {
 

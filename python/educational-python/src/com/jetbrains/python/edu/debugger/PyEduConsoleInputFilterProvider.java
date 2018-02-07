@@ -16,7 +16,7 @@ public class PyEduConsoleInputFilterProvider implements ConsoleInputFilterProvid
   public InputFilter[] getDefaultFilters(@NotNull Project project) {
     return new InputFilter[]{new InputFilter() {
       @Override
-      public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, ConsoleViewContentType outputType) {
+      public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType outputType) {
         if (outputType.equals(ConsoleViewContentType.SYSTEM_OUTPUT) && !text.contains("exit code")) {
           return Collections.emptyList();
         }

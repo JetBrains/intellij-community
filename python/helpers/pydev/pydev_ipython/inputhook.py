@@ -170,6 +170,13 @@ class InputHookManager(object):
             self._apps[GUI_WX]._in_event_loop = False
         self.clear_inputhook()
 
+    def enable_qt(self, app=None):
+        from pydev_ipython.qt_for_kernel import QT_API, QT_API_PYQT5
+        if QT_API == QT_API_PYQT5:
+            self.enable_qt5(app)
+        else:
+            self.enable_qt4(app)
+
     def enable_qt4(self, app=None):
         """Enable event loop integration with PyQt4.
 
@@ -448,6 +455,7 @@ inputhook_manager = InputHookManager()
 
 enable_wx = inputhook_manager.enable_wx
 disable_wx = inputhook_manager.disable_wx
+enable_qt = inputhook_manager.enable_qt
 enable_qt4 = inputhook_manager.enable_qt4
 disable_qt4 = inputhook_manager.disable_qt4
 enable_qt5 = inputhook_manager.enable_qt5
@@ -510,7 +518,7 @@ def enable_gui(gui=None, app=None):
             GUI_TK: enable_tk,
             GUI_GTK: enable_gtk,
             GUI_WX: enable_wx,
-            GUI_QT: enable_qt4,  # qt3 not supported
+            GUI_QT: enable_qt,
             GUI_QT4: enable_qt4,
             GUI_QT5: enable_qt5,
             GUI_GLUT: enable_glut,
@@ -550,6 +558,7 @@ __all__ = [
 
     "enable_wx",
     "disable_wx",
+    "enable_qt",
     "enable_qt4",
     "disable_qt4",
     "enable_qt5",

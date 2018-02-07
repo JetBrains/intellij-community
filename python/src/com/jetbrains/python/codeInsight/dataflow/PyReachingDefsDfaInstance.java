@@ -107,8 +107,4 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   public DFAMap<ScopeVariable> initial() {
     return INITIAL_MAP;
   }
-
-  public boolean isForward() {
-    return true;
-  }
 }

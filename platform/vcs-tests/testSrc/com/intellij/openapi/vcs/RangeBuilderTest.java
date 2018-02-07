@@ -16,27 +16,22 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * author: lesya
- */
-public class RangeBuilderTest extends LightPlatformTestCase {
-
-  public void testIdenticalContents() throws FilesTooBigForDiffException {
+public class RangeBuilderTest extends TestCase {
+  public void testIdenticalContents() {
     String upToDateContent = "a\na\na\na\n";
-    assertTrue(RangesBuilder.createRanges(EditorFactory.getInstance().createDocument(upToDateContent),
-                                          EditorFactory.getInstance().createDocument(upToDateContent)).isEmpty());
+    assertTrue(RangesBuilder.createRanges(new DocumentImpl(upToDateContent),
+                                          new DocumentImpl(upToDateContent)).isEmpty());
   }
 
-  public void testModified() throws FilesTooBigForDiffException {
+  public void testModified() {
     doTest(
       new String[]{"1", "2", "8", "3", "4"},
       new String[]{"1", "2", "9", "3", "4"},
@@ -61,13 +56,9 @@ public class RangeBuilderTest extends LightPlatformTestCase {
       new String[]{"anbnc"},
       new Range[]{new Range(0, 1, 0, 1)}
     );
-
-
-
-
   }
 
-  public void testDeleted() throws FilesTooBigForDiffException {
+  public void testDeleted() {
     doTest(new String[]{"a", "a", "a", "b", "b", "b", "c", "c", "c"},
            new String[]{"a", "a", "a", "c", "c", "c"},
            new Range[]{new Range(3, 3, 3, 6)}
@@ -81,14 +72,12 @@ public class RangeBuilderTest extends LightPlatformTestCase {
 
     doTest(
       new String[]{"1", "2", "8", "3", "4"},
-      new String[]{"1", "2",      "3", "4"},
+      new String[]{"1", "2", "3", "4"},
       new Range[]{new Range(2, 2, 2, 3)}
     );
-
-
   }
 
-  public void testInsert() throws FilesTooBigForDiffException {
+  public void testInsert() {
     doTest(
       new String[]{"1", "3"},
       new String[]{"1", "2", "3"},
@@ -96,22 +85,20 @@ public class RangeBuilderTest extends LightPlatformTestCase {
     );
 
     doTest(
-      new String[]{     "1", "3"},
+      new String[]{"1", "3"},
       new String[]{"2", "1", "3"},
       new Range[]{new Range(0, 1, 0, 0)}
     );
+
     doTest(
-      new String[]{"1", "2",      "3", "4"},
+      new String[]{"1", "2", "3", "4"},
       new String[]{"1", "2", "8", "3", "4"},
       new Range[]{new Range(2, 3, 2, 2)}
     );
-
-
-
   }
 
 
-  public void testInsertAtEnd() throws FilesTooBigForDiffException {
+  public void testInsertAtEnd() {
     doTest("1",
            "1\n",
            new Range[]{new Range(1, 2, 1, 1)}
@@ -122,28 +109,27 @@ public class RangeBuilderTest extends LightPlatformTestCase {
       new String[]{"1", ""},
       new Range[]{new Range(2, 3, 2, 2)}
     );
-
   }
 
 
-  public void testDocument(){
-    Document document = EditorFactory.getInstance().createDocument("1\n\n");
+  public void testDocument() {
+    Document document = new DocumentImpl("1\n\n");
     int lineStartOffset = document.getLineStartOffset(document.getLineCount() - 1);
     assertEquals(3, lineStartOffset);
     document.getLineNumber(2);
   }
 
   private static void doTest(String[] upToDate, String[] current,
-                             Range[] expected) throws FilesTooBigForDiffException {
+                             Range[] expected) {
     CharSequence upToDateContent = createContentOn(upToDate);
     CharSequence currentContent = createContentOn(current);
     doTest(upToDateContent, currentContent, expected);
   }
 
-  private static void doTest(CharSequence upToDateContent, CharSequence currentContent, Range[] expected) throws FilesTooBigForDiffException {
-    List<Range> result = RangesBuilder.createRanges(EditorFactory.getInstance().createDocument(currentContent),
-                                                    EditorFactory.getInstance().createDocument(upToDateContent));
-    assertEquals(Arrays.asList(expected), result);
+  private static void doTest(CharSequence upToDateContent, CharSequence currentContent, Range[] expected) {
+    List<Range> result = RangesBuilder.createRanges(new DocumentImpl(currentContent),
+                                                    new DocumentImpl(upToDateContent));
+    BaseLineStatusTrackerTestCase.assertEqualRanges(result, Arrays.asList(expected));
   }
 
   private static String createContentOn(String[] content) {
@@ -154,5 +140,4 @@ public class RangeBuilderTest extends LightPlatformTestCase {
     }
     return result.toString();
   }
-
 }

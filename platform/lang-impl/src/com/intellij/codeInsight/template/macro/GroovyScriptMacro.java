@@ -20,7 +20,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -96,7 +95,7 @@ public class GroovyScriptMacro extends Macro {
     if (o != null) {
       Set<LookupElement> set = new LinkedHashSet<>();
       set.add(LookupElementBuilder.create(o.toString()));
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
     return LookupElement.EMPTY_ARRAY;
   }

@@ -53,11 +53,6 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
       protected Color getEmptySpaceColor() {
         return UIUtil.getBgFillColor(getParent());
       }
-
-      @Override
-      protected void paintSelectionAndBorder(Graphics2D g2d) {
-        super.paintSelectionAndBorder(g2d);
-      }
     };
     myTabs.setFirstTabOffset(10);
 

@@ -15,11 +15,7 @@
  */
 package com.intellij.build;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
@@ -32,11 +28,5 @@ public class BuildViewManager extends AbstractViewManager {
   @Override
   public String getViewName() {
     return "Build";
-  }
-
-  @Nullable
-  @Override
-  protected Icon getContentIcon() {
-    return AllIcons.Actions.Compile;
   }
 }

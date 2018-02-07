@@ -1,19 +1,17 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
 import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.function.Consumer;
+
+import static com.intellij.ui.tree.TreeTestUtil.node;
 
 public class TreeSmartSelectProviderTest {
   private final TreeSmartSelectProvider provider = new TreeSmartSelectProvider();
@@ -129,7 +127,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseToVisibleRoot() {
+  public void testIncreaseToVisibleRoot() {
     test(true, tree -> {
       select(tree, 5);
       testIncrease(tree,
@@ -192,7 +190,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseToHiddenRoot() {
+  public void testIncreaseToHiddenRoot() {
     test(false, tree -> {
       select(tree, 5);
       testIncrease(tree,
@@ -241,7 +239,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseDecreaseFromLeafNode() {
+  public void testIncreaseDecreaseFromLeafNode() {
     test(tree -> {
       select(tree, 10);
       testIncreaseDecrease(tree,
@@ -318,7 +316,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseDecreaseFromCollapsedNode() {
+  public void testIncreaseDecreaseFromCollapsedNode() {
     test(tree -> {
       select(tree, 5);
       testIncreaseDecrease(tree,
@@ -353,7 +351,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseDecreaseFromExpandedNode() {
+  public void testIncreaseDecreaseFromExpandedNode() {
     test(tree -> {
       select(tree, 7);
       testIncreaseDecrease(tree,
@@ -416,7 +414,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseDecreaseFromExpandedParentNode() {
+  public void testIncreaseDecreaseFromExpandedParentNode() {
     test(tree -> {
       select(tree, 6);
       testIncreaseDecrease(tree,
@@ -465,7 +463,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseDecreaseWithoutCapture() {
+  public void testIncreaseDecreaseWithoutCapture() {
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, tree -> {
       select(tree, 3, 10);
       testIncreaseDecrease(tree,
@@ -528,7 +526,7 @@ public class TreeSmartSelectProviderTest {
   }
 
   @Test
-  public void testIcreaseDecreaseWithCapture() {
+  public void testIncreaseDecreaseWithCapture() {
     test(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION, tree -> {
       select(tree, 10, 3);
       testIncrease(tree,
@@ -756,15 +754,7 @@ public class TreeSmartSelectProviderTest {
                      "    [zoo.txt]\n");
   }
 
-  private static DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
-    if (object instanceof DefaultMutableTreeNode && ArrayUtil.isEmpty(children)) return (DefaultMutableTreeNode)object;
-    if (object instanceof TreeNode) throw new IllegalArgumentException("do not use a tree node as a node content");
-    DefaultMutableTreeNode node = new DefaultMutableTreeNode(object);
-    for (Object child : children) node.add(node(child));
-    return node;
-  }
-
-  private static DefaultMutableTreeNode root() {
+  private static TreeNode root() {
     return node("Root",
                 node("Color",
                      node("Red"),
@@ -798,7 +788,8 @@ public class TreeSmartSelectProviderTest {
   }
 
   private static void assertTree(JTree tree, String expected) {
-    PlatformTestUtil.assertTreeEqual(tree, expected, true);
+    String actual = TreeTestUtil.toString(tree, true);
+    Assert.assertEquals(expected, !tree.isRootVisible() ? "-Root\n" + actual : actual);
   }
 
   private static void test(Consumer<JTree> consumer) {

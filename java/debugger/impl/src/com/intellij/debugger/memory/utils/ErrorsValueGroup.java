@@ -16,7 +16,7 @@
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;

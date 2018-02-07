@@ -209,7 +209,7 @@ public class AntCompletionTest extends LightCodeInsightTestCase {
   @NotNull
   private static LookupElement[] getItems() {
     final List<LookupElement> list = LookupManager.getInstance(getProject()).getActiveLookup().getItems();
-    return list.toArray(new LookupElement[list.size()]);
+    return list.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

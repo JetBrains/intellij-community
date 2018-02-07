@@ -311,11 +311,6 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
   }
 
-  // PY-2083
-  public void testUnresolvedWith() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true));
-  }
-
   // PY-2092
   public void testUnresolvedRefCreateFunction() {
     doInspectionTest(PyUnresolvedReferencesInspection.class,
@@ -653,9 +648,10 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
-      doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true);
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+    );
   }
 
   // PY-8174

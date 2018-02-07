@@ -17,6 +17,7 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,5 +53,13 @@ public class IntentionPolicy {
    */
   public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
     return "Flip ','".equals(action.getText()); // just does text operations, doesn't care about correctness
+  }
+
+  public boolean checkComments(IntentionAction intention) {
+    return false;
+  }
+
+  public boolean trackComment(PsiComment comment) {
+    return true;
   }
 }

@@ -571,8 +571,4 @@ public class DarculaLaf extends BasicLookAndFeel {
   public boolean getSupportsWindowDecorations() {
     return true;
   }
-
-  public static Icon loadIcon(String iconName) {
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/" + iconName, DarculaLaf.class, true);
-  }
 }

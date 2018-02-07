@@ -34,7 +34,7 @@ public abstract class CodeStyleSettingsProvider {
   }
 
   @NotNull
-  public abstract Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings originalSettings);
+  public abstract Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings modelSettings);
 
   /**
    * Returns the name of the configurable page without creating a Configurable instance.

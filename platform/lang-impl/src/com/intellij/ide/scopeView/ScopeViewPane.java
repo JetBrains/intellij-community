@@ -183,6 +183,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
         return ScopeViewPane.this.getId();
       }
     }).setAsSecondary(true);
+    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
   }
 
   @NotNull

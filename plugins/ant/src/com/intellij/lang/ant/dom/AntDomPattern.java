@@ -29,7 +29,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 2, 2007
  */
 public class AntDomPattern extends AntDomRecursiveVisitor {
   private static final List<Pattern> ourDefaultExcludes = new ArrayList<>(getDefaultExcludes(true));

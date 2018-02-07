@@ -67,7 +67,7 @@ public class PyRedundantParenthesesInspectionTest extends PyInspectionTestCase {
   }
 
   public void testYieldFrom() {       //PY-7410
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testYield() {       //PY-10420

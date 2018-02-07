@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -26,10 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
+import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -86,10 +71,13 @@ public final class XmlSerializerImpl {
         }
         return new CollectionBinding((ParameterizedType)originalType, accessor);
       }
+
+      if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        //noinspection unchecked
+        return new MapBinding(accessor, (Class<? extends Map>)aClass);
+      }
+
       if (accessor != null) {
-        if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-          return new MapBinding(accessor);
-        }
         if (Element.class.isAssignableFrom(aClass)) {
           return new JDOMElementBinding(accessor);
         }
@@ -185,7 +173,7 @@ public final class XmlSerializerImpl {
     }
   }
 
-  private static boolean isPrimitive(@NotNull Class<?> aClass) {
+  static boolean isPrimitive(@NotNull Class<?> aClass) {
     return aClass.isPrimitive() ||
         aClass == String.class ||
         aClass == Integer.class ||
@@ -273,6 +261,13 @@ public final class XmlSerializerImpl {
           deserializedValue = enumConstant;
         }
       }
+      if (deserializedValue == null) {
+        for (Object enumConstant : valueClass.getEnumConstants()) {
+          if (enumConstant.toString().equalsIgnoreCase(value)) {
+            deserializedValue = enumConstant;
+          }
+        }
+      }
       accessor.set(host, deserializedValue);
     }
     else if (Date.class.isAssignableFrom(valueClass)) {
@@ -303,8 +298,41 @@ public final class XmlSerializerImpl {
       else if (valueClass == Float.class) {
         deserializedValue = Float.parseFloat(value);
       }
+      else if (callFromStringIfDefined(host, value, accessor, valueClass)) {
+        return;
+      }
+
       accessor.set(host, deserializedValue);
     }
+  }
+
+  private static boolean callFromStringIfDefined(@NotNull Object host,
+                                                 @NotNull String value,
+                                                 @NotNull MutableAccessor accessor,
+                                                 @NotNull Class<?> valueClass) {
+    Method fromText;
+    try {
+      fromText = valueClass.getMethod("fromText", String.class);
+    }
+    catch (NoSuchMethodException ignored) {
+      return false;
+    }
+
+    try {
+      fromText.setAccessible(true);
+    }
+    catch (SecurityException ignored) {
+    }
+
+    try {
+      accessor.set(host, fromText.invoke(null, value));
+      return true;
+    }
+    catch (IllegalAccessException ignored) {
+    }
+    catch (InvocationTargetException ignored) {
+    }
+    return false;
   }
 
   @NotNull

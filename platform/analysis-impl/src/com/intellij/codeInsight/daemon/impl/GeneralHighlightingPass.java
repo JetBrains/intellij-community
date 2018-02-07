@@ -159,7 +159,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                 Arrays.asList(Extensions.getExtensions(HighlightVisitor.EP_HIGHLIGHT_VISITOR, myProject)));
     }
 
-    return visitors.toArray(new HighlightVisitor[visitors.size()]);
+    return visitors.toArray(new HighlightVisitor[0]);
   }
 
   void setHighlightVisitorProducer(@NotNull NotNullProducer<HighlightVisitor[]> highlightVisitorProducer) {

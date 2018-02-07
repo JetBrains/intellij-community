@@ -70,7 +70,7 @@ public class ReferenceProviderType {
       for (PsiReferenceProvider child : children) {
         ContainerUtil.addAllNotNull(result, child.getReferencesByElement(element, context));
       }
-      return result.toArray(new PsiReference[result.size()]);
+      return result.toArray(PsiReference.EMPTY_ARRAY);
     }
 
     @Override

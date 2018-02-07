@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
@@ -120,7 +119,8 @@ public class PyArgumentListInspection extends PyInspection {
           final PyFunction function = (PyFunction)callable;
 
           // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
-          if (PyUtil.hasCustomDecorators(function) || decoratedClassInitCall(call.getCallee(), function)) {
+          if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||
+              decoratedClassInitCall(call.getCallee(), function, context)) {
             return;
           }
         }
@@ -136,14 +136,18 @@ public class PyArgumentListInspection extends PyInspection {
     inspectPyArgumentList(node, holder, context, 0);
   }
 
-  private static boolean decoratedClassInitCall(@Nullable PyExpression callee, @NotNull PyFunction function) {
+  private static boolean decoratedClassInitCall(@Nullable PyExpression callee,
+                                                @NotNull PyFunction function,
+                                                @NotNull TypeEvalContext context) {
     if (callee instanceof PyReferenceExpression && PyUtil.isInit(function)) {
       final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference();
 
       return Arrays
         .stream(classReference.multiResolve(false))
         .map(ResolveResult::getElement)
-        .anyMatch(element -> element instanceof PyClass && PyUtil.hasCustomDecorators((PyClass)element));
+        .anyMatch(
+          element -> element instanceof PyClass && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, context)
+        );
     }
 
     return false;
@@ -198,13 +202,14 @@ public class PyArgumentListInspection extends PyInspection {
       final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
 
       final PyCallExpression.PyArgumentsMapping mapping = mappings.get(0);
-      if (!mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
+      if (holder.isOnTheFly() && !mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
         final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
         if (markedCallee != null) {
           final PyCallable callable = markedCallee.getElement();
           final Project project = node.getProject();
           if (callable instanceof PyFunction && !PyChangeSignatureHandler.isNotUnderSourceRoot(project, callable.getContainingFile())) {
-            holder.registerProblem(node, PyBundle.message("INSP.unexpected.arg(s)"), PyChangeSignatureQuickFix.forMismatchedCall(mapping));
+            final String message = PyBundle.message("INSP.unexpected.arg(s)");
+            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION, PyChangeSignatureQuickFix.forMismatchedCall(mapping));
           }
         }
       }

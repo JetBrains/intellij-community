@@ -49,12 +49,14 @@ public class IpnbPyFragment extends PyFileImpl {
     return clone;
   }
 
+  @Override
   @NotNull
   public FileViewProvider getViewProvider() {
     if (myViewProvider != null) return myViewProvider;
     return super.getViewProvider();
   }
 
+  @Override
   public boolean isPhysical() {
     return myPhysical;
   }

@@ -3,6 +3,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -11,21 +12,32 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
+import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyTestConfiguration;
 import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PyTestFrameworkService;
-import com.jetbrains.python.testing.TestTargetType;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.hamcrest.Matchers;
+import org.jdom.Element;
+import org.jdom.JDOMException;
+import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,7 +53,6 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST);
 
 
-
   // Ensures setup/teardown does not break anything
   @Test
   public void testSetupTearDown() {
@@ -50,6 +61,42 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
       @Override
       protected PyTestTestProcessRunner createProcessRunner() {
         return new PyTestTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
+  /**
+   * Provides existing .xml and checks that configuration is able to parse it
+   */
+  @Test
+  public void testDeserialization() {
+    runPythonTest(new PyExecutionFixtureTestTask("testRunner/env/pytest/config/") {
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception {
+        final PyTestConfiguration configuration = configureByFile("MyConfig.xml");
+        assertEquals("Wrong target type", new ConfigurationTarget("foo.py", PyRunTargetVariant.PATH), configuration.getTarget());
+        assertEquals("Wrong keywords", "keywords", configuration.getKeywords());
+        assertEquals("Wrong arguments", "--additional-args", configuration.getAdditionalArguments());
+
+
+        final PyTestConfiguration configurationWithCustom = configureByFile("MyConfigWithCustom.xml");
+        assertEquals("Wrong target type", new ConfigurationTarget("spam", PyRunTargetVariant.CUSTOM), configurationWithCustom.getTarget());
+        assertEquals("Wrong keywords", "keywords", configurationWithCustom.getKeywords());
+        assertEquals("Wrong arguments", "--additional-args", configurationWithCustom.getAdditionalArguments());
+      }
+
+      @NotNull
+      private PyTestConfiguration configureByFile(@NotNull final String path) throws IOException, JDOMException {
+        final VirtualFile file = myFixture.getTempDirFixture().getFile(path);
+        assert file != null : "No config found";
+
+        final SAXBuilder builder = new SAXBuilder();
+        final CharBuffer data = Charset.defaultCharset().decode(ByteBuffer.wrap(file.contentsToByteArray()));
+        final Element element = builder.build(new StringReader(data.toString())).getRootElement();
+
+        final PyTestConfiguration configuration = new PyTestConfiguration(myFixture.getProject(), PyTestFactory.INSTANCE);
+        configuration.readExternal(element);
+        return configuration;
       }
     });
   }
@@ -116,7 +163,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   @Test
   public void testTestNameBeforeTestStarted() {
     runPythonTest(
-      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted", SdkCreationType.EMPTY_SDK) {
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted",
+                                                                SdkCreationType.EMPTY_SDK) {
 
         @NotNull
         @Override
@@ -333,18 +381,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() {
-
-    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration> task =
-      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration>() {
-        @NotNull
-        @Override
-        protected PyTestFactory createFactory() {
-          return PyTestFactory.INSTANCE;
-        }
-      };
-    runPythonTest(task);
-    task.checkEmptyTarget();
+  public void testValidation() throws Throwable {
+    new PyConfigurationValidationTask<PyTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyTestFactory createFactory() {
+        return PyTestFactory.INSTANCE;
+      }
+    }.fetchException(this::runPythonTest);
   }
 
   @Test
@@ -438,7 +482,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
             configuration.getTarget().setTarget(fullFilePath.getPath());
-            configuration.getTarget().setTargetType(TestTargetType.PATH);
+            configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
           }
         };
       }

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -40,11 +25,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnEditCommitMessageAction extends AnAction {
   @Override
@@ -130,19 +116,16 @@ public class SvnEditCommitMessageAction extends AnAction {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       final String url = myLocation.getURL();
-      final SVNURL root;
+      final Url root;
       try {
-        root = SvnUtil.getRepositoryRoot(myVcs, SVNURL.parseURIEncoded(url));
+        root = SvnUtil.getRepositoryRoot(myVcs, createUrl(url));
         if (root == null) {
           myException = new VcsException("Can not determine repository root for URL: " + url);
           return;
         }
-        SvnTarget target = SvnTarget.fromURL(root);
+        Target target = Target.on(root);
         myVcs.getFactory(target).createPropertyClient()
-          .setRevisionProperty(target, SvnPropertyKeys.LOG, SVNRevision.create(myNumber), PropertyValue.create(myNewMessage), false);
-      }
-      catch (SVNException e) {
-        myException = new VcsException(e);
+          .setRevisionProperty(target, SvnPropertyKeys.LOG, Revision.of(myNumber), PropertyValue.create(myNewMessage), false);
       }
       catch (VcsException e) {
         myException = e;

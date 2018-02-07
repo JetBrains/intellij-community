@@ -35,9 +35,10 @@ internal data class SelectIndex(private val selectedIndex: Int) : SelectionPolic
 
 internal object PreserveSelection : SelectionPolicy {
   override fun performSelection(popup: ChooseByNameBase, model: SmartPointerListModel<Any>): List<Int> {
-    val chosenElements = popup.currentChosenInfo?.chosenElements ?: return emptyList()
+    val chosenElements = popup.currentChosenInfo?.chosenElements.orEmpty()
     val items = model.items
-    return items.indices.filter { items[it] in chosenElements }
+    val preserved = items.indices.filter { items[it] in chosenElements }
+    return if (preserved.isNotEmpty()) preserved else SelectMostRelevant.performSelection(popup, model)
   }
 }
 

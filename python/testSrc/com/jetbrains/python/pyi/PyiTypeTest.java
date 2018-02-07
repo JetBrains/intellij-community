@@ -81,7 +81,6 @@ public class PyiTypeTest extends PyTestCase {
 
   private void doTest(@NotNull String expectedType) {
     myFixture.copyDirectoryToProject("pyi/type/" + getTestName(true), "");
-    myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final String fileName = getTestName(false) + ".py";
     myFixture.configureByFile(fileName);
@@ -91,6 +90,7 @@ public class PyiTypeTest extends PyTestCase {
     final Project project = element.getProject();
     final PsiFile containingFile = element.getContainingFile();
     assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertProjectFilesNotParsed(myFixture.getFile());
     assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
   }
 
@@ -131,5 +131,23 @@ public class PyiTypeTest extends PyTestCase {
   // PY-22808
   public void testOverloadedNotMatchedGenericType() {
     doTest("Union[Dict[str, Any], list]");
+  }
+
+  public void testGenericClassDefinitionInOtherFile() {
+    doTest("int");
+  }
+
+  // PY-27186
+  public void testGenericClassDefinitionInSameFile() {
+    doTest("int");
+  }
+
+  public void testComparisonOperatorOverloads() {
+    doTest("int");
+  }
+
+  // PY-24929
+  public void testInstanceAttributeAnnotation() {
+    doTest("int");
   }
 }

@@ -16,7 +16,8 @@
 class C {
     void m(boolean b) {
         final boolean isCxf = true;
-        if (!isCxf || <caret>b) {
+        if (!isCxf || <caret>//comment
+                       b) {
           //comment
         }
     }

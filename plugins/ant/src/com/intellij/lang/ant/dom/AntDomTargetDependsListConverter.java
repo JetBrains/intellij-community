@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 16, 2010
  */
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
   
@@ -106,7 +105,7 @@ public class AntDomTargetDependsListConverter extends Converter<TargetResolver.R
       }
       refs.add(new AntDomTargetReference(element, TextRange.from(wholeStringRange.getStartOffset() + tokenStartOffset, ref.length()), group));
     }
-    return refs.toArray(new PsiReference[refs.size()]);
+    return refs.toArray(PsiReference.EMPTY_ARRAY);
   }
 
 }

@@ -72,7 +72,7 @@ public class TreeBuilderUtil {
       for (Object path : pathsToExpand) {
         tree.expandPath((TreePath)path);
       }
-      tree.addSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+      tree.addSelectionPaths(selectionPaths.toArray(new TreePath[0]));
     }
     else{
       for (Object element : pathsToExpand) {

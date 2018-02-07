@@ -37,6 +37,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Contract;
 
 import java.util.List;
 
@@ -124,14 +125,15 @@ class CompletionAssertions {
     }
   }
 
-  static void assertCompletionPositionPsiConsistent(CompletionContext newContext,
+  @Contract("_,_,_,null->fail")
+  static void assertCompletionPositionPsiConsistent(OffsetsInFile offsets,
                                                     int offset,
-                                                    PsiFile fileCopy,
                                                     PsiFile originalFile, PsiElement insertedElement) {
+    PsiFile fileCopy = offsets.getFile();
     if (insertedElement == null) {
       throw new LogEventException("No element at insertion offset",
                                                                    "offset=" +
-                                                                   newContext.getStartOffset() +
+                                                                   offset +
                                                                    "\n" +
                                                                    DebugUtil.currentStackTrace(),
                                                                    createFileTextAttachment(fileCopy, originalFile),
@@ -173,7 +175,7 @@ class CompletionAssertions {
     private RangeMarkerSpy spy;
 
     public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
-      super(offsetMap, completionChar, items.toArray(new LookupElement[items.size()]),
+      super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
             completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
             completionChar != Lookup.NORMAL_SELECT_CHAR);

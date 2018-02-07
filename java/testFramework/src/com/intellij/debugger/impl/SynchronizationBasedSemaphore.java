@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 17, 2009
  */
 public class SynchronizationBasedSemaphore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.Semaphore");

@@ -37,7 +37,7 @@ public class MacrosGroup extends ActionGroup {
       actions.add(actionManager.getAction(id));
     }
 
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
 

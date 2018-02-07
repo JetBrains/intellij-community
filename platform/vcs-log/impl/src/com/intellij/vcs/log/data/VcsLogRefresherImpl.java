@@ -15,10 +15,12 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
@@ -37,9 +39,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-public class VcsLogRefresherImpl implements VcsLogRefresher {
+public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   private static final Logger LOG = Logger.getInstance(VcsLogRefresherImpl.class);
 
@@ -78,23 +81,24 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
 
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPack -> {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
-    }, false) {
+    }, false, this) {
       @NotNull
       @Override
-      protected ProgressIndicator startNewBackgroundTask() {
+      protected SingleTask startNewBackgroundTask() {
         return VcsLogRefresherImpl.this.startNewBackgroundTask(new MyRefreshTask(myDataPack));
       }
     };
   }
 
-  protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+  protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
     LOG.debug("Starting a background task...");
     ProgressIndicator indicator = myProgress.createProgressIndicator();
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(refreshTask, indicator);
-    return indicator;
+    Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask, indicator,
+                                                                                                                 null);
+    return new SingleTaskController.SingleTaskImpl(future, indicator);
   }
 
   @NotNull
@@ -190,6 +194,10 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
   @NotNull
   public VcsLogProgress getProgress() {
     return myProgress;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private class MyRefreshTask extends Task.Backgroundable {

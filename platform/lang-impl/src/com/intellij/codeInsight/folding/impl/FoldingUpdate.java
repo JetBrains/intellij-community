@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.folding.impl;
@@ -23,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,6 +22,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -110,9 +100,17 @@ public class FoldingUpdate {
     final UpdateFoldRegionsOperation operation = new UpdateFoldRegionsOperation(project, editor, file, elementsToFold,
                                                                                 applyDefaultState ? EXCEPT_CARET_REGION : NO, 
                                                                                 !applyDefaultState, false);
+    long documentTimestamp = document.getModificationStamp();
+    int documentLength = document.getTextLength();
     AtomicBoolean alreadyExecuted = new AtomicBoolean();
     Runnable runnable = () -> {
       if (alreadyExecuted.compareAndSet(false, true)) {
+        if (documentTimestamp != editor.getDocument().getModificationStamp()) {
+          LOG.error("Document has changed since fold regions were calculated");
+        }
+        else if (documentLength != editor.getDocument().getTextLength()) {
+          LOG.error("Document length has changed since fold regions were calculated");
+        }
         editor.getFoldingModel().runBatchFoldingOperationDoNotCollapseCaret(operation);
       }
     };
@@ -140,7 +138,7 @@ public class FoldingUpdate {
     Object lastTimeStamp = editor.getUserData(LAST_UPDATE_INJECTED_STAMP_KEY);
     if (lastTimeStamp instanceof Long && ((Long)lastTimeStamp).longValue() == timeStamp) return null;
 
-    List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+    List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(file, file.getTextRange());
     if (injectedDocuments.isEmpty()) return null;
     final List<EditorWindow> injectedEditors = new ArrayList<>();
     final List<PsiFile> injectedFiles = new ArrayList<>();
@@ -271,12 +269,36 @@ public class FoldingUpdate {
     @NotNull
     public final FoldingDescriptor descriptor;
     public final PsiElement element;
+    public final String signature;
     public final boolean collapsedByDefault;
 
     private RegionInfo(@NotNull FoldingDescriptor descriptor, @NotNull PsiElement psiElement) {
       this.descriptor = descriptor;
       this.element = psiElement;
       this.collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
+      this.signature = createSignature(psiElement);
+    }
+
+    private static String createSignature(@NotNull PsiElement element) {
+      String signature = FoldingPolicy.getSignature(element);
+      if (signature != null && Registry.is("folding.signature.validation")) {
+        PsiFile containingFile = element.getContainingFile();
+        PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
+        if (!element.equals(restoredElement)) {
+          StringBuilder trace = new StringBuilder();
+          PsiElement restoredAgain = FoldingPolicy.restoreBySignature(containingFile, signature, trace);
+          LOG.error("element: " + element + "(" + element.getText()
+                    + "); restoredElement: " + restoredElement
+                    + "; signature: '" + signature
+                    + "'; file: " + containingFile
+                    + "; injected: " + InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment(containingFile)
+                    + "; languages: " + containingFile.getViewProvider().getLanguages()
+                    + "; restored again: " + restoredAgain +
+                    "; restore produces same results: " + (restoredAgain == restoredElement)
+                    + "; trace:\n" + trace);
+        }
+      }
+      return signature;
     }
 
     @Override

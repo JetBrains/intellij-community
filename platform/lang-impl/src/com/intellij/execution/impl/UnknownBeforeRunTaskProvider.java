@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 15, 2009
  */
 public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
   private final Key<UnknownTask> myId;
@@ -54,11 +53,6 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
   @Override
   public String getDescription(UnknownTask task) {
     return ExecutionBundle.message("before.launch.run.unknown.task") + " " + myId.toString();
-  }
-
-  @Override
-  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull UnknownTask task) {
-    return false;
   }
 
   @Override
@@ -100,11 +94,6 @@ public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownB
           element.addContent(((Element)child).clone());
         }
       }
-    }
-
-    @Override
-    public BeforeRunTask clone() {
-      return super.clone();
     }
 
     public boolean equals(Object o) {

@@ -46,10 +46,6 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
     return true;
   }
 
-  @Override
-  protected void extendTemplateConfiguration(@NotNull RunConfigurationBase configuration) {
-  }
-
   public void cleanUserData(RunConfigurationBase runConfigurationBase) {}
 
   public static void cleanExtensionsUserData(RunConfigurationBase runConfigurationBase) {

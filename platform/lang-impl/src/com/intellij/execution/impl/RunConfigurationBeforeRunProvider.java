@@ -162,7 +162,15 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     return doExecuteTask(env, settings.first, settings.second);
   }
 
-  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env, 
+  /**
+   * @deprecated use {@link #doExecuteTask(ExecutionEnvironment, RunnerAndConfigurationSettings, ExecutionTarget)} instead
+   */
+  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env,
+                                      @NotNull final RunnerAndConfigurationSettings settings) {
+    return doExecuteTask(env, settings, null);
+  }
+
+  public static boolean doExecuteTask(@NotNull final ExecutionEnvironment env,
                                       @NotNull final RunnerAndConfigurationSettings settings,
                                       @Nullable final ExecutionTarget target) {
     final Executor executor = DefaultRunExecutor.getRunExecutorInstance();

@@ -4,7 +4,6 @@ import javax.xml.bind.annotation.XmlAttribute;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Jun-17
  */
 public abstract class Message {
   private String myUid;

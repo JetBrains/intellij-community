@@ -527,7 +527,7 @@ class InOutInterpreter extends BasicInterpreter {
         case INVOKEINTERFACE:
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = (MethodInsnNode)insn;
-          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           Type retType = Type.getReturnType(mNode.desc);
           boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
           if (!Type.VOID_TYPE.equals(retType)) {
@@ -553,10 +553,10 @@ class InOutInterpreter extends BasicInterpreter {
           }
           break;
         case INVOKEDYNAMIC:
-          LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
-          if(lambda != null) {
-            // indy producing lambda is never null
-            return new NotNullValue(lambda.getFunctionalInterfaceType());
+          InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
+          if(LambdaIndy.from(indy) != null || ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
+            // indy producing lambda or string concatenation is never null
+            return new NotNullValue(Type.getReturnType(indy.desc));
           }
           break;
         case MULTIANEWARRAY:

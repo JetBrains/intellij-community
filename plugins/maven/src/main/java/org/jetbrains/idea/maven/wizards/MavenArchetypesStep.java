@@ -45,7 +45,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 24.09.13
  */
 public class MavenArchetypesStep extends ModuleWizardStep implements Disposable {
 

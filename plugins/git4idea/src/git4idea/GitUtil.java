@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Arrays.stream;
 
 /**
@@ -515,14 +516,14 @@ public class GitUtil {
 
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
-                                              final Consumer<GitSimpleHandler> parametersSpecifier,
+                                              final Consumer<GitHandler> parametersSpecifier,
                                               final Consumer<GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);
 
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     LOG.debug("getLocalCommittedChanges output: '" + output + "'");
     StringScanner s = new StringScanner(output);
     final StringBuilder sb = new StringBuilder();
@@ -550,7 +551,7 @@ public class GitUtil {
 
   public static List<GitCommittedChangeList> getLocalCommittedChanges(final Project project,
                                                                    final VirtualFile root,
-                                                                   final Consumer<GitSimpleHandler> parametersSpecifier)
+                                                                   final Consumer<GitHandler> parametersSpecifier)
     throws VcsException {
     final List<GitCommittedChangeList> rc = new ArrayList<>();
 
@@ -701,16 +702,6 @@ public class GitUtil {
     return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
   }
 
-  @Nullable
-  public static GitRemote findOrigin(Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals("origin")) {
-        return remote;
-      }
-    }
-    return null;
-  }
-
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
     return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
@@ -852,7 +843,7 @@ public class GitUtil {
    * @param root
    */
   public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
-    final GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
     diff.addParameters("--name-only");
     if (staged) {
       diff.addParameters("--cached");
@@ -860,7 +851,7 @@ public class GitUtil {
     diff.setStdoutSuppressed(true);
     diff.setStderrSuppressed(true);
     diff.setSilent(true);
-    final String output = diff.run();
+    final String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
     return !output.trim().isEmpty();
   }
 
@@ -871,7 +862,7 @@ public class GitUtil {
       file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
     }
     if (file == null) {
-      LOG.warn("VirtualFile not found for " + absolutePath);
+      LOG.debug("VirtualFile not found for " + absolutePath);
     }
     return file;
   }
@@ -909,11 +900,8 @@ public class GitUtil {
           String message = "Change is not found for " + file.getPath();
           if (changeListManager.isInUpdate()) {
             message += " because ChangeListManager is being updated.";
-            LOG.debug(message);
           }
-          else {
-            LOG.info(message);
-          }
+          LOG.debug(message);
         }
       }
     }
@@ -946,12 +934,12 @@ public class GitUtil {
 
   @Nullable
   public static GitRemote getDefaultRemote(@NotNull Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(GitRemote.ORIGIN)) {
-        return remote;
-      }
-    }
-    return null;
+    return ContainerUtil.find(remotes, r -> r.getName().equals(GitRemote.ORIGIN));
+  }
+
+  @Nullable
+  public static GitRemote getDefaultOrFirstRemote(@NotNull Collection<GitRemote> remotes) {
+    return chooseNotNull(getDefaultRemote(remotes), ContainerUtil.getFirstItem(remotes));
   }
 
   @NotNull

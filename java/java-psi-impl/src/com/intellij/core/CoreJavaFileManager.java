@@ -190,7 +190,7 @@ public class CoreJavaFileManager implements JavaFileManager {
         result.add(psiClass);
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull

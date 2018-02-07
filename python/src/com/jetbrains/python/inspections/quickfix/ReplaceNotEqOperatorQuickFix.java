@@ -29,8 +29,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   06.03.2010
- * Time:   16:16:52
  */
 public class ReplaceNotEqOperatorQuickFix implements LocalQuickFix {
   @NotNull

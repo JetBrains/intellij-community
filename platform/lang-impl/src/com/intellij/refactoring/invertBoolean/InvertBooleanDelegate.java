@@ -74,16 +74,29 @@ public abstract class InvertBooleanDelegate {
                                           Collection<PsiElement> elementsToInvert);
 
   /**
-   * Invoked from {@link #getForeignElementToInvert(PsiElement, PsiElement, Language)};
+   * Invoked from {@link #collectForeignElementsToInvert(PsiElement, PsiElement, Language, Collection)}
    * should be used to reject usages for elements from foreign language to be refactored
    * @return null, if reference should not be reverted
    */
   public abstract PsiElement getElementToInvert(PsiElement namedElement, PsiElement expression);
 
   /**
-   * Should be called from {@link #collectRefElements(PsiElement, RenameProcessor, String, Collection)}
-   * to process found usages in foreign languages
+   * @return true, if element was found in current language
    */
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+    PsiElement elementToInvert = getElementToInvert(namedElement, expression);
+    if (elementToInvert != null) {
+      elementsToInvert.add(elementToInvert);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Use {@link #collectForeignElementsToInvert(PsiElement, PsiElement, Language, Collection)} instead
+   * To be removed in 2018.3
+   */
+  @Deprecated
   protected static PsiElement getForeignElementToInvert(PsiElement namedElement,
                                                         PsiElement expression,
                                                         Language language) {
@@ -94,6 +107,22 @@ public abstract class InvertBooleanDelegate {
       }
     }
     return null;
+  }
+
+  /**
+   * Should be called from {@link #collectRefElements(PsiElement, RenameProcessor, String, Collection)}
+   * to process found usages in foreign languages
+   */
+  protected static void collectForeignElementsToInvert(PsiElement namedElement,
+                                                       PsiElement expression,
+                                                       Language language,
+                                                       Collection<PsiElement> elementsToInvert) {
+    if (!expression.getLanguage().is(language)){
+      final InvertBooleanDelegate delegate = findInvertBooleanDelegate(expression);
+      if (delegate != null) {
+        delegate.collectElementsToInvert(namedElement, expression, elementsToInvert);
+      }
+    }
   }
 
   /**

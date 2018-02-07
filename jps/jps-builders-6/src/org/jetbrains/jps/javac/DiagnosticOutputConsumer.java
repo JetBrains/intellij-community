@@ -22,7 +22,6 @@ import java.util.Collection;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/22/12
 */
 public interface DiagnosticOutputConsumer extends DiagnosticListener<JavaFileObject> {
   void outputLineAvailable(String line);

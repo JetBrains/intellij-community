@@ -211,6 +211,6 @@ public class IElementType {
         matches.add(value);
       }
     }
-    return matches.toArray(new IElementType[matches.size()]);
+    return matches.toArray(new IElementType[0]);
   }
 }

@@ -30,7 +30,7 @@ public class FileUtilPerformanceTest {
   public void toCanonicalPath() {
     assertEquals(myCanonicalPath, FileUtil.toCanonicalPath(myTestPath));
 
-    PlatformTestUtil.startPerformanceTest("toCanonicalPath", 650, () -> {
+    PlatformTestUtil.startPerformanceTest("toCanonicalPath", 1_000, () -> {
       for (int i = 0; i < 1000000; ++i) {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;

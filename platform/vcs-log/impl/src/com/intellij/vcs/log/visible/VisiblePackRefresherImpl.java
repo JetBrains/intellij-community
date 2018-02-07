@@ -22,11 +22,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.SingleTaskController;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
@@ -59,7 +60,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myVisiblePackBuilder = builder;
     myState = new State(initialSortType);
 
-    myTaskController = new SingleTaskController<Request, State>(state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
@@ -67,16 +68,14 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
-    }, true) {
+    }, true, this) {
       @NotNull
       @Override
-      protected ProgressIndicator startNewBackgroundTask() {
+      protected SingleTask startNewBackgroundTask() {
         ProgressIndicator indicator = myLogData.getProgress().createProgressIndicator();
-        UIUtil.invokeLaterIfNeeded(() -> {
-          MyTask task = new MyTask(project, "Applying filters...");
-          ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
-        });
-        return indicator;
+        MyTask task = new MyTask(project, "Applying filters...");
+        Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, null);
+        return new SingleTaskImpl(future, indicator);
       }
     };
 
@@ -224,8 +223,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           return refresh(state, filterRequest, moreCommitsRequests);
         }
         else if (!indexingRequests.isEmpty()) {
-          if (myVisiblePackBuilder.affectedByIndexingRoots(state.getFilters(),
-                                                           ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+          if (myVisiblePackBuilder.areFiltersAffectedByIndexing(state.getFilters(),
+                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
             return refresh(state, filterRequest, moreCommitsRequests);
           }
         }

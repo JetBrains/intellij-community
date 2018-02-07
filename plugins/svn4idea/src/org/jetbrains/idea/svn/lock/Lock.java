@@ -18,15 +18,12 @@ package org.jetbrains.idea.svn.lock;
 import com.intellij.openapi.vcs.changes.LogicalLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNLock;
 
 import javax.xml.bind.annotation.*;
 import java.util.Date;
 
 /**
  * TODO: Probably unify with LogicalLock class
- *
- * @author Konstantin Kolosovsky.
  */
 public class Lock {
 
@@ -34,18 +31,6 @@ public class Lock {
   private final String myComment;
   private final Date myCreationDate;
   @Nullable private final Date myExpirationDate;
-
-  @Nullable
-  public static Lock create(@Nullable SVNLock lock) {
-    Lock result = null;
-
-    if (lock != null) {
-      result = new Lock.Builder().setOwner(lock.getOwner()).setComment(lock.getComment()).setCreationDate(lock.getCreationDate())
-        .setExpirationDate(lock.getExpirationDate()).build();
-    }
-
-    return result;
-  }
 
   public Lock(@NotNull Lock.Builder builder) {
     myOwner = builder.owner;

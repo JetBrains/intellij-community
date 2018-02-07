@@ -135,6 +135,7 @@ class FindUIHelper implements Disposable {
   }
 
   void updateFindSettings() {
+    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
     FindSettings findSettings = FindSettings.getInstance();
     findSettings.setCaseSensitive(myModel.isCaseSensitive());
     if (myModel.isReplaceState()) {
@@ -212,7 +213,7 @@ class FindUIHelper implements Disposable {
   }
 
   public void doOKAction() {
-    ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myModel);
+    updateFindSettings();
     myOkHandler.run();
   }
 }

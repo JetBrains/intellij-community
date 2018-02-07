@@ -50,7 +50,7 @@ public class SuppressWarningsFoldingBuilder extends FoldingBuilderEx {
         super.visitAnnotation(annotation);
       }
     });
-    return result.toArray(new FoldingDescriptor[result.size()]);
+    return result.toArray(FoldingDescriptor.EMPTY);
   }
 
   @Override

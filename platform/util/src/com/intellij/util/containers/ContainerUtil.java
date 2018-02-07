@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -25,8 +13,6 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -219,6 +205,53 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
+  @NotNull
+  @Contract(pure = true)
+  public static <T> Collection<T> unmodifiableOrEmptyCollection(Collection<? extends T> original) {
+    int size = original.size();
+    if (size == 0) {
+      return emptyList();
+    }
+    else {
+      return Collections.unmodifiableCollection(original);
+    }
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static <T> List<T> unmodifiableOrEmptyList(List<? extends T> original) {
+    int size = original.size();
+    if (size == 0) {
+      return emptyList();
+    }
+    else {
+      return Collections.unmodifiableList(original);
+    }
+  }
+  
+  @NotNull
+  @Contract(pure = true)
+  public static <T> Set<T> unmodifiableOrEmptySet(Set<? extends T> original) {
+    int size = original.size();
+    if (size == 0) {
+      return Collections.emptySet();
+    }
+    else {
+      return Collections.unmodifiableSet(original);
+    }
+  }
+  
+  @NotNull
+  @Contract(pure = true)
+  public static <K,V> Map<K,V> unmodifiableOrEmptyMap(Map<? extends K, ? extends V> original) {
+    int size = original.size();
+    if (size == 0) {
+      return Collections.emptyMap();
+    }
+    else {
+      return Collections.unmodifiableMap(original);
+    }
+  }
 
   @NotNull
   @Contract(pure=true)
@@ -1431,7 +1464,7 @@ public class ContainerUtil extends ContainerUtilRt {
             throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
           }
         }
-        throw new IndexOutOfBoundsException("index: " + index + "size: " + size());
+        throw new IndexOutOfBoundsException("index: " + index + "; size: " + size());
       }
 
       @Override
@@ -1447,7 +1480,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> concat(@NotNull final List<List<? extends T>> lists) {
-    @SuppressWarnings("unchecked") List<? extends T>[] array = lists.toArray(new List[lists.size()]);
+    @SuppressWarnings("unchecked") List<? extends T>[] array = lists.toArray(new List[0]);
     return concat(array);
   }
 
@@ -2695,8 +2728,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> set) {
-    return set == null ? Collections.<K, V>emptyMap() : set;
+  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> map) {
+    return map == null ? Collections.<K, V>emptyMap() : map;
   }
 
   @Contract(pure = true)
@@ -2789,7 +2822,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
-    return new SoftKeySoftValueHashMap<K, V>();
+    return new SoftKeySoftValueHashMap<K, V>(true);
   }
 
   /**

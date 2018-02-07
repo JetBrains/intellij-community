@@ -188,23 +188,6 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   }
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-    //final String key = "toolwindow.stripes.buttons.info.shown";
-    //if (UISettings.getInstance().HIDE_TOOL_STRIPES && !PropertiesComponent.getInstance().isTrueValue(key)) {
-    //  PropertiesComponent.getInstance().setValue(key, String.valueOf(true));
-    //  final Alarm alarm = new Alarm();
-    //  alarm.addRequest(() -> {
-    //    GotItMessage.createMessage(UIBundle.message("tool.window.quick.access.title"), UIBundle.message(
-    //      "tool.window.quick.access.message"))
-    //      .setDisposable(this)
-    //      .show(new RelativePoint(this, new Point(10, 0)), Balloon.Position.above);
-    //    Disposer.dispose(alarm);
-    //  }, 20000);
-    //}
-  }
-
-  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     updateIcon();
   }

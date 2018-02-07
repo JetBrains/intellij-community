@@ -22,7 +22,6 @@ import java.io.Writer;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/24/11
  */
 public abstract class LineOutputWriter extends Writer {
   private final LineParser myLineParser = new LineParser();

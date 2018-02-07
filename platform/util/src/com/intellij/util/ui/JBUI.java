@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
@@ -46,6 +33,7 @@ import static com.intellij.util.ui.JBUI.ScaleType.*;
  * @author Konstantin Bulenkov
  * @author tav
  */
+@SuppressWarnings("UseJBColor")
 public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
@@ -397,7 +385,12 @@ public class JBUI {
 
     scale = discreteScale(scale);
 
-    if (SystemInfo.isLinux && scale == 1.25f) {
+    // Downgrading user scale below 1.0 may be uncomfortable (tiny icons),
+    // whereas some users prefer font size slightly below normal which is ok.
+    if (scale < 1 && sysScale() >= 1) scale = 1;
+
+    // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
+    if (SystemInfo.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
@@ -407,8 +400,8 @@ public class JBUI {
     setUserScaleFactorProperty(scale);
   }
 
-  private static float discreteScale(float scale) {
-    return (float)(Math.floor(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION);
+  static float discreteScale(float scale) {
+    return Math.round(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION;
   }
 
   /**
@@ -553,34 +546,6 @@ public class JBUI {
    */
   public static boolean isHiDPI(double scale) {
     return scale > 1f;
-  }
-
-  /**
-   * If the graphics has floating point scale transform, aligns the graphics to the integer coordinate grid,
-   * otherwise does nothing. This is used to avoid the rounding problem, see JRE-502.
-   *
-   * @param g the graphics to align
-   * @return the original graphics transform when aligned, otherwise null
-   */
-  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g) {
-    try {
-      AffineTransform tx = g.getTransform();
-      double scaleX = tx.getScaleX();
-      double scaleY = tx.getScaleY();
-      boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
-      if (fpsTx) {
-        AffineTransform alignedTx = new AffineTransform();
-        alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
-        alignedTx.scale(scaleX, scaleY);
-        assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
-        g.setTransform(alignedTx);
-        return tx;
-      }
-    }
-    catch (Exception e) {
-      LOG.trace(e);
-    }
-    return null;
   }
 
   public static class Fonts {
@@ -903,6 +868,13 @@ public class JBUI {
         case PIX_SCALE: break;
       }
       update(pixScale, derivePixScale());
+    }
+
+    /**
+     * Creates a context with all scale factors set to 1.
+     */
+    public static ScaleContext createIdentity() {
+      return create(USR_SCALE.of(1), SYS_SCALE.of(1));
     }
 
     /**
@@ -1252,5 +1224,84 @@ public class JBUI {
     public RasterJBIcon() {
       super(ScaleContext.create());
     }
+  }
+
+  public static class CurrentTheme {
+    public static class ToolWindow {
+      public static Color tabSelectedBackground() {
+        return getColor("ToolWindow.header.tab.selected.background", 0xDEDEDE);
+      }
+
+      public static Color tabSelectedActiveBackground() {
+        return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
+      }
+
+      /**
+       * Used for hover as well
+       */
+      public static Color tabSelectedBackground(boolean active) {
+        return active ? tabSelectedActiveBackground() : tabSelectedBackground();
+      }
+
+      public static Color headerBackground(boolean active) {
+        return active ? headerActiveBackground() : headerBackground();
+      }
+
+      public static Color headerBackground() {
+        return getColor("ToolWindow.header.background", 0xECECEC);
+      }
+
+      public static Color headerActiveBackground() {
+        return getColor("ToolWindow.header.active.background", 0xE2E6EC);
+      }
+
+      public static Font headerFont() {
+        JBFont font = Fonts.label();
+        Object size = UIManager.get("ToolWindow.header.font.size");
+        if (size instanceof Integer) {
+          return font.deriveFont(((Integer)size).floatValue());
+        }
+        return font;
+      }
+
+      public static Color closeButtonBackground(boolean tabActive, boolean tabSelected) {
+        return tabSelected ? getColor("ToolWindow.header.closeButton.background", 0xB9B9B9)
+                           : headerBackground(tabActive);
+      }
+
+      public static Icon closeTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
+                       : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
+      }
+    }
+
+    public static class Label {
+      public static Color foreground(boolean selected) {
+        return selected ? getColor("Label.selectedForeground", 0xFFFFFF)
+                        : getColor("Label.foreground", 0x000000);
+      }
+
+      public static Color foreground() {
+        return foreground(false);
+      }
+
+      public static Color disabledForeground(boolean selected) {
+        return selected ? getColor("Label.selectedDisabledForeground", 0x999999)
+                        : getColor("Label.disabledForeground", 0x999999);
+      }
+
+      public static Color disabledForeground() {
+        return foreground(false);
+      }
+    }
+  }
+
+  private static Color getColor(String propertyName, int defaultColor) {
+    Color color = UIManager.getColor(propertyName);
+    return color == null ? new Color(defaultColor) : color;
+  }
+  private static Icon getIcon(String propertyName, Icon defaultIcon) {
+    Icon icon = UIManager.getIcon(propertyName);
+    return icon == null ? defaultIcon : icon;
   }
 }

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Highlights class definitions, functrion definitions, and decorators.
  * User: dcheryasov
- * Date: Jan 9, 2009 9:53:38 AM
  */
 public class PyDefinitionsAnnotator extends PyAnnotator {
 
@@ -41,7 +40,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
 
   @Override
   public void visitPyFunction(PyFunction node) {
-    ASTNode name_node =  node.getNameNode();
+    ASTNode name_node = node.getNameNode();
     if (name_node != null) {
       final String name = node.getName();
       LanguageLevel languageLevel = LanguageLevel.forElement(node);
@@ -62,7 +61,9 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
           addHighlightingAnnotation(name_node, PyHighlighter.PY_PREDEFINED_DEFINITION);
         }
       }
-      else addHighlightingAnnotation(name_node, PyHighlighter.PY_FUNC_DEFINITION);
+      else {
+        addHighlightingAnnotation(name_node, PyHighlighter.PY_FUNC_DEFINITION);
+      }
     }
   }
 
@@ -70,7 +71,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   public void visitPyDecoratorList(PyDecoratorList node) {
     PyDecorator[] decos = node.getDecorators();
     for (PyDecorator deco : decos) {
-      highlightDecorator(deco);  
+      highlightDecorator(deco);
     }
   }
 

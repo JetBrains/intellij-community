@@ -47,7 +47,7 @@ public class ProcessListUtil {
   @NotNull
   public static ProcessInfo[] getProcessList() {
     List<ProcessInfo> result = doGetProcessList();
-    return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[result.size()]);
+    return result.isEmpty() ? ProcessInfo.EMPTY_ARRAY : result.toArray(new ProcessInfo[0]);
   }
 
   @NotNull

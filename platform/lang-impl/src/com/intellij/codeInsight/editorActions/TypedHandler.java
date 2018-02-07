@@ -25,6 +25,7 @@ import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,6 +43,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -230,6 +232,10 @@ public class TypedHandler extends TypedActionHandlerBase {
       long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
       type(originalEditor, charTyped);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
+      
+      if (editor.isDisposed()) { // can be that injected editor disappear
+        return;
+      }
 
       if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
@@ -289,8 +295,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (offset >= 0) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        final List<CompletionContributor> list = CompletionContributor.forLanguage(element.getLanguage());
-        for (CompletionContributor contributor : list) {
+        for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(element.getLanguage(), file.getProject())) {
           if (contributor.invokeAutoPopup(element, charTyped)) {
             LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
             return true;
@@ -336,7 +341,8 @@ public class TypedHandler extends TypedActionHandlerBase {
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
     // and thus we can use its lexer to insert closing braces etc
-    for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
+    List<DocumentWindow> injected = InjectedLanguageManager.getInstance(oldFile.getProject()).getCachedInjectedDocumentsInRange(oldFile, ProperTextRange.create(offset, offset));
+    for (DocumentWindow documentWindow : injected) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         if (injectedFile != null) {

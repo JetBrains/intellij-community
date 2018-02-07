@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.FileContent;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -64,6 +54,7 @@ public class FileContentQueue {
   private final BlockingQueue<VirtualFile> myFilesQueue;
   private final ProgressIndicator myProgressIndicator;
   private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
+  private final Supplier<AccessToken> myPrivilege;
 
   public FileContentQueue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     int numberOfFiles = files.size();
@@ -71,6 +62,7 @@ public class FileContentQueue {
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
     myFilesQueue = numberOfFiles > 0 ? new ArrayBlockingQueue<>(numberOfFiles, false, files) : null;
     myProgressIndicator = indicator;
+    myPrivilege = ((ApplicationImpl)ApplicationManager.getApplication()).transferReadPrivilege();
   }
 
   public void startLoading() {
@@ -116,12 +108,17 @@ public class FileContentQueue {
       return PreloadState.CANCELLED_OR_FINISHED;
     }
 
-    return loadNextContent(myProgressIndicator) ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
+    if (myProgressIndicator.isCanceled()) return PreloadState.CANCELLED_OR_FINISHED;
+    try (AccessToken ignored = myPrivilege.get()) {
+      return loadNextContent() ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
+    }
   }
   
-  private boolean loadNextContent(ProgressIndicator progressIndicator) {
+  private boolean loadNextContent() { 
+    // Contract: if file is taken from myFilesQueue then it will be loaded to myLoadedContents and myContentsToLoad will be decremented
     VirtualFile file = myFilesQueue.poll();
-    if (file == null || progressIndicator.isCanceled()) return false;
+    if (file == null) return false;
+
     try {
       FileContent content = new FileContent(file);
       if (!isValidFile(file) || !doLoadContent(content)) {
@@ -221,8 +218,8 @@ public class FileContentQueue {
         if (remainingContentsToLoad == 0) {
           return null;
         }
-        
-        if (!loadNextContent(indicator) && !indicator.isCanceled()) {
+
+        if (!loadNextContent()) {
           TimeoutUtil.sleep(50); // wait a little for loading last content
         }
       }

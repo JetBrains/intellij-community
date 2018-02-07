@@ -23,11 +23,9 @@ import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.IntFunction;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -74,6 +72,18 @@ public class TroveUtil {
     return createJavaSet(result);
   }
 
+  public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
+    if (set1.size() <= set2.size()) {
+      return !set1.forEach(value -> {
+        if (set2.contains(value)) {
+          return false;
+        }
+        return true;
+      });
+    }
+    return intersects(set2, set1);
+  }
+
   @Nullable
   private static TIntHashSet intersect(@Nullable TIntHashSet set1, @Nullable TIntHashSet set2) {
     if (set1 == null) return set2;
@@ -82,23 +92,22 @@ public class TroveUtil {
     TIntHashSet result = new TIntHashSet();
 
     if (set1.size() < set2.size()) {
-      set1.forEach(value -> {
-        if (set2.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set1, set2, result);
     }
     else {
-      set2.forEach(value -> {
-        if (set1.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set2, set1, result);
     }
 
     return result;
+  }
+
+  private static void intersectTo(@NotNull TIntHashSet small, @NotNull TIntHashSet big, @NotNull TIntHashSet result) {
+    small.forEach(value -> {
+      if (big.contains(value)) {
+        result.add(value);
+      }
+      return true;
+    });
   }
 
   @NotNull
@@ -127,6 +136,15 @@ public class TroveUtil {
   @NotNull
   public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static <T> TIntHashSet map2IntSet(@NotNull Collection<T> set, @NotNull ToIntFunction<T> function) {
+    TIntHashSet result = new TIntHashSet();
+    for (T t : set) {
+      result.add(function.applyAsInt(t));
+    }
+    return result;
   }
 
   public static void processBatches(@NotNull IntStream stream,

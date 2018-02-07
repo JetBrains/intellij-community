@@ -266,7 +266,7 @@ public class DynamicMemberUtils {
 
       for (String methodName : multiMap.keySet()) {
         Collection<PsiMethod> m = multiMap.get(methodName);
-        res.put(methodName, m.toArray(new PsiMethod[m.size()]));
+        res.put(methodName, m.toArray(PsiMethod.EMPTY_ARRAY));
       }
 
       return res;
