@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
@@ -13,11 +12,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -50,30 +47,35 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final int myCheckboxWidth;
-  private boolean myShowFlatten;
+  @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
 
   @NotNull private Set<Object> myIncludedChanges = new THashSet<>();
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myKeepTreeState = false;
 
-  @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
+  @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
+  @NonNls private final static String GROUPING_KEY = "ChangesTree.GroupingKey";
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
-  private TreeState myNonFlatTreeState;
+  private TreeState myDirectoryTreeState;
 
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
                      boolean highlightProblems) {
     super(ChangesBrowserNode.createRoot(project));
     myProject = project;
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
@@ -83,7 +85,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setOpaque(false);
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
 
-    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, highlightProblems);
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
@@ -152,12 +154,22 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }.installOn(this);
     SmartExpander.installOn(this);
 
-    myShowFlatten = PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
+    migrateShowFlattenSetting();
+    myGroupingSupport.setGroupingKey(notNull(PropertiesComponent.getInstance(myProject).getValue(GROUPING_KEY), DIRECTORY_GROUPING));
+    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping((String)e.getOldValue(), (String)e.getNewValue()));
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  }
+
+  private void migrateShowFlattenSetting() {
+    PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
+    if (properties.isTrueValue(FLATTEN_OPTION_KEY)) {
+      properties.setValue(GROUPING_KEY, NONE_GROUPING);
+      properties.unsetValue(FLATTEN_OPTION_KEY);
+    }
   }
 
   public void setEmptyText(@NotNull String emptyText) {
@@ -189,27 +201,36 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return this;
   }
 
+  @NotNull
+  public ChangesGroupingSupport getGroupingSupport() {
+    return myGroupingSupport;
+  }
+
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
+    return getGroupingSupport().getGrouping();
+  }
+
   public boolean isShowFlatten() {
-    return myShowFlatten;
+    return myGroupingSupport.isNone();
   }
 
   public boolean isShowCheckboxes() {
     return myShowCheckboxes;
   }
 
-  public void setShowFlatten(final boolean showFlatten) {
-    if (myShowFlatten == showFlatten) return;
+  private void changeGrouping(@NotNull String oldGrouping, @NotNull String newGrouping) {
+    PropertiesComponent.getInstance(myProject).setValue(GROUPING_KEY, newGrouping);
 
     final List<Object> oldSelection = getSelectedUserObjects();
-    if (myKeepTreeState && showFlatten) {
-      myNonFlatTreeState = TreeState.createOn(this, getRoot());
+    if (myKeepTreeState && DIRECTORY_GROUPING.equals(oldGrouping)) {
+      myDirectoryTreeState = TreeState.createOn(this, getRoot());
     }
 
-    myShowFlatten = showFlatten;
     rebuildTree();
 
-    if (myKeepTreeState && !showFlatten && myNonFlatTreeState != null) {
-      myNonFlatTreeState.applyTo(this, getRoot());
+    if (myKeepTreeState && DIRECTORY_GROUPING.equals(newGrouping) && myDirectoryTreeState != null) {
+      myDirectoryTreeState.applyTo(this, getRoot());
     }
     setSelectedChanges(oldSelection);
   }
@@ -244,7 +265,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     setModel(model);
     myIsModelFlat = isCurrentModelFlat();
-    setChildIndent(myShowFlatten && myIsModelFlat);
+    setChildIndent(isShowFlatten() && myIsModelFlat);
 
     if (myKeepTreeState) {
       //noinspection ConstantConditions
@@ -428,23 +449,19 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public AnAction[] getTreeActions() {
-    final ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
     final ExpandAllAction expandAllAction = new ExpandAllAction(this) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!myShowFlatten || !myIsModelFlat);
+        e.getPresentation().setEnabledAndVisible(!isShowFlatten() || !myIsModelFlat);
       }
     };
     final CollapseAllAction collapseAllAction = new CollapseAllAction(this) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!myShowFlatten || !myIsModelFlat);
+        e.getPresentation().setEnabledAndVisible(!isShowFlatten() || !myIsModelFlat);
       }
     };
-    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
-    directoriesAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)),
-      this);
+    AnAction[] actions = new AnAction[]{ActionManager.getInstance().getAction("ChangesView.GroupBy"), expandAllAction, collapseAllAction};
     expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), this);
     collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), this);
     return actions;
@@ -547,25 +564,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
   }
 
-  public class ToggleShowDirectoriesAction extends ToggleAction implements DumbAware {
-    public ToggleShowDirectoriesAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            AllIcons.Actions.GroupByPackage);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !isShowFlatten();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
-      setShowFlatten(!state);
-    }
-  }
-
   public void setSelectedChanges(@NotNull Collection<?> changes) {
     HashSet<Object> changesSet = new HashSet<>(changes);
     final List<TreePath> treeSelection = new ArrayList<>(changes.size());
@@ -590,6 +588,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Object getData(String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
+    }
+    if (ChangesGroupingSupport.KEY.is(dataId)) {
+      return myGroupingSupport;
     }
     return null;
   }
