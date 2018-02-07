@@ -16,6 +16,8 @@ public interface ProjectViewSettings extends ViewSettings {
   default boolean isUseFileNestingRules() {return true;}
 
   class Immutable extends ViewSettings.Immutable implements ProjectViewSettings {
+    public static final ProjectViewSettings DEFAULT = new ProjectViewSettings.Immutable(null);
+
     private final boolean myShowExcludedFiles;
     private final boolean myUseFileNestingRules;
 
