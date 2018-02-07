@@ -102,8 +102,10 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree {
         getTextRenderer().append(StringUtil.notNullize(value.toString()),
                                  new SimpleTextAttributes(background, attributes.getFgColor(), JBColor.RED, attributes.getStyle()));
         if (isPostfixTemplate) {
-          getTextRenderer().append(" (" + ((PostfixTemplateCheckedTreeNode)node).getTemplate().getExample() + ")",
-                                   SimpleTextAttributes.GRAY_ATTRIBUTES);
+          String example = ((PostfixTemplateCheckedTreeNode)node).getTemplate().getExample();
+          if (StringUtil.isNotEmpty(example)) {
+            getTextRenderer().append(" (" + example + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+          }
         }
       }
     };
