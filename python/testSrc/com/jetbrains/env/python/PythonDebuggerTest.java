@@ -144,6 +144,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging // thread leak
   public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
