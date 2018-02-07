@@ -649,7 +649,11 @@ public final class DefiniteAssignmentUtil {
   }
 
   private static void checkLambdaExpression(PsiLambdaExpression lambdaExpression, DefiniteAssignment definiteAssignment) {
+    // JLS 16.1.10
     final PsiElement body = lambdaExpression.getBody();
+    final boolean du = definiteAssignment.isDefinitelyUnassigned();
+    final boolean da = definiteAssignment.isDefinitelyAssigned();
+    definiteAssignment.set(da, false);
     if (body instanceof PsiExpression) {
       final PsiExpression bodyExpression = (PsiExpression)body;
       checkExpression(bodyExpression, definiteAssignment, BooleanExpressionValue.UNDEFINED);
@@ -658,6 +662,7 @@ public final class DefiniteAssignmentUtil {
       final PsiCodeBlock codeBlock = (PsiCodeBlock)body;
       checkCodeBlock(codeBlock, definiteAssignment);
     }
+    definiteAssignment.set(da, du);
   }
 
   private static void checkMethodCallExpression(PsiMethodCallExpression methodCallExpression,

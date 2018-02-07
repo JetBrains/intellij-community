@@ -975,7 +975,16 @@ class T71 {
 
   void foo() throws Throwable {}
 }
+class T72 {
+  private boolean b;
 
+  T72(int i) {
+    Runnable r = () -> {
+      return;
+    };
+    if (i == 4) b = true;
+  }
+}
 class Foo {
 
   public interface Accessor<T> {
