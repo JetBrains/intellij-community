@@ -646,7 +646,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -683,7 +683,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
