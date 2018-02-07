@@ -1,0 +1,9 @@
+[
+  {
+    "consentId": "rsch.send.usage.stat",
+    "version": "1.0",
+    "text": "This allows Google to collect usage information, such as data about your feature usage, resource usage and plugin configuration. This data is collected in accordance with <a href=\"http://www.google.com/policies/privacy/\">Google's Privacy Policy</a>.",
+    "printableName": "Send usage statistics to Google",
+    "accepted": "false"
+  }
+]
