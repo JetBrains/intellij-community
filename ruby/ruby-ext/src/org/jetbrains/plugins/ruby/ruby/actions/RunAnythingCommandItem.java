@@ -3,8 +3,9 @@ package org.jetbrains.plugins.ruby.ruby.actions;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -44,6 +45,7 @@ import org.jetbrains.plugins.ruby.gem.GemsDataKeys;
 import org.jetbrains.plugins.ruby.remote.RubyRemoteInterpreterManager;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.RubyUtil;
+import org.jetbrains.plugins.ruby.ruby.actions.handlers.RunAnythingCommandHandler;
 import org.jetbrains.plugins.ruby.ruby.debugger.*;
 import org.jetbrains.plugins.ruby.ruby.debugger.impl.LocalPositionConverter;
 import org.jetbrains.plugins.ruby.ruby.debugger.impl.RubyDebugProcess;
@@ -66,8 +68,6 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.RunProfileState;
 
 public class RunAnythingCommandItem extends RunAnythingItem<String> {
   private static final Logger LOG = Logger.getInstance(RunAnythingCommandItem.class);
@@ -133,19 +133,18 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     HashMap<String, Object> dataMap = new HashMap<>();
     dataMap.put(LangDataKeys.MODULE.getName(), module);
     dataMap.put(GemsDataKeys.SDK.getName(), sdk);
-    runInConsole(project, commandLine, executor, SimpleDataContext.getSimpleContext(dataMap, DataContext.EMPTY_CONTEXT));
+    runInConsole(project, commandLine, commandString, executor, SimpleDataContext.getSimpleContext(dataMap, DataContext.EMPTY_CONTEXT));
   }
 
   private static void runInConsole(@NotNull Project project,
                                    @NotNull GeneralCommandLine commandLine,
+                                   @NotNull String originalCommand,
                                    @NotNull Executor executor,
                                    @NotNull DataContext dataContext) {
     try {
-      ExecutionEnvironment environment = ExecutionEnvironmentBuilder.create(project, executor, new AnythingRunProfile(project, commandLine))
-                                                                    .dataContext(dataContext)
-                                                                    .build();
-
-      environment.getRunner().execute(environment);
+      ExecutionEnvironmentBuilder.create(project, executor, new AnythingRunProfile(project, executor, commandLine, originalCommand))
+                                 .dataContext(dataContext)
+                                 .buildAndExecute();
     }
     catch (ExecutionException e) {
       LOG.warn(e);
@@ -261,17 +260,22 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
 
 
   private static class AnythingRunProfile implements DebuggableRunProfile {
-    @NotNull
-    private Project myProject;
-    @NotNull
-    private final GeneralCommandLine myCommandLine;
+    @NotNull private final Project myProject;
+    @NotNull private final String myOriginalCommand;
+    @NotNull private final Executor myExecutor;
+    @NotNull private final GeneralCommandLine myCommandLine;
 
     @Nullable
     private ProcessHandler myProcessHandler;
 
-    public AnythingRunProfile(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
+    AnythingRunProfile(@NotNull Project project,
+                       @NotNull Executor executor,
+                       @NotNull GeneralCommandLine commandLine,
+                       @NotNull String originalCommand) {
+      myExecutor = executor;
       myCommandLine = commandLine;
       myProject = project;
+      myOriginalCommand = originalCommand;
     }
 
     @NotNull
@@ -402,19 +406,57 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
       myProcessHandler = new KillableColoredProcessHandler(myCommandLine) {
         @Override
         protected void notifyProcessTerminated(int exitCode) {
-          RunContentDescriptor contentDescriptor
-            = ExecutionManager.getInstance(myProject).getContentManager()
-                              .findContentDescriptor(DefaultRunExecutor.getRunExecutorInstance(), this);
-
-          if (contentDescriptor != null && contentDescriptor.getExecutionConsole() instanceof ConsoleView) {
-            ((ConsoleView)contentDescriptor.getExecutionConsole())
-              .print(RBundle.message("run.anything.console.process.finished", exitCode), ConsoleViewContentType.SYSTEM_OUTPUT);
-          }
+          print(RBundle.message("run.anything.console.process.finished", exitCode), ConsoleViewContentType.SYSTEM_OUTPUT);
           super.notifyProcessTerminated(exitCode);
+        }
+
+        @Override
+        protected void destroyProcessImpl() {
+          super.destroyProcessImpl();
+          if (!isProcessTerminated()) {
+            print("exit\n", ConsoleViewContentType.USER_INPUT);
+          }
+        }
+
+        @Override
+        public boolean isSilentlyDestroyOnClose() {
+          try {
+            return RunAnythingCommandHandler.isSilentlyDestroyOnClose(myOriginalCommand);
+          }
+          catch (RuntimeException e) {
+            return super.isSilentlyDestroyOnClose();
+          }
+        }
+
+        @Override
+        public final boolean shouldKillProcessSoftly() {
+          try {
+            return RunAnythingCommandHandler.shouldKillProcessSoftly(myOriginalCommand);
+          }
+          catch (RuntimeException e) {
+            return super.shouldKillProcessSoftly();
+          }
         }
       };
       ((KillableColoredProcessHandler)myProcessHandler).setHasPty(true);
       return myProcessHandler;
+    }
+
+    private void print(@NotNull String message, @NotNull ConsoleViewContentType consoleViewContentType) {
+      ConsoleView console = getConsoleView();
+      if (console != null) console.print(message, consoleViewContentType);
+    }
+
+    @Nullable
+    private ConsoleView getConsoleView() {
+      RunContentDescriptor contentDescriptor =
+        ExecutionManager.getInstance(myProject).getContentManager().findContentDescriptor(myExecutor, myProcessHandler);
+
+      ConsoleView console = null;
+      if (contentDescriptor != null && contentDescriptor.getExecutionConsole() instanceof ConsoleView) {
+        console = (ConsoleView)contentDescriptor.getExecutionConsole();
+      }
+      return console;
     }
   }
 }
