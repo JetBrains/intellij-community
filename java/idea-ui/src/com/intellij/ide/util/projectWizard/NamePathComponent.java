@@ -49,17 +49,17 @@ import java.io.File;
 public class NamePathComponent extends JPanel{
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.NamePathComponent");
 
-  private JTextField myTfName;
-  private JTextField myTfPath;
+  private final JTextField myTfName;
+  private final JTextField myTfPath;
   private boolean myIsNameChangedByUser = false;
   private boolean myIsPathChangedByUser = false;
   private boolean myIsPathNameSyncEnabled = true;
   private boolean myIsNamePathSyncEnabled = true;
   private boolean myIsSyncEnabled = true;
 
-  private FieldPanel myPathPanel;
-  private JLabel myNameLabel;
-  private JLabel myPathLabel;
+  private final FieldPanel myPathPanel;
+  private final JLabel myNameLabel;
+  private final JLabel myPathLabel;
   private boolean myShouldBeAbsolute;
 
   public NamePathComponent(String nameLabelText, String pathLabelText, char nameMnemonic, char locationMnemonic, final String pathChooserTitle, final String pathChooserDescription) {

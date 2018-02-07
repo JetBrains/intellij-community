@@ -36,9 +36,9 @@ import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
 
 public class CustomDictionariesPanel extends JPanel {
-  private SpellCheckerSettings mySettings;
+  private final SpellCheckerSettings mySettings;
   @NotNull private final SpellCheckerManager myManager;
-  private CustomDictionariesTableView myCustomDictionariesTableView;
+  private final CustomDictionariesTableView myCustomDictionariesTableView;
   @NotNull private final Project myProject;
   private final List<String> removedDictionaries = new ArrayList<>();
   private final List<String> defaultDictionaries;

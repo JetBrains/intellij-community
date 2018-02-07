@@ -153,7 +153,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     int mySize;
     int myPhase;
     double myUpToNow;
-    private double[] myPhases;
+    private final double[] myPhases;
 
     public ProgressTracker(double... phases) {
       myPhases = phases;

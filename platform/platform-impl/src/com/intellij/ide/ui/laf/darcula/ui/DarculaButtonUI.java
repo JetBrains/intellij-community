@@ -44,9 +44,9 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaButtonUI extends BasicButtonUI {
-  private Rectangle viewRect = new Rectangle();
-  private Rectangle textRect = new Rectangle();
-  private Rectangle iconRect = new Rectangle();
+  private final Rectangle viewRect = new Rectangle();
+  private final Rectangle textRect = new Rectangle();
+  private final Rectangle iconRect = new Rectangle();
 
   static int HELP_BUTTON_DIAMETER = 22;
 

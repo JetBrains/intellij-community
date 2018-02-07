@@ -34,7 +34,7 @@ public class JavadocParser {
   private static final String VALUE_TAG = "@value";
   private static final Set<String> REFERENCE_TAGS = newTroveSet("@throws", "@exception", "@provides", "@uses");
 
-  private static Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
+  private static final Key<Integer> BRACE_SCOPE_KEY = Key.create("Javadoc.Parser.Brace.Scope");
 
   private JavadocParser() { }
 

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyChangeInfo implements ChangeInfo {
 
   private final PyFunction myFunction;
-  private PyParameterInfo[] myNewParameterInfo;
+  private final PyParameterInfo[] myNewParameterInfo;
   private final String myNewName;
 
   private boolean myIsParameterSetOrOrderChanged;

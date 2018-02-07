@@ -20,9 +20,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class DvcsBranchSettings {
   @Tag("favorite-branches")
-  private BranchStorage myFavoriteBranches = new BranchStorage();
+  private final BranchStorage myFavoriteBranches = new BranchStorage();
   @Tag("excluded-from-favorite")
-  private BranchStorage myExcludedFavorites = new BranchStorage();
+  private final BranchStorage myExcludedFavorites = new BranchStorage();
 
   @NotNull
   public BranchStorage getFavorites() {

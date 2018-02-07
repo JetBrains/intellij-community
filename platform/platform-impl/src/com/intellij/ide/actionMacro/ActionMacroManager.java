@@ -70,7 +70,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   private static final String ELEMENT_MACRO = "macro";
   private final IdeEventQueue.EventDispatcher myKeyProcessor;
 
-  private Set<InputEvent> myLastActionInputEvent = new HashSet<>();
+  private final Set<InputEvent> myLastActionInputEvent = new HashSet<>();
   private ActionMacroManager.Widget myWidget;
 
   private String myLastTyping = "";
@@ -143,17 +143,17 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
 
   private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
 
-    private AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
-                                                   new Icon[]{
+    private final AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
+                                                         new Icon[]{
                                                      AllIcons.Ide.Macro.Recording_1,
                                                      AllIcons.Ide.Macro.Recording_2,
                                                      AllIcons.Ide.Macro.Recording_3,
                                                      AllIcons.Ide.Macro.Recording_4},
-                                                   AllIcons.Ide.Macro.Recording_1, 1000);
-    private StatusBar myStatusBar;
+                                                         AllIcons.Ide.Macro.Recording_1, 1000);
+    private final StatusBar myStatusBar;
     private final WidgetPresentation myPresentation;
 
-    private JPanel myBalloonComponent;
+    private final JPanel myBalloonComponent;
     private Balloon myBalloon;
     private final JLabel myText;
 

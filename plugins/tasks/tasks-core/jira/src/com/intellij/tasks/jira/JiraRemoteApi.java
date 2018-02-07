@@ -76,7 +76,7 @@ public abstract class JiraRemoteApi {
     ApiType(String versionName) {
       myVersionName = versionName;
     }
-    private String myVersionName;
+    private final String myVersionName;
     @NotNull
     public abstract JiraRemoteApi createApi(@NotNull JiraRepository repository);
 

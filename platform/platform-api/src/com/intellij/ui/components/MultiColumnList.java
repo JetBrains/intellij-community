@@ -27,7 +27,7 @@ import java.awt.event.KeyEvent;
 public class MultiColumnList extends JTable {
   private final ListModel myModel;
   private ListCellRenderer myRenderer;
-  private JList myList;
+  private final JList myList;
   private Dimension myPrefSize;
 
   public MultiColumnList(ListModel model) {

@@ -20,20 +20,20 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TestClassesFilterTest {
-  private static String FILTER_TEXT = "[Group1]\n" +
-                                      "com.intellij.package1.*\n" +
-                                      "com.intellij.package2.ExcludedTest\n" +
-                                      "com.intellij.package3.*package4\n" +
-                                      "\n" +
-                                      "[Group2]\n" +
-                                      "com.intellij.package5.*\n" +
-                                      "com.intellij.package6.ExcludedTest\n" +
-                                      "com.intellij.package7.*package8\n" +
-                                      "[Group3]\n" +
-                                      "org.jetbrains.*\n" +
-                                      "-org.jetbrains.excluded.*\n" +
-                                      "[Group4]\n" +
-                                      "org.jetbrains.excluded.TestIncludeInG4";
+  private static final String FILTER_TEXT = "[Group1]\n" +
+                                            "com.intellij.package1.*\n" +
+                                            "com.intellij.package2.ExcludedTest\n" +
+                                            "com.intellij.package3.*package4\n" +
+                                            "\n" +
+                                            "[Group2]\n" +
+                                            "com.intellij.package5.*\n" +
+                                            "com.intellij.package6.ExcludedTest\n" +
+                                            "com.intellij.package7.*package8\n" +
+                                            "[Group3]\n" +
+                                            "org.jetbrains.*\n" +
+                                            "-org.jetbrains.excluded.*\n" +
+                                            "[Group4]\n" +
+                                            "org.jetbrains.excluded.TestIncludeInG4";
 
   @Test
   public void excluded() throws Exception {

@@ -31,8 +31,8 @@ import java.util.List;
  * @author Svetlana.Zemlyanskaya
  */
 public class ArrangementRuleAliasConfigurable implements UnnamedConfigurable {
-  private StdArrangementRuleAliasToken myToken;
-  private ArrangementRuleAliasesPanel myTokenRulesPanel;
+  private final StdArrangementRuleAliasToken myToken;
+  private final ArrangementRuleAliasesPanel myTokenRulesPanel;
 
   public ArrangementRuleAliasConfigurable(@NotNull ArrangementStandardSettingsManager settingsManager,
                                           @NotNull ArrangementColorsProvider colorsProvider,

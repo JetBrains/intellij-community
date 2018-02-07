@@ -59,8 +59,8 @@ public class GitLogParser {
   private final boolean mySupportsRawBody;
   @NotNull private final String myPretty;
 
-  @NotNull private OptionsParser myOptionsParser;
-  @NotNull private PathsParser myPathsParser;
+  @NotNull private final OptionsParser myOptionsParser;
+  @NotNull private final PathsParser myPathsParser;
 
   private boolean myIsInBody = true;
 
@@ -232,7 +232,7 @@ public class GitLogParser {
     COMMITTER_EMAIL("ce"), SUBJECT("s"), BODY("b"), PARENTS("P"), REF_NAMES("d"), SHORT_REF_LOG_SELECTOR("gd"),
     RAW_BODY("B");
 
-    private String myPlaceholder;
+    private final String myPlaceholder;
 
     GitLogOption(String placeholder) {
       myPlaceholder = placeholder;

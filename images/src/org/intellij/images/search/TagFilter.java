@@ -24,8 +24,8 @@ import org.intellij.images.thumbnail.actions.Filter;
 import java.util.Objects;
 
 public class TagFilter implements Filter {
-  private String myTag;
-  private ImageTagManager myManager;
+  private final String myTag;
+  private final ImageTagManager myManager;
 
   public TagFilter(String tag, ImageTagManager manager) {
     myTag = tag;

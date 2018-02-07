@@ -41,7 +41,7 @@ public abstract class YamlMissingKeysInspectionBase extends YamlMetaTypeInspecti
   }
 
   private class StructureChecker extends SimpleYamlPsiVisitor {
-    private YamlMetaTypeProvider myMetaTypeProvider;
+    private final YamlMetaTypeProvider myMetaTypeProvider;
     private final ProblemsHolder myProblemsHolder;
 
     public StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {

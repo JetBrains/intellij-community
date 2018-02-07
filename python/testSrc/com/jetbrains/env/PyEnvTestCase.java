@@ -306,7 +306,7 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
-  private Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public Disposable getTestRootDisposable() {
     return myDisposable;

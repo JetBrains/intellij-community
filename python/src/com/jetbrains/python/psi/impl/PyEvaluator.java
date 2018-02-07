@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
@@ -34,7 +33,7 @@ import java.util.*;
  * @author yole
  */
 public class PyEvaluator {
-  private Set<PyExpression> myVisited = new HashSet<>();
+  private final Set<PyExpression> myVisited = new HashSet<>();
   private Map<String, Object> myNamespace;
   private boolean myEvaluateCollectionItems = true;
   private boolean myEvaluateKeys = true;

@@ -44,8 +44,8 @@ public class EditableSchemesCombo<T extends Scheme> {
   // endregion
   
   private SchemesCombo<T> myComboBox;
-  private JPanel myRootPanel;
-  private AbstractSchemesPanel<T, ?> mySchemesPanel;
+  private final JPanel myRootPanel;
+  private final AbstractSchemesPanel<T, ?> mySchemesPanel;
   private final CardLayout myLayout;
   private final JTextField myNameEditorField;
   private @Nullable NameEditData myNameEditData;
@@ -227,9 +227,9 @@ public class EditableSchemesCombo<T extends Scheme> {
   }
 
   private static class NameEditData {
-    private @NotNull String initialName;
-    private @NotNull Consumer<String> nameConsumer;
-    private boolean isProjectScheme;
+    private @NotNull final String initialName;
+    private @NotNull final Consumer<String> nameConsumer;
+    private final boolean isProjectScheme;
 
     private NameEditData(@NotNull String name, @NotNull Consumer<String> nameConsumer, boolean isProjectScheme) {
       initialName = name;

@@ -50,7 +50,7 @@ class GitRepositoryReader {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
-  private static Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
+  private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
 
   @NonNls private static final String REFS_HEADS_PREFIX = "refs/heads/";
   @NonNls private static final String REFS_REMOTES_PREFIX = "refs/remotes/";

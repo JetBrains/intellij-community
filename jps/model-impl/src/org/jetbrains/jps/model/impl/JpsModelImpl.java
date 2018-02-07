@@ -24,8 +24,8 @@ import org.jetbrains.jps.model.JpsModel;
  * @author nik
  */
 public class JpsModelImpl implements JpsModel {
-  private JpsProjectImpl myProject;
-  private JpsGlobalImpl myGlobal;
+  private final JpsProjectImpl myProject;
+  private final JpsGlobalImpl myGlobal;
   private JpsModelImpl myOriginalModel;
   private final JpsEventDispatcher myEventDispatcher;
 

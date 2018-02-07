@@ -240,8 +240,8 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
   private static class MavenWebRootCopyingHandler extends MavenWebArtifactCopyingHandler {
     private final MavenResourceFileProcessor myFileProcessor;
     @NotNull private final ResourceRootConfiguration myRootConfiguration;
-    private MavenResourceFileFilter myFileFilter;
-    private boolean myMainWebAppRoot;
+    private final MavenResourceFileFilter myFileFilter;
+    private final boolean myMainWebAppRoot;
 
     private MavenWebRootCopyingHandler(@NotNull MavenResourceFileProcessor fileProcessor,
                                        @NotNull MavenWebArtifactConfiguration artifactConfiguration,

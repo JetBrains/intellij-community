@@ -41,7 +41,7 @@ public class Field {
   private boolean myIsMany;
   private Relation myOverriddenDefaultRelation;
 
-  private Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
+  private final Map<Relation, YamlMetaType> myPerRelationTypes = new HashMap<>();
 
   public Field(@NotNull String name, @NotNull YamlMetaType mainType) {
     myName = name;

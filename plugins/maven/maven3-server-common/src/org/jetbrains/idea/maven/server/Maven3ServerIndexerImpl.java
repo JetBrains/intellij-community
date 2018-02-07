@@ -55,7 +55,7 @@ import java.util.*;
 
 public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implements MavenServerIndexer {
 
-  private Maven3ServerEmbedder myEmbedder;
+  private final Maven3ServerEmbedder myEmbedder;
   private final NexusIndexer myIndexer;
   private final IndexUpdater myUpdater;
   private final ArtifactContextProducer myArtifactContextProducer;

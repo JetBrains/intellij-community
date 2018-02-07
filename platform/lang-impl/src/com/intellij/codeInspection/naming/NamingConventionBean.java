@@ -23,7 +23,7 @@ public class NamingConventionBean {
   public int m_minLength;
   public int m_maxLength;
 
-  private Set<String> myPredefinedNames = new HashSet<>();
+  private final Set<String> myPredefinedNames = new HashSet<>();
 
   public NamingConventionBean(String regex, int minLength, int maxLength, String... predefinedNames2Ignore) {
     m_regex = regex;

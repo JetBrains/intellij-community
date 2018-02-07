@@ -91,8 +91,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
-  private static long DOC_GENERATION_TIMEOUT_MS = 5000;
-  private static long DOC_GENERATION_RETRY_DELAY_MS = 100;
+  private static final long DOC_GENERATION_TIMEOUT_MS = 5000;
+  private static final long DOC_GENERATION_RETRY_DELAY_MS = 100;
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 

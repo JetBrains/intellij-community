@@ -105,7 +105,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private JRadioButton myWholeProjectScope;
   private JRadioButton mySingleModuleScope;
   private JRadioButton myModuleWDScope;
-  private TextFieldWithBrowseButton myPatternTextField;
+  private final TextFieldWithBrowseButton myPatternTextField;
   private JrePathEditor myJrePathEditor;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComboBox myForkCb;
@@ -118,7 +118,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
   private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
   private LabeledComponent<RawCommandLineEditor> myTagsField;
-  private Project myProject;
+  private final Project myProject;
   private JComponent anchor;
 
   public JUnitConfigurable(final Project project) {

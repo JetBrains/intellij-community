@@ -35,8 +35,8 @@ import java.util.List;
 public class TrelloTask extends Task {
   private static final TrelloIconBuilder ourIconBuilder = new TrelloIconBuilder(16);
 
-  private TrelloCard myCard;
-  private TaskRepository myRepository;
+  private final TrelloCard myCard;
+  private final TaskRepository myRepository;
 
 
   public TrelloTask(TrelloCard card, TaskRepository repository) {

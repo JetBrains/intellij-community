@@ -68,7 +68,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   private final Project myProject;
 
   private final List<DataProvider> dataProviders = new SmartList<>();
-  private ArrayList<Content> mySelectionHistory = new ArrayList<>();
+  private final ArrayList<Content> mySelectionHistory = new ArrayList<>();
 
   /**
    * WARNING: as this class adds listener to the ProjectManager which is removed on projectClosed event, all instances of this class

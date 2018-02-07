@@ -28,9 +28,9 @@ public class ContinuationOption implements CodeStyleConstraints {
   private @Nullable IntegerField myField;
   private boolean mySupported;
   private final String myName;
-  private Function<CommonCodeStyleSettings.IndentOptions, Integer> myGetter;
-  private BiConsumer<CommonCodeStyleSettings.IndentOptions, Integer> mySetter;
-  private int myDefaultValue;
+  private final Function<CommonCodeStyleSettings.IndentOptions, Integer> myGetter;
+  private final BiConsumer<CommonCodeStyleSettings.IndentOptions, Integer> mySetter;
+  private final int myDefaultValue;
   private JLabel myLabel;
 
   public ContinuationOption(String name,

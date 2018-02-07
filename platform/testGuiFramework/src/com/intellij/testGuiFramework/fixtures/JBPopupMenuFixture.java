@@ -36,8 +36,8 @@ import static junit.framework.Assert.assertNotNull;
 import static org.fest.swing.timing.Pause.pause;
 
 public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JBPopupMenu> {
-  private JBPopupMenu myContextMenu;
-  private Robot myRobot;
+  private final JBPopupMenu myContextMenu;
+  private final Robot myRobot;
 
   private JBPopupMenuFixture(JBPopupMenu menu, Robot robot) {
     super(JBPopupMenuFixture.class, robot, menu);

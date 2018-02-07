@@ -48,14 +48,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author nik
  */
 public class ExternalDependenciesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private final ExternalDependenciesManager myDependenciesManager;
-  private CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
+  private final CollectionListModel<ProjectExternalDependency> myListModel = new CollectionListModel<>();
   private Map<String, String> myPluginNameById;
 
   public ExternalDependenciesConfigurable(Project project) {

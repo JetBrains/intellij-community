@@ -28,7 +28,7 @@ public class NumpyDocStringBuilder extends SectionBasedDocStringBuilder {
   public static final String DEFAULT_CONTINUATION_INDENT = PyIndentUtil.FOUR_SPACES;
   public static final char DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL = '-';
   
-  private char myUnderlineSymbol = DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL;
+  private final char myUnderlineSymbol = DEFAULT_SECTION_TITLE_UNDERLINE_SYMBOL;
 
   public NumpyDocStringBuilder() {
     // Sections are not indented and continuation indent of 4 spaces like in Numpy sources

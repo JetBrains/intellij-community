@@ -472,7 +472,7 @@ class EventLogConsole {
   }
 
   public static class ClearLogAction extends DumbAwareAction {
-    private EventLogConsole myConsole;
+    private final EventLogConsole myConsole;
 
     public ClearLogAction(EventLogConsole console) {
       super("Clear All", "Clear the contents of the Event Log", AllIcons.Actions.GC);

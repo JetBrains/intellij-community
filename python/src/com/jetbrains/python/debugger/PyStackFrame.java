@@ -54,7 +54,7 @@ public class PyStackFrame extends XStackFrame {
   public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
   public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
 
-  private Project myProject;
+  private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
   private final PyStackFrameInfo myFrameInfo;
   private final XSourcePosition myPosition;

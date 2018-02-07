@@ -49,7 +49,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
-  private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
+  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
     @Override
     protected Set<Pair<PyClass, String>> initialValue() {
       return new HashSet<>();
@@ -533,7 +533,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
   }
 
-  private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
+  private static final Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override

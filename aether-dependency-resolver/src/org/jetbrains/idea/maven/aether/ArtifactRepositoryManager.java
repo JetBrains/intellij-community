@@ -76,7 +76,7 @@ public class ArtifactRepositoryManager {
     ourSystem = locator.getService(RepositorySystem.class);
   }
 
-  private List<RemoteRepository> myRemoteRepositories = new ArrayList<>();
+  private final List<RemoteRepository> myRemoteRepositories = new ArrayList<>();
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath) {
     this(localRepositoryPath, ProgressConsumer.DEAF);
@@ -273,7 +273,7 @@ public class ArtifactRepositoryManager {
     */
   private static class ArtifactRequestBuilder implements DependencyVisitor {
     private final ArtifactKind myKind;
-    private List<ArtifactRequest> myRequests = new ArrayList<>();
+    private final List<ArtifactRequest> myRequests = new ArrayList<>();
 
     public ArtifactRequestBuilder(ArtifactKind kind) {
       myKind = kind;

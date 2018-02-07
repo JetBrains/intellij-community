@@ -45,7 +45,7 @@ public class PyNewStyleStringFormatParser {
   }
 
   public static class ParseResult {
-    private PyNewStyleStringFormatParser myParser;
+    private final PyNewStyleStringFormatParser myParser;
 
     public ParseResult(@NotNull PyNewStyleStringFormatParser parser) {
       myParser = parser;

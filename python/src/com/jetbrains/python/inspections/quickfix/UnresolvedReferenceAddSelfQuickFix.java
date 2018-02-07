@@ -34,8 +34,8 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to add self to unresolved reference
  */
 public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPriorityAction {
-  private SmartPsiElementPointer<PyReferenceExpression> myElement;
-  private String myQualifier;
+  private final String myQualifier;
+  private final SmartPsiElementPointer<PyReferenceExpression> myElement;
 
   public UnresolvedReferenceAddSelfQuickFix(@NotNull final PyReferenceExpression element, @NotNull final String qualifier) {
     myElement = SmartPointerManager.createPointer(element);

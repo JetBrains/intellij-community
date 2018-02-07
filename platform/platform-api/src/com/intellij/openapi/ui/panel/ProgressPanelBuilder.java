@@ -187,11 +187,11 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     private boolean myServiceComment = false;
 
     private InplaceButton button;
-    private IconButton cancelIcon;
-    private IconButton resumeIcon;
-    private IconButton pauseIcon;
+    private final IconButton cancelIcon;
+    private final IconButton resumeIcon;
+    private final IconButton pauseIcon;
 
-    private SeparatorComponent mySeparatorComponent = new SeparatorComponent(SEPARATOR_COLOR, SeparatorOrientation.HORIZONTAL);
+    private final SeparatorComponent mySeparatorComponent = new SeparatorComponent(SEPARATOR_COLOR, SeparatorOrientation.HORIZONTAL);
 
     private State state = State.PLAYING;
 

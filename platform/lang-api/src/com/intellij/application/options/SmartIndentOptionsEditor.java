@@ -36,14 +36,14 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   public static final String CONTINUATION_INDENT_LABEL = ApplicationBundle.message("editbox.indent.continuation.indent");
   private JCheckBox myCbSmartTabs;
 
-  private ContinuationOption myContinuationOption;
-  private ContinuationOption myDeclarationParameterIndentOption;
-  private ContinuationOption myGenericTypeParameterIndentOption;
-  private ContinuationOption myCallParameterIndentOption;
-  private ContinuationOption myChainedCallIndentOption;
-  private ContinuationOption myArrayElementIndentOption;
+  private final ContinuationOption myContinuationOption;
+  private final ContinuationOption myDeclarationParameterIndentOption;
+  private final ContinuationOption myGenericTypeParameterIndentOption;
+  private final ContinuationOption myCallParameterIndentOption;
+  private final ContinuationOption myChainedCallIndentOption;
+  private final ContinuationOption myArrayElementIndentOption;
 
-  private List<ContinuationOption> myContinuationOptions = new ArrayList<>();
+  private final List<ContinuationOption> myContinuationOptions = new ArrayList<>();
 
   private JCheckBox myCbKeepIndentsOnEmptyLines;
 

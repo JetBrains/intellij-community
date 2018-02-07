@@ -28,7 +28,7 @@ import java.util.List;
 public class ListModelEditor<T> extends ListModelEditorBase<T> {
   private final ToolbarDecorator toolbarDecorator;
 
-  private JBList list = new JBList(model);
+  private final JBList list = new JBList(model);
 
   public ListModelEditor(@NotNull ListItemEditor<T> itemEditor) {
     super(itemEditor);

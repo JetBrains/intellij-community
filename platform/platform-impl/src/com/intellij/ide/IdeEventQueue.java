@@ -128,7 +128,7 @@ public class IdeEventQueue extends EventQueue {
   private final com.intellij.util.EventDispatcher<PostEventHook>
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
-  private LinkedHashMap <AWTEvent, ArrayList<Runnable>> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
+  private final LinkedHashMap <AWTEvent, ArrayList<Runnable>> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
 
   public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
@@ -1171,7 +1171,7 @@ public class IdeEventQueue extends EventQueue {
       e.getID() == WindowEvent.WINDOW_GAINED_FOCUS;
   }
 
-  private ConcurrentLinkedQueue<AWTEvent> focusEventsList =
+  private final ConcurrentLinkedQueue<AWTEvent> focusEventsList =
       new ConcurrentLinkedQueue<>();
 
   // return true if posted, false if consumed immediately

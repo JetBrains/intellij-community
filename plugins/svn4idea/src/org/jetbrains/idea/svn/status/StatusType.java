@@ -61,8 +61,8 @@ public enum StatusType {
     }
   }
 
-  private String myName;
-  private char myCode;
+  private final String myName;
+  private final char myCode;
 
   StatusType(String name) {
     this(name, ' ');

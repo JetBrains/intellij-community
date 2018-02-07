@@ -62,9 +62,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disposable {
 
-  private Project myProject;
+  private final Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
-  private Disposable myParent;
+  private final Disposable myParent;
 
   public JBTabbedTerminalWidget(@NotNull Project project,
                                 @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
@@ -145,7 +145,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   public class JBTerminalTabs implements TerminalTabs {
     private final JBEditorTabs myTabs;
 
-    private TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
+    private final TabInfo.DragOutDelegate myDragDelegate = new MyDragOutDelegate();
 
     private final CopyOnWriteArraySet<TabChangeListener> myListeners = new CopyOnWriteArraySet<>();
 

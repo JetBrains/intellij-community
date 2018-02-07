@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.spellchecker.dictionary.*;
@@ -332,7 +331,7 @@ public class SpellCheckerManager implements Disposable {
 
   public enum DictionaryLevel {
     APP("application-level"), PROJECT("project-level"), NOT_SPECIFIED("not specified");
-    private String myName;
+    private final String myName;
     private final static Map<String, DictionaryLevel> DICTIONARY_LEVELS =
       Maps.uniqueIndex(EnumSet.allOf(DictionaryLevel.class), DictionaryLevel::getName);
 

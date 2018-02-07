@@ -22,9 +22,9 @@ import java.util.Objects;
 public class NullGraphics2D extends Graphics2D {
   private final FontRenderContext myFontRenderContext = new FontRenderContext(null, false, false);
   private final AffineTransform myTransform = new AffineTransform();
-  private Rectangle myClip;
+  private final Rectangle myClip;
   private Composite myComposite = AlphaComposite.SrcOver;
-  private RenderingHints myRenderingHints = new RenderingHints(null);
+  private final RenderingHints myRenderingHints = new RenderingHints(null);
   private Color myColor = Color.black;
   private Font myFont = Font.decode(null);
   private Stroke myStroke = new BasicStroke();

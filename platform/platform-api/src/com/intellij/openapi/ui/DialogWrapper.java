@@ -2072,7 +2072,7 @@ public abstract class DialogWrapper {
 
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
-    private List<String> errors = new ArrayList<>();
+    private final List<String> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());

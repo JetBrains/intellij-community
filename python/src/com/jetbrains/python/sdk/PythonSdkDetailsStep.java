@@ -41,7 +41,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
-  @Nullable private DialogWrapper myShowAll;
+  @Nullable private final DialogWrapper myShowAll;
   private final Project myProject;
   private final Component myOwnerComponent;
   private final Sdk[] myExistingSdks;

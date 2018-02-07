@@ -15,7 +15,7 @@ import java.util.*;
 public class JdkBundleList {
   private static final Logger LOG = Logger.getInstance(JdkBundleList.class);
 
-  private Map<String, JdkBundle> myBundles = new LinkedHashMap<>();
+  private final Map<String, JdkBundle> myBundles = new LinkedHashMap<>();
 
   public void addBundlesFromLocation(@NotNull String location, @Nullable JavaVersion min, @Nullable JavaVersion max) {
     File[] vms = new File(location).listFiles();

@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 
 public class OtherFileTypesCodeStyleConfigurable extends CodeStyleAbstractConfigurable {
-  private OtherFileTypesCodeStyleOptionsForm myOptionsForm;
+  private final OtherFileTypesCodeStyleOptionsForm myOptionsForm;
 
   public OtherFileTypesCodeStyleConfigurable(CodeStyleSettings currSettings, CodeStyleSettings modelSettings) {
     super(currSettings, modelSettings, ApplicationBundle.message("code.style.other.file.types"));

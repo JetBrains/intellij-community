@@ -197,8 +197,8 @@ public class BuildFilePropertiesPanel {
   }
 
   private static class PropertiesTab extends Tab {
-    private JTable myPropertiesTable;
-    private JPanel myWholePanel;
+    private final JTable myPropertiesTable;
+    private final JPanel myWholePanel;
 
     private static final ColumnInfo<BuildFileProperty, String> NAME_COLUMN = new ColumnInfo<BuildFileProperty, String>(
       AntBundle.message("edit.ant.properties.name.column.name")) {

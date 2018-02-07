@@ -62,5 +62,5 @@ public class BadPluginTest extends PlatformTestCase {
     super.tearDown();
   }
 
-  private String myOldConfigPath = System.getProperty(PathManager.PROPERTY_CONFIG_PATH);
+  private final String myOldConfigPath = System.getProperty(PathManager.PROPERTY_CONFIG_PATH);
 }

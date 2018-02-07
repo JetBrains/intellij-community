@@ -126,7 +126,7 @@ public class FormatChangedTextUtil {
   @NotNull
   public static List<PsiFile> getChangedFiles(@NotNull final Project project, @NotNull Collection<Change> changes) {
     Function<Change, PsiFile> changeToPsiFileMapper = new Function<Change, PsiFile>() {
-      private PsiManager myPsiManager = PsiManager.getInstance(project);
+      private final PsiManager myPsiManager = PsiManager.getInstance(project);
 
       @Override
       public PsiFile fun(Change change) {

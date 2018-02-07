@@ -18,7 +18,7 @@ package com.intellij.openapi.ui.popup;
 public class LightweightWindowEvent {
 
   private final LightweightWindow myWindow;
-  private boolean myOk;
+  private final boolean myOk;
 
   public LightweightWindowEvent(LightweightWindow window) {
     this(window, false);

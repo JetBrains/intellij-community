@@ -23,7 +23,7 @@ import java.util.List;
 public class CoverageViewBuilder extends AbstractListBuilder {
   private final JBTable myTable;
   private final FileStatusListener myFileStatusListener;
-  private CoverageViewExtension myCoverageViewExtension;
+  private final CoverageViewExtension myCoverageViewExtension;
 
   CoverageViewBuilder(final Project project,
                       final JList list,

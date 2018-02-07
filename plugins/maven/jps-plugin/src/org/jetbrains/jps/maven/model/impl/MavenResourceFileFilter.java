@@ -27,9 +27,9 @@ import java.io.FileFilter;
  * @author nik
  */
 public class MavenResourceFileFilter implements FileFilter {
-  private File myRoot;
-  private String myRelativeDirectoryPath;
-  private MavenPatternFileFilter myMavenPatternFileFilter;
+  private final File myRoot;
+  private final String myRelativeDirectoryPath;
+  private final MavenPatternFileFilter myMavenPatternFileFilter;
   private final boolean myAcceptWebXml;
 
   public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern) {

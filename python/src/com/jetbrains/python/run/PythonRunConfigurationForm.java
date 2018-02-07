@@ -69,7 +69,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final Project myProject;
   private JBCheckBox myShowCommandLineCheckbox;
   private JBCheckBox myEmulateTerminalCheckbox;
-  private PySymbolFieldWithBrowseButton myModuleField;
+  private final PySymbolFieldWithBrowseButton myModuleField;
   private JBComboBoxLabel myTargetComboBox;
   private JPanel myModuleFieldPanel;
   private boolean myModuleMode;

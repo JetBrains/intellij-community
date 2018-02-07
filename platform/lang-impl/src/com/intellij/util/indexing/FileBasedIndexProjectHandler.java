@@ -45,7 +45,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.FileBasedIndexProjectHandler");
 
   private final FileBasedIndex myIndex;
-  private FileBasedIndexScanRunnableCollector myCollector;
+  private final FileBasedIndexScanRunnableCollector myCollector;
 
   public FileBasedIndexProjectHandler(@NotNull Project project, FileBasedIndex index, FileBasedIndexScanRunnableCollector collector) {
     myIndex = index;

@@ -65,7 +65,7 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
   }
 
   private static class MyComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
-    private Accessible myAccessible;
+    private final Accessible myAccessible;
     private AccessibleContext myDefaultAccessibleContext;
 
     MyComponent(@NotNull Component comp, @NotNull Accessible accessible) {

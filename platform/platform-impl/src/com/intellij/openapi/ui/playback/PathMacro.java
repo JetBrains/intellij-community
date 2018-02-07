@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.ui.playback;
 
-import java.util.HashMap;
-
 import java.io.File;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 public class PathMacro {
   
-  private Map<String, File> myMap = new HashMap<>();
+  private final Map<String, File> myMap = new HashMap<>();
 
   public PathMacro setScriptDir(File dir) {
     myMap.put("\\{script\\.dir\\}", dir);

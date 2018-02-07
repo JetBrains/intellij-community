@@ -35,7 +35,7 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
   @NotNull private final String myName;
   @Nullable private final PyType myBound;
   private boolean myIsDefinition = false;
-  private PyTargetExpression myTargetExpression;
+  private final PyTargetExpression myTargetExpression;
 
   public PyGenericType(@NotNull String name, @Nullable PyType bound) {
     this(name, bound, false);

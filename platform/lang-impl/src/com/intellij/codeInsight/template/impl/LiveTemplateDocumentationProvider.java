@@ -59,7 +59,7 @@ public class LiveTemplateDocumentationProvider extends AbstractDocumentationProv
   private static class LiveTemplateElement extends FakePsiElement {
     @NotNull private final TemplateImpl myTemplate;
     @NotNull private final PsiManager myPsiManager;
-    @NotNull private DummyHolder myDummyHolder;
+    @NotNull private final DummyHolder myDummyHolder;
 
     public LiveTemplateElement(@NotNull TemplateImpl template, @NotNull PsiManager psiManager) {
       myTemplate = template;

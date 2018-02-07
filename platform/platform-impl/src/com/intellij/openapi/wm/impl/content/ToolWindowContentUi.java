@@ -585,7 +585,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   private class CloseContentTarget implements CloseAction.CloseTarget {
 
-    private Content myContent;
+    private final Content myContent;
 
     private CloseContentTarget(Content content) {
       myContent = content;

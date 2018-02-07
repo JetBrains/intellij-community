@@ -144,7 +144,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
   private static class Visitor extends CompatibilityVisitor {
     private final ProblemsHolder myHolder;
-    private Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> myUsedImports = Collections.synchronizedSet(new HashSet<String>());
 
     public Visitor(ProblemsHolder holder, List<LanguageLevel> versionsToProcess) {
       super(versionsToProcess);

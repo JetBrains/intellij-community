@@ -36,7 +36,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Tagir Valeev
  */
 class MigrateToStreamFix implements LocalQuickFix {
-  private BaseStreamApiMigration myMigration;
+  private final BaseStreamApiMigration myMigration;
 
   protected MigrateToStreamFix(BaseStreamApiMigration migration) {
     myMigration = migration;

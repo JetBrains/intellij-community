@@ -46,7 +46,7 @@ import java.util.*;
 public class GenericCompilerRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.GenericCompilerRunner");
   private static final Logger FULL_LOG = Logger.getInstance("#com.intellij.full-generic-compiler-log");
-  private CompileContext myContext;
+  private final CompileContext myContext;
   private final boolean myForceCompile;
   private final boolean myOnlyCheckStatus;
   private final GenericCompiler<?,?,?>[] myCompilers;
@@ -295,7 +295,7 @@ public class GenericCompilerRunner {
   }
 
   private class SourceItemHashingStrategy<S> implements TObjectHashingStrategy<S> {
-    private KeyDescriptor<S> myKeyDescriptor;
+    private final KeyDescriptor<S> myKeyDescriptor;
 
     public SourceItemHashingStrategy(GenericCompiler<S, ?, ?> compiler) {
       myKeyDescriptor = compiler.getItemKeyDescriptor();

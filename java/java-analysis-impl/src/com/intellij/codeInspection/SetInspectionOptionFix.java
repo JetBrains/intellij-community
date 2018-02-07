@@ -17,10 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class SetInspectionOptionFix implements LocalQuickFix, LowPriorityAction, Iconable {
-  private String myShortName;
+  private final String myShortName;
   private final String myProperty;
   private final String myMessage;
-  private boolean myValue;
+  private final boolean myValue;
 
   public SetInspectionOptionFix(InspectionProfileEntry inspection, String property, String message, boolean value) {
     myShortName = inspection.getShortName();

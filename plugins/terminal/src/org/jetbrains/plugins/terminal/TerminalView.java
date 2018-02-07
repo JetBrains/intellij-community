@@ -251,7 +251,7 @@ public class TerminalView {
 
   private static class CloseSession extends DumbAwareAction {
     private final JBTabbedTerminalWidget myTerminal;
-    private ToolWindow myToolWindow;
+    private final ToolWindow myToolWindow;
 
     public CloseSession(@NotNull JBTabbedTerminalWidget terminal, @NotNull ToolWindow toolWindow) {
       super("Close Session", "Close Terminal Session", AllIcons.Actions.Delete);
@@ -271,7 +271,7 @@ public class TerminalView {
    * @author traff
    */
   public class TerminalDockContainer implements DockContainer {
-    private ToolWindow myTerminalToolWindow;
+    private final ToolWindow myTerminalToolWindow;
 
     public TerminalDockContainer(ToolWindow toolWindow) {
       myTerminalToolWindow = toolWindow;

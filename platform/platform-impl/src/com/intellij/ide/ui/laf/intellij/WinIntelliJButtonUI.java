@@ -32,7 +32,7 @@ import java.beans.PropertyChangeListener;
 public class WinIntelliJButtonUI extends DarculaButtonUI {
   static final float DISABLED_ALPHA_LEVEL = 0.47f;
 
-  private PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
+  private final PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
       final Object source = evt.getSource();

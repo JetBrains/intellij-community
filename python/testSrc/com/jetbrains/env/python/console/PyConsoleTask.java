@@ -43,7 +43,10 @@ import org.junit.Assert;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 
 /**
  * @author traff
@@ -60,7 +63,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private Semaphore myConsoleInitSemaphore;
   private PythonConsoleExecuteActionHandler myExecuteHandler;
 
-  private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
+  private final Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
     super(null);
