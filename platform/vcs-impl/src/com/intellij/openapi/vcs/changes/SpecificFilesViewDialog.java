@@ -15,16 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
@@ -43,6 +40,8 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
@@ -80,7 +79,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     init();
     initData(initDataFiles);
     myView.setMinimumSize(new JBDimension(100, 100));
-
+    myView.addGroupingChangeListener(e -> refreshView());
 
     ChangeListAdapter changeListListener = new ChangeListAdapter() {
       @Override
@@ -101,7 +100,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   private void initData(@NotNull final List<VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    final DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.isShowFlatten(), files);
+    DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.getGrouping(), files);
     myView.setModel(model);
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
@@ -119,13 +118,13 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
     group.addSeparator();
-    group.add(new ToggleShowFlattenAction());
+    group.add(ActionManager.getInstance().getAction("ChangesView.GroupBy"));
     group.add(cam.createExpandAllAction(expander, myView));
     group.add(cam.createCollapseAllAction(expander, myView));
 
     myPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
-    myView.setShowFlatten(false);
+    myView.getGroupingSupport().setGroupingKey(DIRECTORY_GROUPING);
   }
 
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
@@ -175,21 +174,4 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
   @NotNull
   protected abstract List<VirtualFile> getFiles();
-
-  public class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
-    public ToggleShowFlattenAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            AllIcons.Actions.GroupByPackage);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return !myView.isShowFlatten();
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      myView.setShowFlatten(!state);
-      refreshView();
-    }
-  }
 }

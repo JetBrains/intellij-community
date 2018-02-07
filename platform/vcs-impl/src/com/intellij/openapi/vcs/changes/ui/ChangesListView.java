@@ -46,6 +46,7 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.function.Predicate;
@@ -61,8 +62,8 @@ import static java.util.stream.Collectors.toList;
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
   private final Project myProject;
-  private boolean myShowFlatten = false;
   private final CopyProvider myCopyProvider;
+  @NotNull private final ChangesGroupingSupport myGroupingSupport;
 
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
@@ -73,6 +74,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   public ChangesListView(@NotNull Project project) {
     myProject = project;
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
 
     setModel(TreeModelBuilder.buildEmpty(project));
 
@@ -82,7 +84,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
     myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
-    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true);
+    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, this::isShowFlatten, true);
     setCellRenderer(renderer);
 
     new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
@@ -95,12 +97,26 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     return (DefaultTreeModel)super.getModel();
   }
 
-  public boolean isShowFlatten() {
-    return myShowFlatten;
+  public void addGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.addPropertyChangeListener(listener);
   }
 
-  public void setShowFlatten(final boolean showFlatten) {
-    myShowFlatten = showFlatten;
+  public void removeGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.removePropertyChangeListener(listener);
+  }
+
+  @NotNull
+  public ChangesGroupingSupport getGroupingSupport() {
+    return myGroupingSupport;
+  }
+
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
+    return myGroupingSupport.getGrouping();
+  }
+
+  public boolean isShowFlatten() {
+    return myGroupingSupport.isNone();
   }
 
   public void updateModel(@NotNull DefaultTreeModel newModel) {
@@ -207,6 +223,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
           sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, firstNode.getAllChangesUnder());
         }
       }
+    }
+    else if (key == ChangesGroupingSupport.KEY) {
+      sink.put(ChangesGroupingSupport.KEY, myGroupingSupport);
     }
   }
 

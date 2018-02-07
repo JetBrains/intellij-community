@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.KeyedExtensionFactory;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -42,6 +41,8 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
@@ -78,18 +79,14 @@ public class TreeModelBuilder {
   protected final static Comparator<Change> CHANGE_COMPARATOR = comparing(ChangesUtil::getFilePath, PATH_COMPARATOR);
 
   public TreeModelBuilder(@NotNull Project project, boolean showFlatten) {
+    this(project, ChangesGroupingSupport.collectFactories(project).getByKey(showFlatten ? NONE_GROUPING : DIRECTORY_GROUPING));
+  }
+
+  public TreeModelBuilder(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
     myProject = project;
     myRoot = ChangesBrowserNode.createRoot(myProject);
     myModel = new DefaultTreeModel(myRoot);
-    KeyedExtensionFactory<ChangesGroupingPolicyFactory, String> groupingFactories =
-      new KeyedExtensionFactory<ChangesGroupingPolicyFactory, String>(
-        ChangesGroupingPolicyFactory.class, ChangesGroupingPolicyFactory.EP_NAME, myProject.getPicoContainer()) {
-        @Override
-        public String getKey(@NotNull String key) {
-          return key;
-        }
-      };
-    myGroupingPolicyFactory = groupingFactories.getByKey(showFlatten ? "none" : "directory");
+    myGroupingPolicyFactory = grouping;
   }
 
   @NotNull
@@ -134,6 +131,14 @@ public class TreeModelBuilder {
       .build();
   }
 
+  @NotNull
+  public static DefaultTreeModel buildFromVirtualFiles(@NotNull Project project,
+                                                       @NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull Collection<VirtualFile> virtualFiles) {
+    return new TreeModelBuilder(project, grouping)
+      .setVirtualFiles(virtualFiles, null)
+      .build();
+  }
 
   @NotNull
   public TreeModelBuilder setChanges(@NotNull Collection<? extends Change> changes, @Nullable ChangeNodeDecorator changeNodeDecorator) {
