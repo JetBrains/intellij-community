@@ -214,8 +214,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
 
   private static class ImportSchemeChooserDialog extends DialogWrapper {
 
-    private Component myComponentAbove;
-    private List<ColorSchemeItem> mySchemeItems;
+    private final Component myComponentAbove;
+    private final List<ColorSchemeItem> mySchemeItems;
     private JBList<ColorSchemeItem> mySchemeList;
 
     protected ImportSchemeChooserDialog(@NotNull Component parent,
@@ -257,8 +257,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
   }
 
   private static class ColorSchemeItem {
-    private String myName;
-    private VirtualFile myFile;
+    private final String myName;
+    private final VirtualFile myFile;
 
     public ColorSchemeItem(String name, VirtualFile file) {
       myName = name;

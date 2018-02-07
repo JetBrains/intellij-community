@@ -182,7 +182,7 @@ public class PluginManager extends PluginManagerCore {
     return null;
   }
 
-  private static Thread.UncaughtExceptionHandler HANDLER = (t, e) -> processException(e);
+  private static final Thread.UncaughtExceptionHandler HANDLER = (t, e) -> processException(e);
 
   public static void installExceptionHandler() {
     Thread.currentThread().setUncaughtExceptionHandler(HANDLER);

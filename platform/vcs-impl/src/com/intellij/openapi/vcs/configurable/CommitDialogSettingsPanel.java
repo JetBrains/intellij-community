@@ -40,7 +40,7 @@ public class CommitDialogSettingsPanel implements ConfigurableUi<VcsConfiguratio
   private JBCheckBox myForceNonEmptyCommitMessage;
   private JBCheckBox myMoveUncommittedToAnotherChangeList;
   private ComboBox<VcsShowConfirmationOption.Value> myMoveToFailedCommitChangeList;
-  private EnumComboBoxModel<VcsShowConfirmationOption.Value> myMoveToFailedCommitChangeListModel;
+  private final EnumComboBoxModel<VcsShowConfirmationOption.Value> myMoveToFailedCommitChangeListModel;
 
   public CommitDialogSettingsPanel(@NotNull Project project) {
     myProject = project;

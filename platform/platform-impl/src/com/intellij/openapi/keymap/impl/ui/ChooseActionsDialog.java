@@ -50,10 +50,10 @@ import java.util.ArrayList;
 public class ChooseActionsDialog extends DialogWrapper {
   private final ActionsTree myActionsTree;
   private FilterComponent myFilterComponent;
-  private TreeExpansionMonitor myTreeExpansionMonitor;
+  private final TreeExpansionMonitor myTreeExpansionMonitor;
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
-  private Keymap myKeymap;
-  private QuickList[] myQuicklists;
+  private final Keymap myKeymap;
+  private final QuickList[] myQuicklists;
 
   public ChooseActionsDialog(Component parent, Keymap keymap, QuickList[] quicklists) {
     super(parent, true);

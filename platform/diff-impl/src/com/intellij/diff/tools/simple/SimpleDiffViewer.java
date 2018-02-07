@@ -63,7 +63,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final StatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<>();
-  @NotNull private final List<SimpleDiffChange> myNonSkippedDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<>();
   private boolean myIsContentsEqual;
 
@@ -242,11 +241,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
           SimpleDiffChange change = new SimpleDiffChange(this, fragment, previousFragment, isSkipped);
 
           myDiffChanges.add(change);
-          if (!change.isSkipped()) myNonSkippedDiffChanges.add(change);
         }
       }
 
-      myFoldingModel.install(myNonSkippedDiffChanges, myRequest, getFoldingModelSettings());
+      myFoldingModel.install(getNonSkippedDiffChanges(), myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -281,7 +279,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myDiffChanges.clear();
-    myNonSkippedDiffChanges.clear();
 
     for (SimpleDiffChange change : myInvalidDiffChanges) {
       change.destroyHighlighter();
@@ -323,7 +320,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    SimpleDiffChange targetChange = scrollToPolicy.select(myNonSkippedDiffChanges);
+    SimpleDiffChange targetChange = scrollToPolicy.select(getNonSkippedDiffChanges());
     if (targetChange == null) targetChange = scrollToPolicy.select(myDiffChanges);
     if (targetChange == null) return false;
 
@@ -365,6 +362,11 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull
   protected List<SimpleDiffChange> getDiffChanges() {
     return myDiffChanges;
+  }
+
+  @NotNull
+  private List<SimpleDiffChange> getNonSkippedDiffChanges() {
+    return ContainerUtil.filter(myDiffChanges, it -> !it.isSkipped());
   }
 
   @NotNull
@@ -444,7 +446,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected List<SimpleDiffChange> getChanges() {
-      return myNonSkippedDiffChanges;
+      return getNonSkippedDiffChanges();
     }
 
     @NotNull
@@ -789,11 +791,15 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (myTextDiffProvider.isHighlightingDisabled()) {
         return DiffBundle.message("diff.highlighting.disabled.text");
       }
+      int skippedChanges = ContainerUtil.count(myDiffChanges, it -> it.isSkipped()) +
+                           ContainerUtil.count(myInvalidDiffChanges, it -> it.isSkipped());
       int changesCount = myDiffChanges.size() + myInvalidDiffChanges.size();
       if (changesCount == 0 && !myIsContentsEqual) {
         return DiffBundle.message("diff.all.differences.ignored.text");
       }
-      return DiffBundle.message("diff.count.differences.status.text", changesCount);
+      String message = DiffBundle.message("diff.count.differences.status.text", changesCount - skippedChanges);
+      if (skippedChanges > 0) message += " " + DiffBundle.message("diff.inactive.count.differences.status.text", skippedChanges);
+      return message;
     }
   }
 

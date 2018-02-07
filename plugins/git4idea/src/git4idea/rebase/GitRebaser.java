@@ -54,10 +54,10 @@ public class GitRebaser {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
-  @NotNull private GitVcs myVcs;
-  @NotNull private ProgressIndicator myProgressIndicator;
+  @NotNull private final GitVcs myVcs;
+  @NotNull private final ProgressIndicator myProgressIndicator;
 
-  @NotNull private List<GitRebaseUtils.CommitInfo> mySkippedCommits;
+  @NotNull private final List<GitRebaseUtils.CommitInfo> mySkippedCommits;
 
   public GitRebaser(@NotNull Project project, @NotNull Git git, @NotNull ProgressIndicator progressIndicator) {
     myProject = project;

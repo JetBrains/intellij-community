@@ -962,6 +962,19 @@ class T70 {
     s = "";
   }
 }
+class T71 {
+  private String s;
+
+  T71() {
+    try {
+      foo();
+    } catch (Throwable t) {
+      s = t.getMessage();
+    }
+  }
+
+  void foo() throws Throwable {}
+}
 
 class Foo {
 

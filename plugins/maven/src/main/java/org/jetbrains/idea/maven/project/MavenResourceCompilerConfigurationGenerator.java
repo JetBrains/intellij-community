@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
  */
 public class MavenResourceCompilerConfigurationGenerator {
 
-  private static Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
+  private static final Logger LOG = Logger.getInstance(MavenResourceCompilerConfigurationGenerator.class);
 
   private static final Pattern SIMPLE_NEGATIVE_PATTERN = Pattern.compile("!\\?(\\*\\.\\w+)");
   private static final String IDEA_MAVEN_DISABLE_MANIFEST = System.getProperty("idea.maven.disable.manifest");

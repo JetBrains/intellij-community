@@ -242,9 +242,9 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
   }
 
   private class IdSetPanel extends JPanel implements LinkListener<String> {
-    private JLabel myTitleLabel = new JLabel();
-    private JPanel myContentPanel = new JPanel(new GridLayout(0, 3, 5, 5));
-    private JButton mySaveButton = new JButton("Save Changes and Go Back");
+    private final JLabel myTitleLabel = new JLabel();
+    private final JPanel myContentPanel = new JPanel(new GridLayout(0, 3, 5, 5));
+    private final JButton mySaveButton = new JButton("Save Changes and Go Back");
     private String myGroup;
 
     private IdSetPanel() {

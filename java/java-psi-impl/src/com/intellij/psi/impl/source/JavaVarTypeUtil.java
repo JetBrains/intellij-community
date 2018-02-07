@@ -53,7 +53,7 @@ public class JavaVarTypeUtil {
   }
 
   private static class UpwardProjectionTypeVisitor extends PsiTypeVisitorEx<PsiType> {
-    private static RecursionGuard upwardGuard = RecursionManager.createGuard("upwardProjectionGuard");
+    private static final RecursionGuard upwardGuard = RecursionManager.createGuard("upwardProjectionGuard");
     @Override
     public PsiType visitType(PsiType type) {
       return type;

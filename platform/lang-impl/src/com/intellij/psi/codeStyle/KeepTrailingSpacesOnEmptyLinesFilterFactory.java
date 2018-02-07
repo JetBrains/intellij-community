@@ -31,7 +31,7 @@ import static com.intellij.openapi.editor.StripTrailingSpacesFilter.ALL_LINES;
 public class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
 
   private static class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {
-    private @NotNull Document myDocument;
+    private @NotNull final Document myDocument;
 
     public KeepTrailingSpacesOnEmptyLinesFilter(@NotNull Document document) {
       myDocument = document;

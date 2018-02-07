@@ -37,10 +37,10 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private JBTable myTable;
-  private TableModel myModel;
+  private final TableModel myModel;
   private List<T> myData;
   private AbstractTableModel myTableModel;
-  private String myLabel;
+  private final String myLabel;
 
   public AddEditRemovePanel(TableModel<T> model, List<T> data) {
     this(model, data, null);

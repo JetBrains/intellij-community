@@ -132,7 +132,7 @@ public class UnsupportedFeaturesUtil {
   }
 
   private static class VersionsParser extends DefaultHandler {
-    private CharArrayWriter myContent = new CharArrayWriter();
+    private final CharArrayWriter myContent = new CharArrayWriter();
     private LanguageLevel myCurrentLevel;
 
     @Override
@@ -168,7 +168,7 @@ public class UnsupportedFeaturesUtil {
   }
 
   static class ClassMethodsParser extends DefaultHandler {
-    private CharArrayWriter myContent = new CharArrayWriter();
+    private final CharArrayWriter myContent = new CharArrayWriter();
     private String myClassName = "";
     private LanguageLevel myCurrentLevel;
 

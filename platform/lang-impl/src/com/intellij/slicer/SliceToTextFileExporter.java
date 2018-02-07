@@ -16,7 +16,7 @@ import java.util.List;
 public class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
   @NotNull private final UsageViewSettings myUsageViewSettings;
-  private String myLineSeparator = SystemProperties.getLineSeparator();
+  private final String myLineSeparator = SystemProperties.getLineSeparator();
 
   public SliceToTextFileExporter(@NotNull SliceTreeBuilder builder, @NotNull UsageViewSettings usageViewSettings) {
     myBuilder = builder;

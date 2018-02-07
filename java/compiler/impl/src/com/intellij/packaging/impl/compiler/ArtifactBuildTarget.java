@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class ArtifactBuildTarget extends BuildTarget {
-  private Artifact myArtifact;
+  private final Artifact myArtifact;
 
   public ArtifactBuildTarget(Artifact artifact) {
     myArtifact = artifact;

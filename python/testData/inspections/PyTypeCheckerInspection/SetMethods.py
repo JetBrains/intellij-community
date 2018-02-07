@@ -1,8 +1,8 @@
 
 def foo(xs, ys):
     """
-    :type xs: set of int
-    :type ys: set of string
+    :type xs: set[int]
+    :type ys: set[string]
     """
     'foo' + <warning descr="Expected type 'AnyStr', got 'int' instead">xs.pop()</warning>
     xs.discard(<weak_warning descr="Expected type 'int' (matched generic type '_T'), got 'str' instead">'foo'</weak_warning>)

@@ -82,7 +82,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
   private Project myProject;
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
-  private Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = ContainerUtil.newConcurrentMap();
+  private final Map<Content, Pair<Icon, AtomicInteger>> liveContentsMap = ContainerUtil.newConcurrentMap();
 
   public BuildContentManagerImpl(Project project) {
     init(project);

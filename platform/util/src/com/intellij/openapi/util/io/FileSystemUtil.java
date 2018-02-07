@@ -342,7 +342,7 @@ public class FileSystemUtil {
 
 
   private static class IdeaWin32MediatorImpl extends Mediator {
-    private IdeaWin32 myInstance = IdeaWin32.getInstance();
+    private final IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
     protected FileAttributes getAttributes(@NotNull final String path) {

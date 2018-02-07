@@ -32,7 +32,7 @@ import java.awt.*;
 public class MultilineEditor extends JPanel {
 
     private final EditorModel myModel;
-    private EditorTextField myEditorTextField;
+    private final EditorTextField myEditorTextField;
 
     public EditorTextField getField() {
     return myEditorTextField;

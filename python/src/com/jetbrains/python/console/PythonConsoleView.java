@@ -96,7 +96,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  private ActionCallback myInitialized = new ActionCallback();
+  private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
 
   /**

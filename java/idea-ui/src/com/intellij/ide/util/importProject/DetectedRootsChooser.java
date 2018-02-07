@@ -135,8 +135,8 @@ public class DetectedRootsChooser {
       detectedRootData.setSelectedRoot(value);
     }
   };
-  private TableView<DetectedRootData> myTable;
-  private JComponent myComponent;
+  private final TableView<DetectedRootData> myTable;
+  private final JComponent myComponent;
   private final ListTableModel<DetectedRootData> myModel;
   private final EventDispatcher<RootSelectionListener> myDispatcher = EventDispatcher.create(RootSelectionListener.class);
 

@@ -241,9 +241,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   private fun registerUndoAction(undo: Boolean) {
-    val undoState = documentTracker.readLock {
-      blocks.map { RangeState(it.range, it.marker.changelistId) }
-    }
+    val undoState = collectRangeStates()
     val action = MyUndoableAction(project, document, undoState, undo)
     undoManager.undoableActionPerformed(action)
     undoableActions.add(action)
@@ -482,48 +480,71 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
   @CalledInAwt
-  fun storeTrackerState(): State {
+  internal fun storeTrackerState(): FullState {
     return documentTracker.readLock {
       val vcsContent = documentTracker.getContent(Side.LEFT)
       val currentContent = documentTracker.getContent(Side.RIGHT)
 
-      val rangeStates = blocks.map { RangeState(it.range, it.marker.changelistId) }
+      val rangeStates = collectRangeStates()
 
-      State(virtualFile, vcsContent.toString(), currentContent.toString(), rangeStates)
+      FullState(virtualFile, rangeStates, vcsContent.toString(), currentContent.toString())
     }
   }
 
-  private fun restoreState(state: State) {
+  @CalledInAwt
+  internal fun restoreState(state: State): Boolean {
+    if (state is FullState) {
+      return restoreFullState(state)
+    }
+    else {
+      return restoreState(state.ranges)
+    }
+  }
+
+  @CalledInAwt
+  private fun collectRangeStates(): List<RangeState> {
+    return documentTracker.readLock {
+      blocks.map { RangeState(it.range, it.marker.changelistId) }
+    }
+  }
+
+  private fun restoreFullState(state: FullState): Boolean {
+    var success = false
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
       changeListManager.executeUnderDataLock {
         documentTracker.writeLock {
-          val success = documentTracker.setFrozenState(state.vcsContent, state.currentContent, state.ranges.map { it.range })
+          success = documentTracker.setFrozenState(state.vcsContent, state.currentContent, state.ranges.map { it.range })
           if (success) {
             restoreChangelistsState(state.ranges)
           }
         }
       }
 
-      updateDocument(Side.LEFT) {
-        vcsDocument.setText(state.vcsContent)
+      if (success) {
+        updateDocument(Side.LEFT) {
+          vcsDocument.setText(state.vcsContent)
+        }
       }
     }
+    return success
   }
 
   @CalledInAwt
-  internal fun restoreState(states: List<RangeState>) {
+  private fun restoreState(states: List<RangeState>): Boolean {
+    var success = false
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
       changeListManager.executeUnderDataLock {
         documentTracker.writeLock {
-          val success = documentTracker.setFrozenState(states.map { it.range })
+          success = documentTracker.setFrozenState(states.map { it.range })
           if (success) {
             restoreChangelistsState(states)
           }
         }
       }
     }
+    return success
   }
 
   private fun restoreChangelistsState(states: List<RangeState>) {
@@ -591,14 +612,18 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  class State(
+  internal class FullState(virtualFile: VirtualFile,
+                           ranges: List<RangeState>,
+                           val vcsContent: String,
+                           val currentContent: String)
+    : State(virtualFile, ranges)
+
+  internal open class State(
     val virtualFile: VirtualFile,
-    val vcsContent: String,
-    val currentContent: String,
     val ranges: List<RangeState>
   )
 
-  class RangeState(
+  internal class RangeState(
     val range: com.intellij.diff.util.Range,
     val changelistId: String
   )
@@ -629,18 +654,6 @@ class PartialLocalLineStatusTracker(project: Project,
                       virtualFile: VirtualFile,
                       mode: Mode): PartialLocalLineStatusTracker {
       return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
-    }
-
-    @JvmStatic
-    @CalledInAwt
-    fun createTracker(project: Project,
-                      document: Document,
-                      virtualFile: VirtualFile,
-                      mode: Mode,
-                      state: State): PartialLocalLineStatusTracker {
-      val tracker = createTracker(project, document, virtualFile, mode)
-      tracker.restoreState(state)
-      return tracker
     }
 
     @JvmStatic

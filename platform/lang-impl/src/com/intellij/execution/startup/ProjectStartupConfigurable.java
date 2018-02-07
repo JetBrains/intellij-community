@@ -180,7 +180,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   private void refreshDataUpdateSelection(RunnerAndConfigurationSettings settings) {
     if (myTable.isEmpty()) return;
     myModel.reValidateConfigurations(new Processor<RunnerAndConfigurationSettings>() {
-      private RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
+      private final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
       @Override
       public boolean process(RunnerAndConfigurationSettings settings) {
         return runManager.getConfigurationById(settings.getUniqueID()) != null;

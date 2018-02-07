@@ -29,7 +29,7 @@ public class MouseGestureManager {
 
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
 
-  private Map<IdeFrame, Object> myListeners = new HashMap<>();
+  private final Map<IdeFrame, Object> myListeners = new HashMap<>();
   private boolean HAS_TRACKPAD = false;
 
   public MouseGestureManager() {

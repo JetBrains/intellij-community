@@ -149,17 +149,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private volatile GotoSymbolModel2 mySymbolsModel;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private Map<String, String> myConfigurables = new HashMap<>();
+  private final Map<String, String> myConfigurables = new HashMap<>();
 
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
-  private Set<AnAction> myDisabledActions = new HashSet<>();
+  private final Set<AnAction> myDisabledActions = new HashSet<>();
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  private static AtomicBoolean showAll = new AtomicBoolean(false);
+  private static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
+  private static final AtomicBoolean showAll = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
@@ -1027,8 +1027,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private String myLocationString;
     private Icon myLocationIcon;
     private Project myProject;
-    private MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
-    private JLabel myTitle = new JLabel();
+    private final MyAccessibleComponent myMainPanel = new MyAccessibleComponent(new BorderLayout());
+    private final JLabel myTitle = new JLabel();
 
     MyListRenderer(@NotNull JBList myList) {
       assert myList == SearchEverywhereAction.this.myList;

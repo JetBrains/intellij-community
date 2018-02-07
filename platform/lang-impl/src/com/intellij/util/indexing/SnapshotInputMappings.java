@@ -38,7 +38,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class SnapshotInputMappings<Key, Value, Input> {
@@ -52,7 +55,7 @@ public class SnapshotInputMappings<Key, Value, Input> {
   private volatile PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
   private volatile PersistentHashMap<Integer, String> myIndexingTrace;
 
-  private boolean myIsPsiBackedIndex;
+  private final boolean myIsPsiBackedIndex;
 
   public SnapshotInputMappings(IndexExtension<Key, Value, Input> indexExtension) throws IOException {
     myIndexId = (ID<Key, Value>)indexExtension.getName();

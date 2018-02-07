@@ -28,7 +28,7 @@ import java.util.Set;
  * @author yole
  */
 public class PyImportedModuleType implements PyType {
-  @NotNull private PyImportedModule myImportedModule;
+  @NotNull private final PyImportedModule myImportedModule;
 
   public PyImportedModuleType(@NotNull PyImportedModule importedModule) {
     myImportedModule = importedModule;

@@ -68,8 +68,8 @@ interface ConditionalExpression {
   }
 
   class Boolean implements ConditionalExpression {
-    private String myCondition;
-    private boolean myInvert;
+    private final String myCondition;
+    private final boolean myInvert;
 
     public Boolean(String condition, boolean invert) {
       myCondition = condition;

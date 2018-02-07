@@ -55,8 +55,8 @@ public class DomModelTreeView extends Wrapper implements DataProvider, Disposabl
 
   private final SimpleTree myTree;
   private final AbstractTreeBuilder myBuilder;
-  private DomManager myDomManager;
-  @Nullable private DomElement myRootElement;
+  private final DomManager myDomManager;
+  @Nullable private final DomElement myRootElement;
 
   public DomModelTreeView(@NotNull DomElement rootElement) {
     this(rootElement, rootElement.getManager(), new DomModelTreeStructure(rootElement));

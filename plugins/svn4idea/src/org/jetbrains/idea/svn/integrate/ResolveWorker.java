@@ -36,7 +36,7 @@ public class ResolveWorker {
   private final boolean myChangesUnderProjectRoot;
   private final Project myProject;
   private final VcsDirtyScopeManager myDirtyScopeManager;
-  private List<VirtualFile> myConflictedVirtualFiles;
+  private final List<VirtualFile> myConflictedVirtualFiles;
 
   public ResolveWorker(final boolean changesUnderProjectRoot, final Project project) {
     myChangesUnderProjectRoot = changesUnderProjectRoot;

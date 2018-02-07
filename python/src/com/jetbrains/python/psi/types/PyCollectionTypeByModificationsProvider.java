@@ -4,6 +4,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
@@ -15,17 +16,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final public class PyCollectionTypeByModificationsProvider extends PyTypeProviderBase implements PyOverridingTypeProvider {
+public final class PyCollectionTypeByModificationsProvider extends PyTypeProviderBase implements PyOverridingTypeProvider {
 
   @Nullable
   @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     String qualifiedName = function.getQualifiedName();
-    if (qualifiedName != null && PyCollectionTypeUtil.INSTANCE.getCOLLECTION_CONSTRUCTORS().contains(qualifiedName)) {
-      if (callSite == null) {
-        return null;
-      }
-
+    if (qualifiedName != null && PyCollectionTypeUtil.INSTANCE.getCOLLECTION_CONSTRUCTORS().contains(qualifiedName) && callSite != null) {
       PyExpression target = PyCollectionTypeUtil.INSTANCE.getTargetForValueInAssignment(callSite);
       if (target instanceof PyTargetExpression) {
         List<PyExpression> arguments = callSite.getArguments(null);
@@ -60,11 +57,11 @@ final public class PyCollectionTypeByModificationsProvider extends PyTypeProvide
   private static List<PyType> getTypesFromConstructorArguments(@NotNull TypeEvalContext context,
                                                                @NotNull List<PyExpression> arguments) {
     List<PyType> argumentTypes = new ArrayList<>();
-    if (arguments.size() == 1 && arguments.get(0) != null) {
-      PyType type = context.getType(arguments.get(0));
+    final PyExpression arg = ContainerUtil.getFirstItem(arguments);
+    if (arg != null) {
+      PyType type = context.getType(arg);
       if (type instanceof PyCollectionType) {
-        List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
-        argumentTypes.addAll(elementTypes);
+        argumentTypes.addAll(((PyCollectionType)type).getElementTypes());
       }
       else {
         argumentTypes.add(type);
@@ -76,11 +73,12 @@ final public class PyCollectionTypeByModificationsProvider extends PyTypeProvide
   @NotNull
   private static List<PyType> extractTypesForDict(@NotNull List<PyType> argumentTypes, @NotNull List<PyType> typesByModifications) {
     if (argumentTypes.size() == 1) {
-      if (argumentTypes.get(0) instanceof PyTupleType) {
-        PyTupleType tuple = (PyTupleType)argumentTypes.get(0);
+      final PyType type = ContainerUtil.getFirstItem(argumentTypes);
+      if (type instanceof PyTupleType) {
+        PyTupleType tuple = (PyTupleType)type;
         argumentTypes = tuple.getElementTypes();
       }
-      else if (argumentTypes.get(0) == null) {
+      else if (type == null) {
         argumentTypes.add(null);
       }
     }

@@ -43,7 +43,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
   private List<Module> myInitialDependencies;
   private JPanel myMainPanel;
   private JPanel myListHolderPanel;
-  private CheckBoxList<Module> myDependenciesList;
+  private final CheckBoxList<Module> myDependenciesList;
 
   public PyModuleDependenciesConfigurable(Module module) {
     myModule = module;

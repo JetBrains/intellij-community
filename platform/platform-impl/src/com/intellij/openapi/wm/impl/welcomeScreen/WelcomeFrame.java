@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -144,19 +145,22 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   }
 
   public static void showNow() {
-    if (ourInstance == null) {
-      IdeFrame frame = null;
-      for (WelcomeFrameProvider provider : EP.getExtensions()) {
-        frame = provider.createFrame();
-        if (frame != null) break;
-      }
-      if (frame == null) {
-        frame = new WelcomeFrame();
-      }
-      IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
-      ((JFrame)frame).setVisible(true);
-      ourInstance = frame;
+    if (ourInstance != null) return;
+    if (!GeneralSettings.getInstance().isShowWelcomeScreen()) {
+      ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
+
+    IdeFrame frame = null;
+    for (WelcomeFrameProvider provider : EP.getExtensions()) {
+      frame = provider.createFrame();
+      if (frame != null) break;
+    }
+    if (frame == null) {
+      frame = new WelcomeFrame();
+    }
+    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
+    ((JFrame)frame).setVisible(true);
+    ourInstance = frame;
   }
 
   public static void showIfNoProjectOpened() {

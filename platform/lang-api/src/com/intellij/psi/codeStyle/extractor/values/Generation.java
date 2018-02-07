@@ -27,12 +27,12 @@ import java.util.List;
 
 public class Generation {
 
-  private static int GENERATION_POOL_SIZE = 45;
-  private static int MUTATION_PER_GEN = 10;
+  private static final int GENERATION_POOL_SIZE = 45;
+  private static final int MUTATION_PER_GEN = 10;
   public  static int GEN_COUNT = 40;
   private List<Gens> myGensPool;
   private int myAge;
-  private int myParentKind;
+  private final int myParentKind;
 
   private Generation(@NotNull final Gens bestGens) {
     myParentKind = -1;

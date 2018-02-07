@@ -330,7 +330,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
    * It tries to preserve entry count on line as it was before sort
    */
   private static class LineLayout {
-    private TIntArrayList myEntryCountOnLines;
+    private final TIntArrayList myEntryCountOnLines;
 
     public LineLayout(TIntArrayList entryCountOnLines) {
       myEntryCountOnLines = entryCountOnLines;

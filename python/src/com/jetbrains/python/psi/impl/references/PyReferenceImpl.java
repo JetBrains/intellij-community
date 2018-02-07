@@ -81,7 +81,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   // it is *not* final so that it can be changed in debug time. if set to false, caching is off
   @SuppressWarnings("FieldCanBeLocal")
-  private static boolean USE_CACHE = true;
+  private static final boolean USE_CACHE = true;
 
   /**
    * Resolves reference to possible referred elements.
@@ -788,7 +788,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
     public static CachingResolver INSTANCE = new CachingResolver();
-    private ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
+    private final ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
       @Override
       protected AtomicInteger initialValue() {
         return new AtomicInteger();

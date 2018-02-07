@@ -1044,7 +1044,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         }
 
         Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon == null && action instanceof Toggleable) icon = PlatformIcons.CHECK_ICON;
+        if (icon == null && action instanceof Toggleable) icon = EmptyIcon.ICON_16;
         if (icon != null) {
           final int width = icon.getIconWidth();
           final int height = icon.getIconHeight();

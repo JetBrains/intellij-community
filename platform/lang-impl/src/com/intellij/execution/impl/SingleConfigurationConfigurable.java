@@ -47,7 +47,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     extends BaseRCSettingsConfigurable {
   private static final Logger LOG = Logger.getInstance(SingleConfigurationConfigurable.class);
   private final PlainDocument myNameDocument = new PlainDocument();
-  @Nullable private Executor myExecutor;
+  @Nullable private final Executor myExecutor;
 
   private ValidationResult myLastValidationResult = null;
   private boolean myValidationResultValid = false;

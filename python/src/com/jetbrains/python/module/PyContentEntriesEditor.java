@@ -50,7 +50,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final Module myModule;
   private Disposable myFilePointersDisposable;
   private MyContentEntryEditor myContentEntryEditor;
-  private FacetErrorPanel myWarningPanel;
+  private final FacetErrorPanel myWarningPanel;
 
   public PyContentEntriesEditor(Module module, ModuleConfigurationState moduleConfigurationState,
                                 boolean withBorders, JpsModuleSourceRootType<?>... rootTypes) {

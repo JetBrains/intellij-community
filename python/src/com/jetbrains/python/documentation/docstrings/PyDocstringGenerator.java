@@ -56,7 +56,7 @@ public class PyDocstringGenerator {
   private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   private final String myDocStringText;
   // Updated after buildAndInsert()
-  @Nullable private PyDocStringOwner myDocStringOwner;
+  @Nullable private final PyDocStringOwner myDocStringOwner;
   private final String myDocStringIndent;
   private final DocStringFormat myDocStringFormat;
   private final PsiElement mySettingsAnchor;

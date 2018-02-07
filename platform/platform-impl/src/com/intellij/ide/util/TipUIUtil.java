@@ -360,7 +360,7 @@ public class TipUIUtil {
   }
 
   private static class JFXBrowser extends JPanel implements Browser {
-    private JFXPanel myPanel;
+    private final JFXPanel myPanel;
     private WebView myWebView;
     private String myRecentText = "";
 

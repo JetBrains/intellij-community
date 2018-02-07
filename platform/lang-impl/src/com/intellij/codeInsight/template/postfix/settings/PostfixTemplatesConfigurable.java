@@ -44,7 +44,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @Nullable
   private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
 
-  private MultiMap<String, PostfixTemplate> templateMultiMap;
+  private final MultiMap<String, PostfixTemplate> templateMultiMap;
 
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;

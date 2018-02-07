@@ -349,9 +349,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
     catch (StorageException e) {
       forceRebuild(e);
-    } catch (AssertionError e) {
-      forceRebuild(e);
-      throw e;
     }
     catch (RuntimeException e) {
       final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);

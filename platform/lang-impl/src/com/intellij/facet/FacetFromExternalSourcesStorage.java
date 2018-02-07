@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.serialization.facet.FacetManagerState;
 @State(name = "External" + FacetManagerImpl.COMPONENT_NAME, externalStorageOnly = true)
 public class FacetFromExternalSourcesStorage implements PersistentStateComponent<FacetManagerState>, ProjectModelElement {
   private FacetManagerState myState = new FacetManagerState();
-  private Module myModule;
+  private final Module myModule;
 
   public static FacetFromExternalSourcesStorage getInstance(Module module) {
     return ModuleServiceManager.getService(module, FacetFromExternalSourcesStorage.class);

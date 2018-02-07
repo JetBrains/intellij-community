@@ -26,10 +26,10 @@ import java.util.*;
 @State(name = "FrameworkDetectionExcludesConfiguration")
 public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfiguration
          implements PersistentStateComponent<ExcludesConfigurationState>, Disposable {
-  private Map<String, VirtualFilePointerContainer> myExcludedFiles;
-  private Set<String> myExcludedFrameworks;
+  private final Map<String, VirtualFilePointerContainer> myExcludedFiles;
+  private final Set<String> myExcludedFrameworks;
   private final Project myProject;
-  private VirtualFilePointerManager myPointerManager;
+  private final VirtualFilePointerManager myPointerManager;
   private boolean myDetectionEnabled = true;
   private boolean myConverted;
 

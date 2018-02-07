@@ -57,16 +57,16 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author max
  */
-@SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public class FSRecords {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   private static final boolean lazyVfsDataCleaning = SystemProperties.getBooleanProperty("idea.lazy.vfs.data.cleaning", true);
-  static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
+  private static final boolean backgroundVfsFlush = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
   private static final boolean inlineAttributes = SystemProperties.getBooleanProperty("idea.inline.vfs.attributes", true);
-  static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
-  static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
+  private static final boolean bulkAttrReadSupport = SystemProperties.getBooleanProperty("idea.bulk.attr.read", false);
+  private static final boolean useSnappyForCompression = SystemProperties.getBooleanProperty("idea.use.snappy.for.vfs", false);
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   static final String VFS_FILES_EXTENSION = System.getProperty("idea.vfs.files.extension", ".dat");
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
@@ -168,11 +168,10 @@ public class FSRecords {
     private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
-    /** guarded by {@link #r}/{@link #w} */
-    private static boolean myDirty;
-    /** accessed under {@link #w} only */
+    private static volatile boolean myDirty;
+    /** accessed under {@link #r}/{@link #w} */
     private static ScheduledFuture<?> myFlushingFuture;
-    /** accessed under {@link #w} only */
+    /** accessed under {@link #r}/{@link #w} */
     private static boolean myCorrupted;
 
     private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
@@ -392,10 +391,6 @@ public class FSRecords {
       });
     }
 
-    private static void force() {
-      writeAndHandleErrors(DbConnection::doForce);
-    }
-
     private static void doForce() {
       // avoid NPE when close has already taken place
       if (myNames != null && myFlushingFuture != null) {
@@ -408,12 +403,14 @@ public class FSRecords {
       }
     }
 
+    // must not be run under write lock to avoid other clients wait for read lock
     private static void flush() {
-      writeAndHandleErrors(()->{
-        if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
+      if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
+        readAndHandleErrors(() -> {
           doForce();
-        }
-      });
+          return null;
+        });
+      }
     }
 
     public static boolean isDirty() {
@@ -483,10 +480,12 @@ public class FSRecords {
       ourInitialized = false;
     }
 
+    // either called from FlushingDaemon thread under read lock, or from handleError under write lock
     private static void markClean() {
-      assert lock.isWriteLocked();
+      assert lock.isWriteLocked() || lock.getReadHoldCount() != 0;
       if (myDirty) {
         myDirty = false;
+        // writing here under read lock is safe because no-one else read or write at this offset (except at startup)
         myRecords.putInt(HEADER_CONNECTION_STATUS_OFFSET, myCorrupted ? CORRUPTED_MAGIC : SAFELY_CLOSED_MAGIC);
       }
     }
@@ -540,8 +539,9 @@ public class FSRecords {
   }
 
   private static ResizeableMappedFile getRecords() {
-    assert DbConnection.myRecords != null:"Vfs should be initialized"; 
-    return DbConnection.myRecords;
+    ResizeableMappedFile records = DbConnection.myRecords;
+    assert records != null : "Vfs should be initialized";
+    return records;
   }
 
   private static PersistentBTreeEnumerator<byte[]> getContentHashesEnumerator() {
@@ -639,7 +639,8 @@ public class FSRecords {
     if (content_page != 0) {
       if (weHaveContentHashes) {
         getContentStorage().releaseRecord(content_page, false);
-      } else {
+      }
+      else {
         getContentStorage().releaseRecord(content_page);
       }
     }
@@ -677,7 +678,7 @@ public class FSRecords {
   @NotNull
   @TestOnly
   static int[] listRoots() {
-    return writeAndHandleErrors(() -> {
+    return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
         TIntArrayList result = new TIntArrayList();
 
@@ -712,7 +713,7 @@ public class FSRecords {
 
   @TestOnly
   static void force() {
-    DbConnection.force();
+    writeAndHandleErrors(DbConnection::doForce);
   }
 
   @TestOnly

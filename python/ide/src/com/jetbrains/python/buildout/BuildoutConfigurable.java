@@ -45,7 +45,7 @@ public class BuildoutConfigurable implements Configurable, NonDefaultProjectConf
   private JCheckBox myEnabledCheckbox;
   private JPanel myPlaceholder;
   private JPanel myMainPanel;
-  private BuildoutConfigPanel mySettingsPanel;
+  private final BuildoutConfigPanel mySettingsPanel;
   private final Module myModule;
 
   public BuildoutConfigurable(@NotNull Module module) {

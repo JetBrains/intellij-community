@@ -77,7 +77,7 @@ public class IpnbConnection {
   private IpnbOutputCell myOutput;
   private int myExecCount;
   private String myXsrf;
-  private HashMap<String, String> myHeaders = new HashMap<>();
+  private final HashMap<String, String> myHeaders = new HashMap<>();
   private final CookieManager myCookieManager;
 
 

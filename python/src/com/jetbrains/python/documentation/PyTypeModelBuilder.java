@@ -61,7 +61,7 @@ public class PyTypeModelBuilder {
   }
 
   static class OneOf extends TypeModel {
-    private Collection<TypeModel> oneOfTypes;
+    private final Collection<TypeModel> oneOfTypes;
 
     private OneOf(Collection<TypeModel> oneOfTypes) {
       this.oneOfTypes = oneOfTypes;
@@ -74,8 +74,8 @@ public class PyTypeModelBuilder {
   }
 
   static class CollectionOf extends TypeModel {
-    private String collectionName;
-    private List<TypeModel> elementTypes;
+    private final String collectionName;
+    private final List<TypeModel> elementTypes;
 
     private CollectionOf(String collectionName, List<TypeModel> elementTypes) {
       this.collectionName = collectionName;
@@ -94,7 +94,7 @@ public class PyTypeModelBuilder {
     private static final NamedType ANY = new NamedType(PyNames.UNKNOWN_TYPE);
 
     @Nullable
-    private String name;
+    private final String name;
 
     private NamedType(@Nullable String name) {
       this.name = name;
@@ -422,8 +422,8 @@ public class PyTypeModelBuilder {
   }
 
   private static class TypeToBodyWithLinksVisitor extends TypeNameVisitor {
-    private ChainIterable<String> myBody;
-    private PsiElement myAnchor;
+    private final ChainIterable<String> myBody;
+    private final PsiElement myAnchor;
 
     public TypeToBodyWithLinksVisitor(ChainIterable<String> body, PsiElement anchor) {
       myBody = body;

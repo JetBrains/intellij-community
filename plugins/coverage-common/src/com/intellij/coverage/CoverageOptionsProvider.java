@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class CoverageOptionsProvider implements PersistentStateComponent<CoverageOptionsProvider.State> {
-  private State myState = new State();
+  private final State myState = new State();
 
   public static CoverageOptionsProvider getInstance(Project project) {
     return ServiceManager.getService(project, CoverageOptionsProvider.class);

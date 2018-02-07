@@ -69,7 +69,7 @@ public class ActionsTree {
   private final JScrollPane myComponent;
   private Keymap myKeymap;
   private Group myMainGroup = new Group("", null, null);
-  private boolean myShowBoundActions = Registry.is("keymap.show.alias.actions");
+  private final boolean myShowBoundActions = Registry.is("keymap.show.alias.actions");
 
   @NonNls
   private static final String ROOT = "ROOT";

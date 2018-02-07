@@ -81,9 +81,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   private final boolean myInfoMode;
   private final JLabel myInfoLabel;
   private JPanel myIconsPanel = null;
-  private ActionButton myNewLineButton;
-  private ActionButton myClearButton;
-  private JBScrollPane myScrollPane;
+  private final ActionButton myNewLineButton;
+  private final ActionButton myClearButton;
+  private final JBScrollPane myScrollPane;
   private final ActionButton myHistoryPopupButton;
   private final LafHelper myHelper;
   private boolean myMultilineEnabled = true;
@@ -339,8 +339,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myInfoLabel.setText(info);
   }
 
-  private static Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
-  private static Color disabledBorderColor = Gray._83;
+  private static final Color enabledBorderColor = new JBColor(Gray._196, Gray._100);
+  private static final Color disabledBorderColor = Gray._83;
 
   @Override
   public void paint(Graphics graphics) {

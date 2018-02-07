@@ -166,7 +166,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     private final int myFirst;
     private final int mySecond;
     private final boolean myOrdered;
-    private List<EqClass> myList;
+    private final List<EqClass> myList;
 
     private DistinctPair(int first, int second, boolean ordered, List<EqClass> list) {
       myFirst = first;

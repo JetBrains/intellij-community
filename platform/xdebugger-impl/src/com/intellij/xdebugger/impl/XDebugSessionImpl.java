@@ -22,7 +22,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
@@ -832,12 +831,9 @@ public class XDebugSessionImpl implements XDebugSession {
   private void enableBreakpoints() {
     if (myBreakpointsDisabled) {
       myBreakpointsDisabled = false;
-      new ReadAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          processAllBreakpoints(true, false);
-        }
-      }.execute();
+      ReadAction.run(() -> {
+        processAllBreakpoints(true, false);
+      });
     }
   }
 

@@ -86,7 +86,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
   private final JLabel myCountLabel;
 
-  private Configuration myConfiguration;
+  private final Configuration myConfiguration;
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;

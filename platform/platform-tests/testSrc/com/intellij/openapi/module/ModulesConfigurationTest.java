@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ModulesConfigurationTest extends PlatformTestCase {
-  private boolean myDoNotSaveValue;
+  private boolean isSaveAllowed;
 
   public void testAddRemoveModule() throws IOException, JDOMException {
     Pair<File, File> result = createProjectWithModule();
@@ -86,14 +86,14 @@ public class ModulesConfigurationTest extends PlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myDoNotSaveValue = ApplicationManagerEx.getApplicationEx().isDoNotSave();
-    ApplicationManagerEx.getApplicationEx().doNotSave(false);
+    isSaveAllowed = ApplicationManagerEx.getApplicationEx().isSaveAllowed();
+    ApplicationManagerEx.getApplicationEx().setSaveAllowed(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      ApplicationManagerEx.getApplicationEx().doNotSave(myDoNotSaveValue);
+      ApplicationManagerEx.getApplicationEx().setSaveAllowed(isSaveAllowed);
     }
     finally {
       super.tearDown();

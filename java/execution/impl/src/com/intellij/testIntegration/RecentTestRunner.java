@@ -41,8 +41,8 @@ public interface RecentTestRunner {
 }
 
 class RecentTestRunnerImpl implements RecentTestRunner {
-  private static AnAction RUN = ActionManager.getInstance().getAction("RunClass");
-  private static AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
+  private static final AnAction RUN = ActionManager.getInstance().getAction("RunClass");
+  private static final AnAction DEBUG = ActionManager.getInstance().getAction("DebugClass");
 
   private final TestLocator myTestLocator;
 

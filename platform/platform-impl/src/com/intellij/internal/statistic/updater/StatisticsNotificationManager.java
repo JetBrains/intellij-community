@@ -29,7 +29,7 @@ public class StatisticsNotificationManager {
   }
 
   private static class MyNotificationListener implements NotificationListener {
-    private StatisticsService myStatisticsService;
+    private final StatisticsService myStatisticsService;
     private final UsageStatisticsPersistenceComponent mySettings;
 
     public MyNotificationListener(@NotNull StatisticsService statisticsService,

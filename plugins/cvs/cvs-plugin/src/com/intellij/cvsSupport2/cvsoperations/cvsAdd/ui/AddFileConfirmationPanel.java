@@ -31,9 +31,9 @@ import java.awt.event.ActionListener;
  */
 public class AddFileConfirmationPanel extends AbstractAddFileConfirmationPanel {
 
-  private JComboBox mySubstitutionComboBox;
-  private FileLabel myFileLabel;
-  private JPanel myPanel;
+  private final JComboBox mySubstitutionComboBox;
+  private final FileLabel myFileLabel;
+  private final JPanel myPanel;
 
   public AddFileConfirmationPanel(AddedFileInfo addedFileInfo) {
     super(addedFileInfo);

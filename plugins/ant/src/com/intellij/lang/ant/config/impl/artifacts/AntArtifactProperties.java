@@ -30,7 +30,7 @@ import java.util.List;
 */
 public class AntArtifactProperties extends ArtifactProperties<AntArtifactExtensionProperties> {
   private AntArtifactExtensionProperties myExtensionProperties = new AntArtifactExtensionProperties();
-  private boolean myPostProcessing;
+  private final boolean myPostProcessing;
 
   public AntArtifactProperties(boolean postProcessing) {
     myPostProcessing = postProcessing;

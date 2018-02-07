@@ -66,7 +66,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
   }
 
   private static class ReplaceConditionWithOptionalFix implements LocalQuickFix {
-    private boolean myChangesSemantics;
+    private final boolean myChangesSemantics;
 
     public ReplaceConditionWithOptionalFix(boolean changesSemantics) {
       myChangesSemantics = changesSemantics;

@@ -706,7 +706,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       .register(collectorMatcher("toSet", 0), CommonClassNames.JAVA_UTIL_HASH_SET)
       .register(collectorMatcher("toCollection", 1), SimplifyCollectionCreationFix::getCollectionClass);
 
-    private String myReplacement;
+    private final String myReplacement;
 
     public SimplifyCollectionCreationFix(String replacement) {
       myReplacement = replacement;
@@ -833,7 +833,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     private static final CallMatcher OPTIONAL_TERMINAL =
       anyOf(instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "findFirst", "findAny").parameterCount(0),
             instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "min", "max", "reduce").parameterCount(1));
-    private ReplacementMode myMode;
+    private final ReplacementMode myMode;
 
     enum ReplacementMode {
       OPTIONAL, FUNCTION, NEGATED_FUNCTION
@@ -1232,7 +1232,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
   }
 
   private static class RemoveBooleanIdentityFix implements CallChainSimplification {
-    private boolean myInvert;
+    private final boolean myInvert;
 
     public RemoveBooleanIdentityFix(boolean invert) {
       myInvert = invert;

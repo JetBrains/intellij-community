@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -59,10 +58,10 @@ public class HgStatusCommand {
   }
 
   public static class Builder {
-    private boolean includeAdded;
-    private boolean includeModified;
+    private final boolean includeAdded;
+    private final boolean includeModified;
     private boolean includeRemoved;
-    private boolean includeDeleted;
+    private final boolean includeDeleted;
     private boolean includeUnknown;
     private boolean includeIgnored;
     private boolean includeCopySource;

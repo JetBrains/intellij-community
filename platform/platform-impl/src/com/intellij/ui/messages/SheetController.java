@@ -43,10 +43,10 @@ public class SheetController implements Disposable {
   private BufferedImage myShadowImage;
 
   private final JButton[] buttons;
-  private JButton myDefaultButton;
+  private final JButton myDefaultButton;
   private JComponent myFocusedComponent;
 
-  private JCheckBox doNotAskCheckBox = new JCheckBox();
+  private final JCheckBox doNotAskCheckBox = new JCheckBox();
 
   public static int SHADOW_BORDER = 5;
 

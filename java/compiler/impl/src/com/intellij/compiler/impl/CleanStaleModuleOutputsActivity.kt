@@ -78,9 +78,11 @@ class CleanStaleModuleOutputsActivity : StartupActivity, DumbAware {
                        + parents.drop(1).map { "and ${it.presentableUrl}" }
                       ).joinToString("<br>")
     }
-    val answer = Messages.showOkCancelDialog(project, CompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
+
+    //until IDEA-186296 is fixed we need to use IDEA's message dialog for potentially long messages
+    val answer = Messages.showIdeaMessageDialog(project, CompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
                                              CompilerBundle.message("dialog.title.delete.old.outputs"),
-                                             CompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText(), null)
+                                             arrayOf(CompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText()), 0,null, null)
     if (answer == Messages.CANCEL) return
 
     val filesToDelete = outputs.map { VfsUtil.virtualToIoFile(it) }

@@ -72,14 +72,14 @@ public class CopiesPanel {
   private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
 
   private final Project myProject;
-  private MessageBusConnection myConnection;
-  private SvnVcs myVcs;
-  private JPanel myPanel;
-  private JComponent myHolder;
+  private final MessageBusConnection myConnection;
+  private final SvnVcs myVcs;
+  private final JPanel myPanel;
+  private final JComponent myHolder;
   private LinkLabel myRefreshLabel;
   // updated only on AWT
   private List<OverrideEqualsWrapper<WCInfo>> myCurrentInfoList;
-  private int myTextHeight;
+  private final int myTextHeight;
 
   private final static String CHANGE_FORMAT = "CHANGE_FORMAT";
   private final static String CLEANUP = "CLEANUP";

@@ -303,9 +303,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class PyInstallRequirementsFix implements LocalQuickFix {
-    @NotNull private String myName;
+    @NotNull private final String myName;
     @NotNull private final Module myModule;
-    @NotNull private Sdk mySdk;
+    @NotNull private final Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
 
     public PyInstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
@@ -392,7 +392,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     private final Sdk mySdk;
     private final Module myModule;
-    private String myPackageName;
+    private final String myPackageName;
     @Nullable private final String myAsName;
     @NotNull private final SmartPsiElementPointer<PyElement> myNode;
 

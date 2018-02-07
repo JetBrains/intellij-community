@@ -31,7 +31,7 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
-  private List<String> myClasses =
+  private final List<String> myClasses =
     Arrays.asList(CommonClassNames.JAVA_LANG_STRING_BUILDER, CommonClassNames.JAVA_LANG_STRING_BUFFER);
 
   @Nls

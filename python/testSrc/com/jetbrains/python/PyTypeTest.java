@@ -8,10 +8,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -3075,6 +3072,92 @@ public class PyTypeTest extends PyTestCase {
                    "from typing import NamedTuple\n" +
                    "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
                    "expr = Cat(\"name\", 5)._replace(age=\"give\").age")
+    );
+  }
+
+  // PY-21302
+  public void testNewTypeReferenceTarget() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyExpression definition = parseExpr("from typing import NewType\n" +
+                                                  "UserId = NewType('UserId', int)\n" +
+                                                  "expr = UserId");
+
+        for (TypeEvalContext context : getTypeEvalContexts(definition)) {
+          assertInstanceOf(context.getType(definition), PyTypingNewType.class);
+        }
+
+        final PyExpression instance = parseExpr("from typing import NewType\n" +
+                                                "UserId = NewType('UserId', int)\n" +
+                                                "expr = UserId(12)");
+
+        for (TypeEvalContext context : getTypeEvalContexts(instance)) {
+          assertInstanceOf(context.getType(instance), PyTypingNewType.class);
+        }
+      }
+    );
+  }
+
+  // PY-21302
+  public void testNewType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "from typing import NewType\n" +
+                   "UserId = NewType('UserId', int)\n" +
+                   "expr = UserId(12)")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Type[UserId]",
+                   "from typing import Dict, NewType\n" +
+                   "UserId = NewType('UserId', Dict[int, str])\n" +
+                   "expr = UserId\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("(a: UserId) -> str",
+                   "from typing import Dict, NewType\n" +
+                   "UserId = NewType('UserId', int)\n" +
+                   "def foo(a: UserId) -> str\n" +
+                   "    pass\n" +
+                   "expr = foo\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "from typing import NewType as nt\n" +
+                   "UserId = nt('UserId', int)\n" +
+                   "expr = UserId(12)\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "import typing\n" +
+                   "UserId = typing.NewType('UserId', int)\n" +
+                   "expr = UserId(12)\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("UserId",
+                   "import typing as t\n" +
+                   "UserId = t.NewType('UserId', int)\n" +
+                   "expr = UserId(12)\n")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("SuperId",
+                   "from typing import NewType\n" +
+                   "UserId = NewType('UserId', int)\n" +
+                   "SuperId = NewType('SuperId', UserId)\n" +
+                   "expr = SuperId(UserId(12))\n")
     );
   }
 

@@ -102,7 +102,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final long myStartTime;
   @Nullable
   private Splash mySplash;
-  private boolean myDoNotSave;
+  private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
   private volatile boolean myDisposeInProgress;
 
@@ -144,7 +144,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myHeadlessMode = isHeadless;
     myCommandLineMode = isCommandLine;
 
-    myDoNotSave = isUnitTestMode || isHeadless;
+    mySaveAllowed = !(isUnitTestMode || isHeadless);
 
     if (!isUnitTestMode && !isHeadless) {
       Disposer.register(this, Disposer.newDisposable(), "ui");
@@ -1411,18 +1411,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveSettings(boolean isForce) {
-    if (myDoNotSave) {
+    if (!mySaveAllowed || !mySaveSettingsIsInProgress.compareAndSet(false, true)) {
       return;
     }
 
-    if (mySaveSettingsIsInProgress.compareAndSet(false, true)) {
-      HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
-      try {
-        StoreUtil.save(ServiceKt.getStateStore(this), null, isForce);
-      }
-      finally {
-        mySaveSettingsIsInProgress.set(false);
-      }
+    HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
+    try {
+      StoreUtil.save(ServiceKt.getStateStore(this), null, isForce);
+    }
+    finally {
+      mySaveSettingsIsInProgress.set(false);
     }
   }
 
@@ -1433,24 +1431,19 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveAll(boolean isForce) {
-    if (!myDoNotSave) {
+    if (mySaveAllowed) {
       StoreUtil.saveDocumentsAndProjectsAndApp(isForce);
     }
   }
 
   @Override
-  public void doNotSave() {
-    doNotSave(true);
+  public void setSaveAllowed(boolean value) {
+    mySaveAllowed = value;
   }
 
   @Override
-  public void doNotSave(boolean value) {
-    myDoNotSave = value;
-  }
-
-  @Override
-  public boolean isDoNotSave() {
-    return myDoNotSave;
+  public boolean isSaveAllowed() {
+    return mySaveAllowed;
   }
 
   @NotNull

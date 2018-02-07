@@ -153,7 +153,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     int mySize;
     int myPhase;
     double myUpToNow;
-    private double[] myPhases;
+    private final double[] myPhases;
 
     public ProgressTracker(double... phases) {
       myPhases = phases;
@@ -211,14 +211,18 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       finally {
         myProgressTracker.dispose();
       }
+      createFilesLater(generatedCode);
+    }
 
-      ApplicationManager.getApplication().invokeLater(
-        () -> CommandProcessor.getInstance().executeCommand(
-          myProject, () ->
-            ((ApplicationImpl)ApplicationManager.getApplication())
-              .runWriteActionWithCancellableProgressInDispatchThread(
-                COMMAND_TITLE, myProject, null,
-                indicator -> createFiles(myProject, generatedCode, indicator)), COMMAND_TITLE, null));
+    private void createFilesLater(List<GeneratedCode> generatedCode) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          CommandProcessor.getInstance().executeCommand(myProject, () ->
+            ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+              COMMAND_TITLE, myProject, null,
+              indicator -> createFiles(myProject, generatedCode, indicator)), COMMAND_TITLE, null);
+        }
+      });
     }
 
     private Map<String, Set<ModuleNode>> collectDependencies(THashMap<Module, List<File>> classFiles) {

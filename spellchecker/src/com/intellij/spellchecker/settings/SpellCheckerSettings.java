@@ -11,9 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.openapi.util.text.StringUtil.parseBoolean;
-import static com.intellij.openapi.util.text.StringUtil.parseInt;
+import static com.intellij.openapi.util.text.StringUtil.*;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SpellCheckerSettings implements PersistentStateComponent<Element> {
@@ -37,7 +35,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final boolean DEFAULT_USE_SINGLE_DICT = true;
 
   // Paths
-  private List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
+  private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
   private List<String> myCustomDictionariesPaths = new ArrayList<>();
   private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 

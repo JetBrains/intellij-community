@@ -95,7 +95,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Helper to keep on busy loop.
    */
-  private volatile Object lock2 = new Object();
+  private final Object lock2 = new Object();
   /**
    * Keeps a flag indicating that we were able to communicate successfully with the shell at least once
    * (if we haven't we may retry more than once the first time, as jython can take a while to initialize
@@ -108,7 +108,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private boolean myNeedsMore = false;
 
   private @Nullable PythonConsoleView myConsoleView;
-  private List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
    * Initializes the xml-rpc communication.
@@ -213,7 +213,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Helper to keep on busy loop.
    */
-  private volatile Object lock = new Object();
+  private final Object lock = new Object();
 
 
   /**

@@ -37,7 +37,7 @@ public class IndentCalculator {
   
   private @NotNull final Project myProject;
   private @NotNull final Editor myEditor;
-  private @NotNull BaseLineOffsetCalculator myBaseLineOffsetCalculator;
+  private @NotNull final BaseLineOffsetCalculator myBaseLineOffsetCalculator;
   private @NotNull final Indent.Type myIndentType;
 
   public IndentCalculator(@NotNull Project project,

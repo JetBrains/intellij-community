@@ -42,7 +42,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   private final RemoteServersManager myServersManager;
   private RemoteServer<?> myLastSelectedServer;
-  private String myInitialSelectedName;
+  private final String myInitialSelectedName;
   private final List<ServerType<?>> myDisplayedServerTypes;
 
   private RemoteServerListConfigurable(@NotNull RemoteServersManager manager,

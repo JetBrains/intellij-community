@@ -403,7 +403,7 @@ public class GuessManagerImpl extends GuessManager {
     PsiType mySpecificType;
     private boolean myNeedDfa;
     private boolean myDeclared;
-    private int myStart;
+    private final int myStart;
 
     GuessTypeVisitor(@NotNull PsiExpression place) {
       myPlace = place;

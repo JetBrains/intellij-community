@@ -28,11 +28,11 @@ import java.util.Map;
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
-  private Project myProject;
+  private final Project myProject;
   private final CoverageDataManager myDataManager;
-  private ContentManager myContentManager;
+  private final ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
-  private Map<String, CoverageView> myViews = new HashMap<>();
+  private final Map<String, CoverageView> myViews = new HashMap<>();
   private boolean myReady;
 
   public CoverageViewManager(Project project, ToolWindowManager toolWindowManager, CoverageDataManager dataManager) {

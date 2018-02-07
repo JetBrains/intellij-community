@@ -167,7 +167,7 @@ public abstract class AppIcon {
   @SuppressWarnings("UseJBColor")
   static class MacAppIcon extends BaseIcon {
     private BufferedImage myAppImage;
-    private Map<Object, AppImage> myProgressImagesCache = new HashMap<>();
+    private final Map<Object, AppImage> myProgressImagesCache = new HashMap<>();
 
     private BufferedImage getAppImage() {
       assertIsDispatchThread();
@@ -276,8 +276,8 @@ public abstract class AppIcon {
     }
 
     // white 80% transparent
-    private static Color PROGRESS_BACKGROUND_COLOR = new Color(255, 255, 255, 217);
-    private static Color PROGRESS_OUTLINE_COLOR = new Color(140, 139, 140);
+    private static final Color PROGRESS_BACKGROUND_COLOR = new Color(255, 255, 255, 217);
+    private static final Color PROGRESS_OUTLINE_COLOR = new Color(140, 139, 140);
 
     @Override
     public boolean _setProgress(IdeFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
@@ -529,9 +529,9 @@ public abstract class AppIcon {
       }
     }
 
-    private static Color errorBadgeShadowColor = new Color(0,0,0,102);
-    private static Color errorBadgeMainColor = new Color(255,98,89);
-    private static Color errorBadgeTextBackgroundColor = new Color(0,0,0,39);
+    private static final Color errorBadgeShadowColor = new Color(0, 0, 0, 102);
+    private static final Color errorBadgeMainColor = new Color(255, 98, 89);
+    private static final Color errorBadgeTextBackgroundColor = new Color(0, 0, 0, 39);
 
     @Override
     public void _setTextBadge(IdeFrame frame, String text) {

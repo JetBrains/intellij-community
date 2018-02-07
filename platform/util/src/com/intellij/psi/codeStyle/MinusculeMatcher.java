@@ -397,7 +397,7 @@ public class MinusculeMatcher implements Matcher {
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
       if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i) &&
           shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
-        return 0;
+        break;
       }
       i++;
     }

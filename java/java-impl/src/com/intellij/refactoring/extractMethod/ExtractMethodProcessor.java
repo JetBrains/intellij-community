@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.*;
@@ -515,8 +515,8 @@ public class ExtractMethodProcessor implements MatchProvider {
     });
     for(PsiClass localClass: localClasses) {
       final boolean classExtracted = isExtractedElement(localClass);
-      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
-      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
+      final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<>());
+      final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<>());
       ReferencesSearch.search(localClass).forEach(psiReference -> {
         final PsiElement element = psiReference.getElement();
         final boolean elementExtracted = isExtractedElement(element);
@@ -1816,8 +1816,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       classes.put(myTargetClass, null);
       PsiElement target = myTargetClass.getParent();
       PsiElement targetMember = myTargetClass;
-      while (true) {
-        if (target instanceof PsiFile) break;
+      while (!(target instanceof PsiFile)) {
         if (target instanceof PsiClass) {
           boolean success = true;
           final List<PsiVariable> array = new ArrayList<>();
@@ -1839,7 +1838,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       if (classes.size() > 1) {
-        final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
+        final PsiClass[] psiClasses = classes.keySet().toArray(PsiClass.EMPTY_ARRAY);
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
         NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);

@@ -10,9 +10,9 @@ import javax.swing.*;
  * @author ksafonov
  */
 public class CommentsTabForm {
-  private LabeledTextComponent myCommentsArea;
+  private final LabeledTextComponent myCommentsArea;
   private JPanel myContentPane;
-  private LabeledTextComponent myErrorComponent;
+  private final LabeledTextComponent myErrorComponent;
   private JPanel myErrorPanel;
   private JPanel myCommentsPanel;
 

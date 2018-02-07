@@ -172,7 +172,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   public synchronized Element getState() {
     Element element = new Element("NotificationsConfiguration");
 
-    NotificationSettings[] sortedNotifications = myIdToSettingsMap.values().toArray(new NotificationSettings[myIdToSettingsMap.size()]);
+    NotificationSettings[] sortedNotifications = myIdToSettingsMap.values().toArray(new NotificationSettings[0]);
     Arrays.sort(sortedNotifications, NOTIFICATION_SETTINGS_COMPARATOR);
     for (NotificationSettings settings : sortedNotifications) {
       element.addContent(settings.save());

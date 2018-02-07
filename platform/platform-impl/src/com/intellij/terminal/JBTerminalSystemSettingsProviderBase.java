@@ -71,7 +71,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     });
   }
 
-  private Set<TerminalSettingsListener> myListeners = new HashSet<>();
+  private final Set<TerminalSettingsListener> myListeners = new HashSet<>();
 
   @Override
   public KeyStroke[] getCopyKeyStrokes() {

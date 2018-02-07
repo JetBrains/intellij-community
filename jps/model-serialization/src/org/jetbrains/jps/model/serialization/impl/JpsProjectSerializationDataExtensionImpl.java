@@ -29,7 +29,7 @@ import java.nio.file.Path;
  */
 public class JpsProjectSerializationDataExtensionImpl extends JpsElementBase<JpsProjectSerializationDataExtensionImpl> implements JpsProjectSerializationDataExtension {
   public static final JpsElementChildRole<JpsProjectSerializationDataExtension> ROLE = JpsElementChildRoleBase.create("serialization data");
-  private Path myBaseDirectory;
+  private final Path myBaseDirectory;
 
   public JpsProjectSerializationDataExtensionImpl(@NotNull Path baseDirectory) {
     myBaseDirectory = baseDirectory;

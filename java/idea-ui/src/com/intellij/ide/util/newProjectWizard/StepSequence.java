@@ -35,7 +35,7 @@ public class StepSequence {
   private final List<ModuleWizardStep> myCommonSteps;
   private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<>();
   private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
-  @NonNls private List<String> myTypes = new ArrayList<>();
+  @NonNls private final List<String> myTypes = new ArrayList<>();
   private List<ModuleWizardStep> mySelectedSteps;
 
   public StepSequence(ModuleWizardStep... commonSteps) {

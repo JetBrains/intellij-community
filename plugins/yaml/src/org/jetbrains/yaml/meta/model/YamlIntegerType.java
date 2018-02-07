@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public class YamlIntegerType extends YamlScalarType {
-  private static YamlIntegerType SHARED_INSTANCE = new YamlIntegerType();
+  private static final YamlIntegerType SHARED_INSTANCE = new YamlIntegerType();
 
   public static YamlIntegerType getInstance() {
     return SHARED_INSTANCE;

@@ -1,5 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import * as net from "net"
-import { JsonRpc, Transport } from "./rpc"
+import {JsonRpc, Transport} from "./rpc"
+
 const debug = require("debug")("rpc")
 
 export function connect(port: number = 63342, domains: { [domainName:string]: { [methodName:string]:Function; }; } = null): JsonRpc {
@@ -9,11 +11,19 @@ export function connect(port: number = 63342, domains: { [domainName:string]: { 
   return server
 }
 
+export function close(server: JsonRpc) {
+  server.close()
+}
+
 export class SocketTransport implements Transport {
   opened: () => void
   messageReceived: (message: Array<any>) => void
 
   constructor(private socket: net.Socket = new net.Socket()) {
+  }
+
+  close(): void {
+    this.socket.end()
   }
 
   connect(port: number = 63342) {
@@ -42,7 +52,7 @@ export class SocketTransport implements Transport {
 
   send(id: number, domain: string, command: string, params: any[] = null): void {
     const encodedParams = params == null || params.length === 0 ? null : JSON.stringify(params)
-    const header = '[' + (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"'
+    const header = '[' + (id == -1 ? '' : (id + ', ')) + '"' + domain + '", "' + command + '"' + (encodedParams != null ? "," : "")
     const headerBuffer = new Buffer(4)
     headerBuffer.writeUInt32BE(header.length + (encodedParams == null ? 0 : Buffer.byteLength(encodedParams)) + 1 /* ] symbol*/, 0)
     this.socket.write(headerBuffer)

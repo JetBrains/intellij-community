@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFactory {
   public static final ExtensionPointName<VcsCheckinHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.vcsCheckinHandlerFactory");
 
-  private VcsKey myKey;
+  private final VcsKey myKey;
 
   protected VcsCheckinHandlerFactory(@NotNull final VcsKey key) {
     myKey = key;

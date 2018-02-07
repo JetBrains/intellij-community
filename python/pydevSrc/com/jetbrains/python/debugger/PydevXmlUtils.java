@@ -106,7 +106,7 @@ public class PydevXmlUtils {
    * Processes CMD_GET_COMPLETIONS return
    */
   static class XMLToCompletionsInfo extends DefaultHandler {
-    private List<Object[]> completions;
+    private final List<Object[]> completions;
 
     public XMLToCompletionsInfo() {
       completions = new ArrayList<>();

@@ -27,9 +27,9 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
 
   private int myTop;
   private int myBack;
-  private CacheEntry<K, V>[] myCache;
-  private int[] myHashTable;
-  private int myHashTableSize;
+  private final CacheEntry<K, V>[] myCache;
+  private final int[] myHashTable;
+  private final int myHashTableSize;
   private int myCount;
   private int myFirstFree;
   private DeletedPairsListener[] myListeners;

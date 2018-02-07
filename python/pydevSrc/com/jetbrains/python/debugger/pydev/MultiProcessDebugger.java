@@ -32,13 +32,13 @@ public class MultiProcessDebugger implements ProcessDebugger {
   private final ServerSocket myServerSocket;
   private final int myTimeoutInMillis;
 
-  private RemoteDebugger myMainDebugger;
+  private final RemoteDebugger myMainDebugger;
   private final List<RemoteDebugger> myOtherDebuggers = Lists.newArrayList();
   private ServerSocket myDebugServerSocket;
   private DebuggerProcessAcceptor myDebugProcessAcceptor;
-  private List<DebuggerProcessListener> myOtherDebuggerCloseListener = Lists.newArrayList();
+  private final List<DebuggerProcessListener> myOtherDebuggerCloseListener = Lists.newArrayList();
 
-  private ThreadRegistry myThreadRegistry = new ThreadRegistry();
+  private final ThreadRegistry myThreadRegistry = new ThreadRegistry();
 
   public MultiProcessDebugger(@NotNull final IPyDebugProcess debugProcess,
                               @NotNull final ServerSocket serverSocket,
@@ -238,7 +238,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
 
   private static class ThreadRegistry {
-    private Map<String, RemoteDebugger> myThreadIdToDebugger = Maps.newHashMap();
+    private final Map<String, RemoteDebugger> myThreadIdToDebugger = Maps.newHashMap();
 
     public void register(String id, RemoteDebugger debugger) {
       myThreadIdToDebugger.put(id, debugger);

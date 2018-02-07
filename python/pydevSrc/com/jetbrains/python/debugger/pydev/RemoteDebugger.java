@@ -52,7 +52,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
-  private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
+  private final Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
 
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();

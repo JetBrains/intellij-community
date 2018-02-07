@@ -56,7 +56,7 @@ public class PluginDownloader {
   private final String myPluginUrl;
   private final String myPluginName;
   private String myPluginVersion;
-  private BuildNumber myBuildNumber;
+  private final BuildNumber myBuildNumber;
 
   private File myFile;
   private File myOldFile;

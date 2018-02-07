@@ -114,7 +114,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     private final CloudGitDeploymentDetector myDeploymentDetector;
 
-    private Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<>();
+    private final Map<GitRepository, RepositoryNotifier> myRepositoryToNotifier = new HashMap<>();
 
     public CloudTypeDelegate(CloudGitDeploymentDetector deploymentDetector) {
       myDeploymentDetector = deploymentDetector;

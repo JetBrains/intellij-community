@@ -571,8 +571,8 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   }
 
   private static class VariableFix implements LocalQuickFix {
-    private String myName;
-    private boolean myIsOnTheFly;
+    private final String myName;
+    private final boolean myIsOnTheFly;
 
     public VariableFix(String name, boolean isOnTheFly) {
       myName = name;

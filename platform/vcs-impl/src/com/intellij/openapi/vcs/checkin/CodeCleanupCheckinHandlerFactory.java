@@ -43,7 +43,7 @@ public class CodeCleanupCheckinHandlerFactory extends CheckinHandlerFactory  {
 
   private static class CleanupCodeCheckinHandler extends CheckinHandler implements CheckinMetaHandler {
     private final CheckinProjectPanel myPanel;
-    private Project myProject;
+    private final Project myProject;
 
     public CleanupCodeCheckinHandler(CheckinProjectPanel panel) {
       myProject = panel.getProject();

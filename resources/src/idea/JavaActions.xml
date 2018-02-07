@@ -489,6 +489,11 @@
       <action id="ToggleInferredAnnotationsHintsAction"
               class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
               text="Show Inferred Annotations"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
     </group>
+
+    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
+    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
   </actions>
 </idea-plugin>

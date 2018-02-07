@@ -37,10 +37,10 @@ import java.util.List;
 
 public class TestFileStructure {
   private int myLevel;
-  @NotNull private Project myProject;
-  @NotNull private Module myModule;
+  @NotNull private final Project myProject;
+  @NotNull private final Module myModule;
   @NotNull private PsiDirectory myCurrentLevelDirectory;
-  private List<List<PsiFile>> myFilesForLevel = new ArrayList<>();
+  private final List<List<PsiFile>> myFilesForLevel = new ArrayList<>();
 
   public TestFileStructure(@NotNull Module module, @NotNull PsiDirectory root) {
     myProject = module.getProject();

@@ -57,7 +57,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
@@ -65,7 +67,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
   
-  private static FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
+  private static final FixPresenter DEFAULT_FIX_PRESENTER = (editor, range, pointer, text, handler) -> {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
