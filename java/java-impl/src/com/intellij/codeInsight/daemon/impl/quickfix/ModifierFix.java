@@ -84,9 +84,11 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                          : containingClass != null ? containingClass.getName() : "unknown";
       name = QuickFixBundle.message("class.initializer.presentation", className);
     }
+    else if (parent instanceof PsiRequiresStatement) {
+      name = "requires " + ((PsiRequiresStatement)parent).getModuleName();
+    }
 
     String modifierText = VisibilityUtil.toPresentableText(myModifier);
-
     return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
   }
 
