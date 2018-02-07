@@ -7,6 +7,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 
 abstract class SetChangesGroupingAction : ToggleAction(), DumbAware {
+  init {
+    isEnabledInModalContext = true
+  }
   abstract val groupingKey: String
 
   override fun update(e: AnActionEvent) = super.update(e).also {
