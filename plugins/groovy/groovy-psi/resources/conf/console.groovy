@@ -9,6 +9,7 @@ catch (MissingPropertyException ignore) {
 }
 try {
   def result = new GroovyShell(bind).run(((String)line).replaceAll('###\\\\n', '\n'), 'ideaGroovyConsole.groovy')
+  System.out.println()
   if (result != null) {
     System.out.println 'ee2d5778-e2f4-4705-84ef-0847535c32f4' + result
   }
@@ -16,4 +17,3 @@ try {
 catch (Throwable e) {
   e.printStackTrace()
 }
-System.out.println '01bd8da7-84b0-4f52-9f98-fd15f4dbc1a7'
