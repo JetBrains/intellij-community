@@ -148,62 +148,52 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
 
     List<Throwable> throwables = new ArrayList<>(0);
-    try{
-      DebugUtil.startPsiModification(null);
-      Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
-      blockedAspects.push(Pair.create(aspect, transaction));
-
-      final PomModelEvent event;
+    DebugUtil.performPSIModification(null, ()->{
       try{
-        transaction.run();
-        event = transaction.getAccumulatedEvent();
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch(Exception e){
-        throwables.add(e);
-        return;
-      }
-      finally{
-        blockedAspects.pop();
-      }
-      if(block != null){
-        block.getSecond().getAccumulatedEvent().merge(event);
-        return;
-      }
+        Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
+        blockedAspects.push(Pair.create(aspect, transaction));
 
-      { // update
-        final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-        final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
-        for (final PomModelAspect pomModelAspect : changedAspects) {
-          dependants.addAll(getAllDependants(pomModelAspect));
+        final PomModelEvent event;
+        try{
+          transaction.run();
+          event = transaction.getAccumulatedEvent();
         }
-        for (final PomModelAspect modelAspect : dependants) {
-          if (!changedAspects.contains(modelAspect)) {
-            modelAspect.update(event);
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch(Exception e){
+          throwables.add(e);
+          return;
+        }
+        finally{
+          blockedAspects.pop();
+        }
+        if(block != null){
+          block.getSecond().getAccumulatedEvent().merge(event);
+          return;
+        }
+
+        { // update
+          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+          final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
+          for (final PomModelAspect pomModelAspect : changedAspects) {
+            dependants.addAll(getAllDependants(pomModelAspect));
+          }
+          for (final PomModelAspect modelAspect : dependants) {
+            if (!changedAspects.contains(modelAspect)) {
+              modelAspect.update(event);
+            }
           }
         }
-      }
-      for (final PomModelListener listener : myListeners) {
-        final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-        for (PomModelAspect modelAspect : changedAspects) {
-          if (listener.isAspectChangeInteresting(modelAspect)) {
-            listener.modelChanged(event);
-            break;
+        for (final PomModelListener listener : myListeners) {
+          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+          for (PomModelAspect modelAspect : changedAspects) {
+            if (listener.isAspectChangeInteresting(modelAspect)) {
+              listener.modelChanged(event);
+              break;
+            }
           }
         }
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Throwable t) {
-      throwables.add(t);
-    }
-    finally {
-      try {
-        commitTransaction(transaction);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -212,10 +202,18 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         throwables.add(t);
       }
       finally {
-        DebugUtil.finishPsiModification();
+        try {
+          commitTransaction(transaction);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Throwable t) {
+          throwables.add(t);
+        }
+        if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
       }
-      if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
-    }
+    });
   }
 
   @Nullable

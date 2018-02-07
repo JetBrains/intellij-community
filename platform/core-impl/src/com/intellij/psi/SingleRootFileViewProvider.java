@@ -128,13 +128,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
           LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
         }
         if (psiFile instanceof PsiFileEx) {
-          DebugUtil.startPsiModification("invalidating throw-away copy");
-          try {
-            ((PsiFileEx)psiFile).markInvalidated();
-          }
-          finally {
-            DebugUtil.finishPsiModification();
-          }
+          PsiFile finalPsiFile = psiFile;
+          DebugUtil.performPSIModification("invalidating throw-away copy", () ->
+            ((PsiFileEx)finalPsiFile).markInvalidated()
+          );
         }
         psiFile = alreadyCreated;
       }

@@ -168,8 +168,7 @@ public class FileManagerImpl implements FileManager {
 
   private void clearViewProviders() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    DebugUtil.startPsiModification("clearViewProviders");
-    try {
+    DebugUtil.performPSIModification("clearViewProviders", () -> {
       ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
       if (map != null) {
         for (final FileViewProvider provider : map.values()) {
@@ -177,10 +176,7 @@ public class FileManagerImpl implements FileManager {
         }
       }
       myVFileToViewProviderMap.set(null);
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
   }
 
   @Override
@@ -221,14 +217,10 @@ public class FileManagerImpl implements FileManager {
     FileViewProvider prev = findCachedViewProvider(virtualFile);
     if (prev == fileViewProvider) return;
     if (prev != null) {
-      DebugUtil.startPsiModification(null);
-      try {
+      DebugUtil.performPSIModification(null, () -> {
         markInvalidated(prev);
         DebugUtil.onInvalidated(prev);
-      }
-      finally {
-        DebugUtil.finishPsiModification();
-      }
+      });
     }
 
     if (fileViewProvider == null) {
@@ -273,22 +265,22 @@ public class FileManagerImpl implements FileManager {
   void processFileTypesChanged() {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
-    DebugUtil.startPsiModification(null);
-    try {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-        event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
-        myManager.beforePropertyChange(event);
+    DebugUtil.performPSIModification(null, () -> {
+      try {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+          event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
+          myManager.beforePropertyChange(event);
 
-        invalidateAllPsi();
+          invalidateAllPsi();
 
-        myManager.propertyChanged(event);
-      });
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-      myProcessingFileTypesChange = false;
-    }
+          myManager.propertyChanged(event);
+        });
+      }
+      finally {
+        myProcessingFileTypesChange = false;
+      }
+    });
   }
 
   void invalidateAllPsi() {
@@ -414,8 +406,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
-    DebugUtil.startPsiModification("removeFilesAndDirsRecursively");
-    try {
+    DebugUtil.performPSIModification("removeFilesAndDirsRecursively", () -> {
       VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
@@ -431,10 +422,7 @@ public class FileManagerImpl implements FileManager {
           return true;
         }
       });
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
   }
 
   private void markInvalidated(@NotNull FileViewProvider viewProvider) {
@@ -538,18 +526,14 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(@NotNull Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    DebugUtil.startPsiModification(null);
-    try {
+    DebugUtil.performPSIModification(null, ()->{
       for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
         FileViewProvider viewProvider = entry.getValue();
         if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {
           markInvalidated(viewProvider);
         }
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
   }
 
   @Override
