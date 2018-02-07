@@ -84,7 +84,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(boolean showFlatten);
+  protected abstract DefaultTreeModel buildTreeModel();
 
 
   @Nullable
@@ -156,6 +156,11 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return myViewer;
   }
 
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
+    return myViewer.getGrouping();
+  }
+
   @Nullable
   @Override
   public Object getData(String dataId) {
@@ -221,7 +226,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void rebuildTree() {
-      DefaultTreeModel newModel = myViewer.buildTreeModel(isShowFlatten());
+      DefaultTreeModel newModel = myViewer.buildTreeModel();
       updateTreeModel(newModel);
     }
   }
