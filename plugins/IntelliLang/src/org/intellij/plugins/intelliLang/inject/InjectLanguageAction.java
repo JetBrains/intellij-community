@@ -31,7 +31,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -45,7 +45,6 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredListCellRendererWrapper;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -197,36 +196,23 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
     final String lastInjectedId = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
     Injectable lastInjected = lastInjectedId != null ? ContainerUtil.find(injectables, injectable1 -> lastInjectedId.equals(lastInjectedId)) : null;
 
-    if (ApplicationManager.getApplication().isOnAir()) {
-      JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(injectables)
-        .setRenderer(renderer)
-        .setItemChoosenCallback(injectable -> {
-          onChosen.process(injectable);
-          PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, injectable.getId());
-        })
-        .setSelectedValue(lastInjected, true)
-        .createPopup().showInBestPositionFor(editor);
-    } else {
-      final JList list = new JBList(injectables);
-      list.setCellRenderer(renderer);
-      Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
-      minSize.height *= 4;
-      list.setMinimumSize(minSize);
-      JBPopup popup = JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(list)
-        .setItemChoosenCallback(() -> {
-          Injectable value = (Injectable)list.getSelectedValue();
-          if (value != null) {
-            onChosen.process(value);
-            PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
-          }
-        }).setFilteringEnabled(language -> ((Injectable)language).getDisplayName()).setMinSize(minSize).createPopup();
-      if (lastInjectedId != null) {
-        list.setSelectedValue(lastInjected, true);
-      }
-      popup.showInBestPositionFor(editor);
+    Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+    minSize.height *= 4;
+
+    IPopupChooserBuilder<Injectable> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(injectables)
+      .setRenderer(renderer)
+      .setItemChoosenCallback(injectable -> {
+        onChosen.process(injectable);
+        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, injectable.getId());
+      })
+      .setMinSize(minSize)
+      .setFilteringEnabled(language -> ((Injectable)language).getDisplayName())
+      .setSelectedValue(lastInjected, true);
+    if (lastInjected != null) {
+      builder = builder.setSelectedValue(lastInjected, true);
     }
+    builder.createPopup().showInBestPositionFor(editor);
     return true;
   }
 
