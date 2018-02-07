@@ -650,7 +650,7 @@ public class AbstractPopup implements JBPopup {
         myState = State.SHOWN;
         return;
       }
-      Dimension size = (Dimension)myContent.getSize().clone();
+      Dimension size = myContent.getSize();
       JBInsets.removeFrom(size, myContent.getInsets());
       storeDimensionSize(size);
       if (myUseDimServiceForXYLocation) {
