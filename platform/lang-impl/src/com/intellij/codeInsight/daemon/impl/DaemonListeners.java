@@ -188,7 +188,7 @@ public class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
-        if (!editor.getComponent().isShowing() && !application.isUnitTestMode() && !application.isOnAir() ||
+        if (!editor.getComponent().isShowing() && !application.isHeadlessEnvironment() ||
             !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
@@ -196,7 +196,7 @@ public class DaemonListeners implements Disposable {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
-              if ((!application.isOnAir() && !editor.getComponent().isShowing()) || myProject.isDisposed()) {
+              if ((!application.isHeadlessEnvironment() && !editor.getComponent().isShowing()) || myProject.isDisposed()) {
                 return;
               }
               myDaemonCodeAnalyzer.hideLastIntentionHint(editor);
