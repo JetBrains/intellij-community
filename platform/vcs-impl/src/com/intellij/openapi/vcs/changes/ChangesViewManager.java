@@ -55,11 +55,14 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -87,6 +90,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private PreviewDiffSplitterComponent mySplitterComponent;
 
   @NotNull private final TreeSelectionListener myTsl;
+  @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
 
   @NotNull
@@ -118,6 +122,10 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
         ApplicationManager.getApplication().invokeLater(() -> updatePreview());
       }
     };
+    myGroupingChangeListener = e -> {
+      myState.groupingKey = myView.getGroupingSupport().getGroupingKey();
+      refreshView();
+    };
   }
 
   @Override
@@ -138,6 +146,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @Override
   public void projectClosed() {
     myView.removeTreeSelectionListener(myTsl);
+    myView.removeGroupingChangeListener(myGroupingChangeListener);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
@@ -171,9 +180,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander, panel));
     visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, panel));
 
-    ToggleShowFlattenAction showFlattenAction = new ToggleShowFlattenAction();
-    showFlattenAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, ctrlMask())), panel);
-    visualActionsGroup.add(showFlattenAction);
+    visualActionsGroup.add(ActionManager.getInstance().getAction("ChangesView.GroupBy"));
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
@@ -185,8 +192,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     toolbarPanel.add(visualActionsToolbar.getComponent(), BorderLayout.CENTER);
 
     myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-
-    myView.setShowFlatten(myState.myShowFlatten);
+    myView.getGroupingSupport().setGroupingKey(myState.groupingKey);
 
     myProgressLabel = new JPanel(new BorderLayout());
 
@@ -207,6 +213,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
+    myView.addGroupingChangeListener(myGroupingChangeListener);
     return panel;
   }
 
@@ -264,7 +271,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
-    TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.isShowFlatten())
+    TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
       .setChangeLists(changeListManager.getChangeListsCopy())
       .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
       .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
@@ -298,13 +305,19 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @Override
   public void loadState(@NotNull ChangesViewManager.State state) {
     myState = state;
+    migrateShowFlattenSetting();
+  }
+
+  private void migrateShowFlattenSetting() {
+    if (!myState.myShowFlatten) {
+      myState.groupingKey = DIRECTORY_GROUPING;
+      myState.myShowFlatten = true;
+    }
   }
 
   @Override
-  public void setShowFlattenMode(boolean state) {
-    myState.myShowFlatten = state;
-    myView.setShowFlatten(state);
-    refreshView();
+  public void setGrouping(@NotNull String groupingKey) {
+    myView.getGroupingSupport().setGroupingKey(groupingKey);
   }
 
   @Override
@@ -380,8 +393,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   public static class State {
 
+    @Deprecated
     @Attribute("flattened_view")
     public boolean myShowFlatten = true;
+
+    @Attribute
+    public String groupingKey = NONE_GROUPING;
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;
@@ -435,24 +452,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Override
     public boolean canCollapse() {
       return true;
-    }
-  }
-
-  private class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
-    public ToggleShowFlattenAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            AllIcons.Actions.GroupByPackage);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !myState.myShowFlatten;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      setShowFlattenMode(!state);
     }
   }
 
