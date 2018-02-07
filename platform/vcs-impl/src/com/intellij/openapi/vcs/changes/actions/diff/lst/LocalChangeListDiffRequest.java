@@ -55,6 +55,11 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   }
 
   @NotNull
+  public String getChangelistName() {
+    return myChangelistName;
+  }
+
+  @NotNull
   public ContentDiffRequest getRequest() {
     return myRequest;
   }
