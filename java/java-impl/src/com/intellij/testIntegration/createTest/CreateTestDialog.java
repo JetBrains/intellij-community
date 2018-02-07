@@ -83,6 +83,7 @@ public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
   private static final String RECENT_SUPERS_KEY = "CreateTestDialog.Recents.Supers";
   private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
+  private static final String DEFAULT_LIBRARY_SUPERCLASS_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrarySuperClass";
   private static final String SHOW_INHERITED_MEMBERS_PROPERTY = CreateTestDialog.class.getName() + ".includeInheritedMembers";
 
   private final Project myProject;
@@ -97,11 +98,11 @@ public class CreateTestDialog extends DialogWrapper {
   private EditorTextField myTargetClassNameField;
   private ReferenceEditorComboWithBrowseButton mySuperClassField;
   private ReferenceEditorComboWithBrowseButton myTargetPackageField;
-  private JCheckBox myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.setUp"));
-  private JCheckBox myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.tearDown"));
-  private JCheckBox myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
-  private MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.emptyList(), null);
-  private JButton myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
+  private final JCheckBox myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.setUp"));
+  private final JCheckBox myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.tearDown"));
+  private final JCheckBox myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
+  private final MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.emptyList(), null);
+  private final JButton myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
   private JPanel myFixLibraryPanel;
   private JLabel myFixLibraryLabel;
 
@@ -138,6 +139,9 @@ public class CreateTestDialog extends DialogWrapper {
       if (superClass.equals(framework.getDefaultSuperClass())) {
         return false;
       }
+      if (superClass.equals(getLastSelectedSuperClassName(framework))) {
+        return false;
+      }
     }
 
     return true;
@@ -155,7 +159,9 @@ public class CreateTestDialog extends DialogWrapper {
                                     || descriptor.getLibraryPath() != null);
     }
 
-    String superClass = descriptor.getDefaultSuperClass();
+    String libraryDefaultSuperClass = descriptor.getDefaultSuperClass();
+    String lastSelectedSuperClass = getLastSelectedSuperClassName(descriptor);
+    String superClass = lastSelectedSuperClass != null ? lastSelectedSuperClass : libraryDefaultSuperClass;
 
     if (isSuperclassSelectedManually()) {
       if (superClass != null) {
@@ -191,8 +197,17 @@ public class CreateTestDialog extends DialogWrapper {
     return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
   }
 
-  private void saveDefaultLibraryName() {
+  private String getLastSelectedSuperClassName(TestFramework framework) {
+    return getProperties().getValue(getDefaultSuperClassPropertyName(framework));
+  }
+
+  private void saveDefaultLibraryNameAndSuperClass() {
     getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedFramework.getName());
+    getProperties().setValue(getDefaultSuperClassPropertyName(mySelectedFramework), mySuperClassField.getText());
+  }
+
+  private static String getDefaultSuperClassPropertyName(TestFramework framework) {
+    return DEFAULT_LIBRARY_SUPERCLASS_NAME_PROPERTY + "." + framework.getName();
   }
 
   private void restoreShowInheritedMembersStatus() {
@@ -500,7 +515,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     }
 
-    saveDefaultLibraryName();
+    saveDefaultLibraryNameAndSuperClass();
     saveShowInheritedMembersStatus();
     super.doOKAction();
   }
