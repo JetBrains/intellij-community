@@ -83,6 +83,7 @@ public class CreateTestDialog extends DialogWrapper {
   private static final String RECENTS_KEY = "CreateTestDialog.RecentsKey";
   private static final String RECENT_SUPERS_KEY = "CreateTestDialog.Recents.Supers";
   private static final String DEFAULT_LIBRARY_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrary";
+  private static final String DEFAULT_LIBRARY_SUPERCLASS_NAME_PROPERTY = CreateTestDialog.class.getName() + ".defaultLibrarySuperClass";
   private static final String SHOW_INHERITED_MEMBERS_PROPERTY = CreateTestDialog.class.getName() + ".includeInheritedMembers";
 
   private final Project myProject;
@@ -138,6 +139,9 @@ public class CreateTestDialog extends DialogWrapper {
       if (superClass.equals(framework.getDefaultSuperClass())) {
         return false;
       }
+      if (superClass.equals(getLastSelectedSuperClassName(framework.getName()))) {
+        return false;
+      }
     }
 
     return true;
@@ -155,21 +159,31 @@ public class CreateTestDialog extends DialogWrapper {
                                     || descriptor.getLibraryPath() != null);
     }
 
-    String superClass = descriptor.getDefaultSuperClass();
+    String libraryDefaultSuperClass = descriptor.getDefaultSuperClass();
+    String lastSelectedSuperClass = getLastSelectedSuperClassName(descriptor.getName());
+    String targetSuperClass = lastSelectedSuperClass != null ? lastSelectedSuperClass : libraryDefaultSuperClass;
 
     if (isSuperclassSelectedManually()) {
-      if (superClass != null) {
-        String currentSuperClass = mySuperClassField.getText();
-        mySuperClassField.appendItem(superClass);
-        mySuperClassField.setText(currentSuperClass);
+      if (targetSuperClass != null) {
+        appendSuperClassItem(targetSuperClass);
       }
     }
     else {
-      mySuperClassField.appendItem(StringUtil.notNullize(superClass));
-      mySuperClassField.getChildComponent().setSelectedItem(StringUtil.notNullize(superClass));
+      appendAndSelectSuperClassItem(targetSuperClass);
     }
 
     mySelectedFramework = descriptor;
+  }
+
+  private void appendSuperClassItem(String superClass) {
+    String currentSuperClass = mySuperClassField.getText();
+    mySuperClassField.appendItem(superClass);
+    mySuperClassField.setText(currentSuperClass);
+  }
+
+  private void appendAndSelectSuperClassItem(String superClass) {
+    mySuperClassField.appendItem(StringUtil.notNullize(superClass));
+    mySuperClassField.getChildComponent().setSelectedItem(StringUtil.notNullize(superClass));
   }
 
   private void updateMethodsTable() {
@@ -191,8 +205,18 @@ public class CreateTestDialog extends DialogWrapper {
     return getProperties().getValue(DEFAULT_LIBRARY_NAME_PROPERTY);
   }
 
-  private void saveDefaultLibraryName() {
-    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, mySelectedFramework.getName());
+  private void saveDefaultLibraryNameAndSuperClass() {
+    String selectedLibrary = mySelectedFramework.getName();
+    getProperties().setValue(DEFAULT_LIBRARY_NAME_PROPERTY, selectedLibrary);
+    getProperties().setValue(getDefaultSuperClassPropertyName(selectedLibrary), mySuperClassField.getText());
+  }
+
+  private String getLastSelectedSuperClassName(String libraryName) {
+    return getProperties().getValue(getDefaultSuperClassPropertyName(libraryName));
+  }
+
+  private String getDefaultSuperClassPropertyName(String libraryName) {
+    return DEFAULT_LIBRARY_SUPERCLASS_NAME_PROPERTY + "." + libraryName;
   }
 
   private void restoreShowInheritedMembersStatus() {
@@ -500,7 +524,7 @@ public class CreateTestDialog extends DialogWrapper {
       }
     }
 
-    saveDefaultLibraryName();
+    saveDefaultLibraryNameAndSuperClass();
     saveShowInheritedMembersStatus();
     super.doOKAction();
   }
