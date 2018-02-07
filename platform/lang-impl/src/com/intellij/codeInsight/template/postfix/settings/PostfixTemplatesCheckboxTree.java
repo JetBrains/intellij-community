@@ -71,7 +71,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       }
     };
     doubleClickListener.installOn(this);
-    Disposer.register(this,  () -> doubleClickListener.uninstall(this));
+    Disposer.register(this, () -> doubleClickListener.uninstall(this));
     setRootVisible(false);
     setShowsRootHandles(true);
   }
@@ -90,10 +90,10 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         CheckedTreeNode node = (CheckedTreeNode)value;
 
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
-        boolean isPostfixTemplate = node instanceof PostfixTemplateCheckedTreeNode;
+        PostfixTemplateCheckedTreeNode templateNode = ObjectUtils.tryCast(node, PostfixTemplateCheckedTreeNode.class);
         SimpleTextAttributes attributes;
-        if (isPostfixTemplate) {
-          Color fgColor = ((PostfixTemplateCheckedTreeNode)node).isChanged() ? JBColor.BLUE : null;
+        if (templateNode != null) {
+          Color fgColor = templateNode.isChanged() || templateNode.isNew() ? JBColor.BLUE : null;
           attributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, fgColor);
         }
         else {
@@ -101,10 +101,11 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
         }
         getTextRenderer().append(StringUtil.notNullize(value.toString()),
                                  new SimpleTextAttributes(background, attributes.getFgColor(), JBColor.RED, attributes.getStyle()));
-        if (isPostfixTemplate) {
-          String example = ((PostfixTemplateCheckedTreeNode)node).getTemplate().getExample();
+
+        if (templateNode != null) {
+          String example = templateNode.getTemplate().getExample();
           if (StringUtil.isNotEmpty(example)) {
-            getTextRenderer().append(" (" + example + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
+            getTextRenderer().append("  " + example, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, JBColor.GRAY), false);
           }
         }
       }
@@ -125,7 +126,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       CheckedTreeNode langNode = new LangTreeNode(languageName);
       myRoot.add(langNode);
       for (PostfixTemplate template : entry.getValue()) {
-        CheckedTreeNode templateNode = new PostfixTemplateCheckedTreeNode(template, languageName);
+        CheckedTreeNode templateNode = new PostfixTemplateCheckedTreeNode(template, languageName, false);
         langNode.add(templateNode);
 
         PostfixTemplateProvider postfixTemplateProvider = template.getProvider();
@@ -242,7 +243,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
                   n instanceof LangTreeNode && languageName.equals(n.getUserObject()));
                 assert languageNode != null;
                 PostfixTemplate createdTemplate = editor.createTemplate(dialog.getTemplateKey());
-                PostfixTemplateCheckedTreeNode createdNode = new PostfixTemplateCheckedTreeNode(createdTemplate, languageName);
+                PostfixTemplateCheckedTreeNode createdNode = new PostfixTemplateCheckedTreeNode(createdTemplate, languageName, true);
                 languageNode.add(createdNode);
                 myModel.nodeStructureChanged(myRoot);
                 TreeUtil.selectNode(PostfixTemplatesCheckboxTree.this, createdNode);

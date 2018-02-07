@@ -14,6 +14,7 @@ public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
 
   @Nullable
   private PostfixTemplate myInitialTemplate;
+  private final boolean myNew;
 
   @NotNull
   public PostfixTemplate getTemplate() {
@@ -25,11 +26,12 @@ public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
     return myLanguageName;
   }
 
-  PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull String languageName) {
+  PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull String languageName, boolean isNew) {
     super(template.getPresentableName());
     myLanguageName = languageName;
     myTemplate = template;
     myInitialTemplate = template;
+    myNew = isNew;
   }
 
   public void setTemplate(@NotNull PostfixTemplate template) {
@@ -41,6 +43,10 @@ public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
 
   public boolean isChanged() {
     return myInitialTemplate != null && !myInitialTemplate.equals(myTemplate);
+  }
+
+  public boolean isNew() {
+    return myNew;
   }
 
   @Override
