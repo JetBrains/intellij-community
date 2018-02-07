@@ -562,13 +562,13 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       if (reportedAnchors.contains(expr)) continue;
 
       if (expr.getParent() instanceof PsiMethodReferenceExpression) {
-        holder.registerProblem(expr.getParent(), "Method reference argument might be null but passed to non annotated parameter");
+        holder.registerProblem(expr.getParent(), "Method reference argument might be null but passed to non-annotated parameter");
         continue;
       }
 
       final String text = isNullLiteralExpression(expr)
-                          ? "Passing <code>null</code> argument to non annotated parameter"
-                          : "Argument <code>#ref</code> #loc might be null but passed to non annotated parameter";
+                          ? "Passing <code>null</code> argument to non-annotated parameter"
+                          : "Argument <code>#ref</code> #loc might be null but passed to non-annotated parameter";
       List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
       final PsiElement parent = expr.getParent();
       if (parent instanceof PsiExpressionList) {
