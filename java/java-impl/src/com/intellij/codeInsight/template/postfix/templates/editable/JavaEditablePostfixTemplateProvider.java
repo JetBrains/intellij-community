@@ -71,7 +71,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
         ContainerUtil.addIfNotNull(conditions, readExternal(conditionElement));
       }
     }
-    String templateText = template.getChildText(TEMPLATE_TAG);
+    String templateText = StringUtil.notNullize(template.getChildText(TEMPLATE_TAG));
     return new JavaEditablePostfixTemplate(key, conditions, languageLevel, useTopmostExpression, templateText, this);
   }
 
@@ -82,11 +82,13 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
 
       LanguageLevel languageLevel = ((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel();
       parentElement.setAttribute(LANGUAGE_LEVEL_ATTR, JpsJavaSdkType.complianceOption(languageLevel.toJavaVersion()));
-      Element conditions = parentElement.addContent(CONDITIONS_TAG);
+      Element conditionsTag = new Element(CONDITIONS_TAG);
       for (JavaPostfixTemplateExpressionCondition condition : ((JavaEditablePostfixTemplate)template).getExpressionConditions()) {
-        writeExternal(condition, conditions);
+        writeExternal(condition, conditionsTag);
       }
-      parentElement.addContent(TEMPLATE_TAG).setText(((JavaEditablePostfixTemplate)template).getTemplateText());
+      Element templateTag = new Element(TEMPLATE_TAG);
+      templateTag.setText(((JavaEditablePostfixTemplate)template).getTemplateText());
+      parentElement.addContent(conditionsTag).addContent(templateTag);
     }
   }
 
@@ -115,11 +117,12 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   }
 
   private static void writeExternal(@NotNull JavaPostfixTemplateExpressionCondition condition, @NotNull Element parentElement) {
-    Element element = parentElement.addContent(CONDITION_TAG);
+    Element element = new Element(CONDITION_TAG);
     element.setAttribute(ID_ATTR, condition.getId());
     if (condition instanceof JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition) {
       String fqn = ((JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition)condition).getFqn();
       element.setAttribute(FQN_ATTR, fqn);
     }
+    parentElement.addContent(element);
   }
 }

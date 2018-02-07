@@ -5,11 +5,13 @@ import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTempla
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
-import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
@@ -29,7 +31,9 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
 
   public PostfixTemplateStorage() {
     myEditableProviders = new HashMap<>();
-    for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(Language.ANY)) {
+    LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
+    for (LanguageExtensionPoint extension : extensions) {
+      Object provider = extension.getInstance();
       if (provider instanceof PostfixEditableTemplateProvider) {
         myEditableProviders.put(((PostfixEditableTemplateProvider)provider).getId(), (PostfixEditableTemplateProvider)provider);
       }
@@ -57,7 +61,7 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
     for (Element templateElement : templatesElement) {
       PostfixEditableTemplateProvider provider = myEditableProviders.get(templateElement.getAttributeValue(PROVIDER_ATTR_NAME, ""));
       if (provider != null) {
-        String templateKey = templateElement.getAttributeValue(KEY_ATTR_NAME, "");
+        String templateKey = StringUtil.trimStart(templateElement.getAttributeValue(KEY_ATTR_NAME, ""), ".");
         myTemplates.putValue(provider.getId(), provider.readExternal(templateKey, templateElement));
       }
       else {

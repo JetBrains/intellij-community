@@ -18,18 +18,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Experimental
 public abstract class EditablePostfixTemplate extends PostfixTemplate {
-  @NotNull private final String myKey;
   @NotNull private final String myTemplateText;
 
   public EditablePostfixTemplate(@NotNull String key, @NotNull String templateText, @NotNull PostfixEditableTemplateProvider provider) {
     super(key, "", provider);
-    myKey = key;
     myTemplateText = templateText;
   }
 
@@ -74,15 +74,15 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof EditablePostfixTemplate)) return false;
     EditablePostfixTemplate template = (EditablePostfixTemplate)o;
-    return Objects.equals(myKey, template.myKey) &&
+    return Objects.equals(getKey(), template.getKey()) &&
            Objects.equals(myTemplateText, template.myTemplateText);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myKey, myTemplateText);
+    return Objects.hash(getKey(), myTemplateText);
   }
 
   protected abstract List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);

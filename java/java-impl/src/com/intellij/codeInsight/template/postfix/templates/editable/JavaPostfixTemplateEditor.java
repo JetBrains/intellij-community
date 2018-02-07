@@ -101,15 +101,14 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
   }
 
   @Override
-  public JavaEditablePostfixTemplate createTemplate(@NotNull String templateId) {
-    String key = "" + templateId;
+  public JavaEditablePostfixTemplate createTemplate(@NotNull String templateKey) {
     LanguageLevel selectedLanguageLevel = ObjectUtils.tryCast(myLanguageLevelCombo.getSelectedItem(), LanguageLevel.class);
     LanguageLevel languageLevel = ObjectUtils.notNull(selectedLanguageLevel, LanguageLevel.JDK_1_3);
     Set<JavaPostfixTemplateExpressionCondition> conditions = ContainerUtil.newLinkedHashSet();
     ContainerUtil.addAll(conditions, myExpressionTypesListModel.elements());
     String templateText = myTemplateEditor.getDocument().getText();
     boolean useTopmostExpression = myApplyToTheTopmostJBCheckBox.isSelected();
-    return new JavaEditablePostfixTemplate(key, conditions, languageLevel, useTopmostExpression, templateText, myProvider);
+    return new JavaEditablePostfixTemplate(templateKey, conditions, languageLevel, useTopmostExpression, templateText, myProvider);
   }
 
   @Override

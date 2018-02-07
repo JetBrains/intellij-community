@@ -47,7 +47,7 @@ public abstract class PostfixTemplate {
     myExample = example;
 
     try {
-      tempDescription = new PostfixTemplateMetaData(this).getDescription().getText();
+      tempDescription = PostfixTemplateMetaData.createMetaData(this).getDescription().getText();
     }
     catch (IOException e) {
       tempDescription = "Under construction";

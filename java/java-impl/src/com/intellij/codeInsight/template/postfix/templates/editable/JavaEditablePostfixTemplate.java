@@ -29,13 +29,13 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   @NotNull private final LanguageLevel myMinimumLanguageLevel;
   private final boolean myUseTopmostExpression;
 
-  public JavaEditablePostfixTemplate(@NotNull String key,
+  public JavaEditablePostfixTemplate(@NotNull String templateKey,
                                      @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
                                      @NotNull String templateText,
                                      @NotNull PostfixEditableTemplateProvider provider) {
-    super(key, templateText, provider);
+    super(templateKey, templateText, provider);
     myExpressionConditions = expressionConditions;
     myMinimumLanguageLevel = minimumLanguageLevel;
     myUseTopmostExpression = useTopmostExpression;
@@ -58,7 +58,7 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (!(o instanceof JavaEditablePostfixTemplate)) return false;
     if (!super.equals(o)) return false;
     JavaEditablePostfixTemplate template = (JavaEditablePostfixTemplate)o;
     return myUseTopmostExpression == template.myUseTopmostExpression &&

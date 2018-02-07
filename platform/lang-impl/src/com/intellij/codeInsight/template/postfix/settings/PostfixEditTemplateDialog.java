@@ -26,7 +26,9 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
     super(null, parentComponent, false, IdeModalityType.IDE);
     myEditor = editor;
     Disposer.register(getDisposable(), editor);
-    editor.setTemplate(template);
+    if (template != null) {
+      editor.setTemplate(template);
+    }
     String initialKey = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
     myKeyTextField = new JBTextField(initialKey);
     myKeyTextField.setEditable(template == null || !template.isBuiltin());

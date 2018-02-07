@@ -4,12 +4,16 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   @NotNull
   private final String myLanguageName;
   @NotNull
-  private final PostfixTemplate myTemplate;
+  private PostfixTemplate myTemplate;
+
+  @Nullable
+  private PostfixTemplate myInitialTemplate;
 
   @NotNull
   public PostfixTemplate getTemplate() {
@@ -22,8 +26,25 @@ public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   }
 
   PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull String languageName) {
-    super(template.getKey().replaceFirst("\\.", ""));
+    super(template.getPresentableName());
     myLanguageName = languageName;
     myTemplate = template;
+    myInitialTemplate = template;
+  }
+
+  public void setTemplate(@NotNull PostfixTemplate template) {
+    if (myInitialTemplate == null) {
+      myInitialTemplate = myTemplate;
+    }
+    myTemplate = template;
+  }
+
+  public boolean isChanged() {
+    return myInitialTemplate != null && !myInitialTemplate.equals(myTemplate);
+  }
+
+  @Override
+  public String toString() {
+    return myTemplate.getPresentableName();
   }
 }
