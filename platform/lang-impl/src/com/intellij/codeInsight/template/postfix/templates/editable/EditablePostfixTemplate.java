@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.Template;
@@ -96,6 +96,11 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   }
 
   @NotNull
+  protected PsiElement getElementToRemove(@NotNull PsiElement element) {
+    return element;
+  }
+
+  @NotNull
   protected Function<PsiElement, String> getElementRenderer() {
     return element -> element.getText();
   }
@@ -109,7 +114,8 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   private void expandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {
     Project project = element.getProject();
     Document document = editor.getDocument();
-    document.deleteString(element.getTextRange().getStartOffset(), element.getTextRange().getEndOffset());
+    PsiElement elementToRemove = getElementToRemove(element);
+    document.deleteString(elementToRemove.getTextRange().getStartOffset(), elementToRemove.getTextRange().getEndOffset());
     TemplateManager manager = TemplateManager.getInstance(project);
 
     Template template = createTemplate(manager, myTemplateText);

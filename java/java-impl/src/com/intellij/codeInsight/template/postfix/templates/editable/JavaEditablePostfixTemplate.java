@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -72,6 +73,7 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
 
   @Override
   protected List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+    if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
     if (!PsiUtil.getLanguageLevel(context).isAtLeast(myMinimumLanguageLevel)) {
       return Collections.emptyList();
     }
@@ -84,12 +86,8 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
       expressions = ContainerUtil.newArrayList(IntroduceVariableBase.collectExpressions(file, document, Math.max(offset - 1, 0), false));
     }
 
-    if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
-
-    if (!expressions.isEmpty()) return expressions;
-
     return ContainerUtil.filter(expressions, e -> {
-      if (!PSI_ERROR_FILTER.value(e) || !(expressions instanceof PsiExpression)) {
+      if (!PSI_ERROR_FILTER.value(e) || !(e instanceof PsiExpression) || e.getTextRange().getEndOffset() != offset) {
         return false;
       }
       for (JavaPostfixTemplateExpressionCondition condition : myExpressionConditions) {
@@ -99,6 +97,12 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
       }
       return myExpressionConditions.isEmpty();
     });
+  }
+
+  @NotNull
+  @Override
+  protected PsiElement getElementToRemove(@NotNull PsiElement element) {
+    return ObjectUtils.notNull(element.getParent(), element);
   }
 
   @NotNull

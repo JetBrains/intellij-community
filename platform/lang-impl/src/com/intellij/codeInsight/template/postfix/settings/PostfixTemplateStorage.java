@@ -69,7 +69,9 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
   @Override
   public Element getState() {
     Element element = new Element("state");
-    element.addContent(myUnloadedTemplates);
+    for (Element template : myUnloadedTemplates) {
+      element.addContent(template.clone());
+    }
     for (Map.Entry<String, Collection<PostfixTemplate>> entry : myTemplates.entrySet()) {
       for (PostfixTemplate template : entry.getValue()) {
         PostfixTemplateProvider provider = template.getProvider();

@@ -15,6 +15,12 @@ public class AssertStatementPostfixTemplate extends JavaEditablePostfixTemplate 
           LanguageLevel.JDK_1_4, true, "assert $EXPR$;$END$", provider);
   }
 
+  @NotNull
+  @Override
+  public String getExample() {
+    return "assert expr";
+  }
+
   @Override
   public boolean isBuiltin() {
     return true;

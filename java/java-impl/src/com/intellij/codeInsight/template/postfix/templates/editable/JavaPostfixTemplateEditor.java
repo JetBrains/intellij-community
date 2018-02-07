@@ -1,11 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.template.postfix.templates;
+package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -105,7 +102,7 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
 
   @Override
   public JavaEditablePostfixTemplate createTemplate(@NotNull String templateId) {
-    String key = "." + templateId;
+    String key = "" + templateId;
     LanguageLevel selectedLanguageLevel = ObjectUtils.tryCast(myLanguageLevelCombo.getSelectedItem(), LanguageLevel.class);
     LanguageLevel languageLevel = ObjectUtils.notNull(selectedLanguageLevel, LanguageLevel.JDK_1_3);
     Set<JavaPostfixTemplateExpressionCondition> conditions = ContainerUtil.newLinkedHashSet();

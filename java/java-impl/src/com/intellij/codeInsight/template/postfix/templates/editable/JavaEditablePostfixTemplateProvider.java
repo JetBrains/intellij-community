@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.template.postfix.templates;
+package com.intellij.codeInsight.template.postfix.templates.editable;
 
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
+import com.intellij.codeInsight.template.postfix.templates.AssertStatementPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -28,7 +27,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   private static final String CONDITION_TAG = "condition";
   private static final String ID_ATTR = "id";
   private static final String FQN_ATTR = "fqn";
-  public static final String TOPMOST_ATTR = "topmost";
+  private static final String TOPMOST_ATTR = "topmost";
 
   private HashSet<AssertStatementPostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
     new AssertStatementPostfixTemplate(this)
@@ -79,7 +78,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   @Override
   public void writeExternal(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
     if (template instanceof JavaEditablePostfixTemplate) {
-      parentElement.setAttribute("topmost", String.valueOf(((JavaEditablePostfixTemplate)template).isUseTopmostExpression()));
+      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((JavaEditablePostfixTemplate)template).isUseTopmostExpression()));
 
       LanguageLevel languageLevel = ((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel();
       parentElement.setAttribute(LANGUAGE_LEVEL_ATTR, JpsJavaSdkType.complianceOption(languageLevel.toJavaVersion()));
@@ -115,7 +114,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
     return null;
   }
 
-  public void writeExternal(@NotNull JavaPostfixTemplateExpressionCondition condition, @NotNull Element parentElement) {
+  private static void writeExternal(@NotNull JavaPostfixTemplateExpressionCondition condition, @NotNull Element parentElement) {
     Element element = parentElement.addContent(CONDITION_TAG);
     element.setAttribute(ID_ATTR, condition.getId());
     if (condition instanceof JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition) {
