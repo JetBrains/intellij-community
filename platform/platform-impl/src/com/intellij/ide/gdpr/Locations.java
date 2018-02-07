@@ -4,6 +4,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.SystemInfo;
 
 import java.io.File;
@@ -13,7 +14,7 @@ import java.io.File;
  * Date: 06-Dec-17
  */
 class Locations {
-  private static final String RELATIVE_RESOURCE_PATH = "JetBrains";
+  private static final String RELATIVE_RESOURCE_PATH = ApplicationInfoImpl.getShadowInstance().getShortCompanyName();
   private static final File ourDataDir;
 
   static {
