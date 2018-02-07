@@ -57,7 +57,7 @@ class AnnotationHintsPass(private val rootElement: PsiElement, editor: Editor) :
       annotations.forEach {
         val nameReferenceElement = it.nameReferenceElement
         if (nameReferenceElement != null && element.modifierList != null &&
-            !(shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(it))) {
+            (shownAnnotations.add(nameReferenceElement.qualifiedName) || JavaDocInfoGenerator.isRepeatableAnnotationType(it))) {
           val offset = element.modifierList!!.textRange.startOffset
           var hintList = hints.get(offset)
           if (hintList == null) {
