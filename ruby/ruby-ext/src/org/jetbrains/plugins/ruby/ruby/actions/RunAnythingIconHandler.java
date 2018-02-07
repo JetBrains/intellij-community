@@ -63,7 +63,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   public static class MyDarcula extends DarculaTextFieldUI {
-    private NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
 
     public MyDarcula(NotNullLazyValue<Map<String, Icon>> map) {
       myIconsMap = map;
@@ -87,7 +87,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   public static class MyMacUI extends MacIntelliJTextFieldUI {
-    private NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
 
     public MyMacUI(NotNullLazyValue<Map<String, Icon>> map) {
       myIconsMap = map;
@@ -111,7 +111,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   }
 
   public static class MyWinUI extends WinIntelliJTextFieldUI {
-    private NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final NotNullLazyValue<Map<String, Icon>> myIconsMap;
 
     public MyWinUI(NotNullLazyValue<Map<String, Icon>> map) {
       myIconsMap = map;

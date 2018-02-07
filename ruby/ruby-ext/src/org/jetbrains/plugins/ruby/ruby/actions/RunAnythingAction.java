@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.PoppedIcon;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -120,7 +119,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private MySearchTextField myPopupField;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
@@ -925,8 +924,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private class MyListRenderer extends ColoredListCellRenderer {
-    private RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
-    private JLabel myTitle = new JLabel();
+    private final RunAnythingMyAccessibleComponent myMainPanel = new RunAnythingMyAccessibleComponent(new BorderLayout());
+    private final JLabel myTitle = new JLabel();
 
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
