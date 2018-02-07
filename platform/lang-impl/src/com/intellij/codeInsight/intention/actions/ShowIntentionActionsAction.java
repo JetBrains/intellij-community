@@ -47,7 +47,7 @@ public class ShowIntentionActionsAction extends BaseCodeInsightAction implements
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing() && !ApplicationManager.getApplication().isOnAir()) return;
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && !editor.getContentComponent().isShowing()) return;
     getHandler().invoke(project, editor, psiFile);
   }
 
