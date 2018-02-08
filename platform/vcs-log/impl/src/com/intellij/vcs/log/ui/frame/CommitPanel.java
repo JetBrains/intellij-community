@@ -2,9 +2,11 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -36,6 +38,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;
@@ -178,7 +181,7 @@ public class CommitPanel extends JBPanel {
 
     @Override
     public Color getBackground() {
-      if (UIUtil.isUnderDarcula()) {
+      if (hasPanelBackground()) {
         return getCommitDetailsBackground();
       }
       return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
@@ -187,8 +190,17 @@ public class CommitPanel extends JBPanel {
     @Override
     public void update() {
       setVisible(myPresentation != null); // looks weird when empty
-      setOpaque(!UIUtil.isUnderDarcula());
+      setOpaque(!hasPanelBackground());
       super.update();
+    }
+
+    protected boolean hasPanelBackground() {
+      return UIUtil.isUnderDarcula() || hasBackgroundImage();
+    }
+
+    private boolean hasBackgroundImage() {
+      return !StringUtil.isEmpty(PropertiesComponent.getInstance().getValue(EDITOR_PROP)) ||
+             !StringUtil.isEmpty(PropertiesComponent.getInstance(myLogData.getProject()).getValue(EDITOR_PROP));
     }
   }
 
