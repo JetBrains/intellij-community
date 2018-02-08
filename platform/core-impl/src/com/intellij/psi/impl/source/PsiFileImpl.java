@@ -586,7 +586,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    DebugUtil.performPSIModification("onContentReload", () -> {
+    DebugUtil.performPsiModification("onContentReload", () -> {
       synchronized (myPsiLock) {
         myRefToPsi.invalidatePsi();
 

@@ -168,7 +168,7 @@ public class FileManagerImpl implements FileManager {
 
   private void clearViewProviders() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    DebugUtil.performPSIModification("clearViewProviders", () -> {
+    DebugUtil.performPsiModification("clearViewProviders", () -> {
       ConcurrentMap<VirtualFile, FileViewProvider> map = myVFileToViewProviderMap.get();
       if (map != null) {
         for (final FileViewProvider provider : map.values()) {
@@ -217,7 +217,7 @@ public class FileManagerImpl implements FileManager {
     FileViewProvider prev = findCachedViewProvider(virtualFile);
     if (prev == fileViewProvider) return;
     if (prev != null) {
-      DebugUtil.performPSIModification(null, () -> {
+      DebugUtil.performPsiModification(null, () -> {
         markInvalidated(prev);
         DebugUtil.onInvalidated(prev);
       });
@@ -265,7 +265,7 @@ public class FileManagerImpl implements FileManager {
   void processFileTypesChanged() {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
-    DebugUtil.performPSIModification(null, () -> {
+    DebugUtil.performPsiModification(null, () -> {
       try {
         ApplicationManager.getApplication().runWriteAction(() -> {
           PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
@@ -406,7 +406,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile) {
-    DebugUtil.performPSIModification("removeFilesAndDirsRecursively", () -> {
+    DebugUtil.performPsiModification("removeFilesAndDirsRecursively", () -> {
       VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
@@ -526,7 +526,7 @@ public class FileManagerImpl implements FileManager {
   }
 
   private void markInvalidations(@NotNull Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap) {
-    DebugUtil.performPSIModification(null, ()->{
+    DebugUtil.performPsiModification(null, ()->{
       for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
         FileViewProvider viewProvider = entry.getValue();
         if (getVFileToViewProviderMap().get(entry.getKey()) != viewProvider) {

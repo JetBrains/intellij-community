@@ -148,7 +148,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
 
     List<Throwable> throwables = new ArrayList<>(0);
-    DebugUtil.performPSIModification(null, ()->{
+    DebugUtil.performPsiModification(null, ()->{
       try{
         Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
         blockedAspects.push(Pair.create(aspect, transaction));

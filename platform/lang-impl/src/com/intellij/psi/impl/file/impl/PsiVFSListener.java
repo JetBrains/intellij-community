@@ -217,7 +217,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
   }
 
   private void clearViewProvider(@NotNull VirtualFile vFile, @NotNull String why) {
-    DebugUtil.performPSIModification(why, ()->myFileManager.setViewProvider(vFile, null));
+    DebugUtil.performPsiModification(why, ()->myFileManager.setViewProvider(vFile, null));
   }
 
   @Override
@@ -599,7 +599,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
           assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
 
-          DebugUtil.performPSIModification(null, () -> myFileManager.invalidateAllPsi());
+          DebugUtil.performPsiModification(null, () -> myFileManager.invalidateAllPsi());
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);

@@ -500,7 +500,7 @@ public class DebugUtil {
    * elements. This should help finding out why a specific PSI element has become invalid.
    *
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
-   * @deprecated use {@link #performPSIModification(String, ThrowableRunnable)} instead
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
   public static void startPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
@@ -519,7 +519,7 @@ public class DebugUtil {
   /**
    * Finished PSI modification action.
    * @see #startPsiModification(String)
-   * @deprecated use {@link #performPSIModification(String, ThrowableRunnable)} instead
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
   public static void finishPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
@@ -538,7 +538,7 @@ public class DebugUtil {
     }
   }
 
-  public static <T extends Throwable> void performPSIModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
     startPsiModification(trace);
     try {
       runnable.run();
@@ -547,7 +547,7 @@ public class DebugUtil {
       finishPsiModification();
     }
   }
-  public static <T, E extends Throwable> T performPSIModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
     startPsiModification(trace);
     try {
       return runnable.compute();
