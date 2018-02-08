@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
@@ -277,7 +278,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   public static Icon getArrowIcon(@NotNull JComponent c) {
-    return MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, c.isEnabled());
+    return IconCache.getIcon("comboDropTriangle", false, false, c.isEnabled());
   }
 
   @Override public void unconfigureArrowButton() {

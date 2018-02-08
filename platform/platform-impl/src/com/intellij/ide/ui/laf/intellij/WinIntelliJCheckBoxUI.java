@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -44,7 +45,7 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
     boolean pressed = bm.isPressed() || isCellPressed(b);
 
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
+    Icon icon = IconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
 
     if (icon != null) {
       icon.paintIcon(c, g, iconRect.x, iconRect.y + JBUI.scale(1));

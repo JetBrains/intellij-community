@@ -11,7 +11,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -918,9 +917,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static class Win10MenuArrowIcon extends MenuArrowIcon {
     private static final String NAME = "menuTriangle";
     private Win10MenuArrowIcon() {
-      super(MacIntelliJIconCache.getIcon(NAME, false, false, true),
-            MacIntelliJIconCache.getIcon(NAME, true, false, true),
-            MacIntelliJIconCache.getIcon(NAME, false, false, false));
+      super(IconCache.getIcon(NAME, false, false, true),
+            IconCache.getIcon(NAME, true, false, true),
+            IconCache.getIcon(NAME, false, false, false));
     }
   }
 }

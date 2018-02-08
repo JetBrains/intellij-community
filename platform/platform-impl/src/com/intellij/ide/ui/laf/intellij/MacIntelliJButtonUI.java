@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
@@ -50,7 +51,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     int w = c.getWidth();
     int h = c.getHeight();
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, c.hasFocus());
+      Icon icon = IconCache.getIcon("helpButton", false, c.hasFocus());
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -128,7 +129,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, false);
+      Icon icon = IconCache.getIcon("helpButton", false, false);
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else if (c.getBorder() instanceof MacIntelliJButtonBorder || isComboButton(c)) {
       return JBUI.size(prefSize.width + (isComboButton(c) ? 10 : 18), 27);
