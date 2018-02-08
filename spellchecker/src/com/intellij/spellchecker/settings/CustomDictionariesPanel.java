@@ -7,13 +7,14 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -34,6 +35,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
+import static javax.swing.ListSelectionModel.SINGLE_SELECTION;
 
 public class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
@@ -59,11 +61,26 @@ public class CustomDictionariesPanel extends JPanel {
         @Override
         public void run(AnActionButton button) {
           myCustomDictionariesTableView.stopEditing();
-          doChooseFiles(project, files -> files.stream()
-            .map(VirtualFile::getPath)
-            .map(PathUtil::toSystemDependentName)
-            .filter(path -> !myCustomDictionariesTableView.getItems().contains(path))
-            .forEach(path -> myCustomDictionariesTableView.getListTableModel().addRow(path)));
+          JBList<DictionaryLocation> locationList = new JBList<>();
+          locationList.setListData(new DictionaryLocation[]{new LocalDictionaryLocation(project, myCustomDictionariesTableView)});
+          locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
+          locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
+            @Override
+            protected void customizeCellRenderer(@NotNull JList<? extends DictionaryLocation> list,
+                                                 DictionaryLocation value,
+                                                 int index,
+                                                 boolean selected,
+                                                 boolean hasFocus) {
+              append(value.getName());
+            }
+          });
+          JBPopupFactory.getInstance().createListPopupBuilder(locationList)
+                          .setTitle(SpellCheckerBundle.message("dictionary.location.choose"))
+                          .setItemChoosenCallback(() -> locationList.getSelectedValue().findAndAddNewDictionary())
+                          .setMovable(false)
+                          .setResizable(false)
+                        .createPopup()
+                        .show(button.getPreferredPopupPoint());
         }
       })
 
@@ -101,16 +118,6 @@ public class CustomDictionariesPanel extends JPanel {
     this.add(decorator.createPanel(), BorderLayout.CENTER);
   }
 
-  private void doChooseFiles(@NotNull Project project, @NotNull Consumer<List<VirtualFile>> consumer) {
-    final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
-      @Override
-      public boolean isFileSelectable(VirtualFile file) {
-        return extensionEquals(file.getPath(), "dic");
-      }
-    };
-
-    FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), project.getBaseDir(), consumer);
-  }
 
   public List<String> getRemovedDictionaries() {
     return removedDictionaries;
@@ -258,6 +265,46 @@ public class CustomDictionariesPanel extends JPanel {
           }
         }
       };
+    }
+  }
+
+  interface DictionaryLocation {
+    @NotNull
+    String getName();
+
+    void findAndAddNewDictionary();
+  }
+
+  private static class LocalDictionaryLocation implements DictionaryLocation {
+    private final Project myProject;
+    private final TableView<String> myTableView;
+
+    LocalDictionaryLocation(@NotNull Project project, @NotNull TableView<String> tableView) {
+      myProject = project;
+      myTableView = tableView;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return SpellCheckerBundle.message("dictionary.location.computer");
+    }
+
+    @Override
+    public void findAndAddNewDictionary() {
+      final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
+        @Override
+        public boolean isFileSelectable(VirtualFile file) {
+          return extensionEquals(file.getPath(), "dic");
+        }
+      };
+
+      FileChooser.chooseFiles(fileChooserDescriptor, myProject, null, myProject.getBaseDir(),
+                              files -> files.stream()
+                                            .map(VirtualFile::getPath)
+                                            .map(PathUtil::toSystemDependentName)
+                                            .filter(path -> !myTableView.getItems().contains(path))
+                                            .forEach(path -> myTableView.getListTableModel().addRow(path)));
     }
   }
 }
