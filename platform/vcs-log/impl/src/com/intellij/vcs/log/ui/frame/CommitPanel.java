@@ -19,6 +19,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.ContainingBranchesGetter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -114,7 +115,8 @@ public class CommitPanel extends JBPanel {
     if (myTagsPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
       myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
-    } else if (myBranchesPanel.isVisible()) {
+    }
+    else if (myBranchesPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
     }
   }
@@ -130,8 +132,8 @@ public class CommitPanel extends JBPanel {
 
   public void updateBranches() {
     if (myCommit != null) {
-      myContainingBranchesPanel
-        .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
+      ContainingBranchesGetter getter = myLogData.getContainingBranchesGetter();
+      myContainingBranchesPanel.setBranches(getter.getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
     }
     else {
       myContainingBranchesPanel.setBranches(null);
