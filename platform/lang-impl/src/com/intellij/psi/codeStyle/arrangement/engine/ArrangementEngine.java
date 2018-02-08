@@ -34,6 +34,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.Order;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.*;
 import java.util.HashSet;
@@ -317,12 +318,18 @@ public class ArrangementEngine {
                                                                           @NotNull MultiMap<ArrangementMatchRule, E> elementsByRule,
                                                                           @NotNull ArrangementMatchRule rule) {
     if (elementsByRule.containsKey(rule)) {
-      final Collection<E> arrangedEntries = elementsByRule.remove(rule);
+      Object order = rule.getOrderType();
 
-      // Sort by name if necessary.
-      if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
-        sortByName((List<E>)arrangedEntries);
+      List<E> arrangedEntries = (List<E>)elementsByRule.remove(rule);
+      assert arrangedEntries != null;
+
+      if (order instanceof Order) {
+        ((List<NameAwareArrangementEntry>)arrangedEntries).sort(((Order)order).getEntryComparator());
       }
+      else if (rule.getOrderType().equals(StdArrangementTokens.Order.BY_NAME)) {
+        sortByName(arrangedEntries);
+      }
+
       arranged.addAll(arrangedEntries);
       return arrangedEntries;
     }
