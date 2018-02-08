@@ -3,6 +3,8 @@
   <property name="python.home" value="${basedir}"/>
   <property name="out.dir" value="${project.home}/out"/>
   <property name="tmp.dir" value="${project.home}/out/tmp"/>
+  <property name="idea.build.number" value="SNAPSHOT"/>
+  <property name="idea.path" value=""/>
 
   <target name="cleanup">
     <delete dir="${out.dir}" failonerror="false"/>
