@@ -9,7 +9,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.codeInsight.PyCustomMember;
@@ -20,15 +19,12 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -475,106 +471,6 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
         .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
-  }
-
-  public void testMultipleModulePathProviderCandidatesReturnSingular() {
-    setupMultipleModulePathProviderCandidatesExtensions();
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("workspace")), () -> {
-      final PsiFile psiFile = myFixture.configureByFile("workspace/import_from_othermodules.py");
-      PsiElement firstChild = psiFile.getFirstChild();
-      assertInstanceOf(firstChild, PyFromImportStatement.class);
-      List<RatedResolveResult> results =
-        ResolveImportUtil.resolveNameInFromImport((PyFromImportStatement)firstChild, QualifiedName.fromComponents("mod"));
-      assertEquals(1, results.size());
-      final Set<String> resultPaths = results.stream()
-        .map(result -> result.getElement())
-        .filter(psiElement -> psiElement instanceof PsiFile)
-        .map(psiElement -> ((PsiFile)psiElement).getVirtualFile().getPath())
-        .collect(Collectors.toSet());
-      assertEquals(1, results.size());
-      assertContainsElements(resultPaths,"/src/provider3/othermodules/mod.py");
-    });
-  }
-
-  public void testMultipleModulePathProviderCandidatesSamePackageDifferentModule() {
-    setupMultipleModulePathProviderCandidatesExtensions();
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("workspace")), () -> {
-      final PsiFile psiFile = myFixture.configureByFile("workspace/import_from_modules_mod2.py");
-      PsiElement firstChild = psiFile.getFirstChild();
-      assertInstanceOf(firstChild, PyFromImportStatement.class);
-      List<RatedResolveResult> results =
-        ResolveImportUtil.resolveNameInFromImport((PyFromImportStatement)firstChild, QualifiedName.fromComponents("mod2"));
-      assertEquals(1, results.size());
-      final Set<String> resultPaths = results.stream()
-        .map(result -> result.getElement())
-        .filter(psiElement -> psiElement instanceof PsiFile)
-        .map(psiElement -> ((PsiFile)psiElement).getVirtualFile().getPath())
-        .collect(Collectors.toSet());
-      assertEquals(1, results.size());
-      assertContainsElements(resultPaths,"/src/provider2/modules/mod2.py");
-    });
-  }
-
-  public void testMultipleModulePathProviderCandidatesReturnMultiple() {
-    setupMultipleModulePathProviderCandidatesExtensions();
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("workspace")), () -> {
-      final PsiFile psiFile = myFixture.configureByFile("workspace/import_from_modules.py");
-      PsiElement firstChild = psiFile.getFirstChild();
-      assertInstanceOf(firstChild, PyFromImportStatement.class);
-      List<RatedResolveResult> results =
-        ResolveImportUtil.resolveNameInFromImport((PyFromImportStatement)firstChild, QualifiedName.fromComponents("mod"));
-      assertEquals(2, results.size());
-      final Set<String> resultPaths = results.stream()
-        .map(result -> result.getElement())
-        .filter(psiElement -> psiElement instanceof PsiFile)
-        .map(psiElement -> ((PsiFile)psiElement).getVirtualFile().getPath())
-        .collect(Collectors.toSet());
-      assertEquals(2, resultPaths.size());
-      assertContainsElements(resultPaths,"/src/provider1/modules/mod.py", "/src/provider2/modules/mod.py");
-    });
-  }
-
-  public void testMultipleModulePathProviderCandidatesReturnNone() {
-    setupMultipleModulePathProviderCandidatesExtensions();
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("workspace")), () -> {
-      final PsiFile psiFile = myFixture.configureByFile("workspace/import_from_unknown.py");
-      PsiElement firstChild = psiFile.getFirstChild();
-      assertInstanceOf(firstChild, PyFromImportStatement.class);
-      List<RatedResolveResult> results =
-        ResolveImportUtil.resolveNameInFromImport((PyFromImportStatement)firstChild, QualifiedName.fromComponents("mod"));
-      assertEquals(0, results.size());
-    });
-  }
-
-  private void setupMultipleModulePathProviderCandidatesExtensions() {
-    myFixture.copyDirectoryToProject("multipleModulePathProviderCandidates", "");
-    VirtualFile vfProvider1 = myFixture.findFileInTempDir("provider1");
-    VirtualFile vfProvider2 = myFixture.findFileInTempDir("provider2");
-    VirtualFile vfProvider3 = myFixture.findFileInTempDir("provider3");
-    PyImportResolver foreignProvider1 = (name, context, withRoots) ->
-      name.getFirstComponent().equals("modules") ? myFixture.getPsiManager().findDirectory(vfProvider1.findChild("modules")) : null;
-    PyImportResolver foreignProvider2 = (name, context, withRoots) ->
-      name.getFirstComponent().equals("modules") ? myFixture.getPsiManager().findDirectory(vfProvider2.findChild("modules")) : null;
-    PyImportResolver foreignProvider3 = (name, context, withRoots) ->
-      name.getFirstComponent().equals("othermodules") ? myFixture.getPsiManager().findDirectory(vfProvider3.findChild("othermodules")) : null;
-
-    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignProvider1, getTestRootDisposable());
-    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignProvider2, getTestRootDisposable());
-    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignProvider3, getTestRootDisposable());
-
-    PyCustomPackageIdentifier basicDirectoryIdentifier = new PyCustomPackageIdentifier() {
-      @Override
-      public boolean isPackage(PsiDirectory directory) {
-        return true;
-      }
-
-      @Override
-      public boolean isPackageFile(PsiFile file) {
-        return false;
-      }
-    };
-
-    PlatformTestUtil.registerExtension(PyCustomPackageIdentifier.EP_NAME, basicDirectoryIdentifier, getTestRootDisposable());
   }
 
   private void withSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable f) {

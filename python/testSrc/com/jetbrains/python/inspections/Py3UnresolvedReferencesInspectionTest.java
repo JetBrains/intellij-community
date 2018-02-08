@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -194,7 +195,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   public void testNestedPackageNamedAsSourceRoot() {
     doMultiFileTest("a.py", Collections.singletonList("lib1"));
   }
-  
+
   // PY-18972
   public void testReferencesInFStringLiterals() {
     doTest();
@@ -248,5 +249,10 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   // PY-13273
   public void testComprehensionInDecorator() {
     doTest();
+  }
+
+  // PY-28406
+  public void testFromNamespacePackageImportInManySourceRoots() {
+    doMultiFileTest("a.py", Arrays.asList("root1" , "root2"));
   }
 }
