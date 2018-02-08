@@ -2158,7 +2158,7 @@ public class ControlFlowUtil {
     if (codeBlock == null) return false;
     final ControlFlow flow;
     try {
-      flow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
+      flow = ControlFlowFactory.getInstance(codeBlock.getProject()).getControlFlow(codeBlock, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), true);
     }
     catch (AnalysisCanceledException e) {
       return false;

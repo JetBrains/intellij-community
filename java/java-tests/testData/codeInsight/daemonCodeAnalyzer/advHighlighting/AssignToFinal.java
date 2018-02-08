@@ -112,3 +112,22 @@ class T3a {
     System.out.println(b);
   }
 }
+class T29 {
+  // IDEA-186306
+  private final int j;
+  T29 (int b) {
+    do {
+      j = 34; // guaranteed to only be executed once
+      if (true) break;
+    } while (b == 1);
+  }
+}
+class T29a {
+  private final int j;
+  T29a (int b) {
+    do {
+      <error descr="Variable 'j' might be assigned in loop">j</error> = 34; // not guaranteed by JLS to only be executed once
+      if (j > 0) break;
+    } while (b == 1);
+  }
+}
