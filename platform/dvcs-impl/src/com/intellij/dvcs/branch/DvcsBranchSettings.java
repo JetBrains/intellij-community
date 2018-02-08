@@ -19,10 +19,12 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
 public class DvcsBranchSettings {
+  @SuppressWarnings("FieldMayBeFinal")
   @Tag("favorite-branches")
-  private final BranchStorage myFavoriteBranches = new BranchStorage();
+  private BranchStorage myFavoriteBranches = new BranchStorage();
+  @SuppressWarnings("FieldMayBeFinal")
   @Tag("excluded-from-favorite")
-  private final BranchStorage myExcludedFavorites = new BranchStorage();
+  private BranchStorage myExcludedFavorites = new BranchStorage();
 
   @NotNull
   public BranchStorage getFavorites() {
