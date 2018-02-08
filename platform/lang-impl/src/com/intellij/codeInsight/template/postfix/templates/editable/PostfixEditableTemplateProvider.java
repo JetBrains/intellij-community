@@ -46,7 +46,7 @@ public interface PostfixEditableTemplateProvider<T extends PostfixTemplate> exte
   PostfixTemplateEditor<T> createEditor(@Nullable Project project);
 
   @NotNull
-  T readExternal(@NotNull String key, @NotNull Element template);
+  T readExternalTemplate(@NotNull String key, @NotNull Element template);
 
-  void writeExternal(@NotNull PostfixTemplate template, @NotNull Element parentElement);
+  void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement);
 }

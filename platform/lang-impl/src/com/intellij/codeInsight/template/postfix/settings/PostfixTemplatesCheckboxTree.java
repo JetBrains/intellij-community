@@ -123,7 +123,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       String languageId = entry.getKey();
       Language language = Language.findLanguageByID(languageId);
       String languageName = language != null ? language.getDisplayName() : languageId;
-      CheckedTreeNode langNode = new LangTreeNode(languageName);
+      CheckedTreeNode langNode = new LangTreeNode(languageName, languageId);
       myRoot.add(langNode);
       for (PostfixTemplate template : entry.getValue()) {
         CheckedTreeNode templateNode = new PostfixTemplateCheckedTreeNode(template, languageName, false);
@@ -131,7 +131,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
         PostfixTemplateProvider postfixTemplateProvider = template.getProvider();
         if (template.isEditable() && postfixTemplateProvider instanceof PostfixEditableTemplateProvider) {
-          myLanguageToEditableTemplateProviders.putValue(languageName, (PostfixEditableTemplateProvider)postfixTemplateProvider);
+          myLanguageToEditableTemplateProviders.putValue(languageId, (PostfixEditableTemplateProvider)postfixTemplateProvider);
         }
       }
     }
@@ -275,8 +275,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       PostfixTemplateEditor editor = ((PostfixEditableTemplateProvider)provider).createEditor(project);
       if (editor != null) {
         //noinspection unchecked
-        PostfixEditTemplateDialog dialog =
-          new PostfixEditTemplateDialog(this, editor, (PostfixEditableTemplateProvider)provider, template);
+        PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, (PostfixEditableTemplateProvider)provider, template);
         if (dialog.showAndGet()) {
           lastPathComponent.setTemplate(editor.createTemplate(dialog.getTemplateKey()));
         }
@@ -319,8 +318,16 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   }
 
   private static class LangTreeNode extends CheckedTreeNode {
-    public LangTreeNode(@NotNull String langName) {
-      super(langName);
+    @NotNull private final String myLanguageId;
+
+    public LangTreeNode(@NotNull String languageName, @NotNull String languageId) {
+      super(languageName);
+      myLanguageId = languageId;
+    }
+
+    @NotNull
+    public String getLanguageId() {
+      return myLanguageId;
     }
   }
 }

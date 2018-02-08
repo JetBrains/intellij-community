@@ -11,6 +11,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @State(name = "PostfixTemplates", storages = @Storage("postfixTemplates.xml"))
-public class PostfixTemplateStorage implements PersistentStateComponent<Element> {
+public class PostfixTemplateStorage extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final String TEMPLATE_TAG = "template";
   private static final String PROVIDER_ATTR_NAME = "provider";
   private static final String KEY_ATTR_NAME = "key";
@@ -51,7 +52,11 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
   }
 
   public void setTemplates(@NotNull PostfixEditableTemplateProvider provider, @NotNull Collection<PostfixTemplate> templates) {
-    myTemplates.put(provider.getId(), templates);
+    Collection<PostfixTemplate> oldTemplates = myTemplates.get(provider.getId());
+    if (!templates.equals(oldTemplates)) {
+      myTemplates.put(provider.getId(), templates);
+      incModificationCount();
+    }
   }
 
   @Override
@@ -62,7 +67,7 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
       PostfixEditableTemplateProvider provider = myEditableProviders.get(templateElement.getAttributeValue(PROVIDER_ATTR_NAME, ""));
       if (provider != null) {
         String templateKey = StringUtil.trimStart(templateElement.getAttributeValue(KEY_ATTR_NAME, ""), ".");
-        myTemplates.putValue(provider.getId(), provider.readExternal(templateKey, templateElement));
+        myTemplates.putValue(provider.getId(), provider.readExternalTemplate(templateKey, templateElement));
       }
       else {
         myUnloadedTemplates.add(templateElement);
@@ -91,7 +96,7 @@ public class PostfixTemplateStorage implements PersistentStateComponent<Element>
     Element templateElement = new Element(TEMPLATE_TAG);
     templateElement.setAttribute(PROVIDER_ATTR_NAME, provider.getId());
     templateElement.setAttribute(KEY_ATTR_NAME, template.getKey());
-    provider.writeExternal(template, templateElement);
+    provider.writeExternalTemplate(template, templateElement);
     return templateElement;
   }
 }

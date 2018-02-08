@@ -108,7 +108,7 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
     ContainerUtil.addAll(conditions, myExpressionTypesListModel.elements());
     String templateText = myTemplateEditor.getDocument().getText();
     boolean useTopmostExpression = myApplyToTheTopmostJBCheckBox.isSelected();
-    return new JavaEditablePostfixTemplate(templateKey, conditions, languageLevel, useTopmostExpression, templateText, myProvider);
+    return new JavaEditablePostfixTemplate(templateKey, templateText, "", conditions, languageLevel, useTopmostExpression, myProvider);
   }
 
   @Override
@@ -144,6 +144,8 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateVoidExpressionCondition()));
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()));
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition()));
+    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition()));
+    group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition()));
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition()));
     group.add(new ChooseClassAction());
     DataContext context = DataManager.getInstance().getDataContext(button.getContextComponent());

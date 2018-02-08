@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
@@ -139,6 +139,9 @@ public abstract class JavaPostfixTemplatesUtils {
   public static final Condition<PsiElement> IS_BOOLEAN =
     element -> element instanceof PsiExpression && isBoolean(((PsiExpression)element).getType());
 
+  /**
+   * @deprecated
+   */
   public static final Condition<PsiElement> IS_THROWABLE =
     element -> element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
 

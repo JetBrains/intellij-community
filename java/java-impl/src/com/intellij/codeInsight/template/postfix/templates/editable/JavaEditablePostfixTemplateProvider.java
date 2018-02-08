@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
-import com.intellij.codeInsight.template.postfix.templates.AssertStatementPostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -29,8 +27,21 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   private static final String FQN_ATTR = "fqn";
   private static final String TOPMOST_ATTR = "topmost";
 
-  private HashSet<AssertStatementPostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
-    new AssertStatementPostfixTemplate(this)
+  private HashSet<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
+    new AssertStatementPostfixTemplate(this),
+    new SynchronizedStatementPostfixTemplate(this),
+    new ForAscendingPostfixTemplate(this),
+    new ForDescendingPostfixTemplate(this),
+    new WhileStatementPostfixTemplate(this),
+    new SoutPostfixTemplate(this),
+    new ReturnStatementPostfixTemplate(this),
+    new OptionalPostfixTemplate(this),
+    new ForeachPostfixTemplate("iter", this),
+    new ForeachPostfixTemplate("for", this),
+    new LambdaPostfixTemplate(this),
+    new ThrowExceptionPostfixTemplate(this),
+    new FormatPostfixTemplate(this),
+    new ObjectsRequireNonNullPostfixTemplate(this)
   );
 
   @NotNull
@@ -59,7 +70,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
 
   @NotNull
   @Override
-  public JavaEditablePostfixTemplate readExternal(@NotNull String key, @NotNull Element template) {
+  public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String key, @NotNull Element template) {
     boolean useTopmostExpression = Boolean.parseBoolean(template.getAttributeValue(TOPMOST_ATTR));
     String languageLevelAttributeValue = template.getAttributeValue(LANGUAGE_LEVEL_ATTR);
     LanguageLevel languageLevel = ObjectUtils.notNull(LanguageLevel.parse(languageLevelAttributeValue), LanguageLevel.JDK_1_6);
@@ -72,11 +83,11 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
       }
     }
     String templateText = StringUtil.notNullize(template.getChildText(TEMPLATE_TAG));
-    return new JavaEditablePostfixTemplate(key, conditions, languageLevel, useTopmostExpression, templateText, this);
+    return new JavaEditablePostfixTemplate(key, templateText, "", conditions, languageLevel, useTopmostExpression, this);
   }
 
   @Override
-  public void writeExternal(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
+  public void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
     if (template instanceof JavaEditablePostfixTemplate) {
       parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((JavaEditablePostfixTemplate)template).isUseTopmostExpression()));
 
@@ -93,7 +104,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   }
 
   @Nullable
-  public JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
+  private static JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
     String id = condition.getAttributeValue(ID_ATTR);
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition();
@@ -106,6 +117,12 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
     }
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateBooleanExpressionCondition();
+    }
+    if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition.ID.equals(id)) {
+      return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition();
+    }
+    if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition.ID.equals(id)) {
+      return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition();
     }
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition.ID.equals(id)) {
       String fqn = condition.getAttributeValue(FQN_ATTR);

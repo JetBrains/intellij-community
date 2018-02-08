@@ -154,6 +154,66 @@ public interface JavaPostfixTemplateExpressionCondition extends Condition<PsiExp
     }
   }
 
+  class JavaPostfixTemplateNumberExpressionCondition implements JavaPostfixTemplateExpressionCondition {
+    public static final String ID = "number";
+
+    @Override
+    public boolean value(PsiExpression element) {
+      return JavaPostfixTemplatesUtils.isNumber(element.getType());
+    }
+
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @Override
+    public String getPresentableName() {
+      return "number";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+  }
+
+  class JavaPostfixTemplateNotPrimitiveTypeExpressionCondition implements JavaPostfixTemplateExpressionCondition {
+    public static final String ID = "notPrimitive";
+
+    @Override
+    public boolean value(PsiExpression element) {
+      return JavaPostfixTemplatesUtils.isNotPrimitiveTypeExpression(element);
+    }
+
+    @Override
+    public String getId() {
+      return ID;
+    }
+
+    @Override
+    public String getPresentableName() {
+      return "not primitive type";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+  }
+
   class JavaPostfixTemplateArrayExpressionCondition implements JavaPostfixTemplateExpressionCondition {
     public static final String ID = "array";
 

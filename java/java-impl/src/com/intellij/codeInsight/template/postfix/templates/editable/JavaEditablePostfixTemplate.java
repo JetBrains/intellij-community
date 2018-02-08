@@ -9,6 +9,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
@@ -30,12 +31,13 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   private final boolean myUseTopmostExpression;
 
   public JavaEditablePostfixTemplate(@NotNull String templateKey,
+                                     @NotNull String templateText,
+                                     @NotNull String example,
                                      @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
-                                     @NotNull String templateText,
                                      @NotNull PostfixEditableTemplateProvider provider) {
-    super(templateKey, templateText, provider);
+    super(templateKey, templateText, example, provider);
     myExpressionConditions = expressionConditions;
     myMinimumLanguageLevel = minimumLanguageLevel;
     myUseTopmostExpression = useTopmostExpression;
@@ -102,6 +104,9 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
   @NotNull
   @Override
   protected PsiElement getElementToRemove(@NotNull PsiElement element) {
+    if (element instanceof PsiLiteralExpression) {
+      return element;
+    }
     return ObjectUtils.notNull(element.getParent(), element);
   }
 

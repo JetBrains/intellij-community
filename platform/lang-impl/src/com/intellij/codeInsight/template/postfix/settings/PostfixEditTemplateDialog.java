@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.List;
 
 public class PostfixEditTemplateDialog extends DialogWrapper {
   private final JBTextField myKeyTextField;
@@ -33,9 +36,17 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
     myKeyTextField = new JBTextField(initialKey);
     myKeyTextField.setEditable(template == null || !template.isBuiltin());
     setTitle(template != null ? "Edit '" + initialKey + "' template" : "Create new " + provider.getName() + " template");
-    // todo: validate key 
-    // todo: validate key duplicates 
     init();
+  }
+
+  @NotNull
+  @Override
+  protected List<ValidationInfo> doValidateAll() {
+    String templateKey = myKeyTextField.getText();
+    if (!StringUtil.isJavaIdentifier(templateKey)) {
+      return Collections.singletonList(new ValidationInfo("Template key must be identifier", myKeyTextField));
+    }
+    return super.doValidateAll();
   }
 
   @NotNull

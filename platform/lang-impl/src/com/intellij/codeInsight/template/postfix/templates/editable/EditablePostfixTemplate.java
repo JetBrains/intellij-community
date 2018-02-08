@@ -28,8 +28,11 @@ import java.util.Objects;
 public abstract class EditablePostfixTemplate extends PostfixTemplate {
   @NotNull private final String myTemplateText;
 
-  public EditablePostfixTemplate(@NotNull String key, @NotNull String templateText, @NotNull PostfixEditableTemplateProvider provider) {
-    super(key, "", provider);
+  public EditablePostfixTemplate(@NotNull String key,
+                                 @NotNull String templateText,
+                                 @NotNull String example,
+                                 @NotNull PostfixEditableTemplateProvider provider) {
+    super(key, example, provider);
     myTemplateText = templateText;
   }
 
@@ -92,7 +95,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     return !getExpressions(context, copyDocument, newOffset).isEmpty();
   }
 
-  protected void addTemplateVariable(@NotNull PsiElement element, @NotNull Template template) {
+  protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
   }
 
   @NotNull
@@ -120,7 +123,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
 
     Template template = createTemplate(manager, myTemplateText);
     template.addVariable("EXPR", new TextExpression(element.getText()), false);
-    addTemplateVariable(element, template);
+    addTemplateVariables(element, template);
     manager.startTemplate(editor, template);
   }
 

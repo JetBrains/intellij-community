@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -13,11 +13,6 @@ public class JavaPostfixTemplateProviderImpl extends JavaPostfixTemplateProvider
   public JavaPostfixTemplateProviderImpl() {
     templates = ContainerUtil.newHashSet(new CastExpressionPostfixTemplate(),
                                          new ElseStatementPostfixTemplate(),
-                                         new ForAscendingPostfixTemplate(),
-                                         new ForDescendingPostfixTemplate(),
-                                         new ForeachPostfixTemplate("iter"),
-                                         new ForeachPostfixTemplate("for"),
-                                         new FormatPostfixTemplate(),
                                          new IfStatementPostfixTemplate(),
                                          new InstanceofExpressionPostfixTemplate(),
                                          new InstanceofExpressionPostfixTemplate("inst"),
@@ -29,18 +24,10 @@ public class JavaPostfixTemplateProviderImpl extends JavaPostfixTemplateProvider
                                          new NotNullCheckPostfixTemplate(),
                                          new NotNullCheckPostfixTemplate("nn"),
                                          new ParenthesizedExpressionPostfixTemplate(),
-                                         new ReturnStatementPostfixTemplate(),
-                                         new SoutPostfixTemplate(),
                                          new SwitchStatementPostfixTemplate(),
-                                         new SynchronizedStatementPostfixTemplate(),
-                                         new ThrowExceptionPostfixTemplate(),
                                          new TryStatementPostfixTemplate(),
                                          new TryWithResourcesPostfixTemplate(),
-                                         new WhileStatementPostfixTemplate(),
-                                         new StreamPostfixTemplate(),
-                                         new OptionalPostfixTemplate(),
-                                         new LambdaPostfixTemplate(),
-                                         new ObjectsRequireNonNullPostfixTemplate());
+                                         new StreamPostfixTemplate());
   }
 
   @NotNull
