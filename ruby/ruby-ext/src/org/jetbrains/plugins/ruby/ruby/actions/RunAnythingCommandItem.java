@@ -157,17 +157,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     if (SystemInfoRt.isWindows) return ContainerUtil.immutableList(ExecUtil.getWindowsShellName(), "/c");
 
     String shell = System.getenv("SHELL");
-    if (shell == null || !new File(shell).canExecute()) {
-      return ContainerUtil.emptyList();
-    }
-    else {
-      List<String> shellCommands = ContainerUtil.newArrayList(shell);
-      if ("/bin/bash".equals(shell)) {
-        shellCommands.add("--login");
-      }
-      shellCommands.add("-c");
-      return shellCommands;
-    }
+    return shell == null || !new File(shell).canExecute() ? ContainerUtil.emptyList() : ContainerUtil.immutableList(shell, "-c");
   }
 
   private static String getRubyAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env, @NotNull String commandLine) {
