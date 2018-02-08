@@ -115,10 +115,14 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
   private void processHeadCommentsAndWhiteSpaces(@NotNull List<Block> result) {
     while (myCurrentChild != null) {
       if (StdTokenSets.COMMENT_BIT_SET.contains(myCurrentChild.getElementType()) || myCurrentChild.getElementType() == JavaDocElementType.DOC_COMMENT) {
+        Wrap wrap = myNode.getElementType() == JavaElementType.ENUM_CONSTANT
+                    && myCurrentChild.textContains('\n')
+                    ? Wrap.createWrap(WrapType.ALWAYS, true)
+                    : null;
         Block commentBlock = createJavaBlock(
           myCurrentChild,
           mySettings, myJavaSettings,
-          Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()
+          Indent.getNoneIndent(), wrap, AlignmentStrategy.getNullStrategy()
         );
         result.add(commentBlock);
         myCurrentIndent = Indent.getNoneIndent();

@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.LineReader;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +128,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     }
   }
 
-  public void doTextTest(@NotNull  String text, @NotNull String textAfter) throws IncorrectOperationException {
+  public void doTextTest(@Language("Java") @NotNull  String text, @Language("Java") @NotNull String textAfter) throws IncorrectOperationException {
     doTextTest(REFORMAT, text, textAfter);
   }
 

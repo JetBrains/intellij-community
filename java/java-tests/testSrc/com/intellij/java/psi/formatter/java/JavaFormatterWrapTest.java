@@ -142,6 +142,27 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testEnumConstantsMixedWithCommentsWrapping() {
+    // IDEA-180049
+    getSettings().RIGHT_MARGIN = 80;
+
+    // Expect comments to be wrapped
+    doTextTest(
+      "public enum FormatTest {\n" +
+      "    FOO, /**\n" +
+      "    * some description\n" +
+      "    */ BAR, BAZ;\n" +
+      "}",
+      "public enum FormatTest {\n" +
+      "    FOO,\n" +
+      "    /**\n" +
+      "     * some description\n" +
+      "     */\n" +
+      "    BAR, BAZ;\n" +
+      "}"
+    );
+  }
+
   public void testIDEA123074() {
     getSettings().CALL_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     String before = "final GeoZone geoZone1 = new GeoZone(APPROACHING, new Polygon(point(\"0.0\", \"0.0\"), point(\"10.0\", \"0.0\")," +
