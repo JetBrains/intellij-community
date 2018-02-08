@@ -71,6 +71,8 @@ public class VcsOptionsUsagesCollector extends AbstractProjectsUsagesCollector {
     usages.add(getBooleanUsage("include.text.into.shelf", configuration.INCLUDE_TEXT_INTO_SHELF));
     usages.add(getBooleanUsage("check.conflicts.in.background", configuration.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND));
 
+    usages.add(getBooleanUsage("enable.partial.changelists", configuration.ENABLE_PARTIAL_CHANGELISTS));
+
     return usages;
   }
 }

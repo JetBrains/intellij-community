@@ -438,6 +438,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   @Override
   public boolean arePartialChangelistsSupported() {
-    return Registry.is("vcs.enable.partial.changelists");
+    return true;
   }
 }
