@@ -93,3 +93,22 @@ class T1 {
     (<error descr="Expression expected">)</error>++;
   }
 }
+class T3 {
+  private final boolean b;
+  {
+    assert false : "" + (b = true); // if assignment reachable, assert will not complete normally
+    b = true; // compiles
+    System.out.println(b);
+  }
+}
+class T3a {
+  private final boolean b;
+  {
+    try {
+      assert false : "" + (b = true);
+    }
+    catch(IllegalArgumentException t) {}
+    <error descr="Variable 'b' might already have been assigned to">b</error> = true; // red
+    System.out.println(b);
+  }
+}
