@@ -65,6 +65,11 @@ public class PyAbstractClassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26628
+  public void testTypingProtocolSubclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

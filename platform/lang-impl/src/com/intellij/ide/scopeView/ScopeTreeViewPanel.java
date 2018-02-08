@@ -83,11 +83,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
@@ -482,7 +479,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   private class MyTreeCellRenderer extends ColoredTreeCellRenderer {
 
-    private WolfTheProblemSolver myWolfTheProblemSolver = WolfTheProblemSolver.getInstance(myProject);
+    private final WolfTheProblemSolver myWolfTheProblemSolver = WolfTheProblemSolver.getInstance(myProject);
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree,

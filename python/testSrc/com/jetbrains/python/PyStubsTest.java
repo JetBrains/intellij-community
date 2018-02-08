@@ -24,10 +24,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
-import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -969,6 +966,29 @@ public class PyStubsTest extends PyTestCase {
         assertNotParsed(file1);
         assertNotParsed(file2);
         assertNotParsed(file3);
+      }
+    );
+  }
+
+  // PY-27398
+  public void testTypingNewType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final PyFile file = getTestFile("typingNewType/new_type.py");
+
+        final PyTargetExpression type = file.findTopLevelAttribute("UserId");
+        final PyTypingNewTypeStub stub = type.getStub().getCustomStub(PyTypingNewTypeStub.class);
+
+        assertNotNull(stub);
+        assertTrue("UserId".equals(stub.getName()));
+        assertTrue("int".equals(stub.getClassType()));
+
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+        final PyType typeDef = context.getType(type);
+
+        assertTrue(typeDef instanceof PyTypingNewType);
+        assertNotParsed(file);
       }
     );
   }

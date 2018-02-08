@@ -844,10 +844,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
     @NotNull private final GitVcs myVcs;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
-    @NotNull private JPanel myPanel;
+    @NotNull private final JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
     @Nullable private Date myAuthorDate;
-    @NotNull private AmendComponent myAmendComponent;
+    @NotNull private final AmendComponent myAmendComponent;
     @NotNull private final JCheckBox mySignOffCheckbox;
     @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
     @Nullable private Balloon myAuthorBalloon;

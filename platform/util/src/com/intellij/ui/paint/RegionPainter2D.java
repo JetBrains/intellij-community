@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 
 /**
  * A {@code double} version of RegionPainter.
@@ -41,6 +42,16 @@ public interface RegionPainter2D<T> {
    */
   void paint(@NotNull Graphics2D g,
              double x, double y, double width, double height,
+             @Nullable T object,
+             @NotNull StrokeType strokeType,
+             double strokeWidth,
+             @NotNull Object valueAA);
+
+  /**
+   * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
+   */
+  void paint(@NotNull final Graphics2D g,
+             Rectangle2D rect,
              @Nullable T object,
              @NotNull StrokeType strokeType,
              double strokeWidth,

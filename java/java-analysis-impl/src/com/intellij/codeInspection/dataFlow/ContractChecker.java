@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -115,7 +116,7 @@ class ContractChecker extends DataFlowRunner {
 
   private static boolean weCannotInferAnythingAboutMethodReturnValue(MethodCallInstruction instruction) {
     PsiMethod target = instruction.getTargetMethod();
-    return instruction.getContracts().isEmpty() && target != null && !target.isConstructor();
+    return instruction.getContracts().isEmpty() && target != null && !target.isConstructor() && !NullableNotNullManager.isNotNull(target);
   }
 
   @NotNull

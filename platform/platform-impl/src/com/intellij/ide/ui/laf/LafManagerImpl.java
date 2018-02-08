@@ -907,7 +907,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static class DefaultMenuArrowIcon extends MenuArrowIcon {
-    private static boolean invert = UIUtil.isUnderDarcula();
+    private static final boolean invert = UIUtil.isUnderDarcula();
     private DefaultMenuArrowIcon(Icon icon) {
       super(invert ? IconUtil.brighter(icon, 2) : IconUtil.darker(icon, 2),
             IconUtil.brighter(icon, 8),

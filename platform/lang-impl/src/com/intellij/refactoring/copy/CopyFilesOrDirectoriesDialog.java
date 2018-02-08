@@ -82,7 +82,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
 
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
-  private JCheckBox myOpenFilesInEditor = createOpenInEditorCB();
+  private final JCheckBox myOpenFilesInEditor = createOpenInEditorCB();
   private boolean myUnknownFileType = false;
 
   private JTextField myNewNameField;

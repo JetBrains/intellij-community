@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.JBUI.ScaleType;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +51,12 @@ public class PaintUtil {
      */
     public static ParityMode of(int value) {
       return value % 2 == 0 ? EVEN : ODD;
+    }
+    /**
+     * Returns inverted parity mode.
+     */
+    public static ParityMode invert(ParityMode pm) {
+      return pm == EVEN ? ODD : EVEN;
     }
   }
 
@@ -141,6 +148,16 @@ public class PaintUtil {
            (int)Math.ceil(usrValue * scale);
   }
 
+  /**
+   * Returns one device pixel converted to the user space.
+   *
+   * @param g the graphics
+   * @return one device pixel in user space
+   */
+  public static double devPixel(Graphics2D g) {
+    return 1 / devValue(1, g);
+  }
+
   private static double getScale(ScaleContext ctx) {
     // exclude the user scale, unless it's zero
     return ctx.getScale(USR_SCALE) == 0 ? 0 : ctx.getScale(PIX_SCALE) / ctx.getScale(USR_SCALE);
@@ -172,7 +189,7 @@ public class PaintUtil {
       }
     }
     catch (Exception e) {
-      e.printStackTrace();
+      Logger.getInstance("#com.intellij.ui.paint.PaintUtil").error(e);
     }
     return null;
   }

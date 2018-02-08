@@ -37,7 +37,7 @@ public class CloudGitChooseAccountStepBase extends ModuleWizardStep {
   private JPanel myMainPanel;
   private JLabel myTitleLabel;
 
-  private CloudAccountSelectionEditor myEditor;
+  private final CloudAccountSelectionEditor myEditor;
 
   private final CloudGitDeploymentDetector myDeploymentDetector;
   private final WizardContext myContext;

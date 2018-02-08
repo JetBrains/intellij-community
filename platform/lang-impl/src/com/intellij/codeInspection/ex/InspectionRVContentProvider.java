@@ -397,13 +397,12 @@ public abstract class InspectionRVContentProvider {
               finalContainer.areEqual(object, userObject)) {
             if (firstLevel.get()) {
               result.set(refElementNode);
-              return false;
             }
             else {
               refElementNode.insertByOrder(finalPrevNode, false);
               result.set(nodeToBeAdded);
-              return false;
             }
+            return false;
           }
         }
         return true;
@@ -515,7 +514,7 @@ public abstract class InspectionRVContentProvider {
         }
       }
     }
-    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
   }
 
   private static Class getFixClass(QuickFix fix) {

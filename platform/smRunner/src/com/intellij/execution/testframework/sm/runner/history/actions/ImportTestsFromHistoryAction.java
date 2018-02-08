@@ -34,7 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
-  private String myFileName;
+  private final String myFileName;
   
   public ImportTestsFromHistoryAction(@Nullable SMTRunnerConsoleProperties properties, Project project, String name) {
     super(properties, StringUtil.escapeMnemonics(getPresentableText(project, name)), getPresentableText(project, name), getIcon(project, name));

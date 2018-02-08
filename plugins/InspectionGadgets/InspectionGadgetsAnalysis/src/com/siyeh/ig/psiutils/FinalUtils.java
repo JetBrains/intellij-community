@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2015 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class FinalUtils {
       return !VariableAccessUtils.variableIsAssigned(variable);
     }
     final FinalDefiniteAssignment definiteAssignment = new FinalDefiniteAssignment(variable);
-    DefiniteAssignmentUtil.checkVariable(variable, definiteAssignment);
+    DefiniteAssignmentUtil.checkVariable(definiteAssignment);
     return definiteAssignment.isDefinitelyAssigned() &&
            !definiteAssignment.isDefinitelyUnassigned() && // spec?
            definiteAssignment.canBeFinal() &&

@@ -26,7 +26,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import org.jetbrains.annotations.NotNull;
 
 public class PyConsoleStartFolding implements ConsoleCommunicationListener, FoldingListener, DocumentListener {
-  private PythonConsoleView myConsoleView;
+  private final PythonConsoleView myConsoleView;
   private int myNumberOfCommandExecuted = 0;
   private int myNumberOfCommandToStop = 2;
   private boolean doNotAddFoldingAgain = false;

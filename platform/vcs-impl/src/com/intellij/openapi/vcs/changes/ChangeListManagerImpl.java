@@ -152,8 +152,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
-    if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
-
     invokeAfterUpdate(() -> {
       LocalChangeList actualList = getChangeList(oldList.getId());
       if (actualList == null || actualList.isDefault() || !actualList.getChanges().isEmpty()) {

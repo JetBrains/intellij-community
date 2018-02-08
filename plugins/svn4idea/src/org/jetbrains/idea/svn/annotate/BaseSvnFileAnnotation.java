@@ -92,7 +92,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   };
 
   private final SvnConfiguration myConfiguration;
-  private boolean myShowMergeSources;
+  private final boolean myShowMergeSources;
   // null if full annotation
   private SvnRevisionNumber myFirstRevisionNumber;
 

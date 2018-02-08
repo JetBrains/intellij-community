@@ -81,7 +81,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   // it is *not* final so that it can be changed in debug time. if set to false, caching is off
   @SuppressWarnings("FieldCanBeLocal")
-  private static boolean USE_CACHE = true;
+  private static final boolean USE_CACHE = true;
 
   /**
    * Resolves reference to possible referred elements.
@@ -218,7 +218,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolveResult;
   }
 
-  private static boolean isInOwnScopeComprehension(PsiElement uexpr) {
+  private boolean isInOwnScopeComprehension(PsiElement uexpr) {
+    if (!myContext.getTypeEvalContext().maySwitchToAST(uexpr)) {
+      return false;
+    }
     PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
     return comprehensionElement != null && PyUtil.isOwnScopeComprehension(comprehensionElement);
   }
@@ -368,13 +371,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolved == referenceOwner && referenceOwner instanceof PyClass && !PyiUtil.isInsideStubAnnotation(myElement);
   }
 
-  private static boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
-    for (PsiElement element : elements) {
-      if (!isInOwnScopeComprehension(element)) {
-        return false;
-      }
-    }
-    return true;
+  private boolean allInOwnScopeComprehensions(@NotNull Collection<PsiElement> elements) {
+    return StreamEx.of(elements).allMatch(this::isInOwnScopeComprehension);
   }
 
   private static boolean allowsForwardOutgoingReferencesInClass(@NotNull PyQualifiedExpression element) {
@@ -790,7 +788,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   private static class CachingResolver implements ResolveCache.PolyVariantResolver<PyReferenceImpl> {
     public static CachingResolver INSTANCE = new CachingResolver();
-    private ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
+    private final ThreadLocal<AtomicInteger> myNesting = new ThreadLocal<AtomicInteger>() {
       @Override
       protected AtomicInteger initialValue() {
         return new AtomicInteger();

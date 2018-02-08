@@ -30,7 +30,7 @@ public interface JqlTerminalClause extends JqlClause {
     WAS_NOT_IN(true),
     CHANGED(false);
 
-    private boolean myListOperator;
+    private final boolean myListOperator;
 
     Type(boolean listOperator) {
       myListOperator = listOperator;

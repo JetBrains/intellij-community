@@ -1056,9 +1056,16 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     return myUnloadedModules.get(moduleName);
   }
 
+  @NotNull
+  @Override
+  public ModuleGrouper getModuleGrouper(@Nullable ModifiableModuleModel model) {
+    return ModuleGroupersKt.createGrouper(myProject, model);
+  }
+
   @Override
   public void setUnloadedModules(@NotNull List<String> unloadedModuleNames) {
-    if (myUnloadedModules.keySet().equals(unloadedModuleNames)) {
+    if (myUnloadedModules.keySet().equals(new HashSet<>(unloadedModuleNames))) {
+      //optimization
       return;
     }
 

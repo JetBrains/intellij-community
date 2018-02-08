@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.Side
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
@@ -32,7 +32,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
@@ -41,8 +42,10 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.labels.ActionGroupLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
@@ -52,7 +55,6 @@ import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.collections.HashSet
 
@@ -74,7 +76,8 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
   private var hasUndoInCommand: Boolean = false
-  private var undoModificationStamp: Int = 0
+
+  private val undoableActions: WeakList<MyUndoableAction> = WeakList()
 
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
@@ -83,10 +86,9 @@ class PartialLocalLineStatusTracker(project: Project,
     val connection = application.messageBus.connect(disposable)
     connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
-    if (Registry.`is`("vcs.enable.partial.changelists.undo")) {
-      document.addDocumentListener(MyUndoDocumentListener(), disposable)
-      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
-    }
+    document.addDocumentListener(MyUndoDocumentListener(), disposable)
+    CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+    Disposer.register(disposable, Disposable { dropExistingUndoActions() })
 
     assert(blocks.isEmpty())
   }
@@ -140,6 +142,7 @@ class PartialLocalLineStatusTracker(project: Project,
     currentMarker = if (changelistId != null) ChangeListMarker(changelistId) else null
     try {
       setBaseRevision(vcsContent)
+      dropExistingUndoActions()
     }
     finally {
       currentMarker = null
@@ -201,7 +204,7 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    undoModificationStamp++
+    dropExistingUndoActions()
     updateAffectedChangeLists(false) // no need to notify CLM, as we're inside it's action
 
     for (block in affectedBlocks) {
@@ -230,11 +233,19 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  private fun registerUndoAction(undo: Boolean) {
-    val undoState = documentTracker.readLock {
-      blocks.map { RangeState(it.range, it.marker.changelistId) }
+  private fun dropExistingUndoActions() {
+    val actions = undoableActions.copyAndClear()
+    for (action in actions) {
+      action.drop()
     }
-    undoManager.undoableActionPerformed(MyUndoableAction(project, document, undoModificationStamp, undoState, undo))
+  }
+
+  @CalledInAwt
+  private fun registerUndoAction(undo: Boolean) {
+    val undoState = collectRangeStates()
+    val action = MyUndoableAction(project, document, undoState, undo)
+    undoManager.undoableActionPerformed(action)
+    undoableActions.add(action)
   }
 
   private inner class MyBatchFileChangeListener : BatchFileChangeListener {
@@ -406,112 +417,170 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    override fun createAdditionalInfoPanel(editor: Editor, range: Range): JComponent? {
+    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?): JComponent? {
       if (range !is LocalRange) return null
 
-      val list = ChangeListManager.getInstance(tracker.project).getChangeList(range.changelistId) ?: return null
+      val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
+      val rangeList = changeLists.find { it.id == range.changelistId } ?: return null
+
+      val group = DefaultActionGroup()
+      if (changeLists.size > 1) {
+        group.add(Separator("Changelists"))
+        val comparator = compareBy<LocalChangeList> { if (it.isDefault) 0 else 1 }.thenBy { it.name }
+        for (changeList in changeLists.sortedWith(comparator)) {
+          if (changeList == rangeList) continue
+          group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
+        }
+        group.add(Separator.getInstance())
+      }
+      group.add(MoveToAnotherChangeListAction(editor, range, mousePosition))
+
+
+      val link = ActionGroupLink(rangeList.name, null, group)
 
       val panel = JPanel(BorderLayout())
-      panel.add(JLabel(list.name), BorderLayout.CENTER)
-      panel.border = JBUI.Borders.emptyLeft(5)
+      panel.add(link, BorderLayout.CENTER)
+      panel.border = JBUI.Borders.emptyLeft(7)
       panel.isOpaque = false
       return panel
     }
 
-    override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
-      val actions = ArrayList<AnAction>()
-      actions.addAll(super.createToolbarActions(editor, range, mousePosition))
-      actions.add(SetChangeListAction(editor, range, mousePosition))
-      return actions
-    }
+    private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
+      : RangeMarkerAction(editor, range, null) {
+      init {
+        templatePresentation.text = "New..."
+      }
 
-    private inner class SetChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
-      : RangeMarkerAction(editor, range, IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST) {
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(editor: Editor, range: Range) {
         MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
-
-        val newRange = tracker.findRange(range)
-        if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
+        reopenRange(editor, range, mousePosition)
       }
+    }
+
+    private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
+      : RangeMarkerAction(editor, range, null) {
+      init {
+        templatePresentation.text = StringUtil.trimMiddle(changelist.name, 60)
+      }
+
+      override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        tracker.moveToChangelist(range, changelist)
+        reopenRange(editor, range, mousePosition)
+      }
+    }
+
+    private fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
+      val newRange = tracker.findRange(range)
+      if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
     }
   }
 
 
   @CalledInAwt
   fun moveToChangelist(range: Range, changelist: LocalChangeList) {
-    documentTracker.writeLock {
-      val block = findBlock(range)
-      if (block != null) moveToChangelist(listOf(block), changelist)
+    val newRange = findBlock(range)
+    if (newRange != null) {
+      moveToChangelist({ it == newRange }, changelist)
     }
   }
 
   @CalledInAwt
   fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
-    documentTracker.writeLock {
-      moveToChangelist(blocks.filter { it.isSelectedByLine(lines) }, changelist)
-    }
+    moveToChangelist({ it.isSelectedByLine(lines) }, changelist)
   }
 
   @CalledInAwt
-  private fun moveToChangelist(blocks: List<Block>, changelist: LocalChangeList) {
-    val newMarker = ChangeListMarker(changelist)
-    for (block in blocks) {
-      if (block.marker != newMarker) {
-        block.marker = newMarker
-        updateHighlighter(block)
+  private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
+    changeListManager.executeUnderDataLock {
+      if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
+      val newMarker = ChangeListMarker(changelist)
+
+      documentTracker.writeLock {
+        for (block in blocks) {
+          if (condition(block) &&
+              block.marker != newMarker) {
+            block.marker = newMarker
+            updateHighlighter(block)
+          }
+        }
+
+        dropExistingUndoActions()
+        updateAffectedChangeLists()
       }
     }
-
-    undoModificationStamp++
-    updateAffectedChangeLists()
   }
 
 
   @CalledInAwt
-  fun storeTrackerState(): State {
+  internal fun storeTrackerState(): FullState {
     return documentTracker.readLock {
       val vcsContent = documentTracker.getContent(Side.LEFT)
       val currentContent = documentTracker.getContent(Side.RIGHT)
 
-      val rangeStates = blocks.map { RangeState(it.range, it.marker.changelistId) }
+      val rangeStates = collectRangeStates()
 
-      State(virtualFile, vcsContent.toString(), currentContent.toString(), rangeStates)
+      FullState(virtualFile, rangeStates, vcsContent.toString(), currentContent.toString())
     }
   }
 
-  private fun restoreState(state: State) {
+  @CalledInAwt
+  internal fun restoreState(state: State): Boolean {
+    if (state is FullState) {
+      return restoreFullState(state)
+    }
+    else {
+      return restoreState(state.ranges)
+    }
+  }
+
+  @CalledInAwt
+  private fun collectRangeStates(): List<RangeState> {
+    return documentTracker.readLock {
+      blocks.map { RangeState(it.range, it.marker.changelistId) }
+    }
+  }
+
+  private fun restoreFullState(state: FullState): Boolean {
+    var success = false
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
       changeListManager.executeUnderDataLock {
         documentTracker.writeLock {
-          val success = documentTracker.setFrozenState(state.vcsContent, state.currentContent, state.ranges.map { it.range })
+          success = documentTracker.setFrozenState(state.vcsContent, state.currentContent, state.ranges.map { it.range })
           if (success) {
             restoreChangelistsState(state.ranges)
           }
         }
       }
 
-      updateDocument(Side.LEFT) {
-        vcsDocument.setText(state.vcsContent)
+      if (success) {
+        updateDocument(Side.LEFT) {
+          vcsDocument.setText(state.vcsContent)
+        }
       }
     }
+    return success
   }
 
   @CalledInAwt
-  internal fun restoreState(states: List<RangeState>) {
+  private fun restoreState(states: List<RangeState>): Boolean {
+    var success = false
     documentTracker.doFrozen {
       // ensure that changelist can't disappear in the middle of operation
       changeListManager.executeUnderDataLock {
         documentTracker.writeLock {
-          val success = documentTracker.setFrozenState(states.map { it.range })
+          success = documentTracker.setFrozenState(states.map { it.range })
           if (success) {
             restoreChangelistsState(states)
           }
         }
       }
     }
+    return success
   }
 
   private fun restoreChangelistsState(states: List<RangeState>) {
@@ -531,11 +600,14 @@ class PartialLocalLineStatusTracker(project: Project,
   private class MyUndoableAction(
     project: Project,
     document: Document,
-    val undoModificationStamp: Int,
-    val states: List<RangeState>,
+    var states: List<RangeState>?,
     val undo: Boolean
   ) : BasicUndoableAction(document) {
     val projectRef: WeakReference<Project> = WeakReference(project)
+
+    fun drop() {
+      states = null
+    }
 
     override fun undo() {
       if (undo) restore()
@@ -548,11 +620,11 @@ class PartialLocalLineStatusTracker(project: Project,
     private fun restore() {
       val document = affectedDocuments!!.single().document
       val project = projectRef.get()
-      if (document != null && project != null) {
+      val rangeStates = states
+      if (document != null && project != null && rangeStates != null) {
         val tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
-        if (tracker is PartialLocalLineStatusTracker &&
-            tracker.undoModificationStamp == undoModificationStamp) {
-          tracker.restoreState(states)
+        if (tracker is PartialLocalLineStatusTracker) {
+          tracker.restoreState(rangeStates)
         }
       }
     }
@@ -576,14 +648,18 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  class State(
+  internal class FullState(virtualFile: VirtualFile,
+                           ranges: List<RangeState>,
+                           val vcsContent: String,
+                           val currentContent: String)
+    : State(virtualFile, ranges)
+
+  internal open class State(
     val virtualFile: VirtualFile,
-    val vcsContent: String,
-    val currentContent: String,
     val ranges: List<RangeState>
   )
 
-  class RangeState(
+  internal class RangeState(
     val range: com.intellij.diff.util.Range,
     val changelistId: String
   )
@@ -614,18 +690,6 @@ class PartialLocalLineStatusTracker(project: Project,
                       virtualFile: VirtualFile,
                       mode: Mode): PartialLocalLineStatusTracker {
       return PartialLocalLineStatusTracker(project, document, virtualFile, mode)
-    }
-
-    @JvmStatic
-    @CalledInAwt
-    fun createTracker(project: Project,
-                      document: Document,
-                      virtualFile: VirtualFile,
-                      mode: Mode,
-                      state: State): PartialLocalLineStatusTracker {
-      val tracker = createTracker(project, document, virtualFile, mode)
-      tracker.restoreState(state)
-      return tracker
     }
 
     @JvmStatic

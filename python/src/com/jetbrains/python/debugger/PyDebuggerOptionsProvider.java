@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
   }
 )
 public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDebuggerOptionsProvider.State> {
-  private State myState = new State();
+  private final State myState = new State();
 
   @NotNull
   private final Project myProject;

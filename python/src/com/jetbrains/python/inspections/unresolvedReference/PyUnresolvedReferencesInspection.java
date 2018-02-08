@@ -127,9 +127,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
   public static class Visitor extends PyInspectionVisitor {
 
-    private Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
-    private Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
-    private Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
+    private final Set<PyImportedNameDefiner> myImportsInsideGuard = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
+    private final Set<PyImportedNameDefiner> myUsedImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
+    private final Set<PyImportedNameDefiner> myAllImports = Collections.synchronizedSet(new HashSet<PyImportedNameDefiner>());
     private final ImmutableSet<String> myIgnoredIdentifiers;
     private volatile Boolean myIsEnabled = null;
 

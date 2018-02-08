@@ -226,7 +226,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
 
       private void dispatch(KeyEvent e) {
-        if (KeyboardUtils.isUpDownKey(e.getKeyCode()) || KeyboardUtils.isEnterKey(e.getKeyCode())) {
+        final int keyCode = e.getKeyCode();
+        if (myTable.isInClickableMode() && (KeyboardUtils.isCharacter(keyCode) || KeyboardUtils.isEnterKey(keyCode))) {
+          myTable.exitClickableMode();
+          updateClassesAndCounts(true);
+        }
+        else if (KeyboardUtils.isUpDownKey(keyCode) || KeyboardUtils.isEnterKey(keyCode)) {
           myTable.dispatchEvent(e);
         }
       }
@@ -427,11 +432,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       handleTrackers();
 
-      final List<ReferenceType> classes = suspendContext.getDebugProcess().getVirtualMachineProxy().allClasses();
+      final VirtualMachineProxyImpl proxy = suspendContext.getDebugProcess().getVirtualMachineProxy();
+      final List<ReferenceType> classes = proxy.allClasses();
 
       if (!classes.isEmpty()) {
         final VirtualMachine vm = classes.get(0).virtualMachine();
-        if (vm.canGetInstanceInfo()) {
+        if (proxy.canGetInstanceInfo()) {
           final Map<ReferenceType, Long> counts = getInstancesCounts(classes, vm);
           ApplicationManager.getApplication().invokeLater(() -> myTable.updateContent(counts));
         }

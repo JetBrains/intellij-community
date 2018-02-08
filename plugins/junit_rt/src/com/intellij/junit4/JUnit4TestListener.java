@@ -35,15 +35,15 @@ public class JUnit4TestListener extends RunListener {
   public static final String EMPTY_SUITE_WARNING = "warning";
   public static final String CLASS_CONFIGURATION = "Class Configuration";
 
-  private List myStartedSuites = new ArrayList();
-  private Map   myParents = new HashMap();
-  private Map   myMethodNames = new HashMap();
+  private final List myStartedSuites = new ArrayList();
+  private final Map   myParents = new HashMap();
+  private final Map   myMethodNames = new HashMap();
   private final PrintStream myPrintStream;
   private String myRootName;
   private long myCurrentTestStart;
 
   private Description myCurrentTest;
-  private Map myWaitingQueue = new LinkedHashMap();
+  private final Map myWaitingQueue = new LinkedHashMap();
 
 
   public JUnit4TestListener() {

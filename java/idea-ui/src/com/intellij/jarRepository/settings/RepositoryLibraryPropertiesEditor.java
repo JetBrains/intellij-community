@@ -49,9 +49,9 @@ public class RepositoryLibraryPropertiesEditor {
   List<String> versions;
   @Nullable
   private VersionKind versionKind;
-  private RepositoryLibraryPropertiesModel initialModel;
-  private RepositoryLibraryPropertiesModel model;
-  private RepositoryLibraryDescription repositoryLibraryDescription;
+  private final RepositoryLibraryPropertiesModel initialModel;
+  private final RepositoryLibraryPropertiesModel model;
+  private final RepositoryLibraryDescription repositoryLibraryDescription;
   private ComboBox versionKindSelector;
   private ComboBox versionSelector;
   private JPanel mainPanel;
@@ -62,7 +62,7 @@ public class RepositoryLibraryPropertiesEditor {
   private JBCheckBox myIncludeTransitiveDepsCheckBox;
   private JPanel myPropertiesPanel;
 
-  @NotNull private ModelChangeListener onChangeListener;
+  @NotNull private final ModelChangeListener onChangeListener;
 
   public interface ModelChangeListener {
     void onChange(RepositoryLibraryPropertiesEditor editor);

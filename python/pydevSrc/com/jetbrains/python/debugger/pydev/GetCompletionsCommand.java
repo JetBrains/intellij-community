@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class GetCompletionsCommand extends AbstractFrameCommand {
 
-  private String myActionToken;
+  private final String myActionToken;
   private List<PydevCompletionVariant> myCompletions = null;
 
   public GetCompletionsCommand(final RemoteDebugger debugger,

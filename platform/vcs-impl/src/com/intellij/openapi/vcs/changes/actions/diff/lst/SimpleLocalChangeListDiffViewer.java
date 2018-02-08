@@ -14,12 +14,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange;
@@ -27,26 +32,35 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull private final String myChangelistId;
+  @NotNull private final String myChangelistName;
   @NotNull private final PartialLocalLineStatusTracker myTracker;
 
   public SimpleLocalChangeListDiffViewer(@NotNull DiffContext context,
                                          @NotNull LocalChangeListDiffRequest localRequest) {
     super(context, localRequest.getRequest());
     myChangelistId = localRequest.getChangelistId();
+    myChangelistName = localRequest.getChangelistName();
     myTracker = (PartialLocalLineStatusTracker)notNull(localRequest.getLineStatusTracker());
 
     myTracker.addListener(new MyTrackerListener(), this);
 
-    DiffUtil.registerAction(new MoveSelectedChangesToAnotherChangelistAction(true), myPanel);
+    DiffUtil.registerAction(new MoveSelectedChangesToAnotherChangelistAction(), myPanel);
+  }
+
+  @NotNull
+  @Override
+  public Project getProject() {
+    //noinspection ConstantConditions
+    return super.getProject();
   }
 
   @NotNull
@@ -54,7 +68,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   protected List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
 
-    group.add(new MoveSelectedChangesToAnotherChangelistAction(false));
+    group.add(new MoveSelectedChangesToAnotherChangelistAction());
 
     return group;
   }
@@ -166,36 +180,66 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
   }
 
-  private class MoveSelectedChangesToAnotherChangelistAction extends SelectedChangesActionBase {
-    public MoveSelectedChangesToAnotherChangelistAction(boolean shortcut) {
-      super(shortcut);
+  private class MoveSelectedChangesToAnotherChangelistAction extends DumbAwareAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      Side side = Side.fromValue(getEditors(), editor);
+      if (side == null) {
+        e.getPresentation().setEnabledAndVisible(false);
+        return;
+      }
+
+      List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
+
+      String text;
+      if (!selectedChanges.isEmpty() && ContainerUtil.and(selectedChanges, change -> change.isSkipped())) {
+        String shortChangeListName = StringUtil.trimMiddle(myChangelistName, 40);
+        text = String.format("Move to '%s' Changelist", shortChangeListName);
+      }
+      else {
+        text = ActionsBundle.message("action.ChangesView.Move.text");
+      }
+
+      e.getPresentation().setText(text);
+      e.getPresentation().setIcon(AllIcons.Actions.MoveToAnotherChangelist);
+
+      e.getPresentation().setVisible(true);
+      e.getPresentation().setEnabled(!selectedChanges.isEmpty());
     }
 
     @Override
-    protected boolean isVisible(@NotNull Side side) {
-      return true;
-    }
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
+      Side side = assertNotNull(Side.fromValue(getEditors(), editor));
+      List<SimpleDiffChange> selectedChanges = getSelectedChanges(side);
+      if (selectedChanges.isEmpty()) return;
 
-    @NotNull
-    @Override
-    protected String getText(@NotNull Side side) {
-      return ActionsBundle.actionText(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    }
-
-    @Nullable
-    @Override
-    protected Icon getIcon(@NotNull Side side) {
-      return AllIcons.Actions.MoveToAnotherChangelist;
-    }
-
-    @Override
-    protected void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes) {
       BitSet selectedLines = new BitSet();
-      for (SimpleDiffChange change : changes) {
+      for (SimpleDiffChange change : selectedChanges) {
         selectedLines.set(change.getStartLine(side), change.getEndLine(side));
       }
 
-      MoveChangesLineStatusAction.moveToAnotherChangelist(myTracker, selectedLines);
+      if (ContainerUtil.and(selectedChanges, change -> change.isSkipped())) {
+        LocalChangeList changeList = ChangeListManager.getInstance(getProject()).getChangeList(myChangelistId);
+        if (changeList != null) myTracker.moveToChangelist(selectedLines, changeList);
+      }
+      else {
+        MoveChangesLineStatusAction.moveToAnotherChangelist(myTracker, selectedLines);
+      }
+    }
+
+    @NotNull
+    private List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
+      EditorEx editor = getEditor(side);
+      BitSet lines = DiffUtil.getSelectedLines(editor);
+
+      return ContainerUtil.filter(getDiffChanges(), change -> {
+        int line1 = change.getStartLine(side);
+        int line2 = change.getEndLine(side);
+
+        return DiffUtil.isSelectedByLine(lines, line1, line2);
+      });
     }
   }
 

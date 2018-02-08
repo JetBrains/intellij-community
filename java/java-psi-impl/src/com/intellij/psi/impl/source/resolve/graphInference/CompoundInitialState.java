@@ -22,8 +22,8 @@ import com.intellij.psi.PsiSubstitutor;
 import java.util.Map;
 
 class CompoundInitialState {
-  private PsiSubstitutor myInitialSubstitutor;
-  private Map<PsiElement, InitialInferenceState> myInitialStates;
+  private final PsiSubstitutor myInitialSubstitutor;
+  private final Map<PsiElement, InitialInferenceState> myInitialStates;
 
   CompoundInitialState(PsiSubstitutor initialSubstitutor,
                        Map<PsiElement, InitialInferenceState> initialStates) {

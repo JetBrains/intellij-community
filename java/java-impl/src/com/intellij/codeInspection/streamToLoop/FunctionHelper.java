@@ -48,7 +48,7 @@ import java.util.function.Consumer;
 abstract class FunctionHelper {
   private static final Logger LOG = Logger.getInstance(FunctionHelper.class);
 
-  private PsiType myResultType;
+  private final PsiType myResultType;
 
   FunctionHelper(PsiType resultType) {
     myResultType = resultType;

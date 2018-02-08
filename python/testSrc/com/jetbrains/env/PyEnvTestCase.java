@@ -125,11 +125,6 @@ public abstract class PyEnvTestCase {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
   }
 
-  @Nullable
-  public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
-    return PyPackageUtil.findPackage(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false), "django");
-  }
-
   public static String norm(String testDataPath) {
     return FileUtil.toSystemIndependentName(testDataPath);
   }
@@ -306,7 +301,7 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
-  private Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public Disposable getTestRootDisposable() {
     return myDisposable;

@@ -17,7 +17,6 @@ package com.intellij.xml.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Dennis.Ushakov
  */
 public class EscapeEntitiesAction extends BaseCodeInsightAction implements CodeInsightActionHandler {
-  private static ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile> ESCAPES = new ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile>(
+  private static final ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile> ESCAPES = new ParameterizedCachedValueImpl<IntObjectHashMap<String>, PsiFile>(
     new ParameterizedCachedValueProvider<IntObjectHashMap<String>, PsiFile>() {
       @Nullable
       @Override

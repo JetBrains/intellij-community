@@ -47,8 +47,8 @@ public class ModuleDescriptor {
   );
 
   private boolean myReuseExistingElement;
-  private List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<>();
-  private ModuleType myModuleType;
+  private final List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<>();
+  private final ModuleType myModuleType;
 
   public ModuleDescriptor(final File contentRoot, final ModuleType moduleType, final Collection<? extends DetectedSourceRoot> sourceRoots) {
     myName = suggestModuleName(contentRoot);

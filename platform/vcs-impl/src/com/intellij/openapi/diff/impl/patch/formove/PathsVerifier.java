@@ -56,11 +56,11 @@ public class PathsVerifier {
   private final List<PatchAndFile> myTextPatches;
   private final List<PatchAndFile> myBinaryPatches;
   @NotNull private final List<VirtualFile> myWritableFiles;
-  private ProjectLevelVcsManager myVcsManager;
+  private final ProjectLevelVcsManager myVcsManager;
   private final List<FilePatch> mySkipped;
   private DelayedPrecheckContext myDelayedPrecheckContext;
-  private List<FilePath> myAddedPaths;
-  private List<FilePath> myDeletedPaths;
+  private final List<FilePath> myAddedPaths;
+  private final List<FilePath> myDeletedPaths;
   private boolean myIgnoreContentRootsCheck;
 
   public PathsVerifier(@NotNull Project project,

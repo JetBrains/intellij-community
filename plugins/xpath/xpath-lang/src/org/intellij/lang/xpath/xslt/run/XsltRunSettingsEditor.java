@@ -84,7 +84,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private TextFieldWithBrowseButton myOutputFile;
     private JCheckBox myOpenOutputFile;
     private JCheckBox myOpenInBrowser;
-    private JBTable myParameters;
+    private final JBTable myParameters;
 
     private ButtonGroup myOutputOptions;
     private JBRadioButton myShowInConsole;

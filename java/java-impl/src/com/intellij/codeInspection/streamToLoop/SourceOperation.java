@@ -203,7 +203,7 @@ abstract class SourceOperation extends Operation {
   }
 
   static class GenerateSource extends SourceOperation {
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
     private PsiExpression myLimit;
 
     GenerateSource(FunctionHelper fn, PsiExpression limit) {
@@ -252,7 +252,7 @@ abstract class SourceOperation extends Operation {
 
   static class IterateSource extends SourceOperation {
     private PsiExpression myInitializer;
-    private FunctionHelper myFn;
+    private final FunctionHelper myFn;
 
     IterateSource(PsiExpression initializer, FunctionHelper fn) {
       myInitializer = initializer;
@@ -288,7 +288,7 @@ abstract class SourceOperation extends Operation {
   static class RangeSource extends SourceOperation {
     private PsiExpression myOrigin;
     private PsiExpression myBound;
-    private boolean myInclusive;
+    private final boolean myInclusive;
 
     RangeSource(PsiExpression origin, PsiExpression bound, boolean inclusive) {
       myOrigin = origin;
@@ -333,7 +333,7 @@ abstract class SourceOperation extends Operation {
     private @NotNull PsiExpression myArray;
     private @NotNull PsiExpression myOrigin;
     private @NotNull PsiExpression myBound;
-    private @NotNull PsiType myArrayType;
+    private @NotNull final PsiType myArrayType;
 
     ArraySliceSource(@NotNull PsiExpression array, @NotNull PsiExpression origin, @NotNull PsiExpression bound) {
       myOrigin = origin;

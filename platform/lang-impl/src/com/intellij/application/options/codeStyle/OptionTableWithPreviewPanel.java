@@ -506,7 +506,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private Function<Integer,String> myDefaultValueRenderer;
+    @Nullable private final Function<Integer,String> myDefaultValueRenderer;
 
     public IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -834,8 +834,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private class MyValueEditor extends AbstractTableCellEditor {
     public static final String STOP_CELL_EDIT_ACTION_KEY = "stopEdit";
     private final JCheckBox myBooleanEditor = new JBCheckBox();
-    private JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
-    private IntegerField myIntOptionsEditor = new IntegerField();
+    private final JBComboBoxTableCellEditorComponent myOptionsEditor = new JBComboBoxTableCellEditorComponent();
+    private final IntegerField myIntOptionsEditor = new IntegerField();
     private JComponent myCurrentEditor = null;
     private MyTreeNode myCurrentNode = null;
     private final AbstractAction STOP_CELL_EDIT_ACTION = new AbstractAction() {

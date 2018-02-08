@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -128,14 +127,12 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     final Semaphore finished = new Semaphore();
 
     final List<Artifact> artifacts = new ArrayList<>();
-    new ReadAction() {
-      protected void run(@NotNull final Result result) {
-        List<ArtifactPointer> pointers = task.getArtifactPointers();
-        for (ArtifactPointer pointer : pointers) {
-          ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
-        }
+    ReadAction.run(() -> {
+      List<ArtifactPointer> pointers = task.getArtifactPointers();
+      for (ArtifactPointer pointer : pointers) {
+        ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
       }
-    }.execute();
+    });
 
     final ProjectTaskNotification callback = new ProjectTaskNotification() {
       @Override

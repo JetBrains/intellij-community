@@ -53,7 +53,7 @@ import java.util.*;
  */
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
-  private static boolean is4OorBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
+  private static final boolean is4OorBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
 
   private static final String SOURCE_SETS_PROPERTY = "sourceSets";
   private static final String TEST_SRC_DIRS_PROPERTY = "testSrcDirs";

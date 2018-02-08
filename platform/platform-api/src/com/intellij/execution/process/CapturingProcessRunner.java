@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public class CapturingProcessRunner {
-  @NotNull private ProcessOutput myOutput;
-  @NotNull private BaseProcessHandler myProcessHandler;
+  @NotNull private final ProcessOutput myOutput;
+  @NotNull private final BaseProcessHandler myProcessHandler;
   @NotNull private static final Logger LOG = Logger.getInstance(CapturingProcessRunner.class);
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler processHandler) {

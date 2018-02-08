@@ -31,12 +31,10 @@
       <interface-class>com.intellij.psi.RefResolveService</interface-class>
       <implementation-class>com.intellij.psi.refResolve.RefResolveServiceImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.codeInsight.hints.AnnotationHintsPassFactory</implementation-class>
+    </component>
   </project-components>
-
-  <actions>
-    <action id="MethodOverloadSwitchUp" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchUpAction"/>
-    <action id="MethodOverloadSwitchDown" class="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchDownAction" />
-  </actions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.methodImplementor"
@@ -410,6 +408,7 @@
                                  id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title"
                                  bundle="messages.JavadocBundle"/>
+    <editorAppearanceConfigurable instance="com.intellij.codeInsight.hints.AnnotationHintsConfigurable"/>
 
     <editorActionHandler action="PrevParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgPrevParameterHandler"/>
     <editorActionHandler action="NextParameter" implementationClass="com.intellij.codeInsight.editorActions.JavaVarArgNextParameterHandler"/>
@@ -894,6 +893,9 @@
 
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInComments" id="javaComments"/>
     <completion.confidence language="JAVA" implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings" id="javaSkipAutopopupInStrings"/>
+
+    <actionPromoter implementation="com.intellij.codeInsight.editorActions.JavaMethodOverloadSwitchActionPromoter"/>
+
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
       <category>Java/Control Flow</category>

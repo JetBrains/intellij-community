@@ -40,7 +40,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
 
   private final GroovyFile[] myFiles;
 
-  private BaseFix[] myFixes = {new EmptyFieldTypeFix(), new EmptyReturnTypeFix()};
+  private final BaseFix[] myFixes = {new EmptyFieldTypeFix(), new EmptyReturnTypeFix()};
 
   public ConvertToStaticProcessor(Project project, GroovyFile... files) {
     super(project);

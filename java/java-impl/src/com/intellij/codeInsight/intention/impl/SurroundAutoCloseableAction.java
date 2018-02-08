@@ -286,7 +286,7 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   }
 
   public static class Template implements SurroundDescriptor, Surrounder {
-    private Surrounder[] mySurrounders = {this};
+    private final Surrounder[] mySurrounders = {this};
 
     @NotNull
     @Override

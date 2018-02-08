@@ -20,6 +20,7 @@ import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
+import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.OptionalChooserComponent;
 import com.intellij.ui.components.JBCheckBox;
@@ -31,8 +32,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
 import static com.intellij.openapi.extensions.PluginId.getId;
@@ -53,12 +56,15 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JBLabel myAddDictionaryLabel;
   private JBCheckBox myUseSingleDictionary;
   private ComboBox<String> myDictionariesComboBox;
-  private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
+  private JPanel myAdvancedSettingsPanel;
+  private JPanel myAdvancedSettingsPlaceHolder;
+  private final OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
   private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
+  private final HideableDecorator decorator;
 
   public SpellCheckerSettingsPane(SpellCheckerSettings settings, final Project project) {
     this.settings = settings;
@@ -129,7 +135,9 @@ public class SpellCheckerSettingsPane implements Disposable {
     wordsPanel = new WordsPanel(manager);
     panelForAcceptedWords.setLayout(new BorderLayout());
     panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
-
+    decorator = new HideableDecorator(myAdvancedSettingsPlaceHolder, SpellCheckerBundle.message("advanced.settings"), false);
+    decorator.setContentComponent(myAdvancedSettingsPanel);
+    decorator.setOn(!settings.isDefaultAdvancedSettings());
   }
 
   private static String getHunspellDescription() {

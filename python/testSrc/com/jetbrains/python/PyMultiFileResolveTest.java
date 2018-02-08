@@ -533,4 +533,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     final PyType type = typeEvalContext.getType((PyTypedElement) resolved);
     assertInstanceOf(type, PyClassType.class);
   }
+
+  public void testImportAliasTargetReference() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
 }

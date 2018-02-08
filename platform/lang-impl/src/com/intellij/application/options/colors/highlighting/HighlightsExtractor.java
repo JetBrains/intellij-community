@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors.highlighting;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +17,7 @@ import java.util.Map;
 public class HighlightsExtractor {
   private final Map<String,TextAttributesKey> myTags;
   private final Map<String,TextAttributesKey> myInlineElements;
+  private final Map<String,ColorKey> myAdditionalColorKeyMap;
   private int myStartOffset;
   private int myEndOffset;
 
@@ -37,15 +25,17 @@ public class HighlightsExtractor {
   private int myIndex;
   private boolean myIsOpeningTag;
 
-  private List<TextRange> mySkipped = new ArrayList<>();
+  private final List<TextRange> mySkipped = new ArrayList<>();
 
   public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags) {
-    this(tags, null);
+    this(tags, null, null);
   }
 
-  public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags, @Nullable Map<String, TextAttributesKey> inlineElements) {
+  public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags, @Nullable Map<String, TextAttributesKey> inlineElements,
+                             @Nullable Map<String, ColorKey> additionalColorKeyMap) {
     myTags = tags;
     myInlineElements = inlineElements;
+    myAdditionalColorKeyMap = additionalColorKeyMap;
   }
 
   public String extractHighlights(String text, List<HighlightData> highlights) {
@@ -57,15 +47,19 @@ public class HighlightsExtractor {
       String tagName = findTagName(text);
       if (tagName == null || myIndex < 0) break;
       String tagNameWithoutParameters = StringUtil.substringBefore(tagName, " ");
+      ColorKey additionalColorKey = myAdditionalColorKeyMap == null ? null 
+                                                                    : myAdditionalColorKeyMap.get(tagNameWithoutParameters == null 
+                                                                                                  ? tagName : tagNameWithoutParameters);
       if (myInlineElements != null && tagNameWithoutParameters != null && myInlineElements.containsKey(tagNameWithoutParameters)) {
         mySkippedLen += tagName.length() + 2;
         String hintText = tagName.substring(tagNameWithoutParameters.length()).trim();
-        highlights.add(new InlineElementData(myStartOffset - mySkippedLen, myInlineElements.get(tagNameWithoutParameters), hintText));
+        highlights.add(new InlineElementData(myStartOffset - mySkippedLen, myInlineElements.get(tagNameWithoutParameters), hintText,
+                                             additionalColorKey));
       }
       else if (myTags != null && myTags.containsKey(tagName)) {
         if (myIsOpeningTag) {
           mySkippedLen += tagName.length() + 2;
-          HighlightData highlightData = new HighlightData(myStartOffset - mySkippedLen, myTags.get(tagName));
+          HighlightData highlightData = new HighlightData(myStartOffset - mySkippedLen, myTags.get(tagName), additionalColorKey);
           highlightsStack.push(highlightData);
         } else {
           HighlightData highlightData = highlightsStack.pop();

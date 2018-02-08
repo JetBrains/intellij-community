@@ -7,7 +7,9 @@ import com.intellij.ProjectTopics;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -446,9 +448,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private static void makeUserAware(final MergingUpdateQueue mergingUpdateQueue, final Project project) {
-    AccessToken accessToken = ReadAction.start();
-
-    try {
+    ApplicationManager.getApplication().runReadAction(() -> {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
       multicaster.addCaretListener(new CaretListener() {
@@ -487,10 +487,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           }
         }
       });
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   private static class MyNotification extends Notification {
@@ -550,7 +547,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
   private class MyFileChangeListener extends FileChangeListenerBase {
     private final ExternalSystemProjectsWatcherImpl myWatcher;
-    private MultiMap<String/* file path */, String /* project path */> myKnownFiles = MultiMap.createSet();
+    private final MultiMap<String/* file path */, String /* project path */> myKnownFiles = MultiMap.createSet();
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
 

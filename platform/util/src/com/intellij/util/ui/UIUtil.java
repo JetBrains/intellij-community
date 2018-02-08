@@ -2636,9 +2636,9 @@ public class UIUtil {
         @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           if (e.getEventType() == HyperlinkEvent.EventType.ENTERED) {
-            setUnderlined(e, true);
+            setUnderlined(true, e.getSourceElement());
           } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
-            setUnderlined(e, false);
+            setUnderlined(false, e.getSourceElement());
           }
           if (MODEL_CHANGED == null) {
             LOG.error("modelChanged missing from BasicTextUI, hyperlinks underline on hover will not work");
@@ -2655,8 +2655,9 @@ public class UIUtil {
           }
         }
 
-        private void setUnderlined(HyperlinkEvent e, boolean underlined) {
-          AttributeSet attributes = e.getSourceElement().getAttributes();
+        private void setUnderlined(boolean underlined, Element element) {
+          if (element == null) return;
+          AttributeSet attributes = element.getAttributes();
           Object attribute = attributes.getAttribute(HTML.Tag.A);
           if (attribute instanceof MutableAttributeSet) {
             MutableAttributeSet a = (MutableAttributeSet)attribute;
@@ -4257,7 +4258,8 @@ public class UIUtil {
     Method enqueueKeyEventsMethod = ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class, "enqueueKeyEvents", long.class, Component.class);
     try {
       if (enqueueKeyEventsMethod != null) {
-        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(), event.getWhen(), component);
+        enqueueKeyEventsMethod.invoke(KeyboardFocusManager.getCurrentKeyboardFocusManager(),
+                                      event != null ? event.getWhen() : System.currentTimeMillis(), component);
       }
     }
     catch (IllegalAccessException e) {

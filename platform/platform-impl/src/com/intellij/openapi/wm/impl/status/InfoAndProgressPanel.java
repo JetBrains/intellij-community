@@ -39,6 +39,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -130,14 +131,25 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
     restoreEmptyStatus();
 
-    runOnPowerSaveChange(this::updateProgressIcon, this);
+    runOnProgressRelatedChange(this::updateProgressIcon, this);
   }
 
-  private void runOnPowerSaveChange(@NotNull Runnable runnable, Disposable parentDisposable) {
+  private void runOnProgressRelatedChange(@NotNull Runnable runnable, Disposable parentDisposable) {
     synchronized (myOriginals) {
       if (!myDisposed) {
-        ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
-          .subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
+        connection.subscribe(PowerSaveMode.TOPIC, () -> UIUtil.invokeLaterIfNeeded(runnable));
+        connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
+          @Override
+          public void suspendableProgressAppeared(@NotNull ProgressSuspender suspender) {
+            UIUtil.invokeLaterIfNeeded(runnable);
+          }
+
+          @Override
+          public void suspendedStatusChanged(@NotNull ProgressSuspender suspender) {
+            UIUtil.invokeLaterIfNeeded(runnable);
+          }
+        });
       }
     }
   }
@@ -618,7 +630,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void updateProgressIcon() {
     if (myOriginals.isEmpty() || PowerSaveMode.isEnabled() ||
-        myOriginals.stream().map(ProgressSuspender::getSuspender).filter(Objects::nonNull).anyMatch(ProgressSuspender::isSuspended)) {
+        myOriginals.stream().map(ProgressSuspender::getSuspender).filter(Objects::nonNull).allMatch(ProgressSuspender::isSuspended)) {
       myProgressIcon.suspend();
     } else {
       myProgressIcon.resume();
@@ -668,7 +680,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           updateProgress();
         }
       });
-      runOnPowerSaveChange(this::queueProgressUpdate, this);
+      runOnProgressRelatedChange(this::queueProgressUpdate, this);
     }
 
     @Override
@@ -686,8 +698,11 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
     private ProgressButton createSuspendButton() {
       InplaceButton suspendButton = new InplaceButton("", AllIcons.Actions.Pause, e -> {
         ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
-        suspender.setSuspended(!suspender.isSuspended());
-        updateProgressNow();
+        if (suspender.isSuspended()) {
+          suspender.resumeProcess();
+        } else {
+          suspender.suspendProcess(null);
+        }
         ActionsCollector.getInstance().record(suspender.isSuspended() ? "Progress Paused" : "Progress Resumed");
       }).setFillBg(false);
       suspendButton.setVisible(false);

@@ -1,8 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
-import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
+import java.util.EnumSet;
 
 import static com.intellij.ui.paint.PaintUtil.alignToInt;
 
@@ -57,6 +59,20 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
     }
 
     /**
+     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
+     */
+    @Override
+    public void paint(@NotNull final Graphics2D g,
+                      Rectangle2D rect,
+                      @Nullable Double arc,
+                      @NotNull StrokeType strokeType,
+                      double strokeWidth,
+                      @NotNull Object valueAA)
+    {
+      paint(g, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), arc, strokeType, strokeWidth, valueAA);
+    }
+
+    /**
      * Draws a rectangle.
      *
      * @param g the {@code Graphics2D} object to paint on
@@ -82,32 +98,24 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
 
       double sw = alignToInt(strokeWidth, g);
       double dsw = sw * 2;
-      double sw_1 = 0, sw_2 = 0;
-      double a_out = 0;
+      double sw_1, sw_2;
+      double a_out;
 
       if (width > dsw && height > dsw) {
         // align conforms to LinePainter2D
         x = alignToInt(x, g);
         y = alignToInt(y, g);
 
-        if (strokeType == StrokeType.CENTERED) {
-          double _sw = sw - 1;
-          sw_1 = alignToInt(Math.max(_sw / 2, 0), g);
-          //if (sw_1 * 2 < _sw) sw_1 = _sw - sw_1; // bias to left/top of the line
-          sw_2 = Math.max(1 + (_sw - sw_1), 0);
+        Pair<Double, Double> strokeSplit = LinePainter2D.getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
+        sw_1 = strokeSplit.first;
+        sw_2 = strokeSplit.second;
 
-          a_out = sw;
-        }
-        else if (strokeType == StrokeType.OUTSIDE) {
-          a_out = dsw;
-          sw_1 = sw;
-          sw_2 = sw + 1; // add the pixel itself
-        }
+        a_out = strokeType == StrokeType.CENTERED ? sw : strokeType == StrokeType.OUTSIDE ? dsw : 0;
 
         double x_out = x - sw_1;
         double y_out = y - sw_1;
-        double w_out = sw_1 + width + Math.max(sw_2 - 1, 0);
-        double h_out = sw_1 + height + Math.max(sw_2 - 1, 0);
+        double w_out = sw_1 + width + sw_2;
+        double h_out = sw_1 + height + sw_2;
 
         final Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
         if (arc != null) {
@@ -163,6 +171,20 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
     }
 
     /**
+     * @see #paint(Graphics2D, double, double, double, double, Double, StrokeType, double, Object)
+     */
+    @Override
+    public void paint(@NotNull final Graphics2D g,
+                      Rectangle2D rect,
+                      @Nullable Double arc,
+                      @NotNull StrokeType strokeType,
+                      double strokeWidth,
+                      @NotNull Object valueAA)
+    {
+      paint(g, rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight(), arc, strokeType, strokeWidth, valueAA);
+    }
+
+    /**
      * Fills a rectangle.
      *
      * @param g the {@code Graphics2D} object to paint on
@@ -188,30 +210,22 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
 
       double sw = alignToInt(strokeWidth, g);
       double dsw = sw * 2;
-      double sw_1 = 0, sw_2 = 0;
+      double sw_1, sw_2;
 
       // align conforms to LinePainter2D
       x = alignToInt(x, g);
       y = alignToInt(y, g);
 
-      if (strokeType == StrokeType.CENTERED) {
-        double _sw = sw - 1;
-        sw_1 = alignToInt(Math.max(_sw / 2, 0), g);
-        //if (sw_1 * 2 < _sw) sw_1 = _sw - sw_1; // bias to left/top of the line
-        sw_2 = Math.max(1 + (_sw - sw_1), 0);
-      }
-      else if (strokeType == StrokeType.OUTSIDE) {
-        sw_1 = sw;
-        sw_2 = sw + 1; // add the pixel itself
-      }
-      else if (strokeType == StrokeType.INSIDE) {
-        dsw = 0;
-      }
+      Pair<Double, Double> strokeSplit = LinePainter2D.getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
+      sw_1 = strokeSplit.first;
+      sw_2 = strokeSplit.second;
+
+      if (strokeType == StrokeType.INSIDE) dsw = 0;
 
       double x_out = x - sw_1;
       double y_out = y - sw_1;
-      double w_out = sw_1 + width + Math.max(sw_2 - 1, 0);
-      double h_out = sw_1 + height + Math.max(sw_2 - 1, 0);
+      double w_out = sw_1 + width + sw_2;
+      double h_out = sw_1 + height + sw_2;
 
       final Shape rect = arc != null ?
                          new RoundRectangle2D.Double(x_out, y_out, w_out, h_out, arc + dsw, arc + dsw) :
@@ -228,28 +242,41 @@ public enum RectanglePainter2D implements RegionPainter2D<Double> {
   };
 
   /**
-   * Returns the rectangle size which includes the stroke.
+   * Aligns the rectangle relative to the provided {@code x, y} according to the provided {@code align}.
+   * If {@code align} contains {@code CENTER_X}, the provided {@code x} is treated as the x center.
+   * If {@code align} contains {@code CENTER_Y}, the provided {@code y} is treated as the y center.
+   * Otherwise, x and/or y is not changed.
+   * <p>
+   * As the center x (y) coordinate it's expected either a value equal to integer in the device space,
+   * in which case the {@code prefWidth (prefHeight)} is adjusted to a closed even value in the device space,
+   * or a value b/w two integers in the device space, in which case the {@code prefWidth (prefHeight)} is adjusted
+   * to a closed odd value in the device space.
    *
-   * @param g the graphics
-   * @param size the size of the rectangle without the stroke
-   * @param strokeType the stroke type
+   * @param g           the graphics
+   * @param align       the align
+   * @param x           x obeying {@code align}
+   * @param y           y obeying {@code align}
+   * @param prefWidth   the preferred width
+   * @param prefHeight  the preferred height
+   * @param strokeType  the stroke type
    * @param strokeWidth the stroke width
-   * @return the size with the stroke
+   * @return the rectangle with aligned coordinates and size with adjusted parity
    */
-  public static double getStrokedSize(@NotNull Graphics2D g, double size, StrokeType strokeType, double strokeWidth) {
-    return getStrokedSize(ScaleContext.create(g), size, strokeType, strokeWidth);
-  }
-
-  /**
-   * @see #getStrokedSize(Graphics2D, double, StrokeType, double)
-   */
-  public static double getStrokedSize(@NotNull ScaleContext ctx, double size, StrokeType strokeType, double strokeWidth) {
-    if (strokeType == StrokeType.INSIDE) return size;
-    if (strokeType == StrokeType.OUTSIDE) return size + strokeWidth * 2;
-
-    double _sw = strokeWidth - 1;
-    double sw_1 = alignToInt(Math.max(_sw / 2, 0), ctx, RoundingMode.ROUND, null);
-    double sw_2 = Math.max(1 + (_sw - sw_1), 0);
-    return sw_1 + size + Math.max(sw_2 - 1, 0);
+  public static @NotNull Rectangle2D align(@NotNull Graphics2D g,
+                                           @NotNull EnumSet<Align> align,
+                                           double x, double y, double prefWidth, double prefHeight,
+                                           @NotNull StrokeType strokeType, double strokeWidth)
+  {
+    if (align.contains(Align.CENTER_X) && prefWidth >= strokeWidth * 2) {
+      Pair<Double, Double> p = LinePainter2D.alignSizeXY(g, x, prefWidth, strokeType, strokeWidth, true);
+      x = p.first;
+      prefWidth = p.second;
+    }
+    if (align.contains(Align.CENTER_Y) && prefHeight >= strokeWidth * 2) {
+      Pair<Double, Double> p = LinePainter2D.alignSizeXY(g, y, prefHeight, strokeType, strokeWidth, true);
+      y = p.first;
+      prefHeight = p.second;
+    }
+    return new Rectangle2D.Double(x, y, prefWidth, prefHeight);
   }
 }

@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class AnnotationGenerator extends Generator {
   @NotNull
-  private List<String> SKIPPED = Collections.singletonList("groovy.transform");
+  private final List<String> SKIPPED = Collections.singletonList("groovy.transform");
   private final StringBuilder builder;
 
   private final ExpressionContext context;

@@ -962,7 +962,29 @@ class T70 {
     s = "";
   }
 }
+class T71 {
+  private String s;
 
+  T71() {
+    try {
+      foo();
+    } catch (Throwable t) {
+      s = t.getMessage();
+    }
+  }
+
+  void foo() throws Throwable {}
+}
+class T72 {
+  private boolean b;
+
+  T72(int i) {
+    Runnable r = () -> {
+      return;
+    };
+    if (i == 4) b = true;
+  }
+}
 class Foo {
 
   public interface Accessor<T> {

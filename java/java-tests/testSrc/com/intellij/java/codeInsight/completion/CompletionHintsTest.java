@@ -11,7 +11,6 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
@@ -778,8 +777,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   }
 
   public void testBasicScenarioForConstructor() throws Exception {
-    enableConstructorVariantsCompletion();
-
     // check hints appearance on completion
     configureJava("class C { C(int a, int b) {} void m() { new C<caret> } }");
     complete("C(int a, int b)");
@@ -899,11 +896,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     finally {
       setting.setValue(oldValue);
     }
-  }
-
-  private void enableConstructorVariantsCompletion() {
-    Registry.get("java.completion.show.constructors").setValue(true);
-    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
   }
 
   private void checkResult(String text) {

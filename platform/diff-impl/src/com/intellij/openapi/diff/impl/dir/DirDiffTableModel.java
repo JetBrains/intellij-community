@@ -88,10 +88,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private JBTable myTable;
   private final AtomicReference<String> text = new AtomicReference<>(prepareText(""));
   private Updater myUpdater;
-  private List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
   /** directory path -> map from name of source element name to name of target element which is manually specified as replacement for that source */
-  private Map<String, BiMap<String, String>> mySourceToReplacingTarget = HashBiMap.create();
+  private final Map<String, BiMap<String, String>> mySourceToReplacingTarget = HashBiMap.create();
 
   private DirDiffPanel myPanel;
   private volatile boolean myDisposed;

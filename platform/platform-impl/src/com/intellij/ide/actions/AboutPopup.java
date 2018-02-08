@@ -113,12 +113,12 @@ public class AboutPopup {
     private Font myFont;
     private Font myBoldFont;
     private final List<AboutBoxLine> myLines = new ArrayList<>();
-    private StringBuilder myInfo = new StringBuilder();
+    private final StringBuilder myInfo = new StringBuilder();
     private final List<Link> myLinks = new ArrayList<>();
     private Link myActiveLink;
     private boolean myShowCopy = false;
     private float myShowCopyAlpha;
-    private Alarm myAlarm = new Alarm();
+    private final Alarm myAlarm = new Alarm();
 
     public InfoSurface(Icon image, final boolean showDebugInfo) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();

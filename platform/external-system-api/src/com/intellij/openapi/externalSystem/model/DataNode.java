@@ -344,7 +344,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   private static class NoopOutputStream extends OutputStream {
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    private static NoopOutputStream ourInstance = new NoopOutputStream();
+    private static final NoopOutputStream ourInstance = new NoopOutputStream();
 
     public static NoopOutputStream getInstance() {
       return ourInstance;

@@ -184,15 +184,11 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     List<ArtifactState> artifactStates = managerState.getArtifacts();
     final List<ArtifactImpl> artifacts = new ArrayList<>(artifactStates.size());
     if (!artifactStates.isEmpty()) {
-      AccessToken token = ReadAction.start();
-      try {
+      ApplicationManager.getApplication().runReadAction(() -> {
         for (ArtifactState state : artifactStates) {
           artifacts.add(loadArtifact(state));
         }
-      }
-      finally {
-        token.finish();
-      }
+      });
     }
 
     if (myLoaded) {

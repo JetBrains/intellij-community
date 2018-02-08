@@ -19,11 +19,11 @@ class PreviewUsageAction extends RuleAction {
 
   @Override
   protected boolean getOptionValue() {
-    return myView.getUsageViewSettings().isPreviewUsages();
+    return myView.isPreviewUsages();
   }
 
   @Override
-  protected void setOptionValue(final boolean value) {
-    myView.getUsageViewSettings().setPreviewUsages(value);
+  protected void setOptionValue(boolean value) {
+    myView.setPreviewUsages(value);
   }
 }

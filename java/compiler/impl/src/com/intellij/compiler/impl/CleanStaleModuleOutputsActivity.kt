@@ -66,10 +66,23 @@ class CleanStaleModuleOutputsActivity : StartupActivity, DumbAware {
   }
 
   private fun runCleanup(outputs: List<VirtualFile>, project: Project, onSuccess: () -> Unit) {
-    val outputsString = outputs.joinToString("<br>") { it.presentableUrl }
-    val answer = Messages.showOkCancelDialog(project, CompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
+    val outputsString: String
+    val threshold = 50
+    if (outputs.size <= threshold + 2) {
+      outputsString = outputs.joinToString("<br>") { it.presentableUrl }
+    }
+    else {
+      val parents = outputs.subList(threshold, outputs.size).mapTo(LinkedHashSet()) {it.parent}.toList()
+      outputsString = (outputs.subList(0, threshold).map {it.presentableUrl}
+                       + listOf("${outputs.size - threshold} more directories under ${parents.first().presentableUrl}")
+                       + parents.drop(1).map { "and ${it.presentableUrl}" }
+                      ).joinToString("<br>")
+    }
+
+    //until IDEA-186296 is fixed we need to use IDEA's message dialog for potentially long messages
+    val answer = Messages.showIdeaMessageDialog(project, CompilerBundle.message("dialog.text.delete.old.outputs", outputs.size, outputsString),
                                              CompilerBundle.message("dialog.title.delete.old.outputs"),
-                                             CompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText(), null)
+                                             arrayOf(CompilerBundle.message("button.text.delete.old.outputs"), CommonBundle.getCancelButtonText()), 0,null, null)
     if (answer == Messages.CANCEL) return
 
     val filesToDelete = outputs.map { VfsUtil.virtualToIoFile(it) }

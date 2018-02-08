@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
@@ -11,8 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
+import java.util.EnumSet;
 
 import static com.intellij.ui.paint.PaintUtil.alignToInt;
+import static com.intellij.ui.paint.PaintUtil.getParityMode;
 
 /**
  * Draws a line with a stroke defined by {@link StrokeType}, provided that the graphics stroke is {@link BasicStroke}),
@@ -48,6 +52,20 @@ public class LinePainter2D {
   }
 
   /**
+   * A enum bit in a flag which defines alignment for a line or a rectangle.
+   */
+  public enum Align {
+    /**
+     * Align by a provided center x.
+     */
+    CENTER_X,
+    /**
+     * Align by a provided center y.
+     */
+    CENTER_Y
+  }
+
+  /**
    * @see #paint(Graphics2D, double, double, double, double, StrokeType, double, Object)
    */
   public static void paint(@NotNull Graphics2D g, double x1, double y1, double x2, double y2) {
@@ -63,6 +81,18 @@ public class LinePainter2D {
                            @NotNull StrokeType strokeType,
                            double strokeWidth) {
     paint(g, x1, y1, x2, y2, strokeType, strokeWidth, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+  }
+
+  /**
+   * @see #paint(Graphics2D, double, double, double, double, StrokeType, double, Object)
+   */
+  public static void paint(@NotNull final Graphics2D g,
+                           @NotNull Line2D line,
+                           @NotNull StrokeType strokeType,
+                           double strokeWidth,
+                           @NotNull Object valueAA)
+  {
+    paint(g, line.getX1(), line.getY1(), line.getX2(), line.getY2(), strokeType, strokeWidth, valueAA);
   }
 
   /**
@@ -90,7 +120,7 @@ public class LinePainter2D {
     boolean centered = strokeType == StrokeType.CENTERED || strokeType == StrokeType.CENTERED_CAPS_SQUARE;
     boolean thickStroke = PaintUtil.devValue(strokeWidth, g) > 1;
 
-    if (g.getStroke() instanceof BasicStroke && (thickStroke || (straight && !centered))) {
+    if (g.getStroke() instanceof BasicStroke && (straight || thickStroke)) {
       double sw = alignToInt(strokeWidth, g);
       double swx_2 = 0, swx_1 = 0, swy_2 = 0, swy_1 = 0; // stroke offsets
       double capy_1 = 0, capy_2 = 0, capx_1 = 0, capx_2 = 0; // caps offsets
@@ -104,8 +134,10 @@ public class LinePainter2D {
       }
 
       if (strokeType == StrokeType.CENTERED_CAPS_SQUARE) {
-        double cap_1 = strokeWidth > 1 ? sw / 2 : 0;
-        double cap_2 = Math.max(cap_1 - 1, 0);
+        // the caps repeat the stroke split logic
+        Pair<Double, Double> strokeSplit = getStrokeSplit(ScaleContext.create(g), strokeType, sw, false);
+        double cap_1 = strokeSplit.first;
+        double cap_2 = strokeSplit.second;
         double y_sign = straight ? 1 : -1;
         // cap_1 >= cap_2 for x1/y1 < x2/y2, otherwise swap for diagonal line
         capx_1 = (straight || x1 <= x2 ? cap_1 : cap_2) * cos;
@@ -120,14 +152,14 @@ public class LinePainter2D {
         double y_min = Math.min(y1, y2);
         double y_max = Math.max(y1, y2);
         y1 = alignToInt(y_min, g);
-        y2 = y1 + y_max - y_min + 1;
+        y2 = y1 + y_max - y1 + 1;
         x1 = x2 = alignToInt(x2, g);
       }
       else if (horizontal) {
         double x_min = Math.min(x1, x2);
         double x_max = Math.max(x1, x2);
         x1 = alignToInt(x_min, g);
-        x2 = x1 + x_max - x_min + 1;
+        x2 = x1 + x_max - x1 + 1;
         y1 = y2 = alignToInt(y2, g);
       }
       else {
@@ -150,14 +182,18 @@ public class LinePainter2D {
         swy_2 = sw * cos;
       }
       else if (centered) {
-        // The stroke is painted around the center of a user pixel (or in a user pixel when smaller)
-        // for straight lines, and around the math line itself otherwise.
-        int usr_pix = straight ? 1 : 0;
-        double _sw = sw - usr_pix;
-        double sw_1 = alignToInt(Math.max(_sw / 2, 0), g);
-        //if (sw_1 * 2 < _sw) sw_1 = _sw - sw_1; // bias to left/top of the line
-        double sw_2 = Math.max(usr_pix + (_sw - sw_1), 0);
-
+        double sw_1;
+        double sw_2;
+        if (straight) {
+          // stroke is painted around the center of the line pixel (or within the line pixel, when the stroke is smaller)
+          Pair<Double, Double> strokeSplit = getStrokeSplit(ScaleContext.create(g), strokeType, sw);
+          sw_1 = strokeSplit.first;
+          sw_2 = strokeSplit.second;
+        } else {
+          // stroke is painted around the line
+          sw_1 = alignToInt(Math.max(sw / 2, 0), g);
+          sw_2 = Math.max(sw - sw_1, 0);
+        }
         swx_1 = sw_1 * sin;
         swx_2 = sw_2 * sin;
         swy_1 = sw_1 * cos;
@@ -171,7 +207,7 @@ public class LinePainter2D {
       path.closePath();
 
       PaintUtil.paintWithAA(g, valueAA,
-                            new Runnable() {
+        new Runnable() {
           @Override
           public void run() {
             g.fill(path);
@@ -181,7 +217,7 @@ public class LinePainter2D {
     else {
       final Line2D line = new Line2D.Double(x1, y1, x2, y2);
       PaintUtil.paintWithAA(g, valueAA,
-                            new Runnable() {
+        new Runnable() {
           @Override
           public void run() {
             g.draw(line);
@@ -277,23 +313,108 @@ public class LinePainter2D {
   }
 
   /**
-   * @see #getStrokeCenter(Graphics2D, double, StrokeType, double)
+   * Aligns the line relative to the provided {@code x, y} according to the provided {@code align}.
+   * If {@code align} contains {@code CENTER_X}, the provided {@code x} is treated as the x center.
+   * If {@code align} contains {@code CENTER_Y}, the provided {@code y} is treated as the y center.
+   * Otherwise, x and/or y is not changed.
+   * <p>
+   * As the center x (y) coordinate it's expected either a value equal to integer in the device space,
+   * in which case the {@code prefLength} is adjusted to a closed even value in the device space,
+   * or a value b/w two integers in the device space, in which case the {@code prefLength} is adjusted
+   * to a closed odd value in the device space.
+   *
+   * @param g           the graphics
+   * @param align       the align
+   * @param x           x obeying {@code align}
+   * @param y           y obeying {@code align}
+   * @param prefLength  the preferred length of the line
+   * @param vertical    whether the line is vertical or horizontal
+   * @param strokeType  the stroke type
+   * @param strokeWidth the stroke width
+   * @return the line with aligned coordinates and length with adjusted parity
    */
-  public static double getStrokeCenter(ScaleContext ctx, double coord, StrokeType strokeType, double strokeWidth) {
-    if (strokeType == StrokeType.INSIDE) {
-      return coord + strokeWidth / 2;
-    }
-    if (strokeType == StrokeType.OUTSIDE) {
-      return coord - strokeWidth / 2;
-    }
-    double _sw = strokeWidth - 1;
-    double sw_1 = alignToInt(Math.max(_sw / 2, 0), ctx, RoundingMode.ROUND, null);
-    double sw_2 = Math.max(1 + (_sw - sw_1), 0);
-    return coord - sw_1 / 2 + sw_2 / 2;
+  public static @NotNull Line2D align(@NotNull Graphics2D g,
+                                      @NotNull EnumSet<Align> align,
+                                      double x, double y, double prefLength, boolean vertical,
+                                      StrokeType strokeType, double strokeWidth)
+  {
+      if (align.contains(Align.CENTER_X)) {
+        if (vertical) {
+          x = alignStrokeXY(g, x, strokeType, strokeWidth);
+        }
+        else {
+          Pair<Double, Double> p = alignSizeXY(g, x, prefLength, strokeType, strokeWidth, false);
+          x = p.first;
+          prefLength = p.second;
+        }
+      }
+      if (align.contains(Align.CENTER_Y)) {
+        if (!vertical) {
+          y = alignStrokeXY(g, y, strokeType, strokeWidth);
+        }
+        else {
+          Pair<Double, Double> p = alignSizeXY(g, y, prefLength, strokeType, strokeWidth, false);
+          y = p.first;
+          prefLength = p.second;
+        }
+      }
+      double x2 = !vertical ? x + prefLength - 1: x;
+      double y2 = vertical ? y + prefLength - 1: y;
+      return new Line2D.Double(x, y, x2, y2);
   }
 
   /**
-   * Returns the coordinate of the center of the stroke.
+   * Returns new x (y) of a line so that its stroke is centered in the provided x (y)
+   */
+  private static double alignStrokeXY(Graphics2D g, double xy, StrokeType strokeType, double strokeWidth) {
+    Pair<Double, Double> strokeSplit = getStrokeSplit(ScaleContext.create(g), strokeType, strokeWidth, false);
+    return xy - strokeWidth / 2 + strokeSplit.first;
+  }
+
+  /**
+   * Returns:
+   * 1) new x (y), aligned along the provided center x (y)
+   * 2) new size with adjusted parity
+   */
+  static Pair<Double, Double> alignSizeXY(Graphics2D g,
+                                          double xy, double prefSize,
+                                          StrokeType strokeType, double strokeWidth, boolean rectangle)
+  {
+    prefSize = alignToInt(prefSize, g);
+    // if xy is (close to) dev int the resulting size should be EVEN, otherwise ODD - to compensate the middle dev pixel
+    double _xy = alignToInt(xy + 0.000001, g, RoundingMode.FLOOR);
+    ParityMode pm = Double.compare(_xy, xy) == 0 ? ParityMode.EVEN : ParityMode.ODD;
+    double sw_1 = 0, sw_2 = 0; // stroke split for rect, and caps for line with CENTERED_CAPS_SQUARE
+    if (rectangle || strokeType == StrokeType.CENTERED_CAPS_SQUARE) {
+      Pair<Double, Double> strokeSplit = getStrokeSplit(ScaleContext.create(g), strokeType, strokeWidth, false);
+      sw_1 = strokeSplit.first;
+      sw_2 = strokeSplit.second;
+    }
+    double sizeWithStroke = sw_1 + prefSize + sw_2;
+    if (getParityMode(sizeWithStroke, g) != pm) {
+      prefSize = alignToInt(prefSize, g, ParityMode.invert(getParityMode(prefSize, g)));
+      sizeWithStroke = sw_1 + prefSize + sw_2;
+    }
+    _xy -= (pm == ParityMode.ODD ? sizeWithStroke - PaintUtil.devPixel(g) : sizeWithStroke) / 2 - sw_1;
+    return new Pair<Double, Double>(_xy, prefSize);
+  }
+
+  /**
+   * @see #getStrokeCenter(Graphics2D, double, StrokeType, double)
+   */
+  public static double getStrokeCenter(ScaleContext ctx, double xy, StrokeType strokeType, double strokeWidth) {
+    if (strokeType == StrokeType.INSIDE) {
+      return xy + strokeWidth / 2;
+    }
+    if (strokeType == StrokeType.OUTSIDE) {
+      return xy - strokeWidth / 2;
+    }
+    Pair<Double, Double> strokeSplit = getStrokeSplit(ctx, strokeType, strokeWidth);
+    return xy - strokeSplit.first / 2 + strokeSplit.second / 2;
+  }
+
+  /**
+   * Returns the x (y) coordinate of the center of the stroke.
    *
    * @param g           the graphics
    * @param coord       the x or y coordinate
@@ -301,7 +422,38 @@ public class LinePainter2D {
    * @param strokeWidth the stroke width
    * @return the coordinate of the center of the stroke
    */
-  public static double getStrokeCenter(Graphics2D g, double coord, StrokeType strokeType, double strokeWidth) {
-    return getStrokeCenter(ScaleContext.create(g), coord, strokeType, strokeWidth);
+  public static double getStrokeCenter(Graphics2D g, double xy, StrokeType strokeType, double strokeWidth) {
+    return getStrokeCenter(ScaleContext.create(g), xy, strokeType, strokeWidth);
+  }
+
+  /**
+   * @see #getStrokeSplit(ScaleContext, StrokeType, double, boolean)
+   */
+  /*public*/ static Pair<Double, Double> getStrokeSplit(ScaleContext ctx, StrokeType strokeType, double strokeWidth) {
+    return getStrokeSplit(ctx, strokeType, strokeWidth, true);
+  }
+
+  /**
+   * Returns left (top) and right (bottom) parts of the stroke which is to be painted along the line or rectangle side.
+   *
+   * @param ctx               the scale context
+   * @param strokeType        the stroke type
+   * @param strokeWidth       the stroke width
+   * @param includeLinePixel  should the line pixel (in user space) be included in the right (bottom) part of the split
+   * @return                  the stroke split
+   */
+  /*public*/ static Pair<Double, Double> getStrokeSplit(ScaleContext ctx, StrokeType strokeType, double strokeWidth, boolean includeLinePixel) {
+    if (strokeType == StrokeType.OUTSIDE) {
+      return Pair.create(strokeWidth, strokeWidth);
+    }
+    else if (strokeType == StrokeType.INSIDE) {
+      return Pair.create(0d, 0d);
+    }
+    // StrokeType.CENTERED || StrokeType.CENTERED_CAPS_SQUARE
+    int linePixel = includeLinePixel ? 1 : 0;
+    double _sw = strokeWidth - 1;
+    double sw_1 = alignToInt(Math.max(_sw / 2, 0), ctx, RoundingMode.ROUND, null);
+    double sw_2 = Math.max(linePixel + (_sw - sw_1), 0);
+    return Pair.create(sw_1, sw_2);
   }
 }

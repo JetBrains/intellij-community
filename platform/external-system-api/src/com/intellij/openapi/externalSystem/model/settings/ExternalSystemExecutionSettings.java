@@ -29,7 +29,7 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
   private final Map<String, String> myEnv;
   private boolean myPassParentEnvs = true;
 
-  @NotNull private transient UserDataHolderBase myUserData = new UserDataHolderBase();
+  @NotNull private final transient UserDataHolderBase myUserData = new UserDataHolderBase();
 
   public ExternalSystemExecutionSettings() {
     int ttl = SystemProperties.getIntProperty(REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, DEFAULT_REMOTE_PROCESS_TTL_MS);

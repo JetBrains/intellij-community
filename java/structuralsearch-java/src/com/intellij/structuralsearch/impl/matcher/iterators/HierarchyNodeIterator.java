@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public class HierarchyNodeIterator extends NodeIterator {
   private int index;
-  private ArrayList<PsiElement> remaining;
+  private final ArrayList<PsiElement> remaining;
   private boolean objectTaken;
   private boolean firstElementTaken;
   private final boolean acceptClasses;

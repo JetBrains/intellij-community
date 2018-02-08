@@ -138,7 +138,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Saves application settings.
-   *
+   * @see #saveSettings() about `isForce` parameter.
    * @param isForce Whether to force save non-roamable component configuration.
    */
   default void saveAll(boolean isForce) {
@@ -152,6 +152,7 @@ public interface Application extends ComponentManager {
 
   /**
    * Saves application settings.
+   * If `isForce` is `false`, non-roamable component configuration will be saved only if more than 4 minutes have been passed after the last save.
    * @param isForce Whether to force save non-roamable component configuration.
    */
   default void saveSettings(boolean isForce) {
@@ -414,9 +415,10 @@ public interface Application extends ComponentManager {
   boolean isActive();
 
   /**
-   * Returns lock used for read operations, should be closed in finally block
+   * Use {@link #runReadAction(Runnable)} instead
    */
   @NotNull
+  @Deprecated
   AccessToken acquireReadActionLock();
 
   /**

@@ -9,7 +9,6 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -187,12 +186,10 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
       final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
       if (type != null) {
-        myDeploymentSource = new ReadAction<DeploymentSource>() {
-          @Override
-          protected void run(final @NotNull Result<DeploymentSource> result) {
-            result.setResult(type.load(deploymentTag, getProject()));
-          }
-        }.execute().getResultObject();
+        myDeploymentSource = ReadAction.compute(() -> {
+
+          return type.load(deploymentTag, getProject());
+        });
         myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
         ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
       }

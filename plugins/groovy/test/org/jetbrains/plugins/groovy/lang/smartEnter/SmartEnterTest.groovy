@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.smartEnter
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * User: Dmitry.Krasilschikov
  */
@@ -64,7 +65,7 @@ class SmartEnterTest extends LightGroovyTestCase {
   void testCatchClause() { doTest() }
 
   void testMethodBodyAtNextLine() {
-    CodeStyleSettingsManager.getSettings(myFixture.project).getCommonSettings(GroovyLanguage.INSTANCE).METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
+    CodeStyle.getSettings(myFixture.project).getCommonSettings(GroovyLanguage.INSTANCE).METHOD_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE
     doTest()
   }
 

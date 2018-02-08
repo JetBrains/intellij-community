@@ -86,7 +86,7 @@ public class CommonActionsPanel extends JPanel {
     }
   }
 
-  private Map<Buttons, MyActionButton> myButtons = new HashMap<>();
+  private final Map<Buttons, MyActionButton> myButtons = new HashMap<>();
   private final AnActionButton[] myActions;
   private EnumMap<Buttons, ShortcutSet> myCustomShortcuts;
 

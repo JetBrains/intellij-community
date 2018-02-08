@@ -52,7 +52,7 @@ public class HashedBlockInputStream extends InputStream {
 
   private long expectedSequenceNumber = 0;
   private boolean done = false;
-  private InputStream inputStream;
+  private final InputStream inputStream;
   private ByteArrayInputStream blockInputStream = new ByteArrayInputStream(new byte[0]);
 
   private final MessageDigest md = KdbxHeaderKt.sha256MessageDigest();

@@ -1168,7 +1168,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     @NotNull private final DiffViewer myViewer;
     @NotNull private final FrameDiffTool myTool;
 
-    @NotNull private DiffViewer myWrapperViewer;
+    @NotNull private final DiffViewer myWrapperViewer;
 
     public WrapperState(@NotNull DiffViewer viewer, @NotNull FrameDiffTool tool, @NotNull DiffViewerWrapper wrapper) {
       myViewer = viewer;

@@ -32,7 +32,7 @@ import java.util.Collection;
  * @author nik
  */
 public class UnknownUsagesInUnloadedModules extends UsageAdapter implements Usage {
-  private String myExplanationText;
+  private final String myExplanationText;
 
   public UnknownUsagesInUnloadedModules(Collection<UnloadedModuleDescription> unloadedModules) {
     String modulesText = unloadedModules.size() > 1 ? unloadedModules.size() + " unloaded modules"

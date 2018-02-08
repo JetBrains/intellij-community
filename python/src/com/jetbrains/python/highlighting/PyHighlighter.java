@@ -38,7 +38,7 @@ import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
  * Colors and lexer(s) needed for highlighting.
  */
 public class PyHighlighter extends SyntaxHighlighterBase {
-  private Map<IElementType, TextAttributesKey> keys;
+  private final Map<IElementType, TextAttributesKey> keys;
   private final LanguageLevel myLanguageLevel;
 
   @NotNull

@@ -923,7 +923,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
     @NotNull private final GradleProjectResolverExtension myProjectResolverChain;
     private final boolean myIsBuildSrcProject;
-    private DefaultProjectResolverContext myResolverContext;
+    private final DefaultProjectResolverContext myResolverContext;
 
     private ProjectConnectionDataNodeFunction(@NotNull DefaultProjectResolverContext resolverContext,
                                               @NotNull GradleProjectResolverExtension projectResolverChain, boolean isBuildSrcProject) {

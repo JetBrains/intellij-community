@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
+import com.intellij.application.runInAllowSaveMode
 import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
@@ -10,7 +11,6 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.lang.StdLanguages
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -176,19 +176,13 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
         model.setModuleGroupPath(it, null)
       }
 
-      val application = ApplicationManagerEx.getApplicationEx()
-      val doNotSaveValue = application.isDoNotSave
-      application.doNotSave(true)
-      try {
+      runInAllowSaveMode(isSaveAllowed = false) {
         runWriteAction {
           model.commit()
         }
         if (recordPreviousNamesCheckBox.isSelected) {
           (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
         }
-      }
-      finally {
-        application.doNotSave(doNotSaveValue)
       }
       project.save()
     }

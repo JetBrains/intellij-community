@@ -15,7 +15,6 @@
  */
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -55,7 +54,7 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
 
   @Override
   public List<Runnable> collectScanRootRunnables(@NotNull ContentIterator processor, ProgressIndicator indicator) {
-    try (AccessToken ignore = ReadAction.start()) {
+    return ReadAction.compute(()-> {
       if (myProject.isDisposed()) {
         return Collections.emptyList();
       }
@@ -137,6 +136,6 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       }
 
       return tasks;
-    }
+    });
   }
 }

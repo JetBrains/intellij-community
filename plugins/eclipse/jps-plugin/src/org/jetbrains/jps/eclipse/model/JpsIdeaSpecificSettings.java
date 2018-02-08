@@ -38,7 +38,7 @@ import java.io.File;
 import java.util.Map;
 
 class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, String, JpsSdkType<?>> {
-  private JpsMacroExpander myExpander;
+  private final JpsMacroExpander myExpander;
 
   JpsIdeaSpecificSettings(JpsMacroExpander expander) {
     myExpander = expander;

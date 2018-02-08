@@ -398,8 +398,10 @@ CHARACTER (')')
     table.addKeyword2("d#")
     table.addKeyword2("e")
     table.addKeyword2("foo{}")
+    table.addKeyword3("foldl")
     table.addKeyword3("foldl'")
-    doTest table, "a* b-c d# e- e foo{} : foldl' foo", '''\
+    def text = "a* b-c d# e- e foo{} : foldl' foo"
+    def expected = '''\
 KEYWORD_1 ('a*')
 WHITESPACE (' ')
 KEYWORD_1 ('b-c')
@@ -419,6 +421,8 @@ KEYWORD_3 ('foldl'')
 WHITESPACE (' ')
 IDENTIFIER ('foo')
 '''
+    doTest(new CustomFileTypeLexer(table), text, expected)
+    doTest(new CustomFileHighlighter(table).highlightingLexer, text, expected)
   }
 
   void testWordsScanner() {

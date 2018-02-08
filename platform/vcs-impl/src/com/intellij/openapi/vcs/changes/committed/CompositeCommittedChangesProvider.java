@@ -31,7 +31,7 @@ import java.util.List;
  */
 public class CompositeCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, CompositeCommittedChangesProvider.CompositeChangeBrowserSettings> {
   private final Project myProject;
-  private List<AbstractVcs> myBaseVcss;
+  private final List<AbstractVcs> myBaseVcss;
 
   public CompositeCommittedChangesProvider(final Project project, final AbstractVcs... baseVcss) {
     myProject = project;

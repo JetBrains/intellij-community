@@ -31,7 +31,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
-  private boolean myApplyButtonNeeded;
+  private final boolean myApplyButtonNeeded;
   private boolean myResetButtonNeeded;
 
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {

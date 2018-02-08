@@ -14,6 +14,8 @@ public class SizeReplaceableByIsEmptyInspectionTest extends LightInspectionTestC
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new SizeReplaceableByIsEmptyInspection();
+    final SizeReplaceableByIsEmptyInspection inspection = new SizeReplaceableByIsEmptyInspection();
+    inspection.ignoredTypes.add("java.util.ArrayList");
+    return inspection;
   }
 }

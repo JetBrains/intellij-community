@@ -73,7 +73,7 @@ public class MoveChangesLineStatusAction extends LineStatusActionBase {
   }
 
   @Nullable
-  private static LocalChangeList askTargetChangelist(Project project,
+  private static LocalChangeList askTargetChangelist(@NotNull Project project,
                                                      @NotNull List<LocalRange> selectedRanges,
                                                      @NotNull PartialLocalLineStatusTracker tracker) {
     Set<String> selectedListIds = ContainerUtil.map2Set(selectedRanges, range -> range.getChangelistId());

@@ -70,10 +70,10 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private JPanel mySecondKeystrokeEditPlaceholder;
   private JButton myClearFirstKeystroke;
   private JButton myClearSecondKeystroke;
-  private ShortcutTextField myFirstKeystrokeEdit;
-  private ShortcutTextField mySecondKeystrokeEdit;
+  private final ShortcutTextField myFirstKeystrokeEdit;
+  private final ShortcutTextField mySecondKeystrokeEdit;
   private TextFieldWithBrowseButton myIconEdit;
-  private Project myProject;
+  private final Project myProject;
   private ButtonGroup myAnchorButtonGroup;
 
 

@@ -42,9 +42,9 @@ public class InitialInfoBuilder {
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<>();
-  private MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<>();
-  private MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<>();
-  private Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
+  private final MultiMap<ExpandableIndent, AbstractBlockWrapper> myBlocksToForceChildrenIndent = new LinkedMultiMap<>();
+  private final MultiMap<Alignment, Block> myBlocksToAlign = new MultiMap<>();
+  private final Set<Alignment> myAlignmentsInsideRangeToModify = ContainerUtil.newHashSet();
   
   private boolean myCollectAlignmentsInsideFormattingRange = false;
 

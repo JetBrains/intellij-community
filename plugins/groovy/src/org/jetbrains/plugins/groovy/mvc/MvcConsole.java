@@ -67,7 +67,7 @@ public class MvcConsole implements Disposable {
 
   private final MyKillProcessAction myKillAction = new MyKillProcessAction();
   private boolean myExecuting = false;
-  private Content myContent;
+  private final Content myContent;
 
   public MvcConsole(Project project, TextConsoleBuilderFactory consoleBuilderFactory) {
     myProject = project;

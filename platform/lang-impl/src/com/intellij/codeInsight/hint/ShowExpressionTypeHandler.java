@@ -41,7 +41,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
-  private boolean myRequestFocus;
+  private final boolean myRequestFocus;
 
   public ShowExpressionTypeHandler(boolean requestFocus) {
     myRequestFocus = requestFocus;

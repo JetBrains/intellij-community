@@ -1137,7 +1137,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     } else {
       myControlPanelVisible = false;
       remove(myControlPanel);
-      if (myHint == null) return;
+      if (myManager.myToolWindow != null) return;
       myCorner.setVisible(true);
     }
   }

@@ -38,7 +38,7 @@ public class FlattenModulesToggleAction extends ToggleAction implements DumbAwar
   private final BooleanSupplier myIsEnabled;
   private final BooleanSupplier myIsSelected;
   private final Consumer<Boolean> mySetSelected;
-  private Project myProject;
+  private final Project myProject;
 
   public FlattenModulesToggleAction(Project project, BooleanSupplier isEnabled, BooleanSupplier isSelected, Consumer<Boolean> setSelected) {
     super(ProjectBundle.message("project.roots.flatten.modules.action.text"), ProjectBundle.message("project.roots.flatten.modules.action.description"), AllIcons.ObjectBrowser.FlattenModules);

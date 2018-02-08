@@ -46,10 +46,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     add(formPanel, BorderLayout.NORTH)
   }
 
-  override fun validateAll() =
-    listOf(validateAnacondaPresense(sdkComboBox),
-           validateSdkComboBox(sdkComboBox))
-      .filterNotNull()
+  override fun validateAll() = listOfNotNull(validateSdkComboBox(sdkComboBox))
 
   override fun getOrCreateSdk(): Sdk? {
     val sdk = sdkComboBox.selectedSdk

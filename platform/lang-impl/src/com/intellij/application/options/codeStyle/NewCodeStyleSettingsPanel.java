@@ -40,7 +40,7 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
   private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
-  private CodeStyleSchemesModel myModel;
+  private final CodeStyleSchemesModel myModel;
 
   public NewCodeStyleSettingsPanel(@NotNull Configurable tab, @NotNull CodeStyleSchemesModel model) {
     super(new BorderLayout());

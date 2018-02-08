@@ -206,7 +206,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   public class BlockTreeSelectionListener implements TreeSelectionListener {
     @NotNull
-    private PsiElement myRootElement;
+    private final PsiElement myRootElement;
 
     public BlockTreeSelectionListener(@NotNull PsiElement rootElement) {
       myRootElement = rootElement;

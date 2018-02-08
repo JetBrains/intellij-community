@@ -38,7 +38,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   protected final ASTNode myNode;
   private final CodeStyleSettings mySettings;
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
-  private XmlFormattingPolicy myXmlFormattingPolicy;
+  private final XmlFormattingPolicy myXmlFormattingPolicy;
   private Indent myIndent;
   private BlockWithParent myParent;
   private boolean myContainsErrorElements = false;

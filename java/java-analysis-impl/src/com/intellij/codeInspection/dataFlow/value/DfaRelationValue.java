@@ -19,11 +19,11 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DfaRelationValue extends DfaValue {
@@ -32,9 +32,9 @@ public class DfaRelationValue extends DfaValue {
     return myFactory.getRelationFactory().createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
   }
 
-  private @NotNull DfaValue myLeftOperand;
-  private @NotNull DfaValue myRightOperand;
-  private @NotNull RelationType myRelation;
+  private @NotNull final DfaValue myLeftOperand;
+  private @NotNull final DfaValue myRightOperand;
+  private @NotNull final RelationType myRelation;
 
   public enum RelationType {
     LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),

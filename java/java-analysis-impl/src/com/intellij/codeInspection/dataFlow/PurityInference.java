@@ -19,15 +19,12 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.source.FileLocalResolver;
 import com.intellij.psi.impl.source.JavaLightTreeUtil;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.java.IKeywordElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,10 +59,10 @@ public class PurityInference {
   static class PurityInferenceVisitor {
     private final LighterAST tree;
     private final LighterASTNode body;
-    private List<LighterASTNode> mutatedRefs = new ArrayList<>();
+    private final List<LighterASTNode> mutatedRefs = new ArrayList<>();
     private boolean hasReturns;
     private boolean hasVolatileReads;
-    private List<LighterASTNode> calls = new ArrayList<>();
+    private final List<LighterASTNode> calls = new ArrayList<>();
 
     PurityInferenceVisitor(LighterAST tree, LighterASTNode body) {
       this.tree = tree;

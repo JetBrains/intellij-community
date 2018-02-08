@@ -264,26 +264,18 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   public MavenGeneralSettings getGeneralSettings() {
     if (getParameters().myGeneralSettingsCache == null) {
-      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myGeneralSettingsCache = getDirectProjectsSettings().generalSettings.clone();
-      }
-      finally {
-        accessToken.finish();
-      }
+      });
     }
     return getParameters().myGeneralSettingsCache;
   }
 
   public MavenImportingSettings getImportingSettings() {
     if (getParameters().myImportingSettingsCache == null) {
-      AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
+      ApplicationManager.getApplication().runReadAction(() -> {
         getParameters().myImportingSettingsCache = getDirectProjectsSettings().importingSettings.clone();
-      }
-      finally {
-        accessToken.finish();
-      }
+      });
     }
     return getParameters().myImportingSettingsCache;
   }

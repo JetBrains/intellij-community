@@ -78,7 +78,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
     YamlMetaType metaType = meta.getMetaType();
-    if (metaType instanceof YamlScalarType) {
+    if (params.getCompletionType().equals(CompletionType.BASIC) && metaType instanceof YamlScalarType) {
       YamlScalarType scalarType = (YamlScalarType)metaType;
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);

@@ -62,7 +62,7 @@ public class CommonCodeStyleSettings {
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
-  private SoftMargins mySoftMargins = new SoftMargins();
+  private final SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 

@@ -49,7 +49,7 @@ public class GenerateByPatternDialog extends DialogWrapper {
   private final Project myProject;
   private JPanel myPanel;
   private Splitter mySplitter;
-  private Tree myTree;
+  private final Tree myTree;
   private final Editor myEditor;
 
   private final MultiMap<String,PatternDescriptor> myMap;

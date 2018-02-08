@@ -33,9 +33,9 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 import java.util.Arrays;
 
 public class RepositoryLibrarySupport {
-  @NotNull private Project project;
-  @NotNull private RepositoryLibraryPropertiesModel model;
-  @NotNull private RepositoryLibraryDescription libraryDescription;
+  @NotNull private final Project project;
+  @NotNull private final RepositoryLibraryPropertiesModel model;
+  @NotNull private final RepositoryLibraryDescription libraryDescription;
 
   public RepositoryLibrarySupport(@NotNull Project project,
                                   @NotNull RepositoryLibraryDescription libraryDescription,

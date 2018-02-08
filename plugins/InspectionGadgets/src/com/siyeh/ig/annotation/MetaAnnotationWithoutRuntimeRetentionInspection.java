@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public class MetaAnnotationWithoutRuntimeRetentionInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static Collection<String> ourAnnotations = new HashSet<>();
+  private static final Collection<String> ourAnnotations = new HashSet<>();
   static {
     ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST);
     ourAnnotations.add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST);

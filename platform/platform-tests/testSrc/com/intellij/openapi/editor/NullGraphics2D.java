@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import java.awt.*;
@@ -21,9 +21,10 @@ import java.util.Objects;
  */
 public class NullGraphics2D extends Graphics2D {
   private final FontRenderContext myFontRenderContext = new FontRenderContext(null, false, false);
-  private Rectangle myClip;
+  private final AffineTransform myTransform = new AffineTransform();
+  private final Rectangle myClip;
   private Composite myComposite = AlphaComposite.SrcOver;
-  private RenderingHints myRenderingHints = new RenderingHints(null);
+  private final RenderingHints myRenderingHints = new RenderingHints(null);
   private Color myColor = Color.black;
   private Font myFont = Font.decode(null);
   private Stroke myStroke = new BasicStroke();
@@ -384,12 +385,13 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public void setTransform(AffineTransform Tx) {
-    throw new UnsupportedOperationException();
+    myTransform.setTransform(Tx);
+    myResult += Tx.hashCode();
   }
 
   @Override
   public AffineTransform getTransform() {
-    throw new UnsupportedOperationException();
+    return new AffineTransform(myTransform);
   }
 
   @Override

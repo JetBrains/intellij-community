@@ -276,8 +276,8 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   
   
   public static class IndentCalculatorFactory {
-    private Project myProject;
-    private Editor myEditor;
+    private final Project myProject;
+    private final Editor myEditor;
 
     public IndentCalculatorFactory(Project project, Editor editor) {
       myProject = project;

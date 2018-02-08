@@ -88,8 +88,7 @@ public class PyInterpreterInspection extends PyInspection {
     }
   }
 
-  private static class ConfigureInterpreterFix implements LocalQuickFix {
-
+  public static final class ConfigureInterpreterFix implements LocalQuickFix {
     @NotNull
     @Override
     public String getFamilyName() {

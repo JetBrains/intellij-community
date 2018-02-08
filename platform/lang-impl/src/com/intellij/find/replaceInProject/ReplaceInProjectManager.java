@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,6 +60,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class ReplaceInProjectManager {
@@ -234,18 +237,41 @@ public class ReplaceInProjectManager {
       .noText(Messages.CANCEL_BUTTON).show();
   }
 
+  private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
+    Set<Usage> usages = selectedOnly
+                        ? replaceContext.getUsageView().getSelectedUsages()
+                        : replaceContext.getUsageView().getUsages();
+    if (usages.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    Set<VirtualFile> files = new HashSet<>();
+    for (Usage usage : usages) {
+      if (usage instanceof UsageInfo2UsageAdapter) {
+        files.add(((UsageInfo2UsageAdapter)usage).getFile());
+      }
+    }
+    return files;
+  }
+
+  private static Set<Usage> getAllUsagesForFile(@NotNull ReplaceContext replaceContext, @NotNull VirtualFile file) {
+    Set<Usage> usages = replaceContext.getUsageView().getUsages();
+    Set<Usage> result = new LinkedHashSet<>();
+    for (Usage usage : usages) {
+      if (usage instanceof UsageInfo2UsageAdapter && Comparing.equal(((UsageInfo2UsageAdapter)usage).getFile(), file)) {
+        result.add(usage);
+      }
+    }
+    return result;
+  }
+
   private void addReplaceActions(final ReplaceContext replaceContext) {
-    final AbstractAction replaceAction = new AbstractAction(FindBundle.message("find.replace.all.action")) {
+    final AbstractAction replaceAllAction = new AbstractAction(FindBundle.message("find.replace.all.action")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         Set<Usage> usages = replaceContext.getUsageView().getUsages();
         if (usages.isEmpty()) return;
-        Set<VirtualFile> files = new HashSet<>();
-        for (Usage usage : usages) {
-          if (usage instanceof UsageInfo2UsageAdapter) {
-            files.add(((UsageInfo2UsageAdapter)usage).getFile());
-          }
-        }
+        Set<VirtualFile> files = getFiles(replaceContext, false);
         if (files.size() < 2 || showReplaceAllConfirmDialog(
           String.valueOf(usages.size()),
           replaceContext.getFindModel().getStringToFind(),
@@ -260,9 +286,13 @@ public class ReplaceInProjectManager {
         return !replaceContext.getUsageView().getUsages().isEmpty();
       }
     };
-    replaceContext.getUsageView().addButtonToLowerPane(replaceAction);
+    replaceContext.getUsageView().addButtonToLowerPane(replaceAllAction);
 
     final AbstractAction replaceSelectedAction = new AbstractAction() {
+      {
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK));
+      }
+      
       @Override
       public void actionPerformed(ActionEvent e) {
         replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
@@ -282,6 +312,69 @@ public class ReplaceInProjectManager {
     };
 
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedAction);
+
+    final AbstractAction replaceAllInThisFileAction = new AbstractAction() {
+      {
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Set<VirtualFile> files = getFiles(replaceContext, true);
+        if (files.size() == 1) {
+          replaceUsagesUnderCommand(replaceContext, getAllUsagesForFile(replaceContext, files.iterator().next()));
+        }
+      }
+
+      @Override
+      public Object getValue(String key) {
+        return Action.NAME.equals(key)
+               ? FindBundle.message("find.replace.this.file.action", replaceContext.getUsageView().getSelectedUsages().size())
+               : super.getValue(key);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return getFiles(replaceContext, true).size() == 1;
+      }
+    };
+
+    replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
+
+    final AbstractAction skipThisFileAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Set<VirtualFile> files = getFiles(replaceContext, true);
+        if (files.size() != 1) return;
+        VirtualFile selectedFile = files.iterator().next();
+        Set<Usage> toSkip = getAllUsagesForFile(replaceContext, selectedFile);
+        Usage usageToSelect = ((UsageViewImpl)replaceContext.getUsageView()).getNextToSelect(toSkip);
+        replaceContext.getUsageView().excludeUsages(toSkip.toArray(Usage.EMPTY_ARRAY));
+        if (usageToSelect != null) {
+          replaceContext.getUsageView().selectUsages(new Usage[]{usageToSelect});
+        } else {
+          replaceContext.getUsageView().selectUsages(Usage.EMPTY_ARRAY);
+        }
+      }
+
+      @Override
+      public Object getValue(String key) {
+        return Action.NAME.equals(key)
+               ? FindBundle.message("find.replace.skip.this.file.action", replaceContext.getUsageView().getSelectedUsages().size())
+               : super.getValue(key);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        Set<VirtualFile> files = getFiles(replaceContext, true);
+        if (files.size() != 1) return false;
+        VirtualFile selectedFile = files.iterator().next();
+        Set<Usage> toSkip = getAllUsagesForFile(replaceContext, selectedFile);
+        return ((UsageViewImpl)replaceContext.getUsageView()).getNextToSelect(toSkip) != null;
+      }
+    };
+
+    replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
@@ -426,8 +519,9 @@ public class ReplaceInProjectManager {
       final UsageView usageView = replaceContext.getUsageView();
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> 
-               IdeFocusManager.getGlobalInstance().requestFocus(usageView.getComponent(), true));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true);
+      });
     }, FindBundle.message("find.replace.command"), null);
 
     replaceContext.invalidateExcludedSetCache();

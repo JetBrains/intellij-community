@@ -28,7 +28,7 @@ public class CommandLineTokenizer extends StringTokenizer {
 
     private static final String DEFAULT_DELIMITERS = " \t\n\r\f";
     // keep source level 1.4
-    private List myTokens = new ArrayList();
+    private final List myTokens = new ArrayList();
     private int myCurrentToken = 0;
     private boolean myHandleEscapedWhitespaces = false;
 

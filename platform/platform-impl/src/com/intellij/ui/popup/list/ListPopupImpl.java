@@ -47,7 +47,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private ListPopupModel myListModel;
 
   private int myIndexForShowingChild = -1;
-  private int myMaxRowCount = 20;
+  private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
 
   public ListPopupImpl(@NotNull ListPopupStep aStep, int maxRowCount) {

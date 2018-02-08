@@ -23,8 +23,8 @@ public class MantisTask extends Task {
   private final Date myUpdated;
   private final Date myCreated;
   private final boolean myClosed;
-  private String myProjectName;
-  private MantisRepository myRepository;
+  private final String myProjectName;
+  private final MantisRepository myRepository;
   private final Comment[] myComments;
 
   public MantisTask(@NotNull IssueData data, @NotNull MantisRepository repository) {

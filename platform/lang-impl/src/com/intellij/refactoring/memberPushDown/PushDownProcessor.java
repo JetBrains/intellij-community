@@ -44,8 +44,8 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   private static final Logger LOG = Logger.getInstance(PushDownProcessor.class);
 
   private NewSubClassData mySubClassData;
-  private PushDownDelegate<MemberInfo, Member> myDelegate;
-  private PushDownData<MemberInfo, Member> myPushDownData;
+  private final PushDownDelegate<MemberInfo, Member> myDelegate;
+  private final PushDownData<MemberInfo, Member> myPushDownData;
 
   public PushDownProcessor(@NotNull Klass sourceClass,
                            @NotNull List<MemberInfo> memberInfos,

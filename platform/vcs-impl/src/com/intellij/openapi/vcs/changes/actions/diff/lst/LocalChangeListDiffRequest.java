@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,11 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   }
 
   @NotNull
+  public String getChangelistName() {
+    return myChangelistName;
+  }
+
+  @NotNull
   public ContentDiffRequest getRequest() {
     return myRequest;
   }
@@ -79,7 +85,11 @@ public class LocalChangeListDiffRequest extends ContentDiffRequest {
   @NotNull
   @Override
   public List<String> getContentTitles() {
-    return myRequest.getContentTitles();
+    List<String> titles = myRequest.getContentTitles();
+    String title1 = titles.get(0);
+    String title2 = titles.get(1);
+    String ourTitle2 = title2 != null ? String.format("%s in %s", title2, myChangelistName) : null;
+    return ContainerUtil.list(title1, ourTitle2);
   }
 
   @Override

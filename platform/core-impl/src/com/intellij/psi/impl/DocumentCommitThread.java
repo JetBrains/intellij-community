@@ -696,7 +696,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         return false; // optimistic locking failed
       }
 
-      if (file.isPhysical() && !ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
         VirtualFile vFile = viewProvider.getVirtualFile();
         LOG.error("Write action expected" +
                   "; document=" + document1 +

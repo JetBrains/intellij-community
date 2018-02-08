@@ -2,11 +2,18 @@
 package com.intellij.util.ui.paint;
 
 import com.intellij.ui.paint.LinePainter2D;
+import com.intellij.ui.paint.LinePainter2D.Align;
 import com.intellij.ui.paint.LinePainter2D.StrokeType;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
+import junit.framework.TestCase;
 import org.junit.Test;
 
 import java.awt.*;
+import java.awt.geom.Line2D;
+import java.util.EnumSet;
 
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 import static com.intellij.util.ui.JBUI.scale;
 
 /**
@@ -14,13 +21,73 @@ import static com.intellij.util.ui.JBUI.scale;
  *
  * @author tav
  */
-public class LinePainter2DTest extends AbstractPainter2D {
+public class LinePainter2DTest extends AbstractPainter2DTest {
   private static final int LINE_LEN = 10;
 
   @Test
   @Override
   public void testGoldenImages() {
     super.testGoldenImages();
+  }
+
+  @Test
+  public void testAlign() {
+    JBUI.setUserScaleFactor(1);
+
+    // no paint below, just create right graphics
+
+    PaintUtilTest.overrideJreHiDPIEnabled(false);
+    paintImage(1, 1, 1, this::testAlign);
+
+    PaintUtilTest.overrideJreHiDPIEnabled(true);
+    paintImage(2, 1, 1, this::testAlign);
+  }
+
+  private Void testAlign(Graphics2D g) {
+    double scale = JBUI.ScaleContext.create(g).getScale(PIX_SCALE);
+    String msg = "LinePainter2D.align is incorrect (JreHiDPIEnabled: " + UIUtil.isJreHiDPIEnabled() + "; scale: " + scale + ")";
+    double delta = 0.000001;
+    boolean jhd = UIUtil.isJreHiDPIEnabled();
+
+    // HORIZONTAL
+    Line2D line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 2.5, 2.5, 5, false, StrokeType.CENTERED, 1);
+    TestCase.assertEquals(msg, 0, line.getX1(), delta);
+    TestCase.assertEquals(msg, 2, line.getY1(), delta);
+    TestCase.assertEquals(msg, 4, line.getX2(), delta);
+    TestCase.assertEquals(msg, 2, line.getY2(), delta);
+
+    line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 2.5, 2, 5, false, StrokeType.CENTERED, 2);
+    TestCase.assertEquals(msg, 0, line.getX1(), delta);
+    TestCase.assertEquals(msg, jhd ? 1.5 : 2, line.getY1(), delta);
+    TestCase.assertEquals(msg, 4, line.getX2(), delta);
+    TestCase.assertEquals(msg, jhd ? 1.5 : 2, line.getY2(), delta);
+
+    line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 3, 1.5, 6, false, StrokeType.CENTERED, 3);
+    TestCase.assertEquals(msg, 0, line.getX1(), delta);
+    TestCase.assertEquals(msg, 1, line.getY1(), delta);
+    TestCase.assertEquals(msg, 5, line.getX2(), delta);
+    TestCase.assertEquals(msg, 1, line.getY2(), delta);
+
+    // VERTICAL
+    line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 2.5, 2.5, 5, true, StrokeType.CENTERED, 1);
+    TestCase.assertEquals(msg, 2, line.getX1(), delta);
+    TestCase.assertEquals(msg, 0, line.getY1(), delta);
+    TestCase.assertEquals(msg, 2, line.getX2(), delta);
+    TestCase.assertEquals(msg, 4, line.getY2(), delta);
+
+    line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 2, 2.5, 5, true, StrokeType.CENTERED, 2);
+    TestCase.assertEquals(msg, jhd ? 1.5 : 2, line.getX1(), delta);
+    TestCase.assertEquals(msg, 0, line.getY1(), delta);
+    TestCase.assertEquals(msg, jhd ? 1.5 : 2, line.getX2(), delta);
+    TestCase.assertEquals(msg, 4, line.getY2(), delta);
+
+    line = LinePainter2D.align(g, EnumSet.of(Align.CENTER_X, Align.CENTER_Y), 1.5, 3, 6, true, StrokeType.CENTERED, 3);
+    TestCase.assertEquals(msg, 1, line.getX1(), delta);
+    TestCase.assertEquals(msg, 0, line.getY1(), delta);
+    TestCase.assertEquals(msg, 1, line.getX2(), delta);
+    TestCase.assertEquals(msg, 5, line.getY2(), delta);
+
+    return null;
   }
 
   @Override

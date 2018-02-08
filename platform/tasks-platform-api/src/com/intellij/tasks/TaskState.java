@@ -31,7 +31,7 @@ public enum TaskState {
 
   OTHER("Other");
 
-  private String myPresentableName;
+  private final String myPresentableName;
 
   TaskState(@NotNull String presentableName) {
     myPresentableName = presentableName;

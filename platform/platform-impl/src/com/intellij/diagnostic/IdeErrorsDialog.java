@@ -116,7 +116,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private DetailsTabForm myDetailsTabForm;
   private AttachmentsTabForm myAttachmentsTabForm;
 
-  private ClearFatalsAction myClearAction = new ClearFatalsAction();
+  private final ClearFatalsAction myClearAction = new ClearFatalsAction();
   private BlameAction myBlameAction;
   @Nullable
   private AnalyzeAction myAnalyzeAction;

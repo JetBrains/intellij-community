@@ -52,15 +52,15 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private Content myEmptyStateContent;
   private final JPanel myEmptyStatePanel;
 
-  private ArrayList<PreviewInfo> myHistory = new ArrayList<>();
+  private final ArrayList<PreviewInfo> myHistory = new ArrayList<>();
 
 
-  private TreeSet<PreviewPanelProvider> myProviders = new TreeSet<>((o1, o2) -> {
+  private final TreeSet<PreviewPanelProvider> myProviders = new TreeSet<>((o1, o2) -> {
     int result = Float.compare(o1.getMenuOrder(), o2.getMenuOrder());
     return result != 0 ? result : o1.toString().compareTo(o2.toString());
   });
-  private Set<PreviewProviderId> myActiveProviderIds = new HashSet<>();
-  private Set<PreviewProviderId> myLockedProviderIds = new HashSet<>();
+  private final Set<PreviewProviderId> myActiveProviderIds = new HashSet<>();
+  private final Set<PreviewProviderId> myLockedProviderIds = new HashSet<>();
   private boolean myInnerSelectionChange;
 
   private static boolean isAvailable() {

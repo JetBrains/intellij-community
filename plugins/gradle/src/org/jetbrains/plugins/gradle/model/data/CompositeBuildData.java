@@ -33,7 +33,7 @@ public class CompositeBuildData implements Serializable {
   public static final Key<CompositeBuildData> KEY = Key.create(CompositeBuildData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
 
   private final String myRootProjectPath;
-  @NotNull private List<BuildParticipant> myCompositeParticipants = ContainerUtil.newArrayList();
+  @NotNull private final List<BuildParticipant> myCompositeParticipants = ContainerUtil.newArrayList();
 
   public CompositeBuildData(String rootProjectPath) {
     myRootProjectPath = rootProjectPath;

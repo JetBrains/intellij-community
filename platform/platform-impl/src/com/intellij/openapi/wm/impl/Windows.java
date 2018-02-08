@@ -16,7 +16,9 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -156,7 +158,7 @@ public class Windows {
     }
   }
 
-  private static String HEAVYWEIGHT_WINDOW_CLASS_NAME = "HeavyWeightWindow";
+  private static final String HEAVYWEIGHT_WINDOW_CLASS_NAME = "HeavyWeightWindow";
 
   private static boolean isHeavyWeightPopup(AWTEvent event) {
     Object source = event.getSource();

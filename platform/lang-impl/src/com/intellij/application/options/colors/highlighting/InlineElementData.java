@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
@@ -8,6 +6,7 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -23,14 +22,14 @@ import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGH
 
 public class InlineElementData extends HighlightData {
   private final String myText;
-  private boolean myAddBorder;
+  private final boolean myAddBorder;
 
-  public InlineElementData(int offset, TextAttributesKey attributesKey, String text) {
-    this(offset, attributesKey, text, false);
+  public InlineElementData(int offset, TextAttributesKey attributesKey, String text, ColorKey additionalColorKey) {
+    this(offset, attributesKey, text, false, additionalColorKey);
   }
 
-  private InlineElementData(int offset, TextAttributesKey attributesKey, String text, boolean highlighted) {
-    super(offset, offset, attributesKey);
+  private InlineElementData(int offset, TextAttributesKey attributesKey, String text, boolean highlighted, ColorKey additionalColorKey) {
+    super(offset, offset, attributesKey, additionalColorKey);
     myText = text;
     myAddBorder = highlighted;
   }
@@ -61,7 +60,7 @@ public class InlineElementData extends HighlightData {
 
   @Override
   public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
-    list.add(new InlineElementData(getStartOffset(), getHighlightKey(), myText, highlighted));
+    list.add(new InlineElementData(getStartOffset(), getHighlightKey(), myText, highlighted, getAdditionalColorKey()));
   }
 
   public static class RendererWrapper implements EditorCustomElementRenderer {

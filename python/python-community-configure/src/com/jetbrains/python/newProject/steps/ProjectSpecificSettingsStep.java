@@ -35,7 +35,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
@@ -134,10 +133,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         final String fileName = PathUtil.getFileName(getNewProjectPath());
         ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
       });
-      final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
-      if (interpreterPanel != null) {
-        UiNotifyConnector.doWhenFirstShown(interpreterPanel, this::checkValid);
-      }
     }
   }
 
@@ -307,6 +302,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     addLocationChangeListener(event -> myInterpreterPanel.setNewProjectPath(getNewProjectPath()));
 
     container.add(myInterpreterPanel, BorderLayout.NORTH);
+
+    checkValid();
+
     return decoratorPanel;
   }
 

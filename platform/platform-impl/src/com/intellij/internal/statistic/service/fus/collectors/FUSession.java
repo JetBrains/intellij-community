@@ -11,7 +11,7 @@ import java.util.Objects;
 public class FUSession {
   public final static FUSession APPLICATION_SESSION = create("application_session");
 
-  private int id;
+  private final int id;
   private String buildId;
 
   public static FUSession create(@NotNull String sessionId) {
