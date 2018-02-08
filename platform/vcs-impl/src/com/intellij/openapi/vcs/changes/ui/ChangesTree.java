@@ -265,7 +265,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     setModel(model);
     myIsModelFlat = isCurrentModelFlat();
-    setChildIndent(isShowFlatten() && myIsModelFlat);
+    setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
 
     if (myKeepTreeState) {
       //noinspection ConstantConditions
@@ -452,13 +452,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     final ExpandAllAction expandAllAction = new ExpandAllAction(this) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!isShowFlatten() || !myIsModelFlat);
+        e.getPresentation().setEnabledAndVisible(!myGroupingSupport.isNone() || !myIsModelFlat);
       }
     };
     final CollapseAllAction collapseAllAction = new CollapseAllAction(this) {
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!isShowFlatten() || !myIsModelFlat);
+        e.getPresentation().setEnabledAndVisible(!myGroupingSupport.isNone() || !myIsModelFlat);
       }
     };
     AnAction[] actions = new AnAction[]{ActionManager.getInstance().getAction("ChangesView.GroupBy"), expandAllAction, collapseAllAction};
