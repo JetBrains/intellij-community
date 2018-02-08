@@ -3,6 +3,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,10 +30,10 @@ public interface JavaModuleSystemEx extends JavaModuleSystem {
 
   @Nullable
   default ErrorWithFixes checkAccess(@NotNull PsiClass target, @NotNull PsiElement place) {
-    PsiFile file = target.getContainingFile();
-    return file instanceof PsiClassOwner ? checkAccess(((PsiClassOwner)file).getPackageName(), (PsiClassOwner)file, place) : null;
+    String packageName = PsiUtil.getPackageName(target);
+    return packageName != null ? checkAccess(packageName, target.getContainingFile(), place) : null;
   }
 
   @Nullable
-  ErrorWithFixes checkAccess(@NotNull String targetPackageName, @Nullable PsiClassOwner targetFile, @NotNull PsiElement place);
+  ErrorWithFixes checkAccess(@NotNull String targetPackageName, @Nullable PsiFile targetFile, @NotNull PsiElement place);
 }
