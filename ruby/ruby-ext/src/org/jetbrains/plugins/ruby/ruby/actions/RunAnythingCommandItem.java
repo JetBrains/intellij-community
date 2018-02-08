@@ -7,6 +7,8 @@ import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -24,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
@@ -71,6 +74,7 @@ import java.util.List;
 
 public class RunAnythingCommandItem extends RunAnythingItem<String> {
   private static final Logger LOG = Logger.getInstance(RunAnythingCommandItem.class);
+  static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   @Nullable private final Module myModule;
   @NotNull private final String myCommandLine;
   @NotNull private final Project myProject;
@@ -248,6 +252,15 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     return RunAnythingUtil.getUndefinedCommandCellRendererComponent(this, isSelected);
   }
 
+  @NotNull
+  static Collection<Pair<String, String>> getOrCreateWrappedCommands(@NotNull Project project) {
+    Collection<Pair<String, String>> list = project.getUserData(RUN_ANYTHING_WRAPPED_COMMANDS);
+    if (list == null) {
+      list = ContainerUtil.newArrayList();
+      project.putUserData(RUN_ANYTHING_WRAPPED_COMMANDS, list);
+    }
+    return list;
+  }
 
   private static class AnythingRunProfile implements DebuggableRunProfile {
     @NotNull private final Project myProject;
@@ -428,6 +441,19 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
           }
         }
       };
+
+      myProcessHandler.addProcessListener(new ProcessAdapter() {
+        boolean myIsFirstLineAdded;
+
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          if (!myIsFirstLineAdded) {
+            Objects.requireNonNull(getOrCreateWrappedCommands(myProject))
+                   .add(Pair.create(StringUtil.trim(event.getText()), myOriginalCommand));
+            myIsFirstLineAdded = true;
+          }
+        }
+      });
       ((KillableColoredProcessHandler)myProcessHandler).setHasPty(true);
       return myProcessHandler;
     }
