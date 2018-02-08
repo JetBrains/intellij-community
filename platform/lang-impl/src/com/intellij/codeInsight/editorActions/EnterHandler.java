@@ -325,7 +325,7 @@ public class EnterHandler extends BaseEnterHandler {
     }
     int delta = newIndent.length() - (indentEnd - indentStart);
     document.replaceString(indentStart, indentEnd, newIndent);
-    return offset <= indentEnd ? indentStart + newIndent.length() : offset + delta;
+    return offset <= indentEnd ? (indentStart + newIndent.length()) : (offset + delta);
   }
 
   private static class DoEnterAction implements Runnable {

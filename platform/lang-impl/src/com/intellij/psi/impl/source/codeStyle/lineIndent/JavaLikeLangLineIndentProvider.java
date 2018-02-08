@@ -139,9 +139,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       }
       else if (getPosition(editor, offset).matchesRule(
         position -> {
-          position.moveBefore();
+          moveBeforeEndLineComments(position);
           if (position.isAt(BlockOpeningBrace)) {
-            return !position.before().beforeOptional(Whitespace).isAt(LeftParenthesis);
+            return !position.before().beforeOptionalMix(LineComment, BlockComment, Whitespace).isAt(LeftParenthesis);
           }
           return false;
         }
@@ -211,12 +211,22 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
   private int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
-    position = position.before().beforeOptional(BlockOpeningBrace);
+    moveBeforeEndLineComments(position);
+    position.moveBeforeOptional(BlockOpeningBrace);
     if (position.isAt(Whitespace)) {
-      if (position.isAtMultiline()) return position.after().getStartOffset();
+      if (position.isAtMultiline() && !position.after().isAtEnd()) {
+        return position.after().getStartOffset();
+      }
       position.moveBefore();
     }
     return getStatementStartOffset(position, false);
+  }
+
+  private static void moveBeforeEndLineComments(@NotNull SemanticEditorPosition position) {
+    position.moveBefore();
+    while (!position.isAtMultiline() && position.isAtAnyOf(LineComment, BlockComment, Whitespace)) {
+      position.moveBefore();
+    }
   }
 
   private int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
