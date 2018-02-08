@@ -159,10 +159,6 @@ public class CommitPanel extends JBPanel {
   }
 
   private class MessagePanel extends HtmlPanel {
-    MessagePanel() {
-      setOpaque(true);
-    }
-
     @Override
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
@@ -191,6 +187,7 @@ public class CommitPanel extends JBPanel {
     @Override
     public void update() {
       setVisible(myPresentation != null); // looks weird when empty
+      setOpaque(!UIUtil.isUnderDarcula());
       super.update();
     }
   }
