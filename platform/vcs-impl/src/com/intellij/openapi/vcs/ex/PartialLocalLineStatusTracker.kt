@@ -255,7 +255,7 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project) {
+    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
       if (eventProject != project) return
       if (batchChangeTaskCounter.getAndIncrement() == 0) {
         documentTracker.freeze(Side.LEFT)

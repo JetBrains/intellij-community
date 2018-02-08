@@ -298,15 +298,15 @@ public class BuildManager implements Disposable {
 
     });
 
-    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
       @Override
-      public void batchChangeStarted(Project project) {
+      public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
         myFileChangeCounter++;
         cancelAutoMakeTasks(project);
       }
 
       @Override
-      public void batchChangeCompleted(Project project) {
+      public void batchChangeCompleted(@NotNull Project project) {
         myFileChangeCounter--;
       }
     });

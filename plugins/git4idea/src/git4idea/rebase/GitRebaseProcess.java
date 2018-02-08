@@ -138,8 +138,7 @@ public class GitRebaseProcess {
 
     Map<GitRepository, GitRebaseStatus> statuses = newLinkedHashMap(myRebaseSpec.getStatuses());
     List<GitRepository> repositoriesToRebase = myRepositoryManager.sortByDependency(myRebaseSpec.getIncompleteRepositories());
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 
       GitRepository failed = null;
@@ -179,9 +178,6 @@ public class GitRebaseProcess {
     catch(Throwable e) {
       myRepositoryManager.setOngoingRebaseSpec(null);
       ExceptionUtil.rethrowUnchecked(e);
-    }
-    finally {
-      token.finish();
     }
   }
 
