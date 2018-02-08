@@ -16,7 +16,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
@@ -36,12 +38,11 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Disposable {
+  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () ->
+    new TreeSet<>((o1, o2) -> Comparing.compare(o1.getTemplate().getPresentableName(), o2.getTemplate().getPresentableName()));
   @NotNull
   private final CheckedTreeNode myRoot;
   @NotNull
@@ -123,12 +124,19 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
   public void initTree(@NotNull MultiMap<PostfixTemplateProvider, PostfixTemplate> providerToTemplates) {
     myRoot.removeAllChildren();
+    Map<String, Set<PostfixTemplateCheckedTreeNode>> languageToNodes = new HashMap<>();
     for (Map.Entry<PostfixTemplateProvider, Collection<PostfixTemplate>> entry : providerToTemplates.entrySet()) {
       PostfixTemplateProvider provider = entry.getKey();
       String languageId = myProviderToLanguage.get(provider);
-      DefaultMutableTreeNode languageNode = findOrCreateLanguageNode(languageId);
+      Set<PostfixTemplateCheckedTreeNode> nodes = ContainerUtil.getOrCreate(languageToNodes, languageId, myNodesComparator);
       for (PostfixTemplate template : entry.getValue()) {
-        languageNode.add(new PostfixTemplateCheckedTreeNode(template, provider.getId(), false));
+        nodes.add(new PostfixTemplateCheckedTreeNode(template, provider.getId(), false));
+      }
+    }
+    for (Map.Entry<String, Set<PostfixTemplateCheckedTreeNode>> entry : languageToNodes.entrySet()) {
+      DefaultMutableTreeNode languageNode = findOrCreateLanguageNode(entry.getKey());
+      for (PostfixTemplateCheckedTreeNode node : entry.getValue()) {
+        languageNode.add(new PostfixTemplateCheckedTreeNode(node.getTemplate(), node.getProviderId(), false));
       }
     }
 
