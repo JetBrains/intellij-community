@@ -630,7 +630,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
 
   private void updateProgressIcon() {
     if (myOriginals.isEmpty() || PowerSaveMode.isEnabled() ||
-        myOriginals.stream().map(ProgressSuspender::getSuspender).filter(Objects::nonNull).allMatch(ProgressSuspender::isSuspended)) {
+        myOriginals.stream().map(ProgressSuspender::getSuspender).allMatch(s -> s != null && s.isSuspended())) {
       myProgressIcon.suspend();
     } else {
       myProgressIcon.resume();
