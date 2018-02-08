@@ -146,7 +146,7 @@ class TestDirectory extends TestPackage {
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackage(directory));
+    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
   }
 
   @Override
