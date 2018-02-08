@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
@@ -56,6 +57,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private ComboBox<String> myShortcutComboBox;
   private JPanel myDescriptionPanel;
   private final Map<PostfixTemplateProvider, String> myProviderToLanguage = ContainerUtil.newHashMap();
+  private final Alarm myUpdateDescriptionPanelAlarm = new Alarm();
 
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
@@ -89,7 +91,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     myCheckboxTree = new PostfixTemplatesCheckboxTree(myProviderToLanguage) {
       @Override
       protected void selectionChanged() {
-        resetDescriptionPanel();
+        myUpdateDescriptionPanelAlarm.cancelAllRequests();
+        myUpdateDescriptionPanelAlarm.addRequest(() -> resetDescriptionPanel(), 100);
       }
     };
 
@@ -216,6 +219,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       Disposer.dispose(myCheckboxTree);
       myCheckboxTree = null;
     }
+    Disposer.dispose(myUpdateDescriptionPanelAlarm);
   }
 
   private void updateComponents() {
