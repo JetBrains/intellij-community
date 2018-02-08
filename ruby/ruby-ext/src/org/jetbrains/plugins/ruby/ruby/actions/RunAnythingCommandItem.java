@@ -365,7 +365,7 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
 
     @Override
     public String getName() {
-      return myCommandLine.getCommandLineString();
+      return myOriginalCommand;
     }
 
     @Nullable
