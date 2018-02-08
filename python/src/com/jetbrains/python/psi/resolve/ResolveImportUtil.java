@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -123,6 +124,7 @@ public class ResolveImportUtil {
     PsiFile file = importStatement.getContainingFile().getOriginalFile();
     String name = qName.getComponents().get(0);
 
+    final List<RatedResolveResult> results = new ArrayList<>();
     final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
@@ -131,9 +133,9 @@ public class ResolveImportUtil {
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
-      return updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false));
+      results.addAll(updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false)));
     }
-    return Collections.emptyList();
+    return results;
   }
 
   @NotNull
