@@ -624,6 +624,8 @@ class LineStatusTrackerManager(
 
       val changeList = changeListManager.getChangeList(virtualFile)
       if (changeList != null && !changeList.isDefault) {
+        log("Tracker install from DocumentListener: ", virtualFile)
+
         installTracker(virtualFile, document, changeList.id, listOf(event))
         return
       }
