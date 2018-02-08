@@ -40,7 +40,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class CommonCodeStyleSettingsManager {
+class CommonCodeStyleSettingsManager {
   private volatile Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Content> myUnknownSettingsMap;
 
@@ -251,7 +251,8 @@ public class CommonCodeStyleSettingsManager {
         CommonCodeStyleSettings otherSettings = other.getCommonSettings(language);
         if (!theseSettings.equals(otherSettings)) return false;
       }
+      return true;
     }
-    return true;
+    return false;
   }
 }
