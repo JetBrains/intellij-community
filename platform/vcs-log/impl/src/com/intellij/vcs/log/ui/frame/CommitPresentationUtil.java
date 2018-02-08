@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -261,38 +260,29 @@ public class CommitPresentationUtil {
   public static CommitPresentation buildPresentation(@NotNull Project project,
                                                      @NotNull VcsFullCommitDetails commit,
                                                      @NotNull Set<String> unresolvedHashes) {
-    String fullMessage = commit.getFullMessage();
-
-    String text = formatCommitText(project, fullMessage, Collections.emptySet());
+    String rawMessage = commit.getFullMessage();
     String hashAndAuthor = formatCommitHashAndAuthor(commit);
 
-    Set<String> unresolvedHashesForCommit = findHashes(project, fullMessage);
+    Set<String> unresolvedHashesForCommit = findHashes(project, rawMessage);
     if (unresolvedHashesForCommit.isEmpty()) {
-      return new CommitPresentation(text, hashAndAuthor, commit.getRoot(), MultiMap.empty());
+      return new CommitPresentation(project, commit.getRoot(), rawMessage, hashAndAuthor, MultiMap.empty());
     }
 
     unresolvedHashes.addAll(unresolvedHashesForCommit);
-    return new UnresolvedPresentation(project, commit.getRoot(), fullMessage, hashAndAuthor, text);
+    return new UnresolvedPresentation(project, commit.getRoot(), rawMessage, hashAndAuthor);
   }
 
   private static class UnresolvedPresentation extends CommitPresentation {
-    @NotNull private final Project myProject;
-    @NotNull private final String myRawMessage;
-
     public UnresolvedPresentation(@NotNull Project project,
                                   @NotNull VirtualFile root,
                                   @NotNull String rawMessage,
-                                  @NotNull String hashAndAuthor,
-                                  @NotNull String formattedMessage) {
-      super(formattedMessage, hashAndAuthor, root, MultiMap.empty());
-      myProject = project;
-      myRawMessage = rawMessage;
+                                  @NotNull String hashAndAuthor) {
+      super(project, root, rawMessage, hashAndAuthor, MultiMap.empty());
     }
 
     @NotNull
     public CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {
-      String text = formatCommitText(myProject, myRawMessage, resolvedHashes.keySet());
-      return new CommitPresentation(text, myHashAndAuthor, myRoot, resolvedHashes);
+      return new CommitPresentation(myProject, myRoot, myRawMessage, myHashAndAuthor, resolvedHashes);
     }
 
     @Override
@@ -302,22 +292,27 @@ public class CommitPresentationUtil {
   }
 
   public static class CommitPresentation {
-    @NotNull protected final String myFormattedMessage;
+    @NotNull protected final Project myProject;
+    @NotNull protected final String myRawMessage;
     @NotNull protected final String myHashAndAuthor;
     @NotNull protected final VirtualFile myRoot;
     @NotNull private final MultiMap<String, CommitId> myResolvedHashes;
 
-    public CommitPresentation(@NotNull String formattedMessage, @NotNull String hashAndAuthor,
-                              @NotNull VirtualFile root, @NotNull MultiMap<String, CommitId> resolvedHashes) {
-      myFormattedMessage = formattedMessage;
-      myHashAndAuthor = hashAndAuthor;
+    public CommitPresentation(@NotNull Project project,
+                              @NotNull VirtualFile root,
+                              @NotNull String rawMessage,
+                              @NotNull String hashAndAuthor,
+                              @NotNull MultiMap<String, CommitId> resolvedHashes) {
+      myProject = project;
       myRoot = root;
+      myRawMessage = rawMessage;
+      myHashAndAuthor = hashAndAuthor;
       myResolvedHashes = resolvedHashes;
     }
 
     @NotNull
     public String getText() {
-      return myFormattedMessage;
+      return formatCommitText(myProject, myRawMessage, myResolvedHashes.keySet());
     }
 
     @NotNull
