@@ -429,6 +429,10 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     return FileUtil.expandUserHome(myRepositoryUrlField.getText().trim());
   }
 
+  /**
+   * @deprecated use {@link #getRepositoryHostingServices()}
+   */
+  @Deprecated
   public void prependToHistory(@NotNull final String item) {
     myRepositoryUrlCombobox.addItem(item);
   }
