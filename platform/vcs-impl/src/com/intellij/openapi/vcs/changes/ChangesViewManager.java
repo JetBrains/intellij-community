@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -192,7 +190,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     toolbarPanel.add(visualActionsToolbar.getComponent(), BorderLayout.CENTER);
 
     myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-    myView.getGroupingSupport().setGroupingKey(myState.groupingKey);
+    myView.getGroupingSupport().setGroupingKeyOrNone(myState.groupingKey);
 
     myProgressLabel = new JPanel(new BorderLayout());
 
@@ -317,7 +315,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @Override
   public void setGrouping(@NotNull String groupingKey) {
-    myView.getGroupingSupport().setGroupingKey(groupingKey);
+    myView.getGroupingSupport().setGroupingKeyOrNone(groupingKey);
   }
 
   @Override

@@ -88,6 +88,8 @@
       <action id="ChangesView.GroupBy.None" text="None" class="com.intellij.openapi.vcs.changes.actions.SetNoneChangesGroupingAction"/>
       <action id="ChangesView.GroupBy.Directory" text="Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
+      <action id="ChangesView.GroupBy.Module" text="Module"
+              class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction"/>
     </group>
 
     <group id="ChangesViewToolbar">

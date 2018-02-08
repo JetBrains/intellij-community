@@ -34,3 +34,7 @@ class SetNoneChangesGroupingAction : SetChangesGroupingAction() {
 class SetDirectoryChangesGroupingAction : SetChangesGroupingAction() {
   override val groupingKey get() = "directory"
 }
+
+class SetModuleChangesGroupingAction : SetChangesGroupingAction() {
+  override val groupingKey get() = "module"
+}
