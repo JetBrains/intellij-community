@@ -155,7 +155,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     SmartExpander.installOn(this);
 
     migrateShowFlattenSetting();
-    myGroupingSupport.setGroupingKey(notNull(PropertiesComponent.getInstance(myProject).getValue(GROUPING_KEY), DIRECTORY_GROUPING));
+    myGroupingSupport.setGroupingKeyOrNone(notNull(PropertiesComponent.getInstance(myProject).getValue(GROUPING_KEY), DIRECTORY_GROUPING));
     myGroupingSupport.addPropertyChangeListener(e -> changeGrouping((String)e.getOldValue(), (String)e.getNewValue()));
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
@@ -212,7 +212,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public boolean isShowFlatten() {
-    return myGroupingSupport.isNone();
+    return !myGroupingSupport.isDirectory();
   }
 
   public boolean isShowCheckboxes() {
