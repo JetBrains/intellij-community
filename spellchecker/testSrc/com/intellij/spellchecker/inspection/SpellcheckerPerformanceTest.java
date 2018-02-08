@@ -58,7 +58,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertSize(typoCount, runLocalInspections());
     System.out.println("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PlatformTestUtil.startPerformanceTest("many typos highlighting", 11_000, () -> {
+    PlatformTestUtil.startPerformanceTest("many typos highlighting", 12_000, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertSize(typoCount, runLocalInspections());
     }).assertTiming();
