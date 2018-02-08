@@ -111,35 +111,44 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @Override
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
 
     Editor editor = callback.getEditor();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
       PostfixTemplate postfixTemplate = findTemplate(provider, key);
       if (postfixTemplate != null) {
-        final PsiFile file = callback.getContext().getContainingFile();
-        if (isApplicableTemplate(provider, key, file, editor)) {
-          int offset = deleteTemplateKey(file, editor, key);
-          try {
-            provider.preExpand(file, editor);
-            PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset));
-            expandTemplate(postfixTemplate, editor, context);
-          }
-          finally {
-            provider.afterExpand(file, editor);
-          }
-        }
-        // don't care about errors in multiCaret mode
-        else if (editor.getCaretModel().getAllCarets().size() == 1) {
-          LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
-                    AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
-        }
+        expandTemplate(key, callback, editor, provider, postfixTemplate);
         return;
       }
     }
 
     // don't care about errors in multiCaret mode
     if (editor.getCaretModel().getAllCarets().size() == 1) {
+      LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
+                AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
+    }
+  }
+
+  public static void expandTemplate(@NotNull String key,
+                                    @NotNull CustomTemplateCallback callback,
+                                    @NotNull Editor editor,
+                                    @NotNull PostfixTemplateProvider provider,
+                                    @NotNull PostfixTemplate postfixTemplate) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
+    final PsiFile file = callback.getContext().getContainingFile();
+    if (isApplicableTemplate(provider, key, file, editor)) {
+      int offset = deleteTemplateKey(file, editor, key);
+      try {
+        provider.preExpand(file, editor);
+        PsiElement context = CustomTemplateCallback.getContext(file, positiveOffset(offset));
+        expandTemplate(postfixTemplate, editor, context);
+      }
+      finally {
+        provider.afterExpand(file, editor);
+      }
+    }
+    // don't care about errors in multiCaret mode
+    else if (editor.getCaretModel().getAllCarets().size() == 1) {
       LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
                 AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
