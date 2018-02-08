@@ -1285,6 +1285,11 @@ public class JBUI {
                        : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
       }
 
+      public static Icon comboTabIcon(boolean hovered) {
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", getIconWithBackground(AllIcons.General.Combo2))
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.Combo2);
+      }
+
       private static Icon getIconWithBackground(final Icon icon) {
         return new Icon() {
           @Override

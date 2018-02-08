@@ -25,56 +25,68 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import org.jetbrains.annotations.NotNull;
 
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 class ContentTabLabel extends BaseLabel {
   private final ActiveIcon closeIcon = new ActiveIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true),
                                                       JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
-
   private final Content myContent;
   private final TabContentLayout myLayout;
 
-  private static final int CLOSE_GAP = 3;
+  protected static final int ICONS_GAP = 3;
+
+  private final List<AdditionalIcon> additionalIcon = new ArrayList<>();
 
   private final AdditionalIcon closeTabIcon = new AdditionalIcon(closeIcon) {
-
+    @NotNull
     @Override
-    public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getInsets().right - getIconWidth(), 0, getIconWidth(), getHeight());
+    public Rectangle getRectangle() {
+      return new Rectangle(getX(), 0, getIconWidth(), getHeight());
     }
 
     @Override
-    public boolean isActive() {
-      return mouseOverCloseIcon();
+    public boolean getActive() {
+      return mouseOverIcon(this);
+    }
+
+    @Override
+    public boolean getAvailable() {
+      return canBeClosed();
     }
   };
 
   BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
     protected void execute(final MouseEvent e) {
-      if(canBeClosed() && mouseOverCloseIcon()) {
+      if (canBeClosed() && mouseOverIcon(closeTabIcon)) {
         contentManager().removeContent(getContent(), true);
-      } else {
+      }
+      else {
         selectContent();
       }
     }
   };
 
-  private boolean mouseOverCloseIcon() {
-    if(!isHovered()) return false;
+  protected boolean mouseOverIcon(AdditionalIcon icon) {
+    if (!isHovered()) return false;
 
     Point point = MouseInfo.getPointerInfo().getLocation();
     SwingUtilities.convertPointFromScreen(point, this);
-    return closeTabIcon.getIconRec().contains(point);
+    return icon.contains(point);
   }
 
   public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
     super(layout.myUi, true);
     myLayout = layout;
     myContent = content;
+
+    fillIcons(additionalIcon);
 
     behavior.setActionTrigger(MouseEvent.MOUSE_PRESSED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
@@ -83,19 +95,27 @@ class ContentTabLabel extends BaseLabel {
       @Override
       public void propertyChange(PropertyChangeEvent event) {
         final String property = event.getPropertyName();
-        if(Content.IS_CLOSABLE.equals(property)) {
+        if (Content.IS_CLOSABLE.equals(property)) {
           repaint();
         }
       }
     });
   }
 
+  protected void fillIcons(List<AdditionalIcon> icons) {
+    icons.add(closeTabIcon);
+  }
+
   @Override
   protected void processMouseMotionEvent(MouseEvent event) {
-    super.processMouseEvent(event);
-    if(isHovered() && canBeClosed()) {
-      repaint(closeTabIcon.getIconRec());
+    if (isHovered() && invalid()) {
+      repaint();
     }
+    super.processMouseEvent(event);
+  }
+
+  protected boolean invalid() {
+    return additionalIcon.stream().anyMatch(icon -> icon.getAvailable());
   }
 
   public final boolean canBeClosed() {
@@ -115,10 +135,11 @@ class ContentTabLabel extends BaseLabel {
       setBorder(null);
     }
     else {
-      if(canBeClosed()) {
+      if (additionalIcon.stream().anyMatch(icon -> icon.getAvailable())) {
         setHorizontalAlignment(SwingConstants.LEFT);
         setBorder(JBUI.Borders.empty(0, 12, 0, 7));
-      } else {
+      }
+      else {
         setHorizontalAlignment(SwingConstants.CENTER);
         setBorder(JBUI.Borders.empty(0, 12));
       }
@@ -127,14 +148,24 @@ class ContentTabLabel extends BaseLabel {
     updateTextAndIcon(myContent, isSelected());
   }
 
+  protected Dimension getLabelSize() {
+    return super.getPreferredSize();
+  }
 
   @Override
   public Dimension getPreferredSize() {
-    final Dimension size = super.getPreferredSize();
+    final Dimension size = getLabelSize();
     int w = size.width;
-    if (canBeClosed()) {
-      w += CLOSE_GAP + closeTabIcon.getIconWidth();
+
+    for (int i = 0; i < additionalIcon.size(); i++) {
+      AdditionalIcon icon = additionalIcon.get(i);
+      if (icon.getAvailable()) {
+        icon.setX(w - getInsets().right);
+        w += icon.getIconWidth();
+        if (i < additionalIcon.size() - 1) w += ICONS_GAP;
+      }
     }
+
     return new Dimension(w, size.height);
   }
 
@@ -161,11 +192,17 @@ class ContentTabLabel extends BaseLabel {
     return super.getPassiveFg(selected);
   }
 
+  protected void paintIcons(final Graphics g) {
+    for (AdditionalIcon icon : additionalIcon) {
+      if (icon.getAvailable()) {
+        icon.paintIcon(this, g);
+      }
+    }
+  }
+
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
-    if (canBeClosed()) {
-      closeTabIcon.paintIcon(this, g);
-    }
+    paintIcons(g);
   }
 
   public boolean isSelected() {

@@ -16,40 +16,33 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class TabbedContentTabLabel extends ContentTabLabel {
 
-  private final ComboIcon myComboIcon = new ComboIcon() {
-    @Override
-    public Rectangle getIconRec() {
-      return new Rectangle(getWidth() - getIconWidth() - 3, 0, getIconWidth(), getHeight());
-    }
-
-    @Override
-    public boolean isActive() {
-      return true;
-    }
-  };
   private final TabbedContent myContent;
   private Reference<JBPopup> myPopupReference = null;
 
   public TabbedContentTabLabel(@NotNull TabbedContent content, @NotNull TabContentLayout layout) {
     super(content, layout);
     myContent = content;
+  }
+
+  private boolean isPopupShown() {
+    return (myPopupReference != null && myPopupReference.get() != null && myPopupReference.get().isVisible());
   }
 
   @Override
@@ -65,6 +58,12 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     myPopupReference = new WeakReference<>(popup);
     popup.showUnderneathOf(this);
+    popup.addListener(new JBPopupAdapter() {
+      @Override
+      public void onClosed(LightweightWindowEvent event) {
+        repaint();
+      }
+    });
   }
 
   @Override
@@ -73,23 +72,29 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     if (myContent != null) {
       setText(myContent.getTabName());
     }
-    if (hasMultipleTabs()) {
-      setHorizontalAlignment(LEFT);
-    }
   }
 
   @Override
-  public Dimension getPreferredSize() {
-    final Dimension size = super.getPreferredSize();
-    return hasMultipleTabs() ? new Dimension(size.width + 12, size.height) : size;
-  }
+  protected void fillIcons(List<AdditionalIcon> icons) {
+    icons.add(new AdditionalIcon(new ActiveIcon(JBUI.CurrentTheme.ToolWindow.comboTabIcon(true),
+                                                JBUI.CurrentTheme.ToolWindow.comboTabIcon(false))) {
+      @NotNull
+      @Override
+      public Rectangle getRectangle() {
+        return new Rectangle(getX(), 0, getIconWidth(), getHeight());
+      }
 
-  @Override
-  protected void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    if (hasMultipleTabs()) {
-      myComboIcon.paintIcon(this, g);
-    }
+      @Override
+      public boolean getActive() {
+        return mouseOverIcon(this) || isPopupShown();
+      }
+
+      @Override
+      public boolean getAvailable() {
+        return hasMultipleTabs();
+      }
+    });
+    super.fillIcons(icons);
   }
 
   @Override
