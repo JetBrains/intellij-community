@@ -43,7 +43,7 @@ import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -531,6 +531,6 @@ public class CaptureConfigurable implements SearchableConfigurable {
   }
 
   static String getAnnotationName(boolean capture) {
-    return (capture ? Debugger.Capture.class : Debugger.Insert.class).getName().replace("$", ".");
+    return (capture ? Async.Schedule.class : Async.Execute.class).getName().replace("$", ".");
   }
 }
