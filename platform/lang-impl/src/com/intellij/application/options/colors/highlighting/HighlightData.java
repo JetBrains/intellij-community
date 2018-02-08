@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -65,7 +66,7 @@ public class HighlightData {
           highlighter.setErrorStripeMarkColor(errorStripeColor);
           final String tooltip = displayText.get(myHighlightType);
           highlighter.setErrorStripeTooltip(tooltip);
-          highlighter.putUserData(RangeHighlighter.VISIBLE_IF_FOLDED, Boolean.TRUE);
+          if (highlighter instanceof RangeHighlighterEx) ((RangeHighlighterEx)highlighter).setVisibleIfFolded(true);
         }
         catch (Exception e) {
           throw new RuntimeException(e);

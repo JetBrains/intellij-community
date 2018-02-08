@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -460,7 +461,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     final RangeHighlighter h = dummy.get(0);
     highlighters.add(h);
     h.putUserData(SEARCH_MARKER, YES);
-    h.putUserData(RangeHighlighter.VISIBLE_IF_FOLDED, Boolean.TRUE);
+    if (h instanceof RangeHighlighterEx) ((RangeHighlighterEx)h).setVisibleIfFolded(true);
     return h;
   }
 
