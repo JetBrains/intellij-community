@@ -58,6 +58,9 @@ public class TreeModelBuilder {
     if (node1 instanceof Comparable && node1.getClass().equals(node2.getClass())) {
       return ((Comparable)node1).compareTo(node2);
     }
+    if (!node1.getClass().equals(node2.getClass())) {
+      return String.CASE_INSENSITIVE_ORDER.compare(node1.getTextPresentation(), node2.getTextPresentation());
+    }
     return node1.compareUserObjects(node2.getUserObject());
   };
 
