@@ -31,6 +31,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Set;
 
 public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
@@ -46,7 +47,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private PostfixDescriptionPanel myInnerPostfixDescriptionPanel;
 
   @NotNull
-  private final MultiMap<String, PostfixTemplate> myTemplates = MultiMap.create();
+  private final MultiMap<PostfixTemplateProvider, PostfixTemplate> myTemplates = MultiMap.create();
 
   private JComponent myPanel;
   private JBCheckBox myCompletionEnabledCheckbox;
@@ -54,7 +55,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private JPanel myTemplatesTreeContainer;
   private ComboBox<String> myShortcutComboBox;
   private JPanel myDescriptionPanel;
-  private final MultiMap<String, PostfixEditableTemplateProvider> myLanguageIdToEditableTemplateProviders = MultiMap.createSet();
+  private final Map<PostfixTemplateProvider, String> myProviderToLanguage = ContainerUtil.newHashMap();
 
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
@@ -67,11 +68,9 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       PostfixTemplateProvider provider = (PostfixTemplateProvider)extension.getInstance();
       Set<PostfixTemplate> templates = PostfixTemplatesUtils.getAvailableTemplates(provider);
       if (!templates.isEmpty()) {
-        myTemplates.putValues(extension.getKey(), ContainerUtil.sorted(templates, TEMPLATE_COMPARATOR));
+        myTemplates.putValues(provider, ContainerUtil.sorted(templates, TEMPLATE_COMPARATOR));
       }
-      if (provider instanceof PostfixEditableTemplateProvider) {
-        myLanguageIdToEditableTemplateProviders.putValue(extension.getKey(), (PostfixEditableTemplateProvider)provider);
-      }
+      myProviderToLanguage.put(provider, extension.getKey());
     }
 
     myPostfixTemplatesEnabled.addChangeListener(new ChangeListener() {
@@ -87,7 +86,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   private void createTree() {
-    myCheckboxTree = new PostfixTemplatesCheckboxTree(myLanguageIdToEditableTemplateProviders) {
+    myCheckboxTree = new PostfixTemplatesCheckboxTree(myProviderToLanguage) {
       @Override
       protected void selectionChanged() {
         resetDescriptionPanel();
@@ -155,14 +154,17 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   @Override
   public void apply() throws ConfigurationException {
     if (myCheckboxTree != null) {
-      myTemplatesSettings.setLangDisabledTemplates(myCheckboxTree.getDisabledTemplatesState());
+      myTemplatesSettings.setProviderToDisabledTemplates(myCheckboxTree.getDisabledTemplatesState());
       myTemplatesSettings.setPostfixTemplatesEnabled(myPostfixTemplatesEnabled.isSelected());
       myTemplatesSettings.setTemplatesCompletionEnabled(myCompletionEnabledCheckbox.isSelected());
       myTemplatesSettings.setShortcut(stringToShortcut((String)myShortcutComboBox.getSelectedItem()));
 
       MultiMap<PostfixEditableTemplateProvider, PostfixTemplate> state = myCheckboxTree.getEditableTemplates();
-      for (PostfixEditableTemplateProvider provider : myLanguageIdToEditableTemplateProviders.values()) {
-        PostfixTemplateStorage.getInstance().setTemplates(provider, state.get(provider));
+      for (PostfixTemplateProvider provider : myProviderToLanguage.keySet()) {
+        if (provider instanceof PostfixEditableTemplateProvider) {
+          PostfixEditableTemplateProvider editableProvider = (PostfixEditableTemplateProvider)provider;
+          PostfixTemplateStorage.getInstance().setTemplates(editableProvider, state.get(editableProvider));
+        }
       }
     }
   }
@@ -171,7 +173,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   public void reset() {
     if (myCheckboxTree != null) {
       myCheckboxTree.initTree(myTemplates);
-      myCheckboxTree.setDisabledTemplatesState(myTemplatesSettings.getLangDisabledTemplates());
+      myCheckboxTree.setDisabledTemplatesState(myTemplatesSettings.getProviderToDisabledTemplates());
       myPostfixTemplatesEnabled.setSelected(myTemplatesSettings.isPostfixTemplatesEnabled());
       myCompletionEnabledCheckbox.setSelected(myTemplatesSettings.isTemplatesCompletionEnabled());
       myShortcutComboBox.setSelectedItem(shortcutToString((char)myTemplatesSettings.getShortcut()));
@@ -188,14 +190,17 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     if (myPostfixTemplatesEnabled.isSelected() != myTemplatesSettings.isPostfixTemplatesEnabled() ||
         myCompletionEnabledCheckbox.isSelected() != myTemplatesSettings.isTemplatesCompletionEnabled() ||
         stringToShortcut((String)myShortcutComboBox.getSelectedItem()) != myTemplatesSettings.getShortcut() ||
-        !myCheckboxTree.getDisabledTemplatesState().equals(myTemplatesSettings.getLangDisabledTemplates())) {
+        !myCheckboxTree.getDisabledTemplatesState().equals(myTemplatesSettings.getProviderToDisabledTemplates())) {
       return true;
     }
 
     MultiMap<PostfixEditableTemplateProvider, PostfixTemplate> state = myCheckboxTree.getEditableTemplates();
-    for (PostfixEditableTemplateProvider provider : myLanguageIdToEditableTemplateProviders.values()) {
-      if (!PostfixTemplateStorage.getInstance().getTemplates(provider).equals(state.get(provider))) {
-        return true;
+    for (PostfixTemplateProvider provider : myProviderToLanguage.keySet()) {
+      if (provider instanceof PostfixEditableTemplateProvider) {
+        PostfixEditableTemplateProvider editableProvider = (PostfixEditableTemplateProvider)provider;
+        if (!PostfixTemplateStorage.getInstance().getTemplates(editableProvider).equals(state.get(editableProvider))) {
+          return true;
+        }
       }
     }
     return false;

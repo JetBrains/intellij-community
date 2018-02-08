@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   @NotNull
-  private final String myLanguageName;
+  private final String myProviderId;
   @NotNull
   private PostfixTemplate myTemplate;
 
@@ -22,13 +22,13 @@ public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   }
 
   @NotNull
-  public String getLanguageName() {
-    return myLanguageName;
+  public String getProviderId() {
+    return myProviderId;
   }
 
-  PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull String languageName, boolean isNew) {
+  PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull String providerId, boolean isNew) {
     super(template.getPresentableName());
-    myLanguageName = languageName;
+    myProviderId = providerId;
     myTemplate = template;
     myInitialTemplate = template;
     myNew = isNew;

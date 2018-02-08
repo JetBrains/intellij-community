@@ -11,16 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 public interface PostfixEditableTemplateProvider<T extends PostfixTemplate> extends PostfixTemplateProvider {
-  @NotNull
-  default String getId() {
-    return getClass().getName();
-  }
-
-  @Nullable
-  default String getPresentableName() {
-    return null;
-  }
-
   @Nullable
   default PostfixTemplateEditor<T> createEditor(@Nullable Project project) {
     return null;

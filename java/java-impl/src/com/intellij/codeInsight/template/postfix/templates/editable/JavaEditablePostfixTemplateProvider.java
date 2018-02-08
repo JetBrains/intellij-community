@@ -53,7 +53,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   @NotNull
   @Override
   public String getId() {
-    return "java";
+    return "builtin.java";
   }
 
   @NotNull

@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesCheckb
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesConfigurable;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -35,7 +34,7 @@ public class PostfixTemplateLookupActionProvider implements LookupActionProvider
             ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
               PostfixTemplatesCheckboxTree templatesTree = configurable.getTemplatesTree();
               if (templatesTree != null) {
-                templatesTree.selectTemplate(template, PostfixTemplatesUtils.getLangForProvider(templateLookupElement.getProvider()));
+                templatesTree.selectTemplate(template, templateLookupElement.getProvider());
               }
             });
           });

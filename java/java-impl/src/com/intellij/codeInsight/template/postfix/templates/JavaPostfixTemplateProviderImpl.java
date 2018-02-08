@@ -32,6 +32,12 @@ public class JavaPostfixTemplateProviderImpl extends JavaPostfixTemplateProvider
 
   @NotNull
   @Override
+  public String getId() {
+    return "builtin.java.old";
+  }
+
+  @NotNull
+  @Override
   public Set<PostfixTemplate> getTemplates() {
     return templates;
   }

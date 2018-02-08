@@ -5,10 +5,27 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public interface PostfixTemplateProvider {
+  /**
+   * Identifier of template provider. Used for storing settings of provider's templates.
+   */
+  @NotNull
+  default String getId() {
+    return getClass().getName();
+  }
+
+  /**
+   * Presentation name of editable template type. If null, provider doesn't allow to custom templates.
+   */
+  @Nullable
+  default String getPresentableName() {
+    return null;
+  }
+
   /**
    * Returns builtin templates registered in the provider in their original state.
    * Consider using {@link PostfixTemplatesUtils#getAvailableTemplates(PostfixTemplateProvider)} for actually enabled templates.

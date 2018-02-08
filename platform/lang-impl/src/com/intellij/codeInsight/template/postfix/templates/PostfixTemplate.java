@@ -13,6 +13,14 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Objects;
 
+/**
+ * Represents a postfix template.
+ * <p>
+ * EDITABLE TEMPLATES
+ * ==================
+ * Editable postfix templates MUST provide proper equals/hashCode implementation.
+ * Equal postfix templates produces by the very same provider will overwrite each other.
+ */
 public abstract class PostfixTemplate {
   @NotNull private final String myId;
   @NotNull private final String myPresentableName;
