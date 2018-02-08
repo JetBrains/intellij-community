@@ -14,7 +14,7 @@ import java.util.Collections;
 public class JsEnvironmentVariablesUsagesProvider implements EnvironmentVariablesUsagesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
-        return file.getFileType().equals(JavaScriptFileType.INSTANCE);
+        return file.getFileType().equals(JavaScriptFileType.INSTANCE) && !file.getPath().contains("/node_modules/");
     }
 
     @NotNull
