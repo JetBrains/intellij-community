@@ -231,6 +231,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       else {
         MoveChangesLineStatusAction.moveToAnotherChangelist(myTracker, selectedLines);
       }
+
+      rediff();
     }
 
     @NotNull
