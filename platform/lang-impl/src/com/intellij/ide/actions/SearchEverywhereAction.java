@@ -528,7 +528,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             }
           }
           else {
-            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
+            GotoActionAction.openOptionOrPerformAction(value, pattern, project, c);
           }
         });
         return ()->{};
