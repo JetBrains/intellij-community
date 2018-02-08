@@ -703,7 +703,8 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Nullable
   public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
-    return JBIterable.generate(element, PsiElement::getParent).filter(PsiClass.class).last();
+    PsiClass topClass = JBIterable.generate(element, PsiElement::getParent).filter(PsiClass.class).last();
+    return topClass instanceof PsiTypeParameter ? null : topClass;
   }
 
   @Nullable
