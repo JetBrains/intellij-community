@@ -48,7 +48,7 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
-    DebugUtil.performPSIModification(null, () -> encodeInformation(element, original, new HashMap<>()));
+    DebugUtil.performPsiModification(null, () -> encodeInformation(element, original, new HashMap<>()));
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
@@ -68,7 +68,7 @@ public class ChangeUtil {
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
-    return DebugUtil.performPSIModification(null, () -> decodeInformation(element, new HashMap<>()));
+    return DebugUtil.performPsiModification(null, () -> decodeInformation(element, new HashMap<>()));
   }
 
   private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {

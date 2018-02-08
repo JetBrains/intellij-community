@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
 /**
@@ -48,7 +49,8 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
     Icon icon = IconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
 
     if (icon != null) {
-      icon.paintIcon(c, g, iconRect.x, iconRect.y + JBUI.scale(1));
+      int yOff = c instanceof TableCellRenderer ? 0 : JBUI.scale(1);
+      icon.paintIcon(c, g, iconRect.x, iconRect.y + yOff);
     }
   }
 

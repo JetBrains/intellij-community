@@ -129,7 +129,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
         }
         if (psiFile instanceof PsiFileEx) {
           PsiFile finalPsiFile = psiFile;
-          DebugUtil.performPSIModification("invalidating throw-away copy", () ->
+          DebugUtil.performPsiModification("invalidating throw-away copy", () ->
             ((PsiFileEx)finalPsiFile).markInvalidated()
           );
         }

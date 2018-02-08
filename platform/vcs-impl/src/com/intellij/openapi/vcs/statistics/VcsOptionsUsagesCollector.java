@@ -20,9 +20,9 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.internal.statistic.utils.StatisticsUtilKt.getBooleanUsage;
@@ -70,8 +70,6 @@ public class VcsOptionsUsagesCollector extends AbstractProjectsUsagesCollector {
     usages.add(getBooleanUsage("show.changes.preview", configuration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN));
     usages.add(getBooleanUsage("include.text.into.shelf", configuration.INCLUDE_TEXT_INTO_SHELF));
     usages.add(getBooleanUsage("check.conflicts.in.background", configuration.CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND));
-
-    usages.add(getBooleanUsage("enable.partial.changelists", configuration.ENABLE_PARTIAL_CHANGELISTS));
 
     return usages;
   }

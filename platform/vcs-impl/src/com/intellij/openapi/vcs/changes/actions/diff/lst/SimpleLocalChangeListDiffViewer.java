@@ -175,7 +175,11 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     @Override
-    public void onChangelistsChange() {
+    public void onChangeListsChange() {
+    }
+
+    @Override
+    public void onChangeListMarkerChange() {
       scheduleRediff();
     }
   }
@@ -227,6 +231,8 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       else {
         MoveChangesLineStatusAction.moveToAnotherChangelist(myTracker, selectedLines);
       }
+
+      rediff();
     }
 
     @NotNull

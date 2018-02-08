@@ -219,7 +219,7 @@ public class PsiBuilderTest extends LightIdeaTestCase {
 
     myBuilder = createBuilder("  bar", tree);
     parseWhenEmptyElementAfterWhitespaceIsLastChild();
-    DebugUtil.performPSIModification(null, () -> {
+    DebugUtil.performPsiModification(null, () -> {
       try {
         myBuilder.getTreeBuilt();
         fail();

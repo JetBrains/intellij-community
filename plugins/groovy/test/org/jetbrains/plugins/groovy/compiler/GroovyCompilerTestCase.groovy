@@ -67,7 +67,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
   @Override
   protected void setUp() throws Exception {
     super.setUp()
-    ModuleGroupTestsKt.renameModule(myModule, "mainModule")
+    edt { ModuleGroupTestsKt.renameModule(myModule, "mainModule") }
     myCompilerTester = new CompilerTester(myModule)
   }
 

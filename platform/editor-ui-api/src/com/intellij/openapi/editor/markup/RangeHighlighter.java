@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,12 +16,6 @@ import java.awt.*;
  */
 public interface RangeHighlighter extends RangeMarker {
   RangeHighlighter[] EMPTY_ARRAY = new RangeHighlighter[0];
-  
-  /**
-   * If {@code Boolean.TRUE} value is set for this key on a highlighter (see {@link #putUserData(Key, Object)}), 
-   * there will be a visual indication that such highlighter is present inside a collapsed fold region.
-   */
-  Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
 
   /**
    * Returns the relative priority of the highlighter (higher priority highlighters can override

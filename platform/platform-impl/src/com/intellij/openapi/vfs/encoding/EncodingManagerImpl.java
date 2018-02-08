@@ -226,13 +226,11 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   @Nullable
   public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
-    return ReadAction.compute(() -> {
-      Project project = guessProject(virtualFile);
-      if (project == null) return null;
-      EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
-      if (encodingManager == null) return null; //tests
-      return encodingManager.getEncoding(virtualFile, useParentDefaults);
-    });
+    Project project = guessProject(virtualFile);
+    if (project == null) return null;
+    EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
+    if (encodingManager == null) return null; //tests
+    return encodingManager.getEncoding(virtualFile, useParentDefaults);
   }
 
   public void clearDocumentQueue() {

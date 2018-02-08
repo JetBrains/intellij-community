@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -89,6 +75,24 @@ public class GuessTypeParameters {
       if (substitionResult == SUBSTITUTED_IN_PARAMETERS) {
         PsiJavaCodeReferenceElement refElement = typeElement.getInnermostComponentReferenceElement();
         LOG.assertTrue(refElement != null);
+        PsiElement qualifier = refElement.getQualifier();
+        if (qualifier != null) {
+          // Consider type element `java.util.List<java.lang.String>`.
+          // At this point there is a template on `java.lang.String` type element already.
+          //
+          // We need java.util.List element to put the second template on,
+          // but there is no such element, because type element consists of:
+          // - qualifier `java.util`
+          // - dot
+          // - reference name element `List`
+          // - reference type parameters `<java.lang.String>`
+          //
+          // Removing the qualifier also removes the dot, so in the end we get `List<java.lang.String>`
+          // and we are safe to put the template on the reference name element `List`.
+          //
+          // Actual shortening or using of FQNs is then handled by com.intellij.codeInsight.template.impl.ShortenFQNamesProcessor.
+          qualifier.delete();
+        }
         PsiElement referenceNameElement = refElement.getReferenceNameElement();
         LOG.assertTrue(referenceNameElement != null);
         PsiClassType defaultType = getComponentType(info.getDefaultType());

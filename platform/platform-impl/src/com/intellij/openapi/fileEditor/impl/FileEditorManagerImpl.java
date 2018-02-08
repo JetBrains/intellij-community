@@ -896,7 +896,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         for (int i = editors.length - 1; i >= 0; i--) {
           final FileEditorProvider provider = providers[i];
           if (provider.equals(selectedProvider)) {
-            composite.setSelectedEditor(i);
+            int editorIndex = i;
+            runChange(splitters -> composite.setSelectedEditor(editorIndex), null);
             break;
           }
         }

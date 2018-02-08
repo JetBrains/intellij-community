@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -27,7 +25,7 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     myFixture.checkResult("foo/bar/MyService.java",
                           "package foo.bar;\n\n" +
                           "public class MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testSameModuleExistingPackageInterface() {
@@ -39,7 +37,7 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     myFixture.checkResult("foo/bar/MyService.java",
                           "package foo.bar;\n\n" +
                           "public interface MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testSameModuleExistingPackageAnnotation() {
@@ -51,7 +49,7 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     myFixture.checkResult("foo/bar/MyService.java",
                           "package foo.bar;\n\n" +
                           "public @interface MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testOtherModuleExistingPackage() {
@@ -65,7 +63,7 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     myFixture.checkResult("../${OTHER.rootName}/foo/bar/other/MyService.java",
                           "package foo.bar.other;\n\n" +
                           "public class MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testSameModuleExistingOuterClass() {
@@ -90,7 +88,7 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
     myFixture.checkResult("foo/bar/api/MyService.java",
                           "package foo.bar.api;\n\n" +
                           "public class MyService {\n" +
-                          "}", true)
+                          "}\n", true)
   }
 
   fun testExistingLibraryPackage() = doTestNoAction("module foo.bar { uses java.io.<caret>MyService; }")

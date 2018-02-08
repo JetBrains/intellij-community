@@ -84,7 +84,7 @@ class LineStatusTrackerManager(
   private val trackers = HashMap<Document, TrackerData>()
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
-  private var partialChangeListsEnabled = VcsConfiguration.getInstance(project).ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
+  private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
@@ -649,7 +649,7 @@ class LineStatusTrackerManager(
 
   private inner class MyLineStatusTrackerSettingListener : LineStatusTrackerSettingListener {
     override fun settingsUpdated() {
-      partialChangeListsEnabled = VcsConfiguration.getInstance(project).ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
+      partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
 
       updateTrackingModes()
     }

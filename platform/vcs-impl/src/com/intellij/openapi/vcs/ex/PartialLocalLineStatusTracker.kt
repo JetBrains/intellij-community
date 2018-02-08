@@ -133,8 +133,10 @@ class PartialLocalLineStatusTracker(project: Project,
         changeListManager.notifyChangelistsChanged()
       }
 
-      eventDispatcher.multicaster.onChangelistsChange()
+      eventDispatcher.multicaster.onChangeListsChange()
     }
+
+    eventDispatcher.multicaster.onChangeListMarkerChange()
   }
 
   @CalledInAwt
@@ -157,7 +159,7 @@ class PartialLocalLineStatusTracker(project: Project,
       defaultMarker = ChangeListMarker(defaultId)
 
       val idsSet = changelistsIds.toSet()
-      moveMarkers({ !idsSet.contains(it.changelistId) }, defaultMarker)
+      moveMarkers({ !idsSet.contains(it.marker.changelistId) }, defaultMarker)
     }
   }
 
@@ -171,7 +173,7 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(listId)) return@writeLock
 
-      moveMarkers({ it.changelistId == listId }, defaultMarker)
+      moveMarkers({ it.marker.changelistId == listId }, defaultMarker)
 
       if (affectedChangeLists.size == 1 && affectedChangeLists.contains(listId)) {
         affectedChangeLists.clear()
@@ -184,7 +186,7 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(fromListId)) return@writeLock
 
-      moveMarkers({ it.changelistId == fromListId }, ChangeListMarker(toListId))
+      moveMarkers({ it.marker.changelistId == fromListId }, ChangeListMarker(toListId))
     }
   }
 
@@ -194,21 +196,25 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  private fun moveMarkers(condition: (ChangeListMarker) -> Boolean, toMarker: ChangeListMarker) {
+  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker,
+                          notifyChangeListManager: Boolean = false) {
     val affectedBlocks = mutableListOf<Block>()
 
     for (block in blocks) {
-      if (condition(block.marker)) {
+      if (block.marker != toMarker &&
+          condition(block)) {
         block.marker = toMarker
         affectedBlocks.add(block)
       }
     }
 
-    dropExistingUndoActions()
-    updateAffectedChangeLists(false) // no need to notify CLM, as we're inside it's action
+    if (!affectedBlocks.isEmpty()) {
+      dropExistingUndoActions()
+      updateAffectedChangeLists(notifyChangeListManager) // no need to notify CLM, as we're inside it's action
 
-    for (block in affectedBlocks) {
-      updateHighlighter(block)
+      for (block in affectedBlocks) {
+        updateHighlighter(block)
+      }
     }
   }
 
@@ -249,7 +255,7 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project) {
+    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
       if (eventProject != project) return
       if (batchChangeTaskCounter.getAndIncrement() == 0) {
         documentTracker.freeze(Side.LEFT)
@@ -500,16 +506,7 @@ class PartialLocalLineStatusTracker(project: Project,
       val newMarker = ChangeListMarker(changelist)
 
       documentTracker.writeLock {
-        for (block in blocks) {
-          if (condition(block) &&
-              block.marker != newMarker) {
-            block.marker = newMarker
-            updateHighlighter(block)
-          }
-        }
-
-        dropExistingUndoActions()
-        updateAffectedChangeLists()
+        moveMarkers(condition, newMarker, notifyChangeListManager = true)
       }
     }
   }
@@ -643,7 +640,11 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     @CalledInAwt
-    fun onChangelistsChange() {
+    fun onChangeListsChange() {
+    }
+
+    @CalledInAwt
+    fun onChangeListMarkerChange() {
     }
   }
 
