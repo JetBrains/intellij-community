@@ -35,6 +35,8 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
    */
   @Test
   public void testRectOutlining() {
+    ImageComparator comparator = new ImageComparator();
+
     /*
      * In fact, absolute accuracy is achieved by painting with enabled antialiasing, in which case alpha more precisely
      * shows sub-pixel offsets. However, in that case outlining the right/bottom rect edge would bring additional
@@ -45,14 +47,14 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
 
     // IDE-HiDPI
     for (double scale : new double[]{1, 1.25, /*1.5,*/ 1.75, 2, 2.25, 2.5, /*2.75,*/ 3}) {
-      testRectOutline(scale, false, StrokeType.CENTERED);
+      testRectOutline(comparator, scale, false, StrokeType.CENTERED);
       if (scale == 2.5) continue;
-      testRectOutline(scale, false, StrokeType.INSIDE);
+      testRectOutline(comparator, scale, false, StrokeType.INSIDE);
     }
     // JRE-HiDPI
     for (double scale : new double[]{1, 1.25, /*1.5,*/ 1.75, 2, 2.25, /*2.5,*/ 2.75, 3}) {
-      testRectOutline(scale, true, StrokeType.CENTERED);
-      testRectOutline(scale, true, StrokeType.INSIDE);
+      testRectOutline(comparator, scale, true, StrokeType.CENTERED);
+      testRectOutline(comparator, scale, true, StrokeType.INSIDE);
     }
   }
 
@@ -104,7 +106,7 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
     RectanglePainter2D.FILL.paint(g, values[0], values[1], values[2], values[3]);
   }
 
-  private void testRectOutline(double scale, boolean jreHiDPIEnabled, StrokeType strokeType) {
+  private void testRectOutline(ImageComparator comparator, double scale, boolean jreHiDPIEnabled, StrokeType strokeType) {
     PaintUtilTest.overrideJreHiDPIEnabled(jreHiDPIEnabled);
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : (float)scale);
 
@@ -112,7 +114,7 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
                                     strokeType == StrokeType.INSIDE ? this::paintRectInside : this::paintRectCentered);
     BufferedImage outline = paintImage(scale, 15, 15,
                                        strokeType == StrokeType.INSIDE ? this::outlineRectInside : this::outlineRectCentered);
-    compare(rect, outline, scale, false);
+    compare(rect, outline, comparator, scale);
   }
 
   private Rectangle2D rectBounds(Graphics2D g) {
