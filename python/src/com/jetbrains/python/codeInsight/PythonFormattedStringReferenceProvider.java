@@ -56,7 +56,7 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
     final PySubstitutionChunkReference[] result = new PySubstitutionChunkReference[chunks.size()];
       for (int i = 0; i < chunks.size(); i++) {
         final PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
-        result[i] = new PySubstitutionChunkReference(element, chunk, i);
+        result[i] = new PySubstitutionChunkReference(element, chunk, chunk.getPositionalArgumentIndex());
       }
     return result;
   }

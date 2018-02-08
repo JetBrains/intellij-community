@@ -125,8 +125,16 @@ public class PyStringFormatInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-27710
+  // PY-27601
   public void testNewStylePositionalSubstitutionAfterKeywordSubstitution() {
+    doTest();
+  }
+
+  public void testNewStyleAutomaticAfterManualNumbering() {
+    doTest();
+  }
+
+  public void testNewStyleManualAfterAutomaticNumbering() {
     doTest();
   }
   

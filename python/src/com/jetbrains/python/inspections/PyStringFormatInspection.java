@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.HashMap;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
@@ -480,16 +479,25 @@ public class PyStringFormatInspection extends PyInspection {
 
       public void inspect() {
         final String value = myFormatExpression.getText();
-        final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(value));
+        PyStringFormatParser parser = new PyStringFormatParser(value);
+        final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parser.parseNewStyle());
+
+        switch (parser.getAutoNumberStateError()) {
+          case NONE:
+            break;
+          case MANUAL_TO_AUTO:
+            registerProblem(myFormatExpression, PyBundle.message("INSP.manual.to.auto.field.numbering"));
+            return;
+          case AUTO_TO_MANUAL:
+            registerProblem(myFormatExpression, PyBundle.message("INSP.auto.to.manual.field.numbering"));
+            return;
+        }
 
         for (int i = 0; i < chunks.size(); i++) {
           final PyStringFormatParser.NewStyleSubstitutionChunk chunk =
             as(chunks.get(i), PyStringFormatParser.NewStyleSubstitutionChunk.class);
 
           if (chunk != null) {
-            if (chunk.getPosition() == null) {
-              chunk.setPosition(i);
-            }
             String mappingKey = inspectNewStyleChunkAndGetMappingKey(chunk);
             if (!isProblem()) {
               inspectArguments(chunk, mappingKey);
@@ -502,7 +510,7 @@ public class PyStringFormatInspection extends PyInspection {
         final HashSet<String> supportedTypes = new HashSet<>();
         boolean hasTypeOptions = false;
 
-        final String mappingKey = chunk.getMappingKey() != null ? chunk.getMappingKey() : String.valueOf(chunk.getPosition());
+        final String mappingKey = chunk.getMappingKey() != null ? chunk.getMappingKey() : String.valueOf(chunk.getPositionalArgumentIndex());
 
         // inspect options available only for numeric types
         if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
@@ -539,9 +547,7 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectArguments(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk, @NotNull String mappingKey) {
-        // it's true because we set position manually in inspect()
-        assert chunk.getPosition() != null;
-        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk, chunk.getPosition()).resolve();
+        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk, chunk.getPositionalArgumentIndex()).resolve();
         boolean hasElementIndex = chunk.getMappingKeyElementIndex() != null;
         if (target == null) {
           final String chunkMapping = chunk.getMappingKey();

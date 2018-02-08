@@ -18,7 +18,6 @@ package com.jetbrains.python.inspections;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import java.util.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -144,6 +144,10 @@ public class PyStringFormatParser {
     protected void setMappingKey(@Nullable String mappingKey) {
       myMappingKey = mappingKey;
     }
+
+    public int getPositionalArgumentIndex() {
+      return myPosition == null ? myAutoPosition == null ? 0 : myAutoPosition : myPosition;
+    }
   }
 
   public static class PercentSubstitutionChunk extends SubstitutionChunk {
@@ -254,10 +258,43 @@ public class PyStringFormatParser {
     }
   }
 
+  private enum AutoNumberState {INIT, AUTO, MANUAL}
+  public enum AutoNumberStateError {NONE, MANUAL_TO_AUTO, AUTO_TO_MANUAL}
+  private static class AutoNumber {
+    private AutoNumberState myState = AutoNumberState.INIT;
+    private AutoNumberStateError myStateError = AutoNumberStateError.NONE;
+
+    private void checkState(AutoNumberState nextState) {
+      if (myStateError != AutoNumberStateError.NONE) {
+        return;
+      }
+      switch (myState) {
+        case INIT:
+          myState = nextState;
+          break;
+        case AUTO:
+          if (nextState == AutoNumberState.MANUAL) {
+            myStateError = AutoNumberStateError.AUTO_TO_MANUAL;
+          }
+          break;
+        case MANUAL:
+          if (nextState == AutoNumberState.AUTO) {
+            myStateError = AutoNumberStateError.MANUAL_TO_AUTO;
+          }
+          break;
+      }
+    }
+  }
+
+  public AutoNumberStateError getAutoNumberStateError() {
+    return myAutoNumber.myStateError;
+  }
+
   @NotNull private final String myLiteral;
   @NotNull private final List<FormatStringChunk> myResult = new ArrayList<>();
   private int myPos;
   private int mySubstitutionsCount = 0;
+  @NotNull private AutoNumber myAutoNumber = new AutoNumber();
 
   // % strings
   private static final String CONVERSION_FLAGS = "#0- +";
@@ -273,7 +310,7 @@ public class PyStringFormatParser {
   private static final char ZERO_PADDING_SYMBOL = '0';
 
 
-  private PyStringFormatParser(@NotNull String literal) {
+  public PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
   }
 
@@ -308,7 +345,7 @@ public class PyStringFormatParser {
     return myResult;
   }
 
-  private List<FormatStringChunk> parseNewStyle() {
+  public List<FormatStringChunk> parseNewStyle() {
     final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(myLiteral);
     int autoPositionedFieldsCount = 0;
@@ -350,6 +387,7 @@ public class PyStringFormatParser {
       try {
         final int number = Integer.parseInt(name);
         chunk.setPosition(number);
+        myAutoNumber.checkState(AutoNumberState.MANUAL);
       }
       catch (NumberFormatException e) {
         chunk.setMappingKey(name);
@@ -359,6 +397,7 @@ public class PyStringFormatParser {
     else {
       chunk.setAutoPosition(autoPositionedFieldsCount);
       autoPositionedFieldsCount++;
+      myAutoNumber.checkState(AutoNumberState.AUTO);
     }
 
     // parse field name attribute name
@@ -453,7 +492,7 @@ public class PyStringFormatParser {
       if (myPos < end - 1) {
         chunk.setConversionType(myLiteral.charAt(myPos));
       }
-    } 
+    }
 
 
     results.add(chunk);

@@ -74,7 +74,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private PsiElement resolvePositionalFormat(@NotNull PyArgumentList argumentList) {
-    final int position = myChunk.getAutoPosition() == null ? myPosition : myChunk.getAutoPosition();
     int n = 0;
     boolean notSureAboutStarArgs = false;
     PyStarArgument firstStarArg = null;
@@ -99,7 +98,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         }
       }
       else if (!(arg instanceof PyKeywordArgument)) {
-        if (position == n) {
+        if (myPosition == n) {
           return arg;
         }
         n++;
