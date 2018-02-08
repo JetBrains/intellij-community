@@ -53,21 +53,21 @@ public abstract class AbstractPainter2DTest {
     for (int scale : getScales()) testGolden(comparator, scale, true);
 
     // 3) Boundary values
-    paintImage(2, 10, 10, this::testBoundaries);
+    supplyGraphics(2, 10, 10, this::testBoundaries);
   }
 
   private void testGolden(ImageComparator comparator, int scale, boolean jreHiDPIEnabled) {
     PaintUtilTest.overrideJreHiDPIEnabled(jreHiDPIEnabled);
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : scale);
 
-    BufferedImage image = paintImage(scale, getImageSize().width, getImageSize().height, this::paint);
+    BufferedImage image = supplyGraphics(scale, getImageSize().width, getImageSize().height, this::paint);
 
     //save(image, scale); // uncomment to recreate golden image
 
     compare(image, load(scale), comparator, scale);
   }
 
-  protected BufferedImage paintImage(double scale, int width, int height, Function<Graphics2D, Void> paint) {
+  protected BufferedImage supplyGraphics(double scale, int width, int height, Function<Graphics2D, Void> consumeGraphics) {
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image = new BufferedImage((int)ceil(width * scale), (int)ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
@@ -78,7 +78,7 @@ public abstract class AbstractPainter2DTest {
       g.fillRect(0, 0, image.getWidth(), image.getHeight());
       g.setColor(Color.black);
 
-      paint.apply(g);
+      consumeGraphics.apply(g);
 
       return image;
     }

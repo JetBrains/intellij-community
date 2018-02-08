@@ -6,7 +6,6 @@ import com.intellij.ui.paint.LinePainter2D.StrokeType;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.RectanglePainter2D;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.junit.Test;
 
 import java.awt.*;
@@ -110,9 +109,9 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
     PaintUtilTest.overrideJreHiDPIEnabled(jreHiDPIEnabled);
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : (float)scale);
 
-    BufferedImage rect = paintImage(scale, 15, 15,
+    BufferedImage rect = supplyGraphics(scale, 15, 15,
                                     strokeType == StrokeType.INSIDE ? this::paintRectInside : this::paintRectCentered);
-    BufferedImage outline = paintImage(scale, 15, 15,
+    BufferedImage outline = supplyGraphics(scale, 15, 15,
                                        strokeType == StrokeType.INSIDE ? this::outlineRectInside : this::outlineRectCentered);
     compare(rect, outline, comparator, scale);
   }
@@ -133,8 +132,9 @@ public class RectanglePainter2DTest extends AbstractPainter2DTest {
 
   private Void _paintRect(Graphics2D g, boolean inside) {
     Rectangle2D b = rectBounds(g);
-    RectanglePainter2D.DRAW.paint(g, b.getX(), b.getY(), b.getWidth(), b.getHeight(), null,
-                                  inside ? StrokeType.INSIDE : StrokeType.CENTERED, scale(1f));
+    RectanglePainter2D.DRAW.paint(g, b.getX(), b.getY(), b.getWidth(), b.getHeight(),
+                                  inside ? StrokeType.INSIDE : StrokeType.CENTERED,
+                                  scale(1f));
     return null;
   }
 
