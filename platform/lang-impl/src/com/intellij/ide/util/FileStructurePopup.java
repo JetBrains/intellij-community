@@ -555,10 +555,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
       }
     }
+
+    int checkBoxCount = fileStructureNodeProviders.size() + fileStructureFilters.size();
     JPanel panel = new JPanel(new BorderLayout());
-    JPanel chkPanel = new JPanel();
-    chkPanel.setLayout(new BoxLayout(chkPanel, BoxLayout.X_AXIS));
-    chkPanel.setBorder(JBUI.Borders.empty(0, 10, 1, 0));
+    JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
+      JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
 
     Shortcut[] F4 = ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet().getShortcuts();
     Shortcut[] ENTER = CustomShortcutSet.fromString("ENTER").getShortcuts();
@@ -835,7 +836,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
     checkBox.setText(StringUtil.capitalize(StringUtil.trimStart(text.trim(), "Show ")));
     panel.add(checkBox);
-    panel.add(Box.createRigidArea(JBUI.size(16, 0)));
 
     myCheckBoxes.put(action.getClass(), checkBox);
   }
