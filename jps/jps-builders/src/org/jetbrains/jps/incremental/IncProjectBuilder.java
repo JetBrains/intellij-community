@@ -1305,20 +1305,7 @@ public class IncProjectBuilder {
               }
               else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
                 if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-                  String infoMessage = "Builder \"" + builder.getPresentableName() + "\" requested rebuild of module chunk \"" + chunk.getName() + "\"";
-                  LOG.info(infoMessage);
-
-                  BuildMessage.Kind kind = BuildMessage.Kind.JPS_INFO;
-                  final CompileScope scope = context.getScope();
-                  for (ModuleBuildTarget target : chunk.getTargets()) {
-                    if (!scope.isWholeTargetAffected(target)) {
-                      infoMessage += ".\nConsider building whole project or rebuilding the module.";
-                      kind = BuildMessage.Kind.INFO;
-                      break;
-                    }
-                  }
-                  context.processMessage(new CompilerMessage("", kind, infoMessage));
-
+                  notifyChunkRebuildRequested(context, chunk, builder);
                   // allow rebuild from scratch only once per chunk
                   rebuildFromScratchRequested = true;
                   try {
@@ -1374,6 +1361,21 @@ public class IncProjectBuilder {
     }
 
     return doneSomething;
+  }
+
+  private static void notifyChunkRebuildRequested(CompileContext context, ModuleChunk chunk, ModuleLevelBuilder builder) {
+    String infoMessage = "Builder \"" + builder.getPresentableName() + "\" requested rebuild of module chunk \"" + chunk.getName() + "\"";
+    LOG.info(infoMessage);
+    BuildMessage.Kind kind = BuildMessage.Kind.JPS_INFO;
+    final CompileScope scope = context.getScope();
+    for (ModuleBuildTarget target : chunk.getTargets()) {
+      if (!scope.isWholeTargetAffected(target)) {
+        infoMessage += ".\nConsider building whole project or rebuilding the module.";
+        kind = BuildMessage.Kind.INFO;
+        break;
+      }
+    }
+    context.processMessage(new CompilerMessage("", kind, infoMessage));
   }
 
   private void storeBuilderStatistics(Builder builder, long elapsedTime, int processedFiles) {
