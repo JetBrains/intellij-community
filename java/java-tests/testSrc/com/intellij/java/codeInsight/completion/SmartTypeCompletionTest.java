@@ -441,6 +441,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testArrayIndexTailType() { doTest(); }
 
   public void testPrivateOverloads() { doTest(); }
+  public void testInaccessibleMethodArgument() { doTest(); }
 
   public void testPolyadicExpression() { doTest(); }
 
