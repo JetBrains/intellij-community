@@ -441,11 +441,33 @@ class T2 {
   }
 }
 class T3 {
-  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final, but red when it is
+  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
   {
     assert false : "" + (b = true);
-    b = true; // red, but valid code
+    b = true;
     System.out.println(b);
+  }
+}
+class T3a {
+  private int x; // can be final as x = 2 is never executed, but we don't see this
+
+  {
+    try {
+      assert true : x = 2;
+    }
+    catch (Throwable t) {}
+    x = 1;
+  }
+}
+class T3b {
+  private int x; // cannot be final
+
+  {
+    try {
+      assert false : x = 2;
+    }
+    catch (Throwable t) {}
+    x = 1;
   }
 }
 class T4 {
@@ -460,6 +482,22 @@ class T5 {
   {
     assert true : d = true;
     d = true;
+  }
+}
+class T5a {
+  private int x; // javac accepts if this is final, as x = 2 is never executed, not sure whether this is according to spec
+
+  {
+    x = 1;
+    assert true : x = 2;
+  }
+}
+class T5b {
+  private int x; // cannot be final
+
+  {
+    x = 1;
+    assert false : x = 2;
   }
 }
 class T6 {
@@ -762,7 +800,7 @@ class T43 {
   }
 }
 class T44 {
-  private int i; // may not be final, but green when it is
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may not be final -- false-positive
   {
     for (; true ; i = 1, i = 2) {
       i = 2 ;
@@ -771,7 +809,7 @@ class T44 {
   }
 }
 class T45 {
-  private int i; // should be allowed final and green when it is, but does not compile in javac
+  private int <warning descr="Field 'i' may be 'final'">i</warning>; // does not compile in javac (probably javac error)
   {
     for (; true; i = 1) {
       i = 2;
@@ -944,7 +982,7 @@ class T67 {
   }
 }
 class T68 {
-  private Runnable <warning descr="Field 'r' may be 'final'">r</warning>; // may be final, compare to T65
+  private Runnable r; // cannot be final in java9, likely it was an error in javac before, compare to T65
   T68() {
     r = () -> System.out.println((this).r);
   }
@@ -975,7 +1013,16 @@ class T71 {
 
   void foo() throws Throwable {}
 }
+class T72 {
+  private boolean b;
 
+  T72(int i) {
+    Runnable r = () -> {
+      return;
+    };
+    if (i == 4) b = true;
+  }
+}
 class Foo {
 
   public interface Accessor<T> {
@@ -1009,4 +1056,17 @@ class Foo {
   public Accessor<Double> getValueAccessor() {
     return myValueAccessor;
   }
+}
+
+class T73 {
+  private int <warning descr="Field 'x' may be 'final'">x</warning>; // can be final
+  int y = x = 3;
+}
+
+class T74 {
+  private int x; // cannot be final as reassigned in another field initializer
+  {
+    x = 2;
+  }
+  int y = x = 3;
 }

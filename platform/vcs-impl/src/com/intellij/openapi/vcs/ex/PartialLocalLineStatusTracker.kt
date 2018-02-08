@@ -18,8 +18,8 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.diff.util.Side
 import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
@@ -41,6 +42,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.components.labels.ActionGroupLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
@@ -53,7 +55,6 @@ import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import kotlin.collections.HashSet
 
@@ -132,8 +133,10 @@ class PartialLocalLineStatusTracker(project: Project,
         changeListManager.notifyChangelistsChanged()
       }
 
-      eventDispatcher.multicaster.onChangelistsChange()
+      eventDispatcher.multicaster.onChangeListsChange()
     }
+
+    eventDispatcher.multicaster.onChangeListMarkerChange()
   }
 
   @CalledInAwt
@@ -156,7 +159,7 @@ class PartialLocalLineStatusTracker(project: Project,
       defaultMarker = ChangeListMarker(defaultId)
 
       val idsSet = changelistsIds.toSet()
-      moveMarkers({ !idsSet.contains(it.changelistId) }, defaultMarker)
+      moveMarkers({ !idsSet.contains(it.marker.changelistId) }, defaultMarker)
     }
   }
 
@@ -170,7 +173,7 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(listId)) return@writeLock
 
-      moveMarkers({ it.changelistId == listId }, defaultMarker)
+      moveMarkers({ it.marker.changelistId == listId }, defaultMarker)
 
       if (affectedChangeLists.size == 1 && affectedChangeLists.contains(listId)) {
         affectedChangeLists.clear()
@@ -183,7 +186,7 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(fromListId)) return@writeLock
 
-      moveMarkers({ it.changelistId == fromListId }, ChangeListMarker(toListId))
+      moveMarkers({ it.marker.changelistId == fromListId }, ChangeListMarker(toListId))
     }
   }
 
@@ -193,21 +196,25 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  private fun moveMarkers(condition: (ChangeListMarker) -> Boolean, toMarker: ChangeListMarker) {
+  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker,
+                          notifyChangeListManager: Boolean = false) {
     val affectedBlocks = mutableListOf<Block>()
 
     for (block in blocks) {
-      if (condition(block.marker)) {
+      if (block.marker != toMarker &&
+          condition(block)) {
         block.marker = toMarker
         affectedBlocks.add(block)
       }
     }
 
-    dropExistingUndoActions()
-    updateAffectedChangeLists(false) // no need to notify CLM, as we're inside it's action
+    if (!affectedBlocks.isEmpty()) {
+      dropExistingUndoActions()
+      updateAffectedChangeLists(notifyChangeListManager) // no need to notify CLM, as we're inside it's action
 
-    for (block in affectedBlocks) {
-      updateHighlighter(block)
+      for (block in affectedBlocks) {
+        updateHighlighter(block)
+      }
     }
   }
 
@@ -248,7 +255,7 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project) {
+    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
       if (eventProject != project) return
       if (batchChangeTaskCounter.getAndIncrement() == 0) {
         documentTracker.freeze(Side.LEFT)
@@ -416,35 +423,65 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    override fun createAdditionalInfoPanel(editor: Editor, range: Range): JComponent? {
+    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?): JComponent? {
       if (range !is LocalRange) return null
 
-      val list = ChangeListManager.getInstance(tracker.project).getChangeList(range.changelistId) ?: return null
+      val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
+      val rangeList = changeLists.find { it.id == range.changelistId } ?: return null
+
+      val group = DefaultActionGroup()
+      if (changeLists.size > 1) {
+        group.add(Separator("Changelists"))
+        val comparator = compareBy<LocalChangeList> { if (it.isDefault) 0 else 1 }.thenBy { it.name }
+        for (changeList in changeLists.sortedWith(comparator)) {
+          if (changeList == rangeList) continue
+          group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
+        }
+        group.add(Separator.getInstance())
+      }
+      group.add(MoveToAnotherChangeListAction(editor, range, mousePosition))
+
+
+      val link = ActionGroupLink(rangeList.name, null, group)
 
       val panel = JPanel(BorderLayout())
-      panel.add(JLabel(list.name), BorderLayout.CENTER)
-      panel.border = JBUI.Borders.emptyLeft(5)
+      panel.add(link, BorderLayout.CENTER)
+      panel.border = JBUI.Borders.emptyLeft(7)
       panel.isOpaque = false
       return panel
     }
 
-    override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
-      val actions = ArrayList<AnAction>()
-      actions.addAll(super.createToolbarActions(editor, range, mousePosition))
-      actions.add(SetChangeListAction(editor, range, mousePosition))
-      return actions
-    }
+    private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
+      : RangeMarkerAction(editor, range, null) {
+      init {
+        templatePresentation.text = "New..."
+      }
 
-    private inner class SetChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
-      : RangeMarkerAction(editor, range, IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST) {
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
       override fun actionPerformed(editor: Editor, range: Range) {
         MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
-
-        val newRange = tracker.findRange(range)
-        if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
+        reopenRange(editor, range, mousePosition)
       }
+    }
+
+    private inner class MoveToChangeListAction(editor: Editor, range: Range, val mousePosition: Point?, val changelist: LocalChangeList)
+      : RangeMarkerAction(editor, range, null) {
+      init {
+        templatePresentation.text = StringUtil.trimMiddle(changelist.name, 60)
+      }
+
+      override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
+
+      override fun actionPerformed(editor: Editor, range: Range) {
+        tracker.moveToChangelist(range, changelist)
+        reopenRange(editor, range, mousePosition)
+      }
+    }
+
+    private fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
+      val newRange = tracker.findRange(range)
+      if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
     }
   }
 
@@ -469,16 +506,7 @@ class PartialLocalLineStatusTracker(project: Project,
       val newMarker = ChangeListMarker(changelist)
 
       documentTracker.writeLock {
-        for (block in blocks) {
-          if (condition(block) &&
-              block.marker != newMarker) {
-            block.marker = newMarker
-            updateHighlighter(block)
-          }
-        }
-
-        dropExistingUndoActions()
-        updateAffectedChangeLists()
+        moveMarkers(condition, newMarker, notifyChangeListManager = true)
       }
     }
   }
@@ -612,7 +640,11 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     @CalledInAwt
-    fun onChangelistsChange() {
+    fun onChangeListsChange() {
+    }
+
+    @CalledInAwt
+    fun onChangeListMarkerChange() {
     }
   }
 

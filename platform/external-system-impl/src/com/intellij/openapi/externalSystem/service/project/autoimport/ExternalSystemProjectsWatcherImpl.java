@@ -125,12 +125,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     ApplicationManager.getApplication().getMessageBus().connect(myProject)
       .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
         @Override
-        public void batchChangeStarted(Project project) {
+        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
           myRefreshRequestsQueue.suspend();
         }
 
         @Override
-        public void batchChangeCompleted(Project project) {
+        public void batchChangeCompleted(@NotNull Project project) {
           myRefreshRequestsQueue.resume();
         }
       });

@@ -239,9 +239,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
         }
       };
-      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-      fileManager.addVirtualFileListener(myListener);
-      Disposer.register(getDisposable(), () -> fileManager.removeVirtualFileListener(myListener));
+      VirtualFileManager.getInstance().addVirtualFileListener(myListener, getDisposable());
     }
     updateOkActions();
   }

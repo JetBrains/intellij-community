@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
@@ -240,8 +241,8 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
   private static class MavenWebRootCopyingHandler extends MavenWebArtifactCopyingHandler {
     private final MavenResourceFileProcessor myFileProcessor;
     @NotNull private final ResourceRootConfiguration myRootConfiguration;
-    private final MavenResourceFileFilter myFileFilter;
-    private final boolean myMainWebAppRoot;
+    private final FileFilter myFilteringFilter;
+    private final FileFilter myCopyingFilter;
 
     private MavenWebRootCopyingHandler(@NotNull MavenResourceFileProcessor fileProcessor,
                                        @NotNull MavenWebArtifactConfiguration artifactConfiguration,
@@ -251,15 +252,33 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       super(artifactConfiguration, moduleResourceConfiguration, null);
       myFileProcessor = fileProcessor;
       myRootConfiguration = rootConfiguration;
-      myFileFilter = new MavenResourceFileFilter(root, myRootConfiguration);
+
+      FileFilter superFileFilter = super.createFileFilter();
+      FileFilter rootFileFilter = new MavenResourceFileFilter(root, myRootConfiguration).acceptingWebXml();
 
       //for additional resource directory 'exclude' means 'exclude from copying' but for the default webapp resource it mean 'exclude from filtering'
-      myMainWebAppRoot = FileUtil.pathsEqual(artifactConfiguration.warSourceDirectory, rootConfiguration.directory);
+      boolean isMainWebAppRoot = FileUtil.pathsEqual(artifactConfiguration.warSourceDirectory, rootConfiguration.directory);
+
+      if (isMainWebAppRoot) {
+        myCopyingFilter = superFileFilter;
+      }
+      else {
+        myCopyingFilter = path -> superFileFilter.accept(path) && rootFileFilter.accept(path);
+      }
+
+      Set<String> nonFilteredFileExtensions = artifactConfiguration.nonFilteredFileExtensions;
+      FileFilter extensionsFileFilter = file -> !nonFilteredFileExtensions.contains(FileUtilRt.getExtension(file.getName()));
+      if (isMainWebAppRoot) {
+        myFilteringFilter = file -> rootFileFilter.accept(file) && extensionsFileFilter.accept(file);
+      }
+      else {
+        myFilteringFilter = extensionsFileFilter;
+      }
     }
 
     @Override
     public void copyFile(@NotNull File from, @NotNull File to, @NotNull CompileContext context) throws IOException {
-      myFileProcessor.copyFile(from, to, myRootConfiguration, context, myMainWebAppRoot ? myFileFilter.acceptingWebXml() : FileUtilRt.ALL_FILES);
+      myFileProcessor.copyFile(from, to, myRootConfiguration, context, myFilteringFilter);
     }
 
     @Override
@@ -270,13 +289,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     @NotNull
     @Override
     public FileFilter createFileFilter() {
-      FileFilter superFilter = super.createFileFilter();
-      if (myMainWebAppRoot) {
-        return superFilter;
-      }
-
-      FileFilter thisFilter = myFileFilter.acceptingWebXml();
-      return path -> superFilter.accept(path) && thisFilter.accept(path);
+      return myCopyingFilter;
     }
   }
 }

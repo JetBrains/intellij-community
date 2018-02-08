@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
@@ -30,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -40,6 +37,7 @@ import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
@@ -402,6 +400,7 @@ public abstract class UsefulTestCase extends TestCase {
       }
       catch (Throwable tearingDown) {
         if (exception == null) exception = tearingDown;
+        else exception = new CompoundRuntimeException(Arrays.asList(exception, tearingDown));
       }
     }
     if (exception != null) throw exception;

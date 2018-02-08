@@ -51,8 +51,7 @@ fun unstash(project: Project,
             roots: Collection<VirtualFile>,
             handlerProvider: (VirtualFile) -> GitLineHandler,
             conflictResolver: GitConflictResolver) {
-  val token = DvcsUtil.workingTreeChangeStarted(project)
-  try {
+  DvcsUtil.workingTreeChangeStarted(project, "Unstash").use {
     for (root in roots) {
       val handler = handlerProvider(root)
 
@@ -84,9 +83,6 @@ fun unstash(project: Project,
         return
       }
     }
-  }
-  finally {
-    token.finish()
   }
 }
 

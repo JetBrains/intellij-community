@@ -25,17 +25,20 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -51,8 +54,17 @@ class TestDirectory extends TestPackage {
   public SourceScope getSourceScope() {
     final String dirName = getConfiguration().getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
-    final GlobalSearchScope globalSearchScope = file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(
-      getConfiguration().getProject(), file, true);
+    final Project project = getConfiguration().getProject();
+    final GlobalSearchScope globalSearchScope;
+    if (file == null) {
+      globalSearchScope = GlobalSearchScope.EMPTY_SCOPE;
+    }
+    else {
+      //package created by directory getDirectories(scope) should return the directory itself,
+      // currently the parent directory should be specified for scope
+      VirtualFile scopeDirectory = Registry.is("junit4.search.4.tests.all.in.scope", true) ? ObjectUtils.notNull(file.getParent(), file) : file;
+      globalSearchScope = GlobalSearchScopesCore.directoryScope(project, scopeDirectory, true);
+    }
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
@@ -61,14 +73,14 @@ class TestDirectory extends TestPackage {
 
       @Override
       public Project getProject() {
-        return getConfiguration().getProject();
+        return project;
       }
 
       @Override
       public GlobalSearchScope getLibrariesScope() {
         final Module module = getConfiguration().getConfigurationModule().getModule();
-        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module) : GlobalSearchScope.allScope(
-          getConfiguration().getProject());
+        return module != null ? GlobalSearchScope.moduleWithLibrariesScope(module)
+                              : GlobalSearchScope.allScope(project);
       }
 
       @Override
@@ -130,11 +142,11 @@ class TestDirectory extends TestPackage {
     if (file == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    final PsiDirectory directory = PsiManager.getInstance(getConfiguration().getProject()).findDirectory(file);
+    final PsiDirectory directory = ReadAction.compute(() -> PsiManager.getInstance(getConfiguration().getProject()).findDirectory(file));
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    return null;
+    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackage(directory));
   }
 
   @Override

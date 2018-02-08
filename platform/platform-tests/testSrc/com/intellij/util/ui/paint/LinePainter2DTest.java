@@ -34,13 +34,11 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
   public void testAlign() {
     JBUI.setUserScaleFactor(1);
 
-    // no paint below, just create right graphics
-
     PaintUtilTest.overrideJreHiDPIEnabled(false);
-    paintImage(1, 1, 1, this::testAlign);
+    supplyGraphics(1, 1, 1, this::testAlign);
 
     PaintUtilTest.overrideJreHiDPIEnabled(true);
-    paintImage(2, 1, 1, this::testAlign);
+    supplyGraphics(2, 1, 1, this::testAlign);
   }
 
   private Void testAlign(Graphics2D g) {
@@ -105,6 +103,7 @@ public class LinePainter2DTest extends AbstractPainter2DTest {
   private void paintLines(Graphics2D g, StrokeType type, float trX, float trY) {
     g.translate(scale(trX), scale(trY));
     Object aa = RenderingHints.VALUE_ANTIALIAS_ON;
+    paintLine(g, 0, 0, 0, 0, type, 1, aa); // a dot
     paintLine(g, 0, -2, 0, -LINE_LEN, type, 1, aa);
     paintLine(g, 2, -2, LINE_LEN, -LINE_LEN, type, 1, aa);
     paintLine(g, 2, 0, LINE_LEN, 0, type, 1, aa);

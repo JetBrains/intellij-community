@@ -34,7 +34,7 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -184,7 +184,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable) {
+  public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
     myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
@@ -326,7 +326,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   // Extracted to have a capture point
-  private static void doRun(@Debugger.Insert Runnable runnable) {
+  private static void doRun(@Async.Execute Runnable runnable) {
     try {
       runnable.run();
     }

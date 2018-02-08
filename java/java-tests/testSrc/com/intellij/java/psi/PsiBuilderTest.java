@@ -219,17 +219,15 @@ public class PsiBuilderTest extends LightIdeaTestCase {
 
     myBuilder = createBuilder("  bar", tree);
     parseWhenEmptyElementAfterWhitespaceIsLastChild();
-    DebugUtil.startPsiModification(null);
-    try {
-      myBuilder.getTreeBuilt();
-      fail();
-    }
-    catch (BlockSupport.ReparsedSuccessfullyException e) {
-      e.getDiffLog().performActualPsiChange(tree.getPsi().getContainingFile());
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    DebugUtil.performPsiModification(null, () -> {
+      try {
+        myBuilder.getTreeBuilt();
+        fail();
+      }
+      catch (BlockSupport.ReparsedSuccessfullyException e) {
+        e.getDiffLog().performActualPsiChange(tree.getPsi().getContainingFile());
+      }
+    });
 
     assertEquals("  bar", tree.getText());
   }

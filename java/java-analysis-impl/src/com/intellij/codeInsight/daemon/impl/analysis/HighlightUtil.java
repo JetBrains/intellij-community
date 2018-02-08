@@ -1650,13 +1650,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
   private static ErrorWithFixes checkAccess(JavaModuleSystemEx system, PsiElement target, PsiElement place) {
     if (target instanceof PsiClass) return system.checkAccess((PsiClass)target, place);
-    if (target instanceof PsiPackage) return system.checkAccess((PsiPackage)target, place);
+    if (target instanceof PsiPackage) return system.checkAccess(((PsiPackage)target).getQualifiedName(), null, place);
     return null;
   }
 
   private static boolean isAccessible(JavaModuleSystem system, PsiElement target, PsiElement place) {
     if (target instanceof PsiClass) return system.isAccessible((PsiClass)target, place);
-    if (target instanceof PsiPackage) return system.isAccessible((PsiPackage)target, place);
+    if (target instanceof PsiPackage) return system.isAccessible(((PsiPackage)target).getQualifiedName(), null, place);
     return true;
   }
 

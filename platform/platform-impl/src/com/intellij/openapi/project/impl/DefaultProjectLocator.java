@@ -28,9 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 
 public class DefaultProjectLocator extends ProjectLocator {
+  @Override
   @Nullable
   public Project guessProjectForFile(final VirtualFile file) {
     ProjectManager projectManager = ProjectManager.getInstance();
@@ -49,7 +50,9 @@ public class DefaultProjectLocator extends ProjectLocator {
   @Override
   public Collection<Project> getProjectsForFile(VirtualFile file) {
     final ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null || file == null) { return new HashSet<>(); }
+    if (projectManager == null || file == null) {
+      return Collections.emptyList();
+    }
     final Project[] openProjects = projectManager.getOpenProjects();
     return Arrays.asList(openProjects);
   }

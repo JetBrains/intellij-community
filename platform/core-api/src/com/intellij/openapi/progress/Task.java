@@ -116,11 +116,6 @@ public abstract class Task implements TaskInfo, Progressive {
   }
 
   @Override
-  public String getProcessId() {
-    return "<unknown>";
-  }
-
-  @Override
   @NotNull
   public final String getTitle() {
     return myTitle;

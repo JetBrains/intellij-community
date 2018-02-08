@@ -586,8 +586,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    DebugUtil.startPsiModification("onContentReload");
-    try {
+    DebugUtil.performPsiModification("onContentReload", () -> {
       synchronized (myPsiLock) {
         myRefToPsi.invalidatePsi();
 
@@ -599,10 +598,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         updateTrees(myTrees.clearStub("onContentReload"));
         setTreeElementPointer(null);
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
     clearCaches();
   }
 

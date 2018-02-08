@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,10 +32,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
@@ -197,8 +195,19 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
-            if (qualifierExpression instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) || qualifierExpression == null) {
+            if (qualifierExpression == null) {
               continue;
+            }
+            if (qualifierExpression instanceof PsiReferenceExpression) {
+              PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
+              if (!(resolve instanceof PsiClass) || resolve != sourceClass) {
+                continue;
+              }
+              PsiClass inheritor = InheritanceUtil.findEnclosingInstanceInScope(sourceClass, element, Condition.TRUE, false);
+              if (inheritor != null && inheritor != targetClass) {
+                //usages in other targets should be updated on corresponding turns
+                continue;
+              }
             }
           }
           refsToRebind.add(reference);

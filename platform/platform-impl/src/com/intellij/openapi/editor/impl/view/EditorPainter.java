@@ -530,8 +530,7 @@ class EditorPainter implements TextDrawingCallback {
     int startOffset = region.getStartOffset();
     int endOffset = region.getEndOffset();
     markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, h -> {
-      if (Boolean.TRUE.equals(h.getUserData(RangeHighlighter.VISIBLE_IF_FOLDED)) && 
-          h.getAffectedAreaStartOffset() >= startOffset && h.getAffectedAreaEndOffset() <= endOffset) {
+      if (h.isVisibleIfFolded() && h.getAffectedAreaStartOffset() >= startOffset && h.getAffectedAreaEndOffset() <= endOffset) {
         highlighters.add(h);
       }
       return true;

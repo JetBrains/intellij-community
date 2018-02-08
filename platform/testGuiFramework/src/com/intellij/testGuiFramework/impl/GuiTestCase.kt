@@ -599,6 +599,10 @@ open class GuiTestCase {
     func(this.navigationBar)
   }
 
+  fun IdeFrameFixture.configurationList(func: RunConfigurationListFixture.() -> Unit) {
+    func(this.runConfigurationList)
+  }
+
   /**
    * Extension function for IDE to iterate through the menu.
    *

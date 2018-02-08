@@ -15,8 +15,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ProjectStartupConfigurationBase implements PersistentStateComponent<ProjectStartupConfigurationBase> {
+  @SuppressWarnings("FieldMayBeFinal")
   @XCollection(propertyElementName = "configurations")
-  private final List<ConfigurationDescriptor> myList;
+  private List<ConfigurationDescriptor> myList;
 
   protected ProjectStartupConfigurationBase() {
     myList = new ArrayList<>();

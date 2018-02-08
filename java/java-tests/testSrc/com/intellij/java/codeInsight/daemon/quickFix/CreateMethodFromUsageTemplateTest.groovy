@@ -224,4 +224,35 @@ class A {
   }
   """
   }
+
+  void 'test guess type parameters'() {
+    configureFromFileText 'a.java', '''\
+public class A {
+    void m(java.util.List<String> list, B<String> b) {
+        b.<caret>foo(list);
+    }
+}
+
+class B<T>
+{
+}
+'''
+    doAction("Create method 'foo' in 'B'")
+    checkResultByText '''\
+import java.util.List;
+
+public class A {
+    void m(java.util.List<String> list, B<String> b) {
+        b.foo(list);
+    }
+}
+
+class B<T>
+{
+    public void foo(List<T> list) {
+        <caret>
+    }
+}
+'''
+  }
 }

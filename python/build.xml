@@ -3,6 +3,8 @@
   <property name="python.home" value="${basedir}"/>
   <property name="out.dir" value="${project.home}/out"/>
   <property name="tmp.dir" value="${project.home}/out/tmp"/>
+  <property name="idea.build.number" value="SNAPSHOT"/>
+  <property name="idea.path" value=""/>
 
   <target name="cleanup">
     <delete dir="${out.dir}" failonerror="false"/>
@@ -34,7 +36,7 @@
   </target>
 
   <target name="plugin" depends="init">
-    <call_gant script="${python.home}/build/python_plugin_build.gant"/>
+    <call_gant script="${python.home}/build/python_community_plugin_build.gant"/>
   </target>
   <!--
   <target name="test" depends="init">

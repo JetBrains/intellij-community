@@ -185,6 +185,31 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
       lines);
   }
 
+
+  public void testRunningAllInDirectory() throws IOException, ExecutionException {
+    Module module1 = getModule1();
+    PsiClass psiClass = findTestA(module1);
+
+    JUnitConfiguration configuration =
+      new JUnitConfiguration("", myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
+    configuration.getPersistentData().setDirName(psiClass.getContainingFile().getContainingDirectory().getVirtualFile().getPath());
+    configuration.setModule(module1);
+    JavaParameters parameters = checkCanRun(configuration);
+    String filePath = ContainerUtil.find(parameters.getProgramParametersList().getArray(),
+                                         value -> StringUtil.startsWithChar(value, '@') && !StringUtil.startsWith(value, "@w@")).substring(1);
+    List<String> lines = readLinesFrom(new File(filePath));
+    lines.remove(0);
+    Assertion.compareUnordered(
+      //category, filters, classNames...
+      new Object[]{"", "", psiClass.getQualifiedName(),
+        "test1.DerivedTest", RT_INNER_TEST_NAME,
+        "test1.nested.TestA",
+        "test1.nested.TestWithJunit4",
+        "test1.ThirdPartyTest"},
+      lines);
+  }
+
   public void testRunAllInPackageWhenPackageIsEmptyInModule() throws ExecutionException {
     assignJdk(getModule2());
     JUnitConfiguration configuration =

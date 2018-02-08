@@ -81,7 +81,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         }
         String enteredText = popup.getTrimmedText();
-        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, e);
+        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component);
       }
     };
 
@@ -281,8 +281,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
   public static void openOptionOrPerformAction(@NotNull Object element,
                                                final String enteredText,
                                                @Nullable final Project project,
-                                               Component component,
-                                               @Nullable AnActionEvent e) {
+                                               Component component) {
     if (element instanceof OptionDescription) {
       OptionDescription optionDescription = (OptionDescription)element;
       final String configurableId = optionDescription.getConfigurableId();
@@ -296,7 +295,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
     else {
       ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-        () -> performAction(element, component, e)));
+        () -> performAction(element, component, null)));
     }
   }
 

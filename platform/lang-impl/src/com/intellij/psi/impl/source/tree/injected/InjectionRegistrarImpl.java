@@ -368,13 +368,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
                                          @NotNull PsiFile psiFile) {
     FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
-    DebugUtil.startPsiModification("MultiHostRegistrar cacheEverything");
-    try {
-      viewProvider.forceCachedPsi(psiFile);
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    DebugUtil.performPsiModification("MultiHostRegistrar cacheEverything", () -> viewProvider.forceCachedPsi(psiFile));
 
     SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = ((ShredImpl)place.get(0)).getSmartPointer();
     psiFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
@@ -516,15 +510,11 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     if (!oldFile.textMatches(injectedPsi)) {
       InjectedFileViewProvider oldViewProvider = (InjectedFileViewProvider)oldFile.getViewProvider();
       oldViewProvider.performNonPhysically(() -> {
-        DebugUtil.startPsiModification("injected tree diff");
-        try {
+        DebugUtil.performPsiModification("injected tree diff", () -> {
           final DiffLog diffLog = BlockSupportImpl.mergeTrees((PsiFileImpl)oldFile, oldFileNode, injectedNode, new DaemonProgressIndicator(),
                                                               oldFileNode.getText());
           diffLog.doActualPsiChange(oldFile);
-        }
-        finally {
-          DebugUtil.finishPsiModification();
-        }
+        });
       });
     }
   }
@@ -623,8 +613,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
       return () -> {
         oldInjectedPsiViewProvider.performNonPhysically(() -> {
-          DebugUtil.startPsiModification("injected tree diff");
-          try {
+          DebugUtil.performPsiModification("injected tree diff", () -> {
             diffLog.doActualPsiChange(oldInjectedPsi);
 
             // create new shreds after commit is complete because otherwise the range markers will be changed in MarkerCache.updateMarkers
@@ -644,10 +633,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
             cacheEverything(newPlace, oldDocumentWindow, oldInjectedPsiViewProvider, oldInjectedPsi);
             String docText = oldDocumentWindow.getText();
             assert docText.equals(newText) : "=\n" + docText + "\n==\n" + newDocumentText + "\n===\n";
-          }
-          finally {
-            DebugUtil.finishPsiModification();
-          }
+          });
         });
         return true;
       };

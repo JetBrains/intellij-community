@@ -504,6 +504,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new ShowAsToolwindowAction());
     gearActions.add(new MyShowSettingsAction());
     gearActions.add(new ShowToolbarAction());
+    gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
@@ -708,7 +709,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myBackStack.push(saveContext());
       myForwardStack.clear();
     }
-    updateControlState();
     setData(element, text, clearHistory, null);
     if (clean) {
       myIsEmpty = false;
@@ -1444,7 +1444,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class MyShowSettingsButton extends ActionButton {
 
     public MyShowSettingsButton() {
-      this(new MyGearActionGroup(new ShowAsToolwindowAction(), new MyShowSettingsAction(), new ShowToolbarAction()), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      this(new MyGearActionGroup(new ShowAsToolwindowAction(), new MyShowSettingsAction(), new ShowToolbarAction(), new RestoreDefaultSizeAction()),
+           new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
@@ -1637,6 +1638,24 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(AnActionEvent e) {
       myToolwindowCallback.run();
+    }
+  }
+
+  private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    public RestoreDefaultSizeAction() {
+      super("Restore Size");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myHint != null && myHint.getDimensionServiceKey() != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
+      myHint.setDimensionServiceKey(null);
+      showHint();
     }
   }
 }

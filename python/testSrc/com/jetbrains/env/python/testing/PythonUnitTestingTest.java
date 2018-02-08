@@ -32,6 +32,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -259,6 +260,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   // Ensure failed and error subtests work
   @Test
+  @Staging //Fails on TC from time to time, investigate
   @EnvTestTagsRequired(tags = "python3")
   public void testSubTestError() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
