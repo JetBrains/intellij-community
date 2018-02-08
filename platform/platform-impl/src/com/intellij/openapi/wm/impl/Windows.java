@@ -71,18 +71,13 @@ public class Windows {
       return this;
     }
 
-    public ToolWindowProvider handleDeactivatingShortcut(Consumer<String> deactivationShortcutHandler) {
-      this.deactivationShortcutHandler = deactivationShortcutHandler;
-      return this;
-    }
-
     public ToolWindowProvider withEscAction(ActionManager actionManager) {
       myActionManager = actionManager;
       return this;
     }
 
     public static boolean isInActiveToolWindow (Object component) {
-      JComponent source = ((component != null) && (component instanceof JComponent)) ? ((JComponent)component) : null;
+      JComponent source = (component instanceof JComponent ? ((JComponent)component) : null);
 
       ToolWindow activeToolWindow = ToolWindowManager.getActiveToolWindow();
       if (activeToolWindow != null) {
@@ -125,17 +120,6 @@ public class Windows {
                 // A toolwindow lost focus
                 if (!focusEvent.isTemporary() && ToolWindowManager.getActiveToolWindow() != null && ToolWindowManager.getActiveToolWindow().isAutoHide()) {
                   pinnedWindowFocusLostHandler.accept(id);
-                }
-              }
-            }
-
-            if (event.getID() == KeyEvent.KEY_PRESSED && !isHeavyWeightPopup(event) && !("Terminal").equals(id))
-            {
-              if (Arrays.stream(findShortcuts("EditorEscape"))
-                .anyMatch(shortcut -> shortcut.equals(new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent((KeyEvent)event), null))))
-              {
-                if(isInActiveToolWindow(event.getSource())) {
-                  deactivationShortcutHandler.accept(id);
                 }
               }
             }
