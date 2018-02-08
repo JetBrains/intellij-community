@@ -1050,7 +1050,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         return;
       }
       String lineText = EditorHyperlinkSupport.getLineText(document, line, false);
-      current = foldingForLine(lineText);
+      current = foldingForLine(lineText, getProject());
       if (current != null) {
         myFolding.put(line, current);
       }
@@ -1076,7 +1076,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
-      String placeholder = prevFolding.getPlaceholderText(toFold);
+      String placeholder = prevFolding.getPlaceholderText(getProject(), toFold);
       FoldRegion region = placeholder == null ? null : myEditor.getFoldingModel().addFoldRegion(oStart, oEnd, placeholder);
       if (region != null) {
         region.setExpanded(false);
@@ -1085,10 +1085,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   @Nullable
-  private static ConsoleFolding foldingForLine(@NotNull String lineText) {
+  private static ConsoleFolding foldingForLine(@NotNull String lineText, @NotNull Project project) {
     ConsoleFolding[] extensions = ConsoleFolding.EP_NAME.getExtensions();
     for (ConsoleFolding extension : extensions) {
-      if (extension.shouldFoldLine(lineText)) {
+      if (extension.shouldFoldLine(project, lineText)) {
         return extension;
       }
     }
