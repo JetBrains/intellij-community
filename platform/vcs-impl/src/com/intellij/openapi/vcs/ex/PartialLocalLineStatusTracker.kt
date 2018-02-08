@@ -135,6 +135,8 @@ class PartialLocalLineStatusTracker(project: Project,
 
       eventDispatcher.multicaster.onChangeListsChange()
     }
+
+    eventDispatcher.multicaster.onChangeListMarkerChange()
   }
 
   @CalledInAwt
@@ -639,6 +641,10 @@ class PartialLocalLineStatusTracker(project: Project,
 
     @CalledInAwt
     fun onChangeListsChange() {
+    }
+
+    @CalledInAwt
+    fun onChangeListMarkerChange() {
     }
   }
 

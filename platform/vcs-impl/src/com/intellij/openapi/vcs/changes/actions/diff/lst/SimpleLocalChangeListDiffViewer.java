@@ -176,6 +176,10 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
 
     @Override
     public void onChangeListsChange() {
+    }
+
+    @Override
+    public void onChangeListMarkerChange() {
       scheduleRediff();
     }
   }
