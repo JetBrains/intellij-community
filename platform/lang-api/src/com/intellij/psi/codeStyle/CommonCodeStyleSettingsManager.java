@@ -226,18 +226,6 @@ class CommonCodeStyleSettingsManager {
     }
   }
 
-  public static void copy(@NotNull CommonCodeStyleSettings source, @NotNull CommonCodeStyleSettings target) {
-    CommonCodeStyleSettings.copyPublicFields(source, target);
-    CommonCodeStyleSettings.IndentOptions targetIndentOptions = target.getIndentOptions();
-    if (targetIndentOptions != null) {
-      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
-      if (sourceIndentOptions != null) {
-        CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
-      }
-    }
-    target.setSoftMargins(source.getSoftMargins());
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof CommonCodeStyleSettingsManager) {
