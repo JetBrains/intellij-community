@@ -32,6 +32,11 @@
 
       <add-to-group group-id="VcsGeneral.KeymapGroup"/>
     </group>
+
+    <action id="ChangesView.GroupBy.Repository" text="Repository" class="com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction">
+      <add-to-group group-id="ChangesView.GroupBy"/>
+    </action>
+
   </actions>
   <project-components>
     <component>
@@ -42,6 +47,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.dvcs.push.PushSettings"/>
     <projectService serviceImplementation="com.intellij.dvcs.cherrypick.VcsCherryPickManager"/>
+
+    <changesGroupingPolicy key="repository" id="repository"
+                           implementationClass="com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy$Factory"/>
   </extensions>
 </idea-plugin>
 
