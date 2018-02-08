@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
+import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -20,6 +21,12 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.*;
 
 public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTemplate {
+  /**
+   * @deprecated
+   */
+  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
+    element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
+    
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,
                                       @NotNull JavaEditablePostfixTemplateProvider provider) {
     super(templateName, templateText, example,

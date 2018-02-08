@@ -151,6 +151,19 @@ public abstract class JavaPostfixTemplatesUtils {
   public static final Condition<PsiElement> IS_NOT_PRIMITIVE =
     element -> element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
 
+  /**
+   * @deprecated
+   */
+  public static final Condition<PsiElement> IS_ARRAY = element -> {
+    if (!(element instanceof PsiExpression)) return false;
+
+    PsiType type = ((PsiExpression)element).getType();
+    return isArray(type);
+  };
+
+  /**
+   * @deprecated
+   */
   public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 

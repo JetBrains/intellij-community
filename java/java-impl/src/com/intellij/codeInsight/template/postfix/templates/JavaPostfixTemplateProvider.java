@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
@@ -12,8 +12,17 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Set;
+
 
 public abstract class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
+  @NotNull
+  @Override
+  public Set<PostfixTemplate> getTemplates() {
+    return Collections.emptySet();
+  }
+
   @Override
   public boolean isTerminalSymbol(char currentChar) {
     return currentChar == '.' || currentChar == '!';
