@@ -179,7 +179,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void componentResized(ComponentEvent e) {
         FontMetrics metrics = myList.getFontMetrics(myList.getFont());
-        int charWidth = metrics.charWidth('m');
+        int charWidth = metrics.charWidth('i');
         renderer.previewChars = myList.getParent().getParent().getWidth() / charWidth + 10;
       }
     });
@@ -358,7 +358,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
   }
-  
+
   private static class Item {
     final int index;
     final String longText;
