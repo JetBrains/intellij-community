@@ -5,6 +5,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,7 +28,7 @@ public final class PostfixTemplateMetaData extends BeforeAfterActionMetaData {
 
   @NotNull
   public static PostfixTemplateMetaData createMetaData(@Nullable PostfixTemplate template) {
-    if (template == null || !template.isBuiltin()) return EMPTY_METADATA;
+    if (template == null || !template.isBuiltin() || template instanceof PostfixChangedBuiltinTemplate) return EMPTY_METADATA;
 
     return new PostfixTemplateMetaData(template);
   }

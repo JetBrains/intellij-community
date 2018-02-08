@@ -11,8 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public abstract class PostfixTemplate {
+  @NotNull private final String myId;
   @NotNull private final String myPresentableName;
   @NotNull private final String myKey;
   @NotNull private final String myDescription;
@@ -20,27 +22,32 @@ public abstract class PostfixTemplate {
   @Nullable private final PostfixTemplateProvider myProvider;
 
   /**
-   * @deprecated use {@link #PostfixTemplate(String, String, PostfixTemplateProvider)}
+   * @deprecated use {@link #PostfixTemplate(String, String, String, PostfixTemplateProvider)}
    */
   protected PostfixTemplate(@NotNull String name, @NotNull String example) {
-    this(name, "." + name, example, null);
-  }
-  
-  protected PostfixTemplate(@NotNull String name, @NotNull String example, @Nullable PostfixTemplateProvider provider) {
-    this(name, "." + name, example, provider);
-  }
-  
-  /**
-   * @deprecated use {@link #PostfixTemplate(String, String, String, PostfixTemplateProvider)} 
-   */
-  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
-    this(name, key, example, null);
+    this(null, name, "." + name, example, null);
   }
 
-  protected PostfixTemplate(@NotNull String name,
+  protected PostfixTemplate(@Nullable String id,
+                            @NotNull String name,
+                            @NotNull String example,
+                            @Nullable PostfixTemplateProvider provider) {
+    this(id, name, "." + name, example, provider);
+  }
+
+  /**
+   * @deprecated use {@link #PostfixTemplate(String, String, String, String, PostfixTemplateProvider)}
+   */
+  protected PostfixTemplate(@NotNull String name, @NotNull String key, @NotNull String example) {
+    this(null, name, key, example, null);
+  }
+
+  protected PostfixTemplate(@Nullable String id,
+                            @NotNull String name,
                             @NotNull String key,
                             @NotNull String example,
                             @Nullable PostfixTemplateProvider provider) {
+    myId = id != null ? id : getClass().getName() + "#" + key;
     String tempDescription;
     myPresentableName = name;
     myKey = key;
@@ -56,6 +63,19 @@ public abstract class PostfixTemplate {
     myProvider = provider;
   }
 
+  /**
+   * Template's identifier. Used for saving the settings related to this templates.
+   */
+  @NotNull
+  public String getId() {
+    return myId;
+  }
+
+  /**
+   * Template's key. Used while expanding template in editor.
+   *
+   * @return
+   */
   @NotNull
   public final String getKey() {
     return myKey;
@@ -95,14 +115,35 @@ public abstract class PostfixTemplate {
   }
 
   /**
-   * Builtin templates cannot be removed
-   * If they are editable, they can be restored to default
+   * Builtin templates cannot be removed.
+   * If they are editable, they can be restored to default.
    */
   public boolean isBuiltin() {
     return true;
   }
 
+  /**
+   * Template can be edit. Only templates whose key starts with . can be edited.
+   */
   public boolean isEditable() {
     return getProvider() instanceof PostfixEditableTemplateProvider;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof PostfixTemplate)) return false;
+    PostfixTemplate template = (PostfixTemplate)o;
+    return Objects.equals(myId, template.myId) &&
+           Objects.equals(myPresentableName, template.myPresentableName) &&
+           Objects.equals(myKey, template.myKey) &&
+           Objects.equals(myDescription, template.myDescription) &&
+           Objects.equals(myExample, template.myExample) &&
+           Objects.equals(myProvider, template.myProvider);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myId, myPresentableName, myKey, myDescription, myExample, myProvider);
   }
 }

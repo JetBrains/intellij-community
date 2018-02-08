@@ -28,11 +28,12 @@ import java.util.Objects;
 public abstract class EditablePostfixTemplate extends PostfixTemplate {
   @NotNull private final String myTemplateText;
 
-  public EditablePostfixTemplate(@NotNull String key,
+  public EditablePostfixTemplate(@NotNull String templateId,
+                                 @NotNull String templateName,
                                  @NotNull String templateText,
                                  @NotNull String example,
                                  @NotNull PostfixEditableTemplateProvider provider) {
-    super(key, example, provider);
+    super(templateId, templateName, example, provider);
     myTemplateText = templateText;
   }
 

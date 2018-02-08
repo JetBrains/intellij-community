@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.CustomLiveTemplateLookupElement;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLookupElement;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
 import com.intellij.diagnostic.AttachmentFactory;
@@ -116,7 +115,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     Editor editor = callback.getEditor();
     for (PostfixTemplateProvider provider : LanguagePostfixTemplate.LANG_EP.allForLanguage(getLanguage(callback))) {
-      PostfixTemplate postfixTemplate = getTemplate(provider, key);
+      PostfixTemplate postfixTemplate = findTemplate(provider, key);
       if (postfixTemplate != null) {
         final PsiFile file = callback.getContext().getContainingFile();
         if (isApplicableTemplate(provider, key, file, editor)) {
@@ -142,14 +141,14 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
     // don't care about errors in multiCaret mode
     if (editor.getCaretModel().getAllCarets().size() == 1) {
       LOG.error("Template not found by key: " + key + "; offset = " + callback.getOffset(),
-                    AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
+                AttachmentFactory.createAttachment(callback.getFile().getVirtualFile()));
     }
   }
 
   @Override
   public boolean isApplicable(@NotNull CustomTemplateCallback callback, int offset, boolean wrapping) {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    if (wrapping || settings == null || !settings.isPostfixTemplatesEnabled()) {
+    if (wrapping || !settings.isPostfixTemplatesEnabled()) {
       return false;
     }
     PsiFile contextFile = callback.getFile();
@@ -181,8 +180,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @Override
   public char getShortcut() {
-    PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
-    return settings != null ? (char)settings.getShortcut() : TemplateSettings.TAB_CHAR;
+    return (char)PostfixTemplatesSettings.getInstance().getShortcut();
   }
 
   @Override
@@ -202,7 +200,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
       String key = computeTemplateKeyWithoutContextChecking(callback);
       if (key != null && editor.getCaretModel().getCaretCount() == 1) {
         Condition<PostfixTemplate> isApplicationTemplateFunction = createIsApplicationTemplateFunction(provider, key, file, editor);
-        for (PostfixTemplate postfixTemplate : provider.getTemplates()) {
+        for (PostfixTemplate postfixTemplate : PostfixTemplatesUtils.getAvailableTemplates(provider)) {
           ProgressManager.checkCanceled();
           if (isApplicationTemplateFunction.value(postfixTemplate)) {
             result.add(new PostfixTemplateLookupElement(this, postfixTemplate, postfixTemplate.getKey(), provider, false));
@@ -219,7 +217,10 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                      @NotNull final PsiElement context) {
     if (template.startInWriteAction()) {
       ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
-        .executeCommand(context.getProject(), () -> template.expand(context, editor), "Expand postfix template", POSTFIX_TEMPLATE_ID));
+                                                                               .executeCommand(context.getProject(),
+                                                                                               () -> template.expand(context, editor),
+                                                                                               "Expand postfix template",
+                                                                                               POSTFIX_TEMPLATE_ID));
     }
     else {
       template.expand(context, editor);
@@ -294,22 +295,21 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                              @NotNull String key,
                                              @NotNull PsiFile file,
                                              @NotNull Editor editor) {
-    return createIsApplicationTemplateFunction(provider, key, file, editor).value(getTemplate(provider, key));
+    return createIsApplicationTemplateFunction(provider, key, file, editor).value(findTemplate(provider, key));
   }
 
   @NotNull
   private static Set<String> getKeys(@NotNull PostfixTemplateProvider provider) {
     Set<String> result = ContainerUtil.newHashSet();
-    for (PostfixTemplate template : provider.getTemplates()) {
+    for (PostfixTemplate template : PostfixTemplatesUtils.getAvailableTemplates(provider)) {
       result.add(template.getKey());
     }
-
     return result;
   }
 
   @Nullable
-  private static PostfixTemplate getTemplate(@NotNull PostfixTemplateProvider provider, @Nullable String key) {
-    for (PostfixTemplate template : provider.getTemplates()) {
+  private static PostfixTemplate findTemplate(@NotNull PostfixTemplateProvider provider, @Nullable String key) {
+    for (PostfixTemplate template : PostfixTemplatesUtils.getAvailableTemplates(provider)) {
       if (template.getKey().equals(key)) {
         return template;
       }

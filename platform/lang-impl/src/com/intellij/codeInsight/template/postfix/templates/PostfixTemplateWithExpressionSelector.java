@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
@@ -20,38 +20,40 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   private final PostfixTemplateExpressionSelector mySelector;
 
   /**
-   * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
+   * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
   protected PostfixTemplateWithExpressionSelector(@NotNull String name,
                                                   @NotNull String key,
                                                   @NotNull String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
-    this(name, key, example, selector, null);
+    this(null, name, key, example, selector, null);
   }
 
   /**
-   * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
+   * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
   protected PostfixTemplateWithExpressionSelector(@NotNull String name,
                                                   @NotNull String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
-    this(name, example, selector, null);
+    this(null, name, example, selector, null);
   }
 
-  protected PostfixTemplateWithExpressionSelector(@NotNull String name,
+  protected PostfixTemplateWithExpressionSelector(@Nullable String id,
+                                                  @NotNull String name,
                                                   @NotNull String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector,
                                                   @Nullable PostfixTemplateProvider provider) {
-    super(name, example, provider);
+    super(id, name, example, provider);
     mySelector = selector;
   }
 
-  protected PostfixTemplateWithExpressionSelector(@NotNull String name,
+  protected PostfixTemplateWithExpressionSelector(@Nullable String id,
+                                                  @NotNull String name,
                                                   @NotNull String key,
                                                   @NotNull String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector,
                                                   @Nullable PostfixTemplateProvider provider) {
-    super(name, key, example, provider);
+    super(id, name, key, example, provider);
     mySelector = selector;
   }
 

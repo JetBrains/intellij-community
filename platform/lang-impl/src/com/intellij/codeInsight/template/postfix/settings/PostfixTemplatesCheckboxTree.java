@@ -3,6 +3,8 @@ package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.ide.DataManager;
@@ -45,10 +47,14 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   @NotNull
   private final DefaultTreeModel myModel;
   @NotNull
-  private final MultiMap<String, PostfixEditableTemplateProvider> myLanguageToEditableTemplateProviders = MultiMap.createSet();
+  private final MultiMap<String, PostfixEditableTemplateProvider> myLanguageIdToEditableTemplateProviders;
+  private final boolean canAddTemplate;
 
-  public PostfixTemplatesCheckboxTree() {
+  public PostfixTemplatesCheckboxTree(@NotNull MultiMap<String, PostfixEditableTemplateProvider> languageIdToEditableTemplateProviders) {
     super(getRenderer(), new CheckedTreeNode(null));
+    myLanguageIdToEditableTemplateProviders = languageIdToEditableTemplateProviders;
+    canAddTemplate = ContainerUtil.find(languageIdToEditableTemplateProviders.values(),
+                                        p -> StringUtil.isNotEmpty(p.getPresentableName())) != null;
     myModel = (DefaultTreeModel)getModel();
     myRoot = (CheckedTreeNode)myModel.getRoot();
     TreeSelectionListener selectionListener = new TreeSelectionListener() {
@@ -118,7 +124,6 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
 
   public void initTree(@NotNull MultiMap<String, PostfixTemplate> langToTemplates) {
     myRoot.removeAllChildren();
-    myLanguageToEditableTemplateProviders.clear();
     for (Map.Entry<String, Collection<PostfixTemplate>> entry : langToTemplates.entrySet()) {
       String languageId = entry.getKey();
       Language language = Language.findLanguageByID(languageId);
@@ -128,11 +133,6 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       for (PostfixTemplate template : entry.getValue()) {
         CheckedTreeNode templateNode = new PostfixTemplateCheckedTreeNode(template, languageName, false);
         langNode.add(templateNode);
-
-        PostfixTemplateProvider postfixTemplateProvider = template.getProvider();
-        if (template.isEditable() && postfixTemplateProvider instanceof PostfixEditableTemplateProvider) {
-          myLanguageToEditableTemplateProviders.putValue(languageId, (PostfixEditableTemplateProvider)postfixTemplateProvider);
-        }
       }
     }
 
@@ -141,7 +141,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   }
 
   @Nullable
-  public PostfixTemplate getTemplate() {
+  public PostfixTemplate getSelectedTemplate() {
     TreePath path = getSelectionModel().getSelectionPath();
     return getTemplateFromPath(path);
   }
@@ -160,7 +160,8 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     visitTemplateNodes(node -> {
       PostfixTemplate template = node.getTemplate();
       PostfixTemplateProvider provider = template.getProvider();
-      if (template.isEditable() && provider instanceof PostfixEditableTemplateProvider) {
+      if (isEditable(template) && provider instanceof PostfixEditableTemplateProvider &&
+          (!template.isBuiltin() || template instanceof PostfixChangedBuiltinTemplate)) {
         result.putValue((PostfixEditableTemplateProvider)provider, template);
       }
     });
@@ -222,28 +223,33 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   }
 
   public boolean canAddTemplate() {
-    return !myLanguageToEditableTemplateProviders.isEmpty();
+    return canAddTemplate;
   }
 
   public void addTemplate(@NotNull AnActionButton button) {
     DefaultActionGroup group = new DefaultActionGroup();
-    for (Map.Entry<String, Collection<PostfixEditableTemplateProvider>> entry : myLanguageToEditableTemplateProviders.entrySet()) {
-      String languageName = entry.getKey();
+    for (Map.Entry<String, Collection<PostfixEditableTemplateProvider>> entry : myLanguageIdToEditableTemplateProviders.entrySet()) {
+      String languageId = entry.getKey();
       for (PostfixEditableTemplateProvider provider : entry.getValue()) {
-        group.add(new DumbAwareAction(provider.getName()) {
+        String providerName = provider.getPresentableName();
+        if (StringUtil.isEmpty(providerName)) continue;
+        group.add(new DumbAwareAction(providerName) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             Project project = getProject();
             PostfixTemplateEditor editor = provider.createEditor(project);
             if (editor != null) {
-              //noinspection unchecked
-              PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(PostfixTemplatesCheckboxTree.this, editor, provider, null);
+              PostfixEditTemplateDialog dialog =
+                new PostfixEditTemplateDialog(PostfixTemplatesCheckboxTree.this, editor, providerName, null);
               if (dialog.showAndGet()) {
+                String templateKey = dialog.getTemplateKey();
+                String templateId = PostfixTemplatesUtils.generateTemplateId(templateKey, provider);
+                PostfixTemplate createdTemplate = editor.createTemplate(templateId, templateKey);
+
+                PostfixTemplateCheckedTreeNode createdNode = new PostfixTemplateCheckedTreeNode(createdTemplate, languageId, true);
                 DefaultMutableTreeNode languageNode = TreeUtil.findNode(myRoot, n ->
-                  n instanceof LangTreeNode && languageName.equals(n.getUserObject()));
+                  n instanceof LangTreeNode && languageId.equals(((LangTreeNode)n).getLanguageId()));
                 assert languageNode != null;
-                PostfixTemplate createdTemplate = editor.createTemplate(dialog.getTemplateKey());
-                PostfixTemplateCheckedTreeNode createdNode = new PostfixTemplateCheckedTreeNode(createdTemplate, languageName, true);
                 languageNode.add(createdNode);
                 myModel.nodeStructureChanged(myRoot);
                 TreeUtil.selectNode(PostfixTemplatesCheckboxTree.this, createdNode);
@@ -260,8 +266,8 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
   }
 
   public boolean canEditSelectedTemplate() {
-    PostfixTemplate template = getTemplate();
-    return template != null && template.isEditable();
+    TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
+    return (selectionPaths == null || selectionPaths.length <= 1) && isEditable(getSelectedTemplate());
   }
 
   public void editSelectedTemplate() {
@@ -270,14 +276,26 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     PostfixTemplateCheckedTreeNode lastPathComponent = (PostfixTemplateCheckedTreeNode)path.getLastPathComponent();
     PostfixTemplate template = lastPathComponent.getTemplate();
     PostfixTemplateProvider provider = template.getProvider();
-    if (template.isEditable() && provider instanceof PostfixEditableTemplateProvider) {
+    if (isEditable(template) && provider instanceof PostfixEditableTemplateProvider) {
+      PostfixTemplate templateToEdit = template instanceof PostfixChangedBuiltinTemplate
+                                       ? ((PostfixChangedBuiltinTemplate)template).getDelegate()
+                                       : template;
       Project project = getProject();
       PostfixTemplateEditor editor = ((PostfixEditableTemplateProvider)provider).createEditor(project);
       if (editor != null) {
-        //noinspection unchecked
-        PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, (PostfixEditableTemplateProvider)provider, template);
+        String providerName = StringUtil.notNullize(((PostfixEditableTemplateProvider)provider).getPresentableName());
+        PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, providerName, templateToEdit);
         if (dialog.showAndGet()) {
-          lastPathComponent.setTemplate(editor.createTemplate(dialog.getTemplateKey()));
+          PostfixTemplate newTemplate = editor.createTemplate(template.getId(), dialog.getTemplateKey());
+          if (template.isBuiltin()) {
+            PostfixTemplate builtin = template instanceof PostfixChangedBuiltinTemplate
+                                      ? ((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate()
+                                      : template;
+            lastPathComponent.setTemplate(new PostfixChangedBuiltinTemplate(newTemplate, builtin));
+          }
+          else {
+            lastPathComponent.setTemplate(newTemplate);
+          }
         }
       }
     }
@@ -290,7 +308,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     }
     for (TreePath path : paths) {
       PostfixTemplate template = getTemplateFromPath(path);
-      if (template != null && template.isEditable() && !template.isBuiltin()) {
+      if (isEditable(template) && (!template.isBuiltin() || template instanceof PostfixChangedBuiltinTemplate)) {
         return true;
       }
     }
@@ -303,8 +321,14 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       return;
     }
     for (TreePath path : paths) {
-      PostfixTemplate template = getTemplateFromPath(path);
-      if (template != null && template.isEditable() && !template.isBuiltin()) {
+      PostfixTemplateCheckedTreeNode lastPathComponent = ObjectUtils.tryCast(path.getLastPathComponent(),
+                                                                             PostfixTemplateCheckedTreeNode.class);
+      if (lastPathComponent == null) continue;
+      PostfixTemplate template = lastPathComponent.getTemplate();
+      if (template instanceof PostfixChangedBuiltinTemplate) {
+        lastPathComponent.setTemplate(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());
+      }
+      else if (isEditable(template) && !template.isBuiltin()) {
         TreeUtil.removeLastPathComponent(this, path);
       }
     }
@@ -315,6 +339,10 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
     // todo: retrieve proper project
     DataProvider dataProvider = DataManager.getDataProvider(this);
     return dataProvider != null ? CommonDataKeys.PROJECT.getData(dataProvider) : null;
+  }
+
+  private static boolean isEditable(@Nullable PostfixTemplate template) {
+    return template != null && template.isEditable() && template.getKey().startsWith(".");
   }
 
   private static class LangTreeNode extends CheckedTreeNode {

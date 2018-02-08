@@ -46,7 +46,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
 
   @NotNull
   @Override
-  public Set<? extends PostfixTemplate> getBuiltinTemplates() {
+  public Set<PostfixTemplate> getTemplates() {
     return myBuiltinTemplates;
   }
 
@@ -58,7 +58,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
 
   @NotNull
   @Override
-  public String getName() {
+  public String getPresentableName() {
     return "Java";
   }
 
@@ -70,7 +70,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
 
   @NotNull
   @Override
-  public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String key, @NotNull Element template) {
+  public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
     boolean useTopmostExpression = Boolean.parseBoolean(template.getAttributeValue(TOPMOST_ATTR));
     String languageLevelAttributeValue = template.getAttributeValue(LANGUAGE_LEVEL_ATTR);
     LanguageLevel languageLevel = ObjectUtils.notNull(LanguageLevel.parse(languageLevelAttributeValue), LanguageLevel.JDK_1_6);
@@ -83,7 +83,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
       }
     }
     String templateText = StringUtil.notNullize(template.getChildText(TEMPLATE_TAG));
-    return new JavaEditablePostfixTemplate(key, templateText, "", conditions, languageLevel, useTopmostExpression, this);
+    return new JavaEditablePostfixTemplate(id, name, templateText, "", conditions, languageLevel, useTopmostExpression, this);
   }
 
   @Override

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -17,6 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -24,7 +26,9 @@ import java.util.*;
 public class PostfixTemplateStorage extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final String TEMPLATE_TAG = "template";
   private static final String PROVIDER_ATTR_NAME = "provider";
+  private static final String ID_ATTR_NAME = "id";
   private static final String KEY_ATTR_NAME = "key";
+  private static final String BUILTIN_ATTR_NAME = "builtin";
 
   private final Map<String, PostfixEditableTemplateProvider> myEditableProviders;
   private final MultiMap<String, PostfixTemplate> myTemplates = MultiMap.createSmart();
@@ -66,13 +70,34 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
     for (Element templateElement : templatesElement) {
       PostfixEditableTemplateProvider provider = myEditableProviders.get(templateElement.getAttributeValue(PROVIDER_ATTR_NAME, ""));
       if (provider != null) {
-        String templateKey = StringUtil.trimStart(templateElement.getAttributeValue(KEY_ATTR_NAME, ""), ".");
-        myTemplates.putValue(provider.getId(), provider.readExternalTemplate(templateKey, templateElement));
+        String templateId = templateElement.getAttributeValue(ID_ATTR_NAME, "");
+        String templateName = StringUtil.trimStart(StringUtil.notNullize(templateElement.getAttributeValue(KEY_ATTR_NAME)), ".");
+        if (StringUtil.isEmpty(templateId) || StringUtil.isEmpty(templateName)) continue;
+
+        PostfixTemplate externalTemplate = provider.readExternalTemplate(templateId, templateName, templateElement);
+        if (externalTemplate == null) {
+          myUnloadedTemplates.add(templateElement);
+          continue;
+        }
+
+        String builtinId = templateElement.getAttributeValue(BUILTIN_ATTR_NAME);
+        PostfixTemplate builtinTemplate = findBuiltinTemplate(builtinId, provider);
+        if (builtinTemplate != null) {
+          myTemplates.putValue(provider.getId(), new PostfixChangedBuiltinTemplate(externalTemplate, builtinTemplate));
+        }
+        else {
+          myTemplates.putValue(provider.getId(), externalTemplate);
+        }
       }
       else {
         myUnloadedTemplates.add(templateElement);
       }
     }
+  }
+
+  @Nullable
+  private static PostfixTemplate findBuiltinTemplate(@Nullable String id, @NotNull PostfixTemplateProvider provider) {
+    return ContainerUtil.find(provider.getTemplates(), p -> p.getId().equals(id));
   }
 
   @Override
@@ -85,17 +110,30 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
       for (PostfixTemplate template : entry.getValue()) {
         PostfixTemplateProvider provider = template.getProvider();
         if (provider instanceof PostfixEditableTemplateProvider) {
-          element.addContent(writeTemplate(template, (PostfixEditableTemplateProvider)provider));
+          if (template instanceof PostfixChangedBuiltinTemplate) {
+            PostfixChangedBuiltinTemplate changedBuiltinTemplate = (PostfixChangedBuiltinTemplate)template;
+            String builtin = changedBuiltinTemplate.getBuiltinTemplate().getId();
+            element.addContent(writeTemplate(changedBuiltinTemplate.getDelegate(), (PostfixEditableTemplateProvider)provider, builtin));
+          }
+          else {
+            element.addContent(writeTemplate(template, (PostfixEditableTemplateProvider)provider, null));
+          }
         }
       }
     }
     return element;
   }
 
-  private static Element writeTemplate(@NotNull PostfixTemplate template, @NotNull PostfixEditableTemplateProvider provider) {
+  private static Element writeTemplate(@NotNull PostfixTemplate template,
+                                       @NotNull PostfixEditableTemplateProvider provider,
+                                       @Nullable String builtinId) {
     Element templateElement = new Element(TEMPLATE_TAG);
-    templateElement.setAttribute(PROVIDER_ATTR_NAME, provider.getId());
+    templateElement.setAttribute(ID_ATTR_NAME, template.getId());
     templateElement.setAttribute(KEY_ATTR_NAME, template.getKey());
+    templateElement.setAttribute(PROVIDER_ATTR_NAME, provider.getId());
+    if (builtinId != null) {
+      templateElement.setAttribute(BUILTIN_ATTR_NAME, builtinId);
+    }
     provider.writeExternalTemplate(template, templateElement);
     return templateElement;
   }

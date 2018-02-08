@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -29,9 +30,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map;
 import java.util.Set;
 
 public class PostfixTemplatesConfigurable implements SearchableConfigurable, EditorOptionsProvider, Configurable.NoScroll {
@@ -55,6 +54,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   private JPanel myTemplatesTreeContainer;
   private ComboBox<String> myShortcutComboBox;
   private JPanel myDescriptionPanel;
+  private final MultiMap<String, PostfixEditableTemplateProvider> myLanguageIdToEditableTemplateProviders = MultiMap.createSet();
 
   private static final String SPACE = CodeInsightBundle.message("template.shortcut.space");
   private static final String TAB = CodeInsightBundle.message("template.shortcut.tab");
@@ -64,10 +64,13 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     myTemplatesSettings = PostfixTemplatesSettings.getInstance();
     LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
     for (LanguageExtensionPoint extension : extensions) {
-      PostfixTemplateProvider templateProvider = (PostfixTemplateProvider)extension.getInstance();
-      Set<PostfixTemplate> templates = templateProvider.getTemplates();
+      PostfixTemplateProvider provider = (PostfixTemplateProvider)extension.getInstance();
+      Set<PostfixTemplate> templates = PostfixTemplatesUtils.getAvailableTemplates(provider);
       if (!templates.isEmpty()) {
         myTemplates.putValues(extension.getKey(), ContainerUtil.sorted(templates, TEMPLATE_COMPARATOR));
+      }
+      if (provider instanceof PostfixEditableTemplateProvider) {
+        myLanguageIdToEditableTemplateProviders.putValue(extension.getKey(), (PostfixEditableTemplateProvider)provider);
       }
     }
 
@@ -84,7 +87,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   private void createTree() {
-    myCheckboxTree = new PostfixTemplatesCheckboxTree() {
+    myCheckboxTree = new PostfixTemplatesCheckboxTree(myLanguageIdToEditableTemplateProviders) {
       @Override
       protected void selectionChanged() {
         resetDescriptionPanel();
@@ -106,7 +109,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
 
   private void resetDescriptionPanel() {
     if (null != myCheckboxTree && null != myInnerPostfixDescriptionPanel) {
-      myInnerPostfixDescriptionPanel.reset(PostfixTemplateMetaData.createMetaData(myCheckboxTree.getTemplate()));
+      myInnerPostfixDescriptionPanel.reset(PostfixTemplateMetaData.createMetaData(myCheckboxTree.getSelectedTemplate()));
       myInnerPostfixDescriptionPanel.resetHeights(myDescriptionPanel.getWidth());
     }
   }
@@ -158,8 +161,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
       myTemplatesSettings.setShortcut(stringToShortcut((String)myShortcutComboBox.getSelectedItem()));
 
       MultiMap<PostfixEditableTemplateProvider, PostfixTemplate> state = myCheckboxTree.getEditableTemplates();
-      for (Map.Entry<PostfixEditableTemplateProvider, Collection<PostfixTemplate>> entry : state.entrySet()) {
-        PostfixTemplateStorage.getInstance().setTemplates(entry.getKey(), entry.getValue());
+      for (PostfixEditableTemplateProvider provider : myLanguageIdToEditableTemplateProviders.values()) {
+        PostfixTemplateStorage.getInstance().setTemplates(provider, state.get(provider));
       }
     }
   }
@@ -190,8 +193,8 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     }
 
     MultiMap<PostfixEditableTemplateProvider, PostfixTemplate> state = myCheckboxTree.getEditableTemplates();
-    for (Map.Entry<PostfixEditableTemplateProvider, Collection<PostfixTemplate>> entry : state.entrySet()) {
-      if (!PostfixTemplateStorage.getInstance().getTemplates(entry.getKey()).equals(entry.getValue())) {
+    for (PostfixEditableTemplateProvider provider : myLanguageIdToEditableTemplateProviders.values()) {
+      if (!PostfixTemplateStorage.getInstance().getTemplates(provider).equals(state.get(provider))) {
         return true;
       }
     }

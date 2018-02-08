@@ -8,10 +8,15 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+/**
+ * The editor that is able to show the UI settings for a particular template,
+ * or to create a template from settings defined in UI form.
+ */
 @ApiStatus.Experimental
 public interface PostfixTemplateEditor<T extends PostfixTemplate> extends Disposable {
-  T createTemplate(@NotNull String templateId);
-  
+  T createTemplate(@NotNull String templateId, @NotNull String templateName);
+
+
   void setTemplate(T template);
 
   @NotNull

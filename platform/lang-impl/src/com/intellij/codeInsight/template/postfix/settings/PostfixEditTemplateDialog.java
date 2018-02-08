@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -19,12 +18,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class PostfixEditTemplateDialog extends DialogWrapper {
-  private final JBTextField myKeyTextField;
+  private final JBTextField myTemplateNameTextField;
   private final PostfixTemplateEditor myEditor;
 
   public PostfixEditTemplateDialog(@NotNull Component parentComponent,
                                    @NotNull PostfixTemplateEditor<PostfixTemplate> editor,
-                                   @NotNull PostfixEditableTemplateProvider provider,
+                                   @NotNull String templateType,
                                    @Nullable PostfixTemplate template) {
     super(null, parentComponent, false, IdeModalityType.IDE);
     myEditor = editor;
@@ -33,31 +32,36 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
       editor.setTemplate(template);
     }
     String initialKey = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
-    myKeyTextField = new JBTextField(initialKey);
-    myKeyTextField.setEditable(template == null || !template.isBuiltin());
-    setTitle(template != null ? "Edit '" + initialKey + "' template" : "Create new " + provider.getName() + " template");
+    myTemplateNameTextField = new JBTextField(initialKey);
+    setTitle(template != null ? "Edit '" + initialKey + "' template" : "Create new " + templateType + " template");
     init();
+  }
+
+  @Nullable
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myTemplateNameTextField;
   }
 
   @NotNull
   @Override
   protected List<ValidationInfo> doValidateAll() {
-    String templateKey = myKeyTextField.getText();
-    if (!StringUtil.isJavaIdentifier(templateKey)) {
-      return Collections.singletonList(new ValidationInfo("Template key must be identifier", myKeyTextField));
+    String templateName = myTemplateNameTextField.getText();
+    if (!StringUtil.isJavaIdentifier(templateName)) {
+      return Collections.singletonList(new ValidationInfo("Template key must be an identifier", myTemplateNameTextField));
     }
     return super.doValidateAll();
   }
 
   @NotNull
   public String getTemplateKey() {
-    return myKeyTextField.getText();
+    return myTemplateNameTextField.getText();
   }
 
   @Override
   protected JComponent createCenterPanel() {
     return FormBuilder.createFormBuilder()
-                      .addLabeledComponent("Key:", myKeyTextField)
+                      .addLabeledComponent("Key:", myTemplateNameTextField)
                       .addComponentFillVertically(myEditor.getComponent(), 0)
                       .getPanel();
   }

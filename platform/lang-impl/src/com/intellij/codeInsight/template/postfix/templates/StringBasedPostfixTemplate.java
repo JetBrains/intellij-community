@@ -27,7 +27,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
                                     @NotNull String example,
                                     @NotNull PostfixTemplateExpressionSelector selector,
                                     @Nullable PostfixEditableTemplateProvider provider) {
-    super(name, example, selector, provider);
+    super(null, name, example, selector, provider);
   }
 
   @Override
