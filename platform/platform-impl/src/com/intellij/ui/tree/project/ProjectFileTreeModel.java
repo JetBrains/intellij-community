@@ -12,12 +12,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.ui.tree.ChildrenProvider;
+import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +36,7 @@ import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 
-public final class ProjectFileTreeModel extends AbstractTreeModel implements InvokerSupplier, ChildrenProvider<Object> {
+public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
   private final ProjectNode root;
 
@@ -99,33 +98,15 @@ public final class ProjectFileTreeModel extends AbstractTreeModel implements Inv
     return root;
   }
 
-  @Nullable
-  @Override
-  public Object getChild(Object object, int index) {
-    if (index < 0) return null;
-    List<Object> children = getChildren(object);
-    return index < children.size() ? children.get(index) : null;
-  }
-
-  @Override
-  public int getChildCount(Object object) {
-    return getChildren(object).size();
-  }
-
   @Override
   public boolean isLeaf(Object object) {
-    return root != object && getChildren(object).isEmpty();
-  }
-
-  @Override
-  public void valueForPathChanged(TreePath path, Object value) {
-    throw new UnsupportedOperationException();
+    return root != object && super.isLeaf(object);
   }
 
   @Override
   public int getIndexOfChild(Object parent, Object object) {
     Node node = object instanceof Node ? (Node)object : null;
-    return node == null || node.parent != parent ? -1 : getChildren(parent).indexOf(object);
+    return node == null || node.parent != parent ? -1 : super.getIndexOfChild(parent, object);
   }
 
   @NotNull
