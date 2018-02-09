@@ -1852,27 +1852,13 @@ public class UIUtil {
                                 boolean drawBottomLine) {
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
     try {
-      g.setColor(getPanelBackground());
+      g.setColor(JBUI.CurrentTheme.ToolWindow.headerBackground(active));
       g.fillRect(x, 0, width, height);
 
-      ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
-      g.fillRect(x, 0, width, height);
-
-      if (active) {
-        g.setColor(new Color(100, 150, 230, toolWindow ? 50 : 30));
-        g.fillRect(x, 0, width, height);
-      }
-      g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
+      g.setColor(JBUI.CurrentTheme.ToolWindow.headerBorderBackground());
       if (drawTopLine) drawLine(g ,x, 0, width, 0);
       if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
 
-      if (SystemInfo.isMac && isUnderIntelliJLaF()) {
-        g.setColor(Gray.xC9);
-      } else {
-        g.setColor(isUnderDarcula() ? CONTRAST_BORDER_COLOR : Gray.xFF.withAlpha(100));
-      }
-
-      drawLine(g ,x, 0, width, 0);
     } finally {
       config.restore();
     }
