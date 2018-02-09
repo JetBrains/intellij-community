@@ -59,10 +59,16 @@ public abstract class JavaPostfixTemplatesUtils {
     };
   }
 
+  /**
+   * @deprecated
+   */
   public static PostfixTemplateExpressionSelector selectorTopmost() {
     return selectorTopmost(Conditions.alwaysTrue());
   }
 
+  /**
+   * @deprecated
+   */
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
@@ -81,10 +87,6 @@ public abstract class JavaPostfixTemplatesUtils {
         return JavaPostfixTemplatesUtils.getRenderer();
       }
     };
-  }
-
-  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {
-    return selectorAllExpressionsWithCurrentOffset(Conditions.alwaysTrue());
   }
 
   public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(final Condition<PsiElement> additionalFilter) {

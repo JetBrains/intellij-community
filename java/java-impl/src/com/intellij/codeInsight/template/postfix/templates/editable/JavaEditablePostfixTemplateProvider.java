@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -27,7 +26,7 @@ public class JavaEditablePostfixTemplateProvider extends JavaPostfixTemplateProv
   private static final String FQN_ATTR = "fqn";
   private static final String TOPMOST_ATTR = "topmost";
 
-  private HashSet<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
+  private final Set<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
     new AssertStatementPostfixTemplate(this),
     new SynchronizedStatementPostfixTemplate(this),
     new ForAscendingPostfixTemplate(this),

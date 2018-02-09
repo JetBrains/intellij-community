@@ -46,11 +46,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
 
 
     Template template = createTemplate(manager, templateString);
-
-    if (shouldAddExpressionToContext()) {
-      template.addVariable("expr", new TextExpression(expr.getText()), false);
-    }
-
+    template.addVariable("expr", new TextExpression(expr.getText()), false);
     setVariables(template, expr);
     manager.startTemplate(editor, template);
   }
@@ -67,14 +63,9 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   @Nullable
   public abstract String getTemplateString(@NotNull PsiElement element);
 
-  protected boolean shouldAddExpressionToContext() {
-    return true;
-  }
-
   protected boolean shouldReformat() {
     return true;
   }
-
 
   /**
    * @deprecated use {@link StringBasedPostfixTemplate#getElementToRemove(PsiElement)} (idea 16 to remove)

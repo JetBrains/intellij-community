@@ -13,7 +13,6 @@ import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEdita
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
@@ -155,7 +154,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     if (myCheckboxTree != null) {
       myTemplatesSettings.setProviderToDisabledTemplates(myCheckboxTree.getDisabledTemplatesState());
       myTemplatesSettings.setPostfixTemplatesEnabled(myPostfixTemplatesEnabled.isSelected());
