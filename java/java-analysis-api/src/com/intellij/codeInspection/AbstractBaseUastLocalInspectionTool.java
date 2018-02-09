@@ -94,7 +94,7 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
           }
         }
       }
-    });
+    }, true);
   }
 
   @Override
