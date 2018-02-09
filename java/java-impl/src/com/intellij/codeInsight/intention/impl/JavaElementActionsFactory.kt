@@ -56,10 +56,10 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     val constantRequested = request.constant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
-      result += CreateFieldAction(javaClass, request, true)
+      result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {
-      result += CreateFieldAction(javaClass, request, false)
+      result += CreateFieldAction(javaClass, request)
     }
     if (canCreateEnumConstant(javaClass, request)) {
       result += CreateEnumConstantAction(javaClass, request)

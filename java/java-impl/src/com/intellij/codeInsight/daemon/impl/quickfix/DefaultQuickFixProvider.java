@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMethodUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
@@ -24,6 +23,7 @@ import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
 
+import static com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper.highPriority;
 import static com.intellij.openapi.util.text.StringUtil.isUpperCase;
 
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
@@ -83,16 +83,19 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
     final Collection<IntentionAction> result = new ArrayList<>();
 
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
+    final VariableKind kind = getKind(styleManager, refExpr) ;
+
     if (JvmElementActionFactories.useInterlaguageActions()) {
       result.addAll(CreateFieldFromUsage.generateActions(refExpr));
       if (!refExpr.isQualified()) {
-        result.add(new CreateLocalFromUsageFix(refExpr));
-        result.add(new CreateParameterFromUsageFix(refExpr));
+        IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
+        result.add(kind == VariableKind.LOCAL_VARIABLE ? highPriority(createLocalFix) : createLocalFix);
+        IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
+        result.add(kind == VariableKind.PARAMETER ? highPriority(createParameterFix) : createParameterFix);
       }
       return result;
     }
-
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
     final Map<VariableKind, IntentionAction> map = new EnumMap<>(VariableKind.class);
     map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
@@ -102,9 +105,8 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       map.put(VariableKind.PARAMETER, new CreateParameterFromUsageFix(refExpr));
     }
 
-    final VariableKind kind = getKind(styleManager, refExpr);
     if (map.containsKey(kind)) {
-      map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
+      map.put(kind, highPriority(map.get(kind)));
     }
 
     result.add(new CreateEnumConstantFromUsageFix(refExpr));
