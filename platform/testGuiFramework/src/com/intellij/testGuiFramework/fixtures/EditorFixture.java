@@ -471,7 +471,7 @@ public class EditorFixture {
         return editor.visualPositionToXY(visualPosition);
       }
     });
-    robot.click(editorComponent, pointToClick, MouseButton.LEFT_BUTTON, 1);
+    robot.click(editorComponent, pointToClick, button, 1);
     return this;
   }
 
