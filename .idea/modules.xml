@@ -52,6 +52,8 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/apkanalyzer/apkanalyzer.iml" filepath="$PROJECT_DIR$/../adt/idea/apkanalyzer/apkanalyzer.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/google-app-engine/runtime/appEngine-runtime.iml" filepath="$PROJECT_DIR$/plugins/google-app-engine/runtime/appEngine-runtime.iml" group="plugins/GAE" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/artwork/artwork.iml" filepath="$PROJECT_DIR$/../adt/idea/artwork/artwork.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/assistant/assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/assistant/assistant.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/assistant/assistant-test.iml" filepath="$PROJECT_DIR$/../adt/idea/assistant/assistant-test.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/bazel/plugin/aswb/aswb.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/bazel/plugin/aswb/aswb.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/bazel/plugin/base/bazel-base.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/bazel/plugin/base/bazel-base.iml" group="plugins/Google/Blaze" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/plugin/common/bazel-common.iml" filepath="$PROJECT_DIR$/../vendor/google3/blaze/third_party/intellij/plugin/common/bazel-common.iml" group="plugins/Google/Blaze" />
@@ -96,6 +98,8 @@
       <module fileurl="file://$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" filepath="$PROJECT_DIR$/java/compiler/openapi/compiler-openapi.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/compiler-tests.iml" filepath="$PROJECT_DIR$/java/compiler/compiler-tests.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/platform/configuration-store-impl/configuration-store-impl.iml" filepath="$PROJECT_DIR$/platform/configuration-store-impl/configuration-store-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant.iml" filepath="$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant.iml" group="android" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant-test.iml" filepath="$PROJECT_DIR$/../adt/idea/connection-assistant/connection-assistant-test.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/copyright/copyright.iml" filepath="$PROJECT_DIR$/plugins/copyright/copyright.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-api/core-api.iml" filepath="$PROJECT_DIR$/platform/core-api/core-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/core-impl/core-impl.iml" filepath="$PROJECT_DIR$/platform/core-impl/core-impl.iml" group="platform" />
