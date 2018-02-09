@@ -7,13 +7,13 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JsPsiHelper {
+class JsPsiHelper {
 
     /**
      * @param psiElement checking element
      * @return true if this is process.env.*** variable
      */
-    public static boolean checkPsiElement(@NotNull PsiElement psiElement) {
+    static boolean checkPsiElement(@NotNull PsiElement psiElement) {
         if(!(psiElement instanceof LeafPsiElement)) {
             return false;
         }
@@ -37,7 +37,7 @@ public class JsPsiHelper {
      * @return null or Environment key
      */
     @Nullable
-    public static String checkReferenceExpression(@NotNull JSReferenceExpression referenceExpression) {
+    static String checkReferenceExpression(@NotNull JSReferenceExpression referenceExpression) {
         String text = referenceExpression.getCanonicalText();
 
         if(!text.startsWith("process.env.") || text.length() < 13) {

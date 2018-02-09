@@ -8,7 +8,8 @@ import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import java.util.Collection;
 
 public interface EnvironmentVariablesProvider {
-    boolean acceptFile(VirtualFile file);
+    @NotNull
+    FileAcceptResult acceptFile(VirtualFile file);
 
     @NotNull
     Collection<KeyValuePsiElement> getElements(PsiFile psiFile);

@@ -46,15 +46,11 @@ public class EnvironmentVariablesUtil {
 
     @NotNull
     public static Set<PsiElement> getElementsByKey(String key, Collection<KeyValuePsiElement> items) {
-        return items.stream().filter(item -> {
-            return item.getKey().equals(key);
-        }).map(KeyValuePsiElement::getElement).collect(Collectors.toSet());
+        return items.stream().filter(item -> item.getKey().equals(key)).map(KeyValuePsiElement::getElement).collect(Collectors.toSet());
     }
 
     @NotNull
     public static Set<PsiElement> getUsagesElementsByKey(String key, Collection<KeyUsagePsiElement> items) {
-        return items.stream().filter(item -> {
-            return item.getKey().equals(key);
-        }).map(KeyUsagePsiElement::getElement).collect(Collectors.toSet());
+        return items.stream().filter(item -> item.getKey().equals(key)).map(KeyUsagePsiElement::getElement).collect(Collectors.toSet());
     }
 }

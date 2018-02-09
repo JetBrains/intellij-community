@@ -1,6 +1,7 @@
 package ru.adelf.idea.dotenv.api;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -22,32 +23,53 @@ public class EnvironmentVariablesApi {
     public static Map<String, String> getAllKeyValues(Project project) {
         FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
         Map<String, String> keyValues = new HashMap<>();
+        Map<String, String> secondaryKeyValues = new HashMap<>();
+        Map<VirtualFile, FileAcceptResult> resultsCache = new HashMap<>();
 
         fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, s -> {
-            if(fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, s, GlobalSearchScope.allScope(project)).size() > 0) {
+            for(VirtualFile virtualFile : fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, s, GlobalSearchScope.allScope(project))) {
+
+                FileAcceptResult fileAcceptResult;
+
+                if(resultsCache.containsKey(virtualFile)) {
+                    fileAcceptResult = resultsCache.get(virtualFile);
+                } else {
+                    fileAcceptResult = getFileAcceptResult(virtualFile);
+                    resultsCache.put(virtualFile, fileAcceptResult);
+                }
+
+                if(!fileAcceptResult.isAccepted()) {
+                    continue;
+                }
 
                 EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(s);
 
-                if(keyValues.containsKey(keyValue.getKey())) return true;
+                if(fileAcceptResult.isPrimary()) {
+                    if(keyValues.containsKey(keyValue.getKey())) return true;
 
-                keyValues.put(keyValue.getKey(), keyValue.getValue());
+                    keyValues.put(keyValue.getKey(), keyValue.getValue());
+                } else {
+                    if(!secondaryKeyValues.containsKey(keyValue.getKey())) {
+                        secondaryKeyValues.put(keyValue.getKey(), keyValue.getValue());
+                    }
+                }
             }
 
             return true;
         }, project);
 
-        return keyValues;
+        return keyValues.size() > 0 ? keyValues : secondaryKeyValues;
     }
 
     /**
-     *
      * @param project project
-     * @param key environment variable key
+     * @param key     environment variable key
      * @return All key declarations, in .env files, Dockerfile, docker-compose.yml, etc
      */
     @NotNull
     public static PsiElement[] getKeyDeclarations(Project project, String key) {
         List<PsiElement> targets = new ArrayList<>();
+        List<PsiElement> secondaryTargets = new ArrayList<>();
 
         FileBasedIndex.getInstance().getFilesWithKey(DotEnvKeysIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
             PsiFile psiFileTarget = PsiManager.getInstance(project).findFile(virtualFile);
@@ -56,21 +78,23 @@ public class EnvironmentVariablesApi {
             }
 
             for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
-                if(provider.acceptFile(virtualFile)) {
-                    targets.addAll(EnvironmentVariablesUtil.getElementsByKey(key, provider.getElements(psiFileTarget)));
+                FileAcceptResult fileAcceptResult = provider.acceptFile(virtualFile);
+                if(!fileAcceptResult.isAccepted()) {
+                    continue;
                 }
+
+                (fileAcceptResult.isPrimary() ? targets : secondaryTargets).addAll(EnvironmentVariablesUtil.getElementsByKey(key, provider.getElements(psiFileTarget)));
             }
 
             return true;
         }, GlobalSearchScope.allScope(project));
 
-        return targets.toArray(new PsiElement[0]);
+        return (targets.size() > 0 ? targets : secondaryTargets).toArray(new PsiElement[0]);
     }
 
     /**
-     *
      * @param project project
-     * @param key environment variable key
+     * @param key     environment variable key
      * @return All key usages, like getenv('KEY')
      */
     @NotNull
@@ -93,5 +117,18 @@ public class EnvironmentVariablesApi {
         }, GlobalSearchScope.allScope(project));
 
         return targets.toArray(new PsiElement[0]);
+    }
+
+    private static FileAcceptResult getFileAcceptResult(VirtualFile virtualFile) {
+        for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+            FileAcceptResult fileAcceptResult = provider.acceptFile(virtualFile);
+            if(!fileAcceptResult.isAccepted()) {
+                continue;
+            }
+
+            return fileAcceptResult;
+        }
+
+        return FileAcceptResult.NOT_ACCEPTED;
     }
 }

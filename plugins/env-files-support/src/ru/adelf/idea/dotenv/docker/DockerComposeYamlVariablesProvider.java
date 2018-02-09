@@ -6,19 +6,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.psi.YAMLFile;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.api.FileAcceptResult;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
 import java.util.Collection;
 import java.util.Collections;
 
 public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesProvider {
+    @NotNull
     @Override
-    public boolean acceptFile(VirtualFile file) {
+    public FileAcceptResult acceptFile(VirtualFile file) {
         if(file.getName().equals("docker-compose.yml") || file.getName().equals("docker-compose.yaml")) {
-            return file.getFileType().equals(YAMLFileType.YML);
+            return file.getFileType().equals(YAMLFileType.YML) ? FileAcceptResult.ACCEPTED : FileAcceptResult.NOT_ACCEPTED;
         }
 
-        return false;
+        return FileAcceptResult.NOT_ACCEPTED;
     }
 
     @NotNull

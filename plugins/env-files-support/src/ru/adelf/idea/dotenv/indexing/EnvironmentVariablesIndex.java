@@ -13,7 +13,7 @@ import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 import java.util.HashMap;
 import java.util.Map;
 
-abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<String, Void> {
+abstract class EnvironmentVariablesIndex extends FileBasedIndexExtension<String, Void> {
     private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
 
     @NotNull
@@ -52,7 +52,7 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
     public FileBasedIndex.InputFilter getInputFilter() {
         return file -> {
             for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
-                if(provider.acceptFile(file)) return true;
+                if(provider.acceptFile(file).isAccepted()) return true;
             }
 
             return false;

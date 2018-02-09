@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.api.FileAcceptResult;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 
@@ -11,9 +12,15 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class DotEnvVariablesProvider implements EnvironmentVariablesProvider {
+    @NotNull
     @Override
-    public boolean acceptFile(VirtualFile file) {
-        return file.getFileType().equals(DotEnvFileType.INSTANCE);
+    public FileAcceptResult acceptFile(VirtualFile file) {
+        if(!file.getFileType().equals(DotEnvFileType.INSTANCE)) {
+            return FileAcceptResult.NOT_ACCEPTED;
+        }
+
+        // .env.dist , .env.example files are secondary
+        return file.getName().equals(".env") ? FileAcceptResult.ACCEPTED : FileAcceptResult.ACCEPTED_SECONDARY;
     }
 
     @NotNull
