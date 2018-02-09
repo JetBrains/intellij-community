@@ -566,6 +566,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
+  @Staging // Flaky
   @Test
   public void testSubtestSkipped() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
