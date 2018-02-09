@@ -1259,12 +1259,7 @@ public class JBUI {
       }
 
       public static int tabVerticalPadding() {
-        Object size = UIManager.get("ToolWindow.tab.verticalPadding");
-        if (size instanceof Integer) {
-          return (Integer) size;
-        }
-
-        return 3;
+        return getInt("ToolWindow.tab.verticalPadding", scale(3));
       }
 
       public static Font headerFont() {
