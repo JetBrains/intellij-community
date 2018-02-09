@@ -15,9 +15,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Function;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -50,7 +50,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public PyModuleType(@NotNull PyFile source) {
     this(source, null);
   }
-  
+
   public PyModuleType(@NotNull PyFile source, @Nullable PyImportedModule importedModule) {
     myModule = source;
     myImportedModule = importedModule;
@@ -176,7 +176,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         }
       }
       else {
-        final List<PsiElement> elements = ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, element.getImportedQName());
+        final List<PsiElement> elements =
+          ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, element.getImportedQName());
         for (PsiElement psiElement : elements) {
           if (psiElement instanceof PsiFile) {
             final VirtualFile virtualFile = ((PsiFile)psiElement).getVirtualFile();
@@ -234,9 +235,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   /**
    * @param directory the module directory
-   *
    * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain file names
-   *         not suitable for import.
+   * not suitable for import.
    */
   @NotNull
   private static List<PsiFileSystemItem> getSubmodulesList(@Nullable PsiDirectory directory, @Nullable PsiElement anchor) {
@@ -368,21 +368,35 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                               @NotNull PsiElement location,
                                                                               @Nullable final Set<String> existingNames) {
 
-    final List<PsiElement> elements = collectImportedSubmodules(pyPackage, location);
-    return elements != null ? ContainerUtil.mapNotNull(elements,
-                                                       (Function<PsiElement, LookupElement>)element -> {
-                                                         if (element instanceof PsiFileSystemItem) {
-                                                           return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
-                                                         }
-                                                         else if (element instanceof PsiNamedElement) {
-                                                           return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
-                                                         }
-                                                         return null;
-                                                       }) : Collections.emptyList();
+    List<LookupElement> lookupElements = new SmartList<>();
+    processImportedSubmodules(pyPackage, location, (importElement, importedSubmodule) -> {
+      if (importedSubmodule instanceof PsiFileSystemItem) {
+        lookupElements.add(buildFileLookupElement((PsiFileSystemItem)importedSubmodule, existingNames));
+      }
+      else if (importedSubmodule instanceof PsiNamedElement) {
+        lookupElements.add(LookupElementBuilder.createWithIcon((PsiNamedElement)importedSubmodule));
+      }
+      return true;
+    });
+    return lookupElements;
   }
 
-  @Nullable
+  @Deprecated
   public static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
+    List<PsiElement> ret = new SmartList<>();
+    processImportedSubmodules(pyPackage, location, (importElement, res) -> {
+      ret.add(res);
+      return true;
+    });
+    return ret;
+  }
+
+
+  /**
+   * @return true if the pyPackage is a package, false otherwise i.e if non-applicable
+   */
+  public static boolean processImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location,
+                                                  @NotNull PairProcessor<PyImportElement, PsiElement> processor) {
     final PsiElement parentAnchor;
     if (pyPackage instanceof PyFile && PyUtil.isPackage(((PyFile)pyPackage))) {
       parentAnchor = ((PyFile)pyPackage).getContainingDirectory();
@@ -391,14 +405,13 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       parentAnchor = pyPackage;
     }
     else {
-      return null;
+      return false;
     }
 
     final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
     if (scopeOwner == null) {
-      return Collections.emptyList();
+      return true;
     }
-    final List<PsiElement> result = new ArrayList<>();
     nextImportElement:
     for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
       PsiElement resolvedChild = PyUtil.turnInitIntoDir(importElement.resolve());
@@ -414,9 +427,11 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         importedQName = importedQName.removeTail(1);
         resolvedChild = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveImportElement(importElement, importedQName));
       }
-      ContainerUtil.addIfNotNull(result, resolvedChild);
+      if (!processor.process(importElement, resolvedChild)) {
+        return true;
+      }
     }
-    return result;
+    return true;
   }
 
   @NotNull
@@ -440,8 +455,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     final String s = FileUtil.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {
-      if (existingNames.contains(s)) return null;
-      else existingNames.add(s);
+      if (existingNames.contains(s)) {
+        return null;
+      }
+      else {
+        existingNames.add(s);
+      }
     }
     return LookupElementBuilder.create(item, s)
       .withTypeText(getPresentablePath((PsiDirectory)item.getParent()))
@@ -482,10 +501,12 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return MODULE_MEMBERS;
   }
 
+
   @Override
   public void accept(@NotNull PyTypeVisitor visitor) {
     if (visitor instanceof PyTypeVisitorExt) {
       ((PyTypeVisitorExt)visitor).visitModuleType(this);
     }
   }
+
 }
