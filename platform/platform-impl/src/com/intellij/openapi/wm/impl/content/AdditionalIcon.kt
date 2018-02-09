@@ -40,6 +40,6 @@ abstract class AdditionalIcon(val myIcon: ActiveIcon) {
   }
 
   fun contains(point: Point): Boolean {
-    return rectangle?.contains(point)!!
+    return rectangle.contains(point)
   }
 }

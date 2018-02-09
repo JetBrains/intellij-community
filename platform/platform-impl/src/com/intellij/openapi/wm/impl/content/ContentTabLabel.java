@@ -93,10 +93,11 @@ class ContentTabLabel extends BaseLabel {
 
   @Override
   protected void processMouseMotionEvent(MouseEvent event) {
+    super.processMouseMotionEvent(event);
+
     if (isHovered() && invalid()) {
       repaint();
     }
-    super.processMouseEvent(event);
   }
 
   protected boolean invalid() {
