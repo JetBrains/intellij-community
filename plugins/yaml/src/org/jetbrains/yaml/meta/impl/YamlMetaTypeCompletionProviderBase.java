@@ -209,11 +209,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
 
-    fields.forEach(field -> {
+    fields.stream()
+          .filter(field -> !field.isAnyNameAllowed())
+          .forEach(field -> {
       final List<Field> fieldPath = Stream.concat(currentPath.stream(), Stream.of(field)).collect(Collectors.toList());
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
-      if (metaType instanceof YamlMetaClass && !field.isAnyNameAllowed()) {
+            if (metaType instanceof YamlMetaClass) {
         doCollectPathsRec(((YamlMetaClass)metaType).getFeatures().stream().filter(Field::isEditable).collect(Collectors.toList()),
                           fieldPath, result, deepness);
       }
