@@ -33,6 +33,9 @@ class StudioTests(unittest.TestCase):
         self.assertEquals(m.group(1), "Info.plist", "Only Info.plist should be present in Contents (Found " + m.group(1) + ")")
 
   def test_no_build_files(self):
+    if aswb:  # aswb plugin includes a BUILD.bazel in the aspect folder
+      return
+
     name = self.artifact_prefix() + build
     for suffix in [ ".mac.zip", ".win.zip", ".win32.zip"]:
       file_name = os.path.join(dist_dir, name + suffix)
