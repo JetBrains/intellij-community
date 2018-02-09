@@ -26,7 +26,7 @@ configurations {
 }
 
 dependencies {
-  kotlinPlugin tc(buildTypeId: 'Kotlin_dev_CompilerAllPlugins', version: "${kotlinPluginBuild.split('-')[0..2].join('-')}", artifactPath: "kotlin-plugin-${kotlinPluginBuild}.zip")
+  kotlinPlugin tc(buildTypeId: 'Kotlin_1230_CompilerAllPlugins', version: "${kotlinPluginBuild.split('-')[0..2].join('-')}", artifactPath: "kotlin-plugin-${kotlinPluginBuild}.zip")
 }
 
 task setupKotlinPlugin(dependsOn: configurations.kotlinPlugin, type: Sync) {
