@@ -408,6 +408,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                        }) : Collections.emptyList();
   }
 
+  /*TODO: extract duplicate iteration code from this method and 'resolveImplicitPackageMember' */
   @Nullable
   private static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
 
