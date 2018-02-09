@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -127,5 +128,19 @@ public class PyImportedModuleType implements PyType {
     if (visitor instanceof PyTypeVisitorExt) {
       ((PyTypeVisitorExt)visitor).visitImportedModuleType(this);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PyImportedModuleType type = (PyImportedModuleType)o;
+    return Objects.equals(myImportedModule, type.myImportedModule);
+  }
+
+  @Override
+  public int hashCode() {
+
+    return Objects.hash(myImportedModule);
   }
 }

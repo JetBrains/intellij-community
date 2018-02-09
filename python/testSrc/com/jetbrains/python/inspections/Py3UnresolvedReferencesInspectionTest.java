@@ -259,6 +259,10 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-28406
   public void testFromNamespacePackageImportInManySourceRoots() {
-    doMultiFileTest("a.py", Arrays.asList("root1" , "root2"));
+    doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
+  }
+
+  public void testNamespacePackageRedundantUnion() {
+    doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
   }
 }
