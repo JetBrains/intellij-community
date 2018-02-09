@@ -339,7 +339,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       if (NullabilityProblemKind.passingNullableArgumentToNonAnnotatedParameter.isMyProblem(problem) ||
           NullabilityProblemKind.assigningNullableValueToNonAnnotatedField.isMyProblem(problem) ||
           NullabilityProblemKind.nullableReturn.isMyProblem(problem)) {
-        // these two kinds are still reported separately
+        // these kinds are still reported separately
         return;
       }
       if (!reportedAnchors.add(problem.getAnchor())) return;
@@ -597,7 +597,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       if (reportedAnchors.contains(expr)) continue;
 
       String text = isNullLiteralExpression(expr)
-                    ? "Assigning <code>null</code> argument to non-annotated field"
+                    ? "Assigning <code>null</code> value to non-annotated field"
                     : "Expression <code>#ref</code> #loc might be null but is assigned to non-annotated field";
       List<LocalQuickFix> fixes = createNPEFixes((PsiExpression)expr, (PsiExpression)expr, holder.isOnTheFly());
       PsiField field = getAssignedField(expr);
