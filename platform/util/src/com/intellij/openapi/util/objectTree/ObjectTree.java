@@ -65,16 +65,18 @@ public final class ObjectTree<T> {
 
   public final void register(@NotNull T parent, @NotNull T child) {
     if (parent == child) throw new IllegalArgumentException("Cannot register to itself: "+parent);
-    Object wasDisposed = getDisposalInfo(parent);
-    if (wasDisposed != null) {
-      throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
-                                            "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
-                                            wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
-    }
-    if (isDisposing(parent)) {
-      throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
-    }
     synchronized (treeLock) {
+      Object wasDisposed = getDisposalInfo(parent);
+      if (wasDisposed != null) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
+                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+                                              wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
+      }
+
+      if (isDisposing(parent)) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
+      }
+
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
       if (parentNode == null) parentNode = createNodeFor(parent, null);
