@@ -38,6 +38,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.FontSize;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -226,6 +227,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         IdeFocusManager.getGlobalInstance().requestFocus(myScrollPane, true);
       }
     });
+  }
+
+  public static DocumentationComponent createAndFetch(Project project, PsiElement element, Disposable disposable) {
+    DocumentationManager manager = DocumentationManager.getInstance(project);
+    DocumentationComponent component = new DocumentationComponent(manager);
+    Disposer.register(disposable, component);
+    manager.fetchDocInfo(element, component);
+    return component;
   }
 
   public DocumentationComponent(final DocumentationManager manager) {
