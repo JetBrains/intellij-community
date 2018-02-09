@@ -36,7 +36,6 @@ public class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
   @NotNull private final SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
-  @NotNull private final Project myProject;
   private final List<String> removedDictionaries = new ArrayList<>();
   private final List<String> defaultDictionaries;
 
@@ -48,7 +47,6 @@ public class CustomDictionariesPanel extends JPanel {
     myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
                                                                     defaultDictionaries,
                                                                     new ArrayList<>(settings.getDisabledDictionariesPaths()));
-    myProject = project;
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
 
       .setAddActionName(SpellCheckerBundle.message("add.custom.dictionaries"))
