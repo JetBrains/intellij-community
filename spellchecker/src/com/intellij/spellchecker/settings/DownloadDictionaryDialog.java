@@ -111,5 +111,22 @@ public class DownloadDictionaryDialog extends DialogWrapper {
     .put("Russian", "ru_RU/ru_RU")
     .put("French", "fr_FR/fr_FR")
     .put("German", "de/de_DE_frami")
+    .put("Canadian", "en/en_CA")
+    .put("American", "en/en_US")
+    .put("Australian", "en/en_AU")
+    .put("South African", "en/en_ZA")
+    .put("Spanish", "es/es_ANY")
+    .put("Swedish", "sv_SE/sv_SE")
+    .put("Italian", "it_IT/it_IT")
+    .put("Hungarian", "hu_HU/hu_HU")
+    .put("Danish", "da_DK/da_DK")
+    .put("Polish", "pl_PL/pl_PL")
+    .put("Greek", "el_GR/el_GR")
+    .put("Croatian","hr_HR/hr_HR")
+    .put("Romanian", "ro/ro_RO")
+    .put("Slovenian", "sl_SI/sl_SI")
+    .put("Portugal", "pt_PT/pt_PT")
+    .put("Arabic", "ar/ar")
+
     .build();
 }
