@@ -15,6 +15,7 @@
  */
 package com.intellij.codeEditor.printing;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ReadAction;
@@ -26,11 +27,9 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -97,18 +96,18 @@ class TextPainter extends BasePainter {
                      String shortFileName,
                      @NotNull PsiFile psiFile,
                      FileType fileType) {
-    this(editorDocument, highlighter, fullFileName, shortFileName, psiFile.getProject(), fileType,
-         FileSeparatorProvider.getFileSeparators(psiFile, editorDocument));
+    this(editorDocument, highlighter, fullFileName, shortFileName, fileType,
+         FileSeparatorProvider.getFileSeparators(psiFile, editorDocument), CodeStyle.getSettings(psiFile));
   }
 
   public TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
-                     Project project,
                      FileType fileType,
-                     List<LineMarkerInfo> separators) {
-    myCodeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+                     List<LineMarkerInfo> separators,
+                     @NotNull CodeStyleSettings codeStyleSettings) {
+    myCodeStyleSettings = codeStyleSettings;
     myDocument = editorDocument;
     myPrintSettings = PrintSettings.getInstance();
     String fontName = myPrintSettings.FONT_NAME;
