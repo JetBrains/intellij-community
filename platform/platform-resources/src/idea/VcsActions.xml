@@ -85,7 +85,6 @@
 
     <group id="ChangesView.GroupBy" text="Group By" icon="AllIcons.General.SecondaryGroup" popup="true"
            class="com.intellij.openapi.vcs.changes.actions.SelectChangesGroupingActionGroup">
-      <action id="ChangesView.GroupBy.None" text="None" class="com.intellij.openapi.vcs.changes.actions.SetNoneChangesGroupingAction"/>
       <action id="ChangesView.GroupBy.Directory" text="Directory"
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
       <action id="ChangesView.GroupBy.Module" text="Module"
