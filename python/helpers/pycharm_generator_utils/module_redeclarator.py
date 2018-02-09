@@ -110,8 +110,15 @@ class ModuleRedeclarator(object):
 
     def _initializeQApp5(self):
         try:
-            from PyQt5.QtCore import QCoreApplication
-            self.app = QCoreApplication([])
+            if 'PyQt5.QtWidgets' in sys.modules:
+                from PyQt5.QtWidgets import QApplication
+                self.app = QApplication([])
+            elif 'PyQt5.QtGui' in sys.modules:
+                from PyQt5.QtGui import QGuiApplication
+                self.app = QGuiApplication([])
+            else:
+                from PyQt5.QtCore import QCoreApplication
+                self.app = QCoreApplication([])
             return
         except ImportError:
             pass
