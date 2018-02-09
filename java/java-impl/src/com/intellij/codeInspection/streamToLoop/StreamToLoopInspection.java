@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -52,6 +52,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
     "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet");
 
+  @SuppressWarnings("PublicField")
   public boolean SUPPORT_UNKNOWN_SOURCES = false;
 
   @Nullable
@@ -636,7 +637,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
           }
         }
         if (candidate != null &&
-            (unwrapLazilyEvaluated || ExpressionUtils.isSimpleExpression(createExpression(candidate.getFalseBranch())))) {
+            (unwrapLazilyEvaluated || ExpressionUtils.isSafelyRecomputableExpression(createExpression(candidate.getFalseBranch())))) {
           myStreamExpression = parent;
           return candidate;
         }

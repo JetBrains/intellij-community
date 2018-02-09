@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExpressionUtil;
@@ -1531,7 +1531,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiExpression[] nCopiesArgs = maybeNCopies.getArgumentList().getExpressions();
         PsiExpression count = nCopiesArgs[0];
         PsiExpression obj = nCopiesArgs[1];
-        if(!ExpressionUtils.isSimpleExpression(obj)) return null;
+        if(!ExpressionUtils.isSafelyRecomputableExpression(obj)) return null;
 
         PsiMethodCallExpression maybeMap = ExpressionUtils.getCallForQualifier(call);
         if(!STREAM_MAP_TO_ALL.test(maybeMap)) return null;
