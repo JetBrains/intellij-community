@@ -1348,6 +1348,11 @@ public class JBUI {
     return color == null ? defaultColor : color;
   }
 
+  private static int getInt(String propertyName, int defaultValue) {
+    Object value = UIManager.get(propertyName);
+    return value instanceof Integer ? (Integer)value : defaultValue;
+  }
+
   private static Icon getIcon(String propertyName, Icon defaultIcon) {
     Icon icon = UIManager.getIcon(propertyName);
     return icon == null ? defaultIcon : icon;
