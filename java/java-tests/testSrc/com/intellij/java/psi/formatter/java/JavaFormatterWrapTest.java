@@ -192,6 +192,29 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
     doClassTest(text, text);
   }
 
+  public void testClassAnnotationsWithoutModifier() {
+    // Inspired by IDEA-178795
+    getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getSettings().KEEP_LINE_BREAKS = true;
+
+    // Expecting the code to be left as-is
+    String text = "@Test\n" +
+                  "class MyClass {\n" +
+                  "}";
+    doTextTest(text, text);
+  }
+
+  public void testClassAnnotationsWithoutModifierSameLine() {
+    // Inspired by IDEA-178795
+    getSettings().CLASS_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getSettings().KEEP_LINE_BREAKS = true;
+
+    // Expecting the code to be left as-is
+    String text = "@Test class MyClass {\n" +
+                  "}";
+    doTextTest(text, text);
+  }
+
   public void testWrapCompoundStringLiteralThatEndsAtRightMargin() {
     // Inspired by IDEA-82398
     getSettings().RIGHT_MARGIN = 30;

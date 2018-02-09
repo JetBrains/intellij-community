@@ -128,7 +128,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     }
   }
 
-  public void doTextTest(@Language("Java") @NotNull  String text, @Language("Java") @NotNull String textAfter) throws IncorrectOperationException {
+  public void doTextTest(@NotNull  String text, @NotNull String textAfter) throws IncorrectOperationException {
     doTextTest(REFORMAT, text, textAfter);
   }
 

@@ -1122,7 +1122,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.TYPE
              && myChild1.getLastChildNode() != null
              && myChild1.getLastChildNode().getElementType() == JavaElementType.ANNOTATION
-             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE) {
+             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.RBRACE
+             || myRole1 == ChildRole.MODIFIER_LIST && myRole2 == ChildRole.CLASS_OR_INTERFACE_KEYWORD) {
       createSpaceProperty(true, mySettings.KEEP_LINE_BREAKS, 0);
     }
     else {
