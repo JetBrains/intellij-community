@@ -27,7 +27,7 @@ import com.intellij.testFramework.TestActionEvent;
 /**
  * @author Yuli Fiterman
  */
-public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestCase {
+public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCase {
   private LanguageConsoleImpl myConsole;
   private ConsoleHistoryController myHistoryController;
   private ConsoleExecuteAction myExecAction;
@@ -89,7 +89,7 @@ public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestC
     execStatementList1();
     setCaretWithText("Statement<caret> 4");
     consoleNext();
-    checkResultByText("Statement<caret> 3");
+    checkResultByText("Statement 3<caret>");
   }
 
   public void testNavigateDown() {
@@ -97,7 +97,17 @@ public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestC
     setCaretWithText("Statement<caret> 4");
     consoleNext();
     consolePrev();
-    checkResultByText("Statement<caret> 4");
+    checkResultByText("Statement 4<caret>");
+  }
+
+  public void testRepeatNavigateDown() {
+    execStatementList1();
+    setCaretWithText("Statement<caret> 4");
+    consoleNext();
+    consoleNext();
+    consolePrev();
+    consolePrev();
+    checkResultByText("Statement 4<caret>");
   }
 
   //PY-26413
@@ -108,7 +118,7 @@ public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestC
     consoleNext();
     setCaretWithText("Statement<caret> 3");
     consolePrev();
-    checkResultByText("<caret>Different Prefix");
+    checkResultByText("Different Prefix<caret>");
   }
 
   public void testNavigateUpNoPrefix() {
