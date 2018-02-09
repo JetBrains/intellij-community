@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 import org.jetbrains.uast.visitor.UastVisitor;
 
 /**
@@ -27,7 +28,19 @@ import org.jetbrains.uast.visitor.UastVisitor;
 public class UastVisitorAdapter extends PsiElementVisitor {
   private final UastVisitor myUastVisitor;
 
+  /**
+   * @deprecated {@link UastVisitor} is recursive by default, when {@link PsiElementVisitor} is not recursive,
+   * thus, passing arbitrary {@code UastVisitor} to this constructor is error-prone (IDEA-181783).
+   * Make sure your {@code UastVisitor} is non-recursive,
+   * in case of doubts implement {@link PsiElementVisitor#visitElement(PsiElement)} yourself
+   * and convert passed @{code PsiElement} to required Uast type with {@link UastContextKt#toUElement(PsiElement, Class)}
+   */
+  @Deprecated
   public UastVisitorAdapter(UastVisitor visitor) {
+    myUastVisitor = visitor;
+  }
+
+  public UastVisitorAdapter(AbstractUastNonRecursiveVisitor visitor) {
     myUastVisitor = visitor;
   }
 

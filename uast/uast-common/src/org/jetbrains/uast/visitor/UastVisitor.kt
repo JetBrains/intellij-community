@@ -278,7 +278,15 @@ interface UastVisitor {
 
 abstract class AbstractUastVisitor : UastVisitor {
   override fun visitElement(node: UElement): Boolean = false
+}
 
+/**
+ * There is a convention in UAST-visitors that visitor will not be passed to children if `visit*` will return true.
+ * So make sure that overridden methods returns `true` and please think twice before returning `false` if you are passing implementation to
+ * [com.intellij.uast.UastVisitorAdapter].
+ */
+abstract class AbstractUastNonRecursiveVisitor : UastVisitor {
+  override fun visitElement(node: UElement): Boolean = true
 }
 
 object EmptyUastVisitor : AbstractUastVisitor()
