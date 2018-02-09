@@ -251,7 +251,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull
   public RunConfigurationListFixture getRunConfigurationList() {
     if (myRCList == null) {
-      myRCList = RunConfigurationListFixture.Companion.createRCListFixture(robot(), this);
+      myRCList = new RunConfigurationListFixture(robot(), this);
     }
     return myRCList;
   }
