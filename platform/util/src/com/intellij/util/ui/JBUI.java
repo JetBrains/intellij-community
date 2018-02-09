@@ -1235,11 +1235,20 @@ public class JBUI {
         return getColor("ToolWindow.header.tab.selected.active.background", 0xD0D4D8);
       }
 
-      /**
-       * Used for hover as well
-       */
+      public static Color tabHoveredBackground() {
+        return getColor("ToolWindow.header.tab.hovered.background", tabSelectedBackground());
+      }
+
+      public static Color tabHoveredActiveBackground() {
+        return getColor("ToolWindow.header.tab.hovered.active.background", tabSelectedActiveBackground());
+      }
+
       public static Color tabSelectedBackground(boolean active) {
         return active ? tabSelectedActiveBackground() : tabSelectedBackground();
+      }
+
+      public static Color tabHoveredBackground(boolean active) {
+        return active ? tabHoveredActiveBackground() : tabHoveredBackground();
       }
 
       public static Color headerBackground(boolean active) {

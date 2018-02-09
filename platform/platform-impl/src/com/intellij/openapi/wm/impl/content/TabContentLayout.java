@@ -256,11 +256,15 @@ class TabContentLayout extends ContentLayout {
 
     for (ContentTabLabel each : myTabs) {
       if (each.isSelected() || each.isHovered()) {
+        Color color = each.isSelected() ?
+                      JBUI.CurrentTheme.ToolWindow.tabSelectedBackground(myUi.myWindow.isActive()) :
+                      JBUI.CurrentTheme.ToolWindow.tabHoveredBackground(myUi.myWindow.isActive());
+
         Rectangle r = each.getBounds();
         Graphics2D g2d = (Graphics2D)g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g2d.setColor(JBUI.CurrentTheme.ToolWindow.tabSelectedBackground(true));
+        g2d.setColor(color);
 
         g2d.fillRect(isIdVisible() ? r.x : r.x - 2, r.y, r.width, r.height);
         g2d.dispose();
