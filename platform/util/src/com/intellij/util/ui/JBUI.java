@@ -1286,8 +1286,8 @@ public class JBUI {
       }
 
       public static Icon comboTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", getIconWithBackground(AllIcons.General.Combo2))
-                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.Combo2);
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", getIconWithBackground(AllIcons.General.ComboArrow))
+                       : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
       }
 
       private static Icon getIconWithBackground(final Icon icon) {
@@ -1296,12 +1296,13 @@ public class JBUI {
           public void paintIcon(Component component, Graphics graphics, int x, int y) {
             Graphics2D g = (Graphics2D)graphics.create();
 
-            g.setColor(hoveredIconBackground());
-            g.fillRect(x, y, icon.getIconWidth(), icon.getIconHeight());
-
-            icon.paintIcon(component, g, x, y);
-
-            g.dispose();
+            try {
+              g.setColor(hoveredIconBackground());
+              g.fillRect(x, y, icon.getIconWidth(), icon.getIconHeight());
+              icon.paintIcon(component, g, x, y);
+            } finally {
+              g.dispose();
+            }
           }
 
           @Override

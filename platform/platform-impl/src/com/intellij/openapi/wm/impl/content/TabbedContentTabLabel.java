@@ -48,22 +48,21 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   @Override
   protected void selectContent() {
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
+    super.selectContent();
 
-    if (!hasMultipleTabs()) {
-      super.selectContent();
-      return;
+    if (hasMultipleTabs()) {
+      final SelectContentTabStep step = new SelectContentTabStep(getContent());
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
+      myPopupReference = new WeakReference<>(popup);
+      popup.showUnderneathOf(this);
+      popup.addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          repaint();
+        }
+      });
     }
 
-    final SelectContentTabStep step = new SelectContentTabStep(getContent());
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    myPopupReference = new WeakReference<>(popup);
-    popup.showUnderneathOf(this);
-    popup.addListener(new JBPopupAdapter() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        repaint();
-      }
-    });
   }
 
   @Override

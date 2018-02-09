@@ -73,7 +73,7 @@ class ContentTabLabel extends BaseLabel {
     }
   };
 
-  protected boolean mouseOverIcon(AdditionalIcon icon) {
+  protected final boolean mouseOverIcon(AdditionalIcon icon) {
     if (!isHovered()) return false;
 
     Point point = MouseInfo.getPointerInfo().getLocation();
@@ -148,21 +148,15 @@ class ContentTabLabel extends BaseLabel {
     updateTextAndIcon(myContent, isSelected());
   }
 
-  protected Dimension getLabelSize() {
-    return super.getPreferredSize();
-  }
-
   @Override
   public Dimension getPreferredSize() {
-    final Dimension size = getLabelSize();
+    final Dimension size = super.getPreferredSize();
     int w = size.width;
 
-    for (int i = 0; i < additionalIcon.size(); i++) {
-      AdditionalIcon icon = additionalIcon.get(i);
+    for (AdditionalIcon icon : additionalIcon) {
       if (icon.getAvailable()) {
-        icon.setX(w - getInsets().right);
-        w += icon.getIconWidth();
-        if (i < additionalIcon.size() - 1) w += ICONS_GAP;
+        icon.setX(w + ICONS_GAP - getInsets().right);
+        w += icon.getIconWidth() + ICONS_GAP;
       }
     }
 
@@ -192,7 +186,7 @@ class ContentTabLabel extends BaseLabel {
     return super.getPassiveFg(selected);
   }
 
-  protected void paintIcons(final Graphics g) {
+  private void paintIcons(final Graphics g) {
     for (AdditionalIcon icon : additionalIcon) {
       if (icon.getAvailable()) {
         icon.paintIcon(this, g);
