@@ -50,6 +50,25 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
             holder.registerProblem(value, error);
           }
         }
+        checkMutationContract(annotation, method);
+      }
+
+      private void checkMutationContract(PsiAnnotation annotation, PsiMethod method) {
+        String mutationContract = AnnotationUtil.getStringAttributeValue(annotation, MutationSignature.ATTR_MUTATES);
+        if (StringUtil.isNotEmpty(mutationContract)) {
+          boolean pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure"));
+          String error;
+          if (pure) {
+            error = "Pure method cannot have mutation contract";
+          } else {
+            error = MutationSignature.checkSignature(mutationContract, method);
+          }
+          if (error != null) {
+            PsiAnnotationMemberValue value = annotation.findAttributeValue(MutationSignature.ATTR_MUTATES);
+            assert value != null;
+            holder.registerProblem(value, error);
+          }
+        }
       }
     };
   }
