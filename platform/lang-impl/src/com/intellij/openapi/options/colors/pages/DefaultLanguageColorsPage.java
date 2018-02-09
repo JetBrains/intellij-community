@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
-import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -21,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -76,11 +74,6 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
-  }
-
-  private static final Map<String, ColorKey> ADDITIONAL_COLOR_KEY_MAPPING = new HashMap<>();
-  static {
-    ADDITIONAL_COLOR_KEY_MAPPING.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -171,12 +164,10 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
     new AttributesDescriptor(
       OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.highlighted"), 
-      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED)
-  };
-
-  private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
-    new ColorDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.border"),
-                        DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_SELECTION_BORDER, ColorDescriptor.Kind.FOREGROUND)
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.current"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT)
   };
 
   @Nullable
@@ -245,12 +236,6 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     return TAG_HIGHLIGHTING_MAP;
   }
 
-  @Nullable
-  @Override
-  public Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() {
-    return ADDITIONAL_COLOR_KEY_MAPPING;
-  }
-
   @NotNull
   @Override
   public AttributesDescriptor[] getAttributeDescriptors() {
@@ -260,7 +245,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
   @NotNull
   @Override
   public ColorDescriptor[] getColorDescriptors() {
-    return COLOR_DESCRIPTORS;
+    return ColorDescriptor.EMPTY_ARRAY;
   }
 
   @NotNull
