@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.InspectingProtocolSubclassCallback
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
@@ -55,21 +55,12 @@ class PyProtocolInspection : PyInspection() {
         .filterIsInstance<PyClassType>()
         .filter { isProtocol(it, myTypeEvalContext) }
         .forEach { protocol ->
-          inspectProtocolSubclass(
-            protocol,
-            type,
-            myTypeEvalContext,
-            object : InspectingProtocolSubclassCallback {
-              override fun onUnresolved(protocolElement: PyTypedElement): Boolean {
-                return true
-              }
-
-              override fun onResolved(protocolElement: PyTypedElement, subclassElements: List<RatedResolveResult>): Boolean {
-                checkMemberCompatibility(protocolElement, subclassElements, type, protocol)
-                return true
-              }
+          inspectProtocolSubclass(protocol, type, myTypeEvalContext).forEach {
+            val subclassElements = it.second
+            if (!subclassElements.isNullOrEmpty()) {
+              checkMemberCompatibility(it.first, subclassElements!!, type, protocol)
             }
-          )
+          }
         }
     }
 

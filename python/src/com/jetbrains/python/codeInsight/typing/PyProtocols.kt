@@ -2,7 +2,6 @@
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.PROTOCOL_EXT
 import com.jetbrains.python.psi.AccessDirection
@@ -27,37 +26,29 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
                                                                                                 isProtocol(expected, context) &&
                                                                                                 isProtocol(actual, context)
 
-fun inspectProtocolSubclass(protocol: PyClassType,
-                            subclass: PyClassType,
-                            context: TypeEvalContext,
-                            callback: InspectingProtocolSubclassCallback) {
+typealias ProtocolAndSubclassElements = Pair<PyTypedElement, List<RatedResolveResult>?>
+
+fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
   val subclassAsInstance = subclass.toInstance()
   val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context)
-  var result = true
+  val result = mutableListOf<Pair<PyTypedElement, List<RatedResolveResult>?>>()
 
   protocol.toInstance().visitMembers(
     { e ->
-      if (FileUtil.getNameWithoutExtension(e.containingFile.name) == "typing_extensions") {
-        return@visitMembers result
-      }
-
-      if (result && e is PyTypedElement) {
-        val name = e.name ?: return@visitMembers result
+      if (e is PyTypedElement && FileUtil.getNameWithoutExtension(e.containingFile.name) != "typing_extensions") {
+        val name = e.name ?: return@visitMembers true
         val resolveResults = subclassAsInstance.resolveMember(name, null, AccessDirection.READ, resolveContext)
 
-        result = if (resolveResults.isNullOrEmpty()) callback.onUnresolved(e) else callback.onResolved(e, resolveResults!!)
+        result.add(Pair(e, resolveResults))
       }
 
-      result
+      true
     },
     true,
     context
   )
-}
 
-interface InspectingProtocolSubclassCallback {
-  fun onUnresolved(protocolElement: PyTypedElement): Boolean
-  fun onResolved(protocolElement: PyTypedElement, subclassElements: List<RatedResolveResult>): Boolean
+  return result
 }
 
 private fun containsProtocol(types: List<PyClassLikeType?>) = types.any { type ->

@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
-import com.jetbrains.python.codeInsight.typing.InspectingProtocolSubclassCallback;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -205,11 +204,11 @@ public class PyTypeChecker {
    * The method mutates {@code substitutions} map adding new entries into it
    */
   private static boolean match(@NotNull PyGenericType expected,
-                                         @Nullable PyType actual,
-                                         @NotNull TypeEvalContext context,
-                                         @NotNull Map<PyGenericType, PyType> substitutions,
-                                         boolean recursive,
-                                         @NotNull Set<Pair<PyType, PyType>> matching) {
+                               @Nullable PyType actual,
+                               @NotNull TypeEvalContext context,
+                               @NotNull Map<PyGenericType, PyType> substitutions,
+                               boolean recursive,
+                               @NotNull Set<Pair<PyType, PyType>> matching) {
     final PyType substitution = substitutions.get(expected);
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
@@ -237,7 +236,8 @@ public class PyTypeChecker {
 
     if (actual != null) {
       substitutions.put(expected, actual);
-    } else if (bound != null) {
+    }
+    else if (bound != null) {
       substitutions.put(expected, bound);
     }
 
@@ -310,46 +310,36 @@ public class PyTypeChecker {
         return Optional.of(false);
       }
 
-      final boolean[] result = new boolean[]{true};
-
-      PyProtocolsKt.inspectProtocolSubclass(
-        expected,
-        actual,
-        context,
-        new InspectingProtocolSubclassCallback() {
-          @Override
-          public boolean onUnresolved(@NotNull PyTypedElement protocolElement) {
-            result[0] = false;
-            return false;
-          }
-
-          @Override
-          public boolean onResolved(@NotNull PyTypedElement protocolElement, @NotNull List<? extends RatedResolveResult> subclassElements) {
-            final PyType protocolElementType = context.getType(protocolElement);
-
-            result[0] = StreamEx
-              .of(subclassElements)
-              .map(ResolveResult::getElement)
-              .select(PyTypedElement.class)
-              .map(context::getType)
-              .anyMatch(
-                subclassElementType -> match(protocolElementType, subclassElementType, context, substitutions, recursive, matching)
-                  .orElse(true)
-              );
-
-            return result[0];
-          }
+      for (kotlin.Pair<PyTypedElement, List<RatedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, context)) {
+        final List<RatedResolveResult> subclassElements = pair.getSecond();
+        if (ContainerUtil.isEmpty(subclassElements)) {
+          return Optional.of(false);
         }
-      );
 
-      return Optional.of(result[0]);
+        final PyType protocolElementType = context.getType(pair.getFirst());
+
+        final boolean elementResult = StreamEx
+          .of(subclassElements)
+          .map(ResolveResult::getElement)
+          .select(PyTypedElement.class)
+          .map(context::getType)
+          .anyMatch(
+            subclassElementType -> match(protocolElementType, subclassElementType, context, substitutions, recursive, matching).orElse(true)
+          );
+
+        if (!elementResult) {
+          return Optional.of(false);
+        }
+      }
+
+      return Optional.of(true);
     }
 
     if (expected instanceof PyCollectionType) {
       return Optional.of(match((PyCollectionType)expected, actual, context, substitutions, recursive, matching));
     }
 
-    if (matchClasses(expected.getPyClass(), actual.getPyClass(), context)) {
+    if (matchClasses(superClass, subClass, context)) {
       if (expected instanceof PyTypingNewType && !expected.equals(actual) && superClass.equals(subClass)) {
         return Optional.of(actual.getAncestorTypes(context).contains(expected));
       }
@@ -400,11 +390,11 @@ public class PyTypeChecker {
   }
 
   private static boolean match(@NotNull PyCollectionType expected,
-                                         @NotNull PyClassType actual,
-                                         @NotNull TypeEvalContext context,
-                                         @NotNull Map<PyGenericType, PyType> substitutions,
-                                         boolean recursive,
-                                         @NotNull Set<Pair<PyType, PyType>> matching) {
+                               @NotNull PyClassType actual,
+                               @NotNull TypeEvalContext context,
+                               @NotNull Map<PyGenericType, PyType> substitutions,
+                               boolean recursive,
+                               @NotNull Set<Pair<PyType, PyType>> matching) {
     if (actual instanceof PyTupleType) {
       return match(expected, (PyTupleType)actual, context, substitutions, recursive, matching);
     }
@@ -452,8 +442,9 @@ public class PyTypeChecker {
     }
 
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    return StreamEx.of(expected.getAttributeNames())
-                   .noneMatch(attribute -> ContainerUtil.isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
+    return StreamEx
+      .of(expected.getAttributeNames())
+      .noneMatch(attribute -> ContainerUtil.isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
   }
 
   private static boolean match(@NotNull PyStructuralType expected, @NotNull PyStructuralType actual) {
@@ -611,7 +602,7 @@ public class PyTypeChecker {
     if (type instanceof PyFunctionType) {
       final PyCallable callable = ((PyFunctionType)type).getCallable();
       if (callable instanceof PyDecoratable &&
-          PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyDecoratable)callable, context)){
+          PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyDecoratable)callable, context)) {
         return true;
       }
     }
