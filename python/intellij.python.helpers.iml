@@ -4,6 +4,8 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/helpers">
       <sourceFolder url="file://$MODULE_DIR$/helpers" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/helpers/pydev" isTestSource="false" packagePrefix="pydev" />
+      <excludeFolder url="file://$MODULE_DIR$/helpers/pydev/build" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
