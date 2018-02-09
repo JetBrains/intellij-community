@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -48,15 +48,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
             PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
             assert value != null;
             holder.registerProblem(value, error);
-            return;
           }
-        }
-
-        if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) &&
-            PsiType.VOID.equals(method.getReturnType())) {
-          PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
-          assert value != null;
-          holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
         }
       }
     };
