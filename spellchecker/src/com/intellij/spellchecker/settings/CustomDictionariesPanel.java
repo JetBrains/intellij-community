@@ -55,7 +55,10 @@ public class CustomDictionariesPanel extends JPanel {
         public void run(AnActionButton button) {
           myCustomDictionariesTableView.stopEditing();
           JBList<DictionaryLocation> locationList = new JBList<>();
-          locationList.setListData(new DictionaryLocation[]{new LocalDictionaryLocation(project, myCustomDictionariesTableView)});
+          locationList.setListData(new DictionaryLocation[]{
+            new LocalDictionaryLocation(project, myCustomDictionariesTableView),
+            new RepositoryDictionaryLocation(project, myCustomDictionariesTableView)
+          });
           locationList.getSelectionModel().setSelectionMode(SINGLE_SELECTION);
           locationList.setCellRenderer(new ColoredListCellRenderer<DictionaryLocation>() {
             @Override
