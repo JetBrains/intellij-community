@@ -25,6 +25,14 @@
           <option name="issueRegexp" value="IDEA-COMMUNITY-CR-\d+" />
           <option name="linkRegexp" value="https://upsource.jetbrains.com/idea-community/review/$0" />
         </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="(?i:bug|bugfix|issue|fix|fixes|fixing|fixed|google-bug-id):? ?(?:(?:https?://)?(?:b|b.android.com|issuetracker.google.com)/)?(\d+)" />
+          <option name="linkRegexp" value="http://issuetracker.google.com/$1" />
+        </IssueNavigationLink>
+        <IssueNavigationLink>
+          <option name="issueRegexp" value="Change-Id: (.+)" />
+          <option name="linkRegexp" value="http://ag/$1" />
+        </IssueNavigationLink>
       </list>
     </option>
   </component>
