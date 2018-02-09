@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.ui.SortedComboBoxModel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.download.DownloadableFileService;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import static com.intellij.util.PathUtil.toSystemDependentName;
 import static java.util.Arrays.asList;
 
 public class DownloadDictionaryDialog extends DialogWrapper {
+  private static final String ENGLISH = "English";
   private JComboBox<String> myDictionaryCombobox;
   private TextFieldWithBrowseButton myDirectoryTextField;
   private JPanel myMainPanel;
@@ -49,7 +51,10 @@ public class DownloadDictionaryDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
-    myDictionaryCombobox.setModel(new DefaultComboBoxModel<>(namesToPaths.keySet().toArray(new String[namesToPaths.size()])));
+    final SortedComboBoxModel<String> model = new SortedComboBoxModel<>(String::compareTo);
+    model.setAll(namesToPaths.keySet());
+    model.setSelectedItem(ENGLISH);
+    myDictionaryCombobox.setModel(model);
     myDirectoryTextField.setText(myProject.getBasePath());
     FileChooserDescriptor singleFileDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myDirectoryTextField.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>(
