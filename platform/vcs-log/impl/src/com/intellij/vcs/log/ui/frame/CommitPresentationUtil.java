@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.diff.comparison.TrimUtil.isPunctuation;
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
 import static com.intellij.openapi.vcs.ui.FontUtil.getCommitMessageFont;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -40,6 +41,7 @@ public class CommitPresentationUtil {
   @NotNull static final String GO_TO_HASH = "go-to-hash:";
   @NotNull static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
   private static final String ELLIPSIS = "...";
+  private static final int BIG_CUT_SIZE = 10;
 
   @NotNull
   private static String escapeMultipleSpaces(@NotNull String text) {
@@ -117,9 +119,24 @@ public class CommitPresentationUtil {
     if (isSubjectMarginEnabled(project)) {
       int margin = CommitMessageInspectionProfile.getSubjectRightMargin(project);
       if (subject.length() > margin) {
-        String tail = subject.substring(margin - ELLIPSIS.length());
-        subject = subject.substring(0, margin - ELLIPSIS.length()) + ELLIPSIS;
-        description = "\n\n" + ELLIPSIS + tail + description;
+        int placeToCut = margin - ELLIPSIS.length();
+        for (int i = placeToCut; i >= Math.max(margin - BIG_CUT_SIZE, BIG_CUT_SIZE); i--) {
+          if (subject.charAt(i) == ' ') {
+            placeToCut = i;
+            break;
+          }
+        }
+
+        String tail = subject.substring(placeToCut);
+        subject = subject.substring(0, placeToCut);
+        if (isPunctuation(subject.charAt(placeToCut - 1))) {
+          tail = StringUtil.trimStart(tail, " ");
+        }
+        else {
+          subject += ELLIPSIS;
+          tail = ELLIPSIS + tail;
+        }
+        description = "\n\n" + tail + description;
       }
     }
 
