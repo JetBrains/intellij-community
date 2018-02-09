@@ -32,6 +32,7 @@ import javax.swing.*;
 
 public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
+  @SuppressWarnings("PublicField")
   public boolean WARN_IF_NO_MUTUAL_SUBCLASS_FOUND = true;
 
   @Override
@@ -148,10 +149,11 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           }
         }
       }
-      else {
-        if (WARN_IF_NO_MUTUAL_SUBCLASS_FOUND & !InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) {
-          registerError(highlightLocation, leftType, rightType, true);
-        }
+      else if (TypeUtils.cannotBeEqualByContract(leftType, rightType)) {
+        registerError(highlightLocation, leftType, rightType, false);
+      }
+      else if (WARN_IF_NO_MUTUAL_SUBCLASS_FOUND && !InheritanceUtil.existsMutualSubclass(leftClass, rightClass, isOnTheFly())) {
+        registerError(highlightLocation, leftType, rightType, true);
       }
     }
   }
