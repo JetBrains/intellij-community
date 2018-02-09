@@ -81,7 +81,7 @@ class ContentTabLabel extends BaseLabel {
       public void propertyChange(PropertyChangeEvent event) {
         final String property = event.getPropertyName();
         if (Content.IS_CLOSABLE.equals(property)) {
-          revalidate();
+          repaint();
         }
       }
     });
@@ -96,7 +96,7 @@ class ContentTabLabel extends BaseLabel {
     super.processMouseMotionEvent(event);
 
     if (isHovered() && invalid()) {
-      revalidate();
+      repaint();
     }
   }
 
