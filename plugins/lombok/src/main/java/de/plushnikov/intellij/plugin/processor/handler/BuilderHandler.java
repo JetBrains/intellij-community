@@ -553,8 +553,9 @@ public class BuilderHandler {
       if (null != modifierList) {
         //Skip static fields.
         selectField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
-        // skip initialized final fields
-        selectField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
+        // skip initialized final fields unless annotated with @Builder.Default
+        selectField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL))
+          || isBuilderDefaultAnnotated(psiField);
       }
       //Skip fields that start with $
       final String psiFieldName = psiField.getName();
@@ -697,6 +698,16 @@ public class BuilderHandler {
     for (PsiTypeParameter psiTypeParameter : psiTypeParameters) {
       methodBuilder.withTypeParameter(psiTypeParameter);
     }
+  }
+
+  private boolean isBuilderDefaultAnnotated(@NotNull PsiField psiField) {
+    for(PsiAnnotation psiAnnotation: psiField.getAnnotations()) {
+      if (psiAnnotation.getQualifiedName() != null &&
+        psiAnnotation.getQualifiedName().equals(Builder.Default.class.getCanonicalName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // These exist just to support the 'old' lombok.experimental.Builder, which had these properties. lombok.Builder no longer has them.
