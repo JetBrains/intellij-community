@@ -86,7 +86,7 @@ public class GradleStartupActivity implements StartupActivity {
 
     String baseDir = project.getBaseDir().getPath();
     String gradleGroovyDslFile = baseDir + '/' + GradleConstants.DEFAULT_SCRIPT_NAME;
-    String kotlinDslGradleFile = baseDir + '/' + GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
+    String kotlinDslGradleFile = baseDir + '/' + GradleConstants.KOTLIN_DSL_SCRIPT_NAME;
     File gradleFile = FileUtil.findFirstThatExist(gradleGroovyDslFile, kotlinDslGradleFile);
 
     if (gradleFile != null) {
