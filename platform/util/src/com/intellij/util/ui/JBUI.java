@@ -1276,40 +1276,13 @@ public class JBUI {
       }
 
       public static Icon closeTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", getIconWithBackground(AllIcons.Actions.CloseNewHovered))
+        return hovered ? getIcon("ToolWindow.header.closeButton.hovered.icon", AllIcons.Actions.CloseNewHovered)
                        : getIcon("ToolWindow.header.closeButton.icon", AllIcons.Actions.CloseNew);
       }
 
       public static Icon comboTabIcon(boolean hovered) {
-        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", getIconWithBackground(AllIcons.General.ComboArrow))
+        return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ComboArrow)
                        : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ComboArrow);
-      }
-
-      private static Icon getIconWithBackground(final Icon icon) {
-        return new Icon() {
-          @Override
-          public void paintIcon(Component component, Graphics graphics, int x, int y) {
-            Graphics2D g = (Graphics2D)graphics.create();
-
-            try {
-              g.setColor(hoveredIconBackground());
-              g.fillRect(x, y, icon.getIconWidth(), icon.getIconHeight());
-              icon.paintIcon(component, g, x, y);
-            } finally {
-              g.dispose();
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return icon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return icon.getIconHeight();
-          }
-        };
       }
     }
 
