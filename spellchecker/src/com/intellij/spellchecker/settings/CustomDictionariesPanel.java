@@ -4,18 +4,14 @@ package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -31,7 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
@@ -265,46 +260,6 @@ public class CustomDictionariesPanel extends JPanel {
           }
         }
       };
-    }
-  }
-
-  interface DictionaryLocation {
-    @NotNull
-    String getName();
-
-    void findAndAddNewDictionary();
-  }
-
-  private static class LocalDictionaryLocation implements DictionaryLocation {
-    private final Project myProject;
-    private final TableView<String> myTableView;
-
-    LocalDictionaryLocation(@NotNull Project project, @NotNull TableView<String> tableView) {
-      myProject = project;
-      myTableView = tableView;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return SpellCheckerBundle.message("dictionary.location.computer");
-    }
-
-    @Override
-    public void findAndAddNewDictionary() {
-      final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          return extensionEquals(file.getPath(), "dic");
-        }
-      };
-
-      FileChooser.chooseFiles(fileChooserDescriptor, myProject, null, myProject.getBaseDir(),
-                              files -> files.stream()
-                                            .map(VirtualFile::getPath)
-                                            .map(PathUtil::toSystemDependentName)
-                                            .filter(path -> !myTableView.getItems().contains(path))
-                                            .forEach(path -> myTableView.getListTableModel().addRow(path)));
     }
   }
 }
