@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -16,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.*;
@@ -150,7 +152,6 @@ public class ResolveImportUtil {
   /**
    * Resolves a module reference in a general case.
    *
-   *
    * @param qualifiedName    qualified name of the module reference to resolve
    * @param sourceFile       where that reference resides; serves as PSI foothold to determine module, project, etc.
    * @param importIsAbsolute if false, try old python 2.x's "relative first, absolute next" approach.
@@ -196,7 +197,7 @@ public class ResolveImportUtil {
   public static List<PsiElement> multiResolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
     if (foothold == null) return Collections.emptyList();
     return PyResolveImportUtil.resolveQualifiedName(moduleQualifiedName,
-                                                                              PyResolveImportUtil.fromFoothold(foothold));
+                                                    PyResolveImportUtil.fromFoothold(foothold));
   }
 
   /**
@@ -206,10 +207,7 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull QualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
     final List<PsiElement> results = multiResolveModuleInRoots(moduleQualifiedName, foothold);
-    if (results.isEmpty()) {
-      return null;
-    }
-    return results.get(0);
+    return ContainerUtil.getFirstItem(results);
   }
 
 
