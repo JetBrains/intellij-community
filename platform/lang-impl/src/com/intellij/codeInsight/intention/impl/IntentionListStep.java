@@ -367,7 +367,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     while (a instanceof IntentionActionDelegate) {
       a = ((IntentionActionDelegate)a).getDelegate();
     }
-    return a instanceof PriorityAction ? group + ((PriorityAction)a).getPriorityModifier(myProject) : group;
+    return a instanceof PriorityAction ? group + ((PriorityAction)a).getPriorityModifier() : group;
   }
 
   private int getGroup(IntentionActionWithTextCaching action) {
