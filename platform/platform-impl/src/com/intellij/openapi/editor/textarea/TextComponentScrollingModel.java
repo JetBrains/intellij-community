@@ -15,15 +15,14 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
-import com.intellij.openapi.editor.ex.ScrollingEventsListener;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
 
 /**

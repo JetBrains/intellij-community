@@ -18,7 +18,6 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -51,12 +50,12 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private final boolean mySearchInComments;
   private final boolean mySearchInNonJavaFiles;
 
-  protected InlineToAnonymousClassProcessor(Project project,
-                                            PsiClass psiClass,
-                                            @Nullable final PsiCall callToInline,
-                                            boolean inlineThisOnly,
-                                            final boolean searchInComments,
-                                            final boolean searchInNonJavaFiles) {
+  public InlineToAnonymousClassProcessor(Project project,
+                                         PsiClass psiClass,
+                                         @Nullable final PsiCall callToInline,
+                                         boolean inlineThisOnly,
+                                         final boolean searchInComments,
+                                         final boolean searchInNonJavaFiles) {
     super(project);
     myClass = psiClass;
     myCallToInline = callToInline;
@@ -72,7 +71,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   @NotNull
-  protected UsageInfo[] findUsages() {
+  public UsageInfo[] findUsages() {
     if (myInlineThisOnly) {
       return new UsageInfo[] { new UsageInfo(myCallToInline) };
     }
@@ -97,7 +96,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       usages.addAll(nonCodeUsages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -109,20 +108,18 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return super.getElementsToWrite(descriptor);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     assert elements.length == 1;
     myClass = (PsiClass) elements [0];
   }
 
+  @Override
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     for(UsageInfo usage: usages) {
       if (isForcePreview(usage)) {
-        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-        if (statusBar != null) {
-          statusBar
-            .setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
-        }
+        WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("occurrences.found.in.comments.strings.and.non.java.files"));
         return true;
       }
     }
@@ -207,7 +204,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         final PsiElement resolved = methodExpression.resolve();
         if (resolved instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)resolved;
-          if ("getClass".equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
+          if ("getClass".equals(method.getName()) && method.getParameterList().isEmpty()) {
             result.putValue(methodExpression, "Result of getClass() invocation would be changed");
           }
         }
@@ -329,6 +326,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return superType;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }

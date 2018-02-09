@@ -28,6 +28,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -35,16 +37,16 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
 
@@ -54,26 +56,26 @@ import java.util.Map;
 public abstract class GotoActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.GotoActionBase");
 
-  protected static Class ourInAction = null;
+  protected static Class myInAction;
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
   private static final Map<Class, List<String>> ourHistory = ContainerUtil.newHashMap();
-  private int myHistoryIndex = 0;
+  private int myHistoryIndex;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    LOG.assertTrue(!getClass().equals(ourInAction));
+    LOG.assertTrue(!getClass().equals(myInAction));
     try {
-      ourInAction = getClass();
-      List<String> strings = ourHistory.get(ourInAction);
-      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(ourInAction) ? 0 : 1;
+      myInAction = getClass();
+      List<String> strings = ourHistory.get(myInAction);
+      myHistoryIndex = strings == null || strings.size() <= 1 || !ourLastStrings.containsKey(myInAction) ? 0 : 1;
       gotoActionPerformed(e);
     }
     catch (ProcessCanceledException e1) {
-      ourInAction = null;
+      myInAction = null;
     }
     catch (Throwable t) {
       LOG.error(t);
-      ourInAction = null;
+      myInAction = null;
     }
   }
 
@@ -84,8 +86,9 @@ public abstract class GotoActionBase extends AnAction {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    presentation.setEnabled(!getClass().equals (ourInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
-    presentation.setVisible(hasContributors(dataContext));
+    boolean hasContributors = hasContributors(dataContext);
+    presentation.setEnabled(!getClass().equals (myInAction) && (!requiresProject() || project != null) && hasContributors);
+    presentation.setVisible(hasContributors);
   }
 
   protected boolean hasContributors(final DataContext dataContext) {
@@ -115,11 +118,11 @@ public abstract class GotoActionBase extends AnAction {
 
   protected abstract static class GotoActionCallback<T> {
     @Nullable
-    protected ChooseByNameFilter<T> createFilter(@NotNull ChooseByNameViewModel popup) {
+    protected ChooseByNameFilter<T> createFilter(@NotNull ChooseByNamePopup popup) {
       return null;
     }
 
-    public abstract void elementChosen(ChooseByNameViewModel popup, Object element);
+    public abstract void elementChosen(ChooseByNamePopup popup, Object element);
   }
 
   protected static Pair<String, Integer> getInitialText(boolean useEditorSelection, AnActionEvent e) {
@@ -145,8 +148,8 @@ public abstract class GotoActionBase extends AnAction {
       }
     }
 
-    if (ourInAction != null) {
-      final Pair<String, Integer> lastString = ourLastStrings.get(ourInAction);
+    if (myInAction != null) {
+      final Pair<String, Integer> lastString = ourLastStrings.get(myInAction);
       if (lastString != null) {
         return lastString;
       }
@@ -156,7 +159,7 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   @Nullable
-  public static String getInitialTextForNavigation(@Nullable Editor editor) {
+  static String getInitialTextForNavigation(@Nullable Editor editor) {
     if (editor != null) {
       final String selectedText = editor.getSelectionModel().getSelectedText();
       if (selectedText != null && !selectedText.contains("\n")) {
@@ -192,7 +195,18 @@ public abstract class GotoActionBase extends AnAction {
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
-                        new DefaultChooseByNameItemProvider(getPsiContext(e)));
+                        ChooseByNameModelEx.getItemProvider(model, getPsiContext(e)));
+  }
+
+  @Deprecated
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection,
+                                         final DefaultChooseByNameItemProvider itemProvider) {
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection, (ChooseByNameItemProvider)itemProvider);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -201,28 +215,30 @@ public abstract class GotoActionBase extends AnAction {
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
-                                         final DefaultChooseByNameItemProvider itemProvider) {
+                                         final ChooseByNameItemProvider itemProvider) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
+                                                            mayRequestOpenInCurrentWindow,
+                                                            start.second);
+    UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
-                        ChooseByNameFactory.getInstance(project)
-                          .createChooseByName(model, itemProvider, mayRequestOpenInCurrentWindow, start, e),
-                        allowMultipleSelection);
+                        popup, allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
-                                         final ChooseByNameViewModel popup) {
+                                         final ChooseByNamePopup popup) {
     showNavigationPopup(callback, findUsagesTitle, popup, true);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
-                                         final ChooseByNameViewModel popup,
+                                         final ChooseByNamePopup popup,
                                          final boolean allowMultipleSelection) {
 
-    final Class startedAction = ourInAction;
+    final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
 
     popup.setCheckBoxShortcut(getShortcutSet());
@@ -231,21 +247,20 @@ public abstract class GotoActionBase extends AnAction {
 
     if (historyEnabled() && popup.getAdText() == null) {
       popup.setAdText("Press " +
-                      KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_UP, InputEvent.CTRL_MASK)) + " or " +
-                      KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.CTRL_MASK)) +
-                      " to navigate through the history");
+                      KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE) + " or " +
+                      KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
+                      " to navigate through the search history");
     }
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
       @Override
       public void onClose() {
         //noinspection ConstantConditions
-        if (startedAction != null && startedAction.equals(ourInAction)) {
+        if (startedAction != null && startedAction.equals(myInAction)) {
           String text = popup.getEnteredText();
-          ourLastStrings.put(ourInAction, Pair.create(text, popup.getSelectedIndex()));
+          ourLastStrings.put(myInAction, Pair.create(text, popup.getSelectedIndex()));
           updateHistory(text);
-          //noinspection AssignmentToStaticFieldFromInstanceMethod
-          ourInAction = null;
+          myInAction = null;
         }
         if (filter != null) {
           filter.close();
@@ -254,12 +269,12 @@ public abstract class GotoActionBase extends AnAction {
 
       private void updateHistory(@Nullable String text) {
         if (!StringUtil.isEmptyOrSpaces(text)) {
-          List<String> history = ourHistory.get(ourInAction);
+          List<String> history = ourHistory.get(myInAction);
           if (history == null) history = ContainerUtil.newArrayList();
           if (!text.equals(ContainerUtil.getFirstItem(history))) {
             history.add(0, text);
           }
-          ourHistory.put(ourInAction, history);
+          ourHistory.put(myInAction, history);
         }
       }
 
@@ -269,12 +284,6 @@ public abstract class GotoActionBase extends AnAction {
       }
     }, ModalityState.current(), allowMultipleSelection);
 
-    if (popup instanceof ChooseByNameBase) {
-      setupHistory((ChooseByNameBase)popup);
-    }
-  }
-
-  private void setupHistory(ChooseByNameBase popup) {
     final JTextField editor = popup.getTextField();
 
     final DocumentAdapter historyResetListener = new DocumentAdapter() {
@@ -291,9 +300,13 @@ public abstract class GotoActionBase extends AnAction {
       }
 
       void setText(@NotNull List<String> strings) {
+        String text = strings.get(myHistoryIndex);
+        if (Comparing.equal(text, editor.getText())) {//don't rebuild popup list, it blinks
+          return;
+        }
         javax.swing.text.Document document = editor.getDocument();
         document.removeDocumentListener(historyResetListener);
-        editor.setText(strings.get(myHistoryIndex));
+        editor.setText(text);
         document.addDocumentListener(historyResetListener);
         editor.selectAll();
       }
@@ -304,24 +317,25 @@ public abstract class GotoActionBase extends AnAction {
     new HistoryAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        List<String> strings = ourHistory.get(ourInAction);
+        List<String> strings = ourHistory.get(myInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex >= strings.size() - 1 ? 0 : myHistoryIndex + 1;
       }
 
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ctrl UP"), editor);
+    }.registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, editor);
 
     new HistoryAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        List<String> strings = ourHistory.get(ourInAction);
+        List<String> strings = ourHistory.get(myInAction);
         setText(strings);
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ctrl DOWN"), editor);
+    }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
+
   private static boolean historyEnabled() {
-    return !ContainerUtil.isEmpty(ourHistory.get(ourInAction));
+    return !ContainerUtil.isEmpty(ourHistory.get(myInAction));
   }
 }

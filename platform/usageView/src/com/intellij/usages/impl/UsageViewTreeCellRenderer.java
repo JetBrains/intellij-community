@@ -41,7 +41,7 @@ import java.awt.*;
 /**
  * @author max
  */
-public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
+class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.UsageViewTreeCellRenderer");
   private static final EditorColorsScheme ourColorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
   private static final SimpleTextAttributes ourInvalidAttributes = SimpleTextAttributes.fromTextAttributes(ourColorsScheme.getAttributes(UsageTreeColors.INVALID_PREFIX));
@@ -274,7 +274,7 @@ public class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     return y < vis.getStartOffset() ? RowLocation.BEFORE_VISIBLE_RECT : RowLocation.AFTER_VISIBLE_RECT;
   }
 
-  public static SimpleTextAttributes patchAttrs(@NotNull Node node, @NotNull SimpleTextAttributes original) {
+  private static SimpleTextAttributes patchAttrs(@NotNull Node node, @NotNull SimpleTextAttributes original) {
     if (node.isExcluded()) {
       original = new SimpleTextAttributes(original.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, original.getFgColor(), original.getWaveColor());
     }

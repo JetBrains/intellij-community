@@ -26,17 +26,13 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -68,7 +64,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import sun.security.action.OpenFileInputStreamAction;
 
 import java.text.MessageFormat;
 import java.util.Arrays;
@@ -140,9 +135,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
     if (element != null) {
-      ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-      showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
       return true;
     }
     return false;
@@ -167,6 +161,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
+    if (!editor.getComponent().isShowing()) return;
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       gotoTargetElement(element, editor, currentFile);
       return true;
@@ -179,7 +174,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
-    if (element.getContainingFile() == currentFile) {
+    if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
       // check that element is really physically inside the file
@@ -188,17 +183,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
         Project project = element.getProject();
         CommandProcessor.getInstance().executeCommand(project, () -> {
           IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation();
-          Navigatable n = PsiNavigationSupport.getInstance().getDescriptor(element);
-          if (n instanceof OpenFileDescriptor) {
-            ((OpenFileDescriptor)n).navigateIn(currentEditor);
-          }
-          else if (n != null) {
-            n.navigate(true);
-          }
-          else {
-            new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
-          }
+          new OpenFileDescriptor(project, currentFile.getViewProvider().getVirtualFile(), offset).navigateIn(currentEditor);
         }, "", null);
+        return true;
       }
     }
     return false;
@@ -207,8 +194,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   private static void gotoTargetElement(@NotNull PsiElement element, @NotNull Editor currentEditor, @NotNull PsiFile currentFile) {
     if (navigateInCurrentEditor(element, currentFile, currentEditor)) return;
 
-    Navigatable navigatable =
-      element instanceof Navigatable ? (Navigatable)element : PsiNavigationSupport.getInstance().getDescriptor(element);
+    Navigatable navigatable = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor(element);
     if (navigatable != null && navigatable.canNavigate()) {
       navigatable.navigate(true);
     }
@@ -227,10 +213,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
-      elements = reference == null
-                 ? PsiElement.EMPTY_ARRAY
-                 : PsiUtilCore.toPsiElementArray(
-                   underModalProgress(reference.getElement().getProject(), "Resolving Reference...", () -> suggestCandidates(reference)));
+      elements = reference == null ? PsiElement.EMPTY_ARRAY
+                                   : PsiUtilCore.toPsiElementArray(
+                                     underModalProgress(reference.getElement().getProject(), "Resolving Reference...",
+                                                        () -> suggestCandidates(reference)));
     }
 
     if (elements.length == 1) {
@@ -248,8 +234,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       else {
         final TextRange range = reference.getRangeInElement();
         final String elementText = reference.getElement().getText();
-        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(),
-                       Arrays.toString(elements) + ";" + reference);
+        LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements) + ";" + reference);
         final String refText = range.substring(elementText);
         title = MessageFormat.format(titlePattern, refText);
       }

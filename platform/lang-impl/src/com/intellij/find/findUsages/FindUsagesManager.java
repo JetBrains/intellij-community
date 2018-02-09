@@ -63,7 +63,6 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.usages.UsageViewManager.UsageViewStateListener;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,11 +97,6 @@ public class FindUsagesManager {
 
   private PsiElement2UsageTargetComposite myLastSearchInFileData; // EDT only
   private final UsageHistory myHistory = new UsageHistory();
-
-  private volatile UsageViewStateListener listener;
-  public void setListener(UsageViewStateListener listener) {
-    this.listener = listener;
-  }
 
   public FindUsagesManager(@NotNull Project project, @NotNull com.intellij.usages.UsageViewManager anotherManager) {
     myProject = project;
@@ -410,7 +404,7 @@ public class FindUsagesManager {
                                                                        @NotNull final FindUsagesOptions findUsagesOptions) {
     final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
                                                                           element -> convertToUsageTarget(element, findUsagesOptions));
-    return targets.toArray(new PsiElement2UsageTargetAdapter[targets.size()]);
+    return targets.toArray(new PsiElement2UsageTargetAdapter[0]);
   }
 
   public void findUsages(@NotNull final PsiElement[] primaryElements,
@@ -431,10 +425,13 @@ public class FindUsagesManager {
     }
     PsiElement2UsageTargetAdapter[] primaryTargets = convertToUsageTargets(Arrays.asList(primaryElements), findUsagesOptions);
     PsiElement2UsageTargetAdapter[] secondaryTargets = convertToUsageTargets(Arrays.asList(secondaryElements), findUsagesOptions);
-    PsiElement2UsageTargetAdapter[]targets= ArrayUtil.mergeArrays(primaryTargets, secondaryTargets);
-                                        Factory<UsageSearcher> factory = () -> createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
+    PsiElement2UsageTargetAdapter[] targets = ArrayUtil.mergeArrays(primaryTargets, secondaryTargets);
+    Factory<UsageSearcher> factory = () -> createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
     UsageView usageView = myAnotherManager.searchAndShowUsages(targets,
-                                                               factory, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), listener);
+                                                               factory, !toSkipUsagePanelWhenOneUsage,
+                                                               true,
+                                                               createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()),
+                                                               null);
     myHistory.add(targets[0]);
     return usageView;
   }

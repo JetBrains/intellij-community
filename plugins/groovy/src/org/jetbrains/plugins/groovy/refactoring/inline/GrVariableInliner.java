@@ -19,7 +19,6 @@ import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -120,9 +119,6 @@ public class GrVariableInliner implements InlineHandler.Inliner {
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     GroovyRefactoringUtil.highlightOccurrences(project, editor, new PsiElement[]{newExpr});
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-    if (statusBar != null) {
-      statusBar.setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-    }
+    WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
   }
 }

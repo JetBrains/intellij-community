@@ -27,13 +27,12 @@ import java.util.Set;
 
 public abstract class DockManager {
 
+  public abstract void register(DockContainer container);
+  public abstract void register(String id, DockContainerFactory factory);
+
   public static DockManager getInstance(Project project) {
     return ServiceManager.getService(project, DockManager.class);
   }
-
-  public abstract void register(DockContainer container);
-
-  public abstract void register(String id, DockContainerFactory factory);
 
   public abstract DragSession createDragSession(MouseEvent mouseEvent, @NotNull DockableContent content);
 

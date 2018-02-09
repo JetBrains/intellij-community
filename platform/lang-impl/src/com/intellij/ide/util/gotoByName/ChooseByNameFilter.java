@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.openapi.actionSystem.*;
@@ -44,7 +45,7 @@ public abstract class ChooseByNameFilter<T> {
   /**
    * a parent popup
    */
-  private final ChooseByNameViewModel myParentPopup;
+  private final ChooseByNamePopup myParentPopup;
   /**
    * action toolbar
    */
@@ -68,18 +69,24 @@ public abstract class ChooseByNameFilter<T> {
 
   /**
    * A constructor
-   *  @param popup               a parent popup
+   *
+   * @param popup               a parent popup
    * @param model               a model for popup
    * @param filterConfiguration storage for selected filter values
    * @param project             a context project
    */
-  public ChooseByNameFilter(@NotNull ChooseByNameViewModel popup,
+  public ChooseByNameFilter(@NotNull ChooseByNamePopup popup,
                             @NotNull FilteringGotoByModel<T> model,
                             @NotNull ChooseByNameFilterConfiguration<T> filterConfiguration,
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new FilterAction();
+    ToggleAction action = new FilterAction() {
+      @Override
+      protected boolean isActive() {
+        return !filterConfiguration.getState().getFilteredOutFileTypeNames().isEmpty();
+      }
+    };
     actionGroup.add(action);
     myToolbar = ActionManager.getInstance().createActionToolbar("gotfile.filter", actionGroup, true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -237,5 +244,16 @@ public abstract class ChooseByNameFilter<T> {
         close();
       }
     }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Icon icon = getTemplatePresentation().getIcon();
+      e.getPresentation().setIcon(isActive() ? ExecutionUtil.getLiveIndicator(icon) : icon);
+    }
+    
+    protected boolean isActive() {
+      return false;
+    }
+    
   }
 }

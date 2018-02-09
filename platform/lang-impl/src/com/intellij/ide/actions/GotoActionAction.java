@@ -20,9 +20,12 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
+import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +49,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +61,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @Override
@@ -66,13 +70,12 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
-    GotoActionModel model = new GotoActionModel(project, component, editor, file);
+    GotoActionModel model = new GotoActionModel(project, component, editor);
     GotoActionCallback<Object> callback = new GotoActionCallback<Object>() {
       @Override
-      public void elementChosen(@NotNull ChooseByNameViewModel popup, @NotNull Object element) {
+      public void elementChosen(@NotNull ChooseByNamePopup popup, @NotNull Object element) {
         if (project != null) {
           // if the chosen action displays another popup, don't populate it automatically with the text from this popup
           project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
@@ -86,13 +89,13 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second, component, e), false);
   }
 
-  @Nullable
+  @NotNull
   private static ChooseByNamePopup createPopup(@Nullable Project project,
                                                @NotNull final GotoActionModel model,
                                                String initialText,
                                                int initialIndex,
                                                final Component component,
-                                               final AnActionEvent e) {
+                                               final AnActionEvent event) {
     ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
@@ -186,8 +189,9 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       protected boolean closeForbidden(boolean ok) {
         if (!ok) return false;
         Object element = getChosenElement();
-        return element instanceof GotoActionModel.MatchedValue && processOptionInplace(((GotoActionModel.MatchedValue)element).value, this, component, e)
-               || super.closeForbidden(true);
+        return element instanceof GotoActionModel.MatchedValue &&
+               processOptionInplace(((GotoActionModel.MatchedValue)element).value, this, component, event) ||
+               super.closeForbidden(true);
       }
 
       @Override
@@ -204,19 +208,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     };
 
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(ProgressWindow.TOPIC, new ProgressWindow.Listener() {
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw, new Disposable() {
       @Override
-      public void progressWindowCreated(ProgressWindow pw) {
-        Disposer.register(pw, new Disposable() {
-          @Override
-          public void dispose() {
-            if (!popup.checkDisposed()) {
-              popup.repaintList();
-            }
-          }
-        });
+      public void dispose() {
+        if (!popup.checkDisposed()) {
+          popup.repaintList();
+        }
       }
-    });
+    }));
 
     if (project != null) {
       project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
@@ -226,37 +225,33 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       public void mouseClicked(@NotNull MouseEvent me) {
         Object element = popup.getSelectionByPoint(me.getPoint());
         if (element instanceof GotoActionModel.MatchedValue) {
-          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, e)) {
+          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, event)) {
             me.consume();
           }
         }
       }
     });
 
-    CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
-
-    new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Object o = popup.getChosenElement();
-        if (o instanceof GotoActionModel.MatchedValue) {
-          Comparable value = ((GotoActionModel.MatchedValue)o).value;
-          if (value instanceof GotoActionModel.ActionWrapper) {
-            GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
-            boolean available = aw.isAvailable();
-            if (available) {
-              AnAction action = aw.getAction();
-              String id = ActionManager.getInstance().getId(action);
-              KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
-              Keymap k = km.getActiveKeymap();
-              if (!k.canModify()) return;
-              KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
-              popup.repaintListImmediate();
-            }
+    ShortcutSet shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+    DumbAwareAction.create(e -> {
+      Object o = popup.getChosenElement();
+      if (o instanceof GotoActionModel.MatchedValue) {
+        Comparable value = ((GotoActionModel.MatchedValue)o).value;
+        if (value instanceof GotoActionModel.ActionWrapper) {
+          GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
+          boolean available = aw.isAvailable();
+          if (available) {
+            AnAction action = aw.getAction();
+            String id = ActionManager.getInstance().getId(action);
+            KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
+            Keymap k = km.getActiveKeymap();
+            if (k == null || !k.canModify()) return;
+            KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
+            popup.repaintListImmediate();
           }
         }
       }
-    }.registerCustomShortcutSet(shortcutSet, popup.getTextField(), disposable);
+    }).registerCustomShortcutSet(shortcutSet, popup.getTextField(), disposable);
     return popup;
   }
 
@@ -335,8 +330,11 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
             }
           }
           else {
+            ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+            manager.fireBeforeActionPerformed(action, context, event);
             ActionUtil.performActionDumbAware(action, event);
             if (callback != null) callback.run();
+            manager.fireAfterActionPerformed(action, context, event);
           }
         }
     });

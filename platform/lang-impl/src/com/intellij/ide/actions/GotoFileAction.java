@@ -58,12 +58,12 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
     final GotoFileModel gotoFileModel = new GotoFileModel(project);
     GotoActionCallback<FileType> callback = new GotoActionCallback<FileType>() {
       @Override
-      protected ChooseByNameFilter<FileType> createFilter(@NotNull ChooseByNameViewModel popup) {
+      protected ChooseByNameFilter<FileType> createFilter(@NotNull ChooseByNamePopup popup) {
         return new GotoFileFilter(popup, gotoFileModel, project);
       }
 
       @Override
-      public void elementChosen(final ChooseByNameViewModel popup, final Object element) {
+      public void elementChosen(final ChooseByNamePopup popup, final Object element) {
         if (element == null) return;
         ApplicationManager.getApplication().assertIsDispatchThread();
         Navigatable n = (Navigatable)element;
@@ -80,12 +80,11 @@ public class GotoFileAction extends GotoActionBase implements DumbAware {
         }
       }
     };
-    GotoFileItemProvider provider = new GotoFileItemProvider(project, getPsiContext(e), gotoFileModel);
-    showNavigationPopup(e, gotoFileModel, callback, IdeBundle.message("go.to.file.toolwindow.title"), true, true, provider);
+    showNavigationPopup(e, gotoFileModel, callback, IdeBundle.message("go.to.file.toolwindow.title"), true, true);
   }
 
   protected static class GotoFileFilter extends ChooseByNameFilter<FileType> {
-    GotoFileFilter(final ChooseByNameViewModel popup, GotoFileModel model, final Project project) {
+    GotoFileFilter(final ChooseByNamePopup popup, GotoFileModel model, final Project project) {
       super(popup, model, GotoFileConfiguration.getInstance(project), project);
     }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.docking.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -33,7 +19,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -42,6 +31,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.docking.*;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -243,7 +233,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       myDragImage = myDefaultDragImage;
 
       myWindow.getContentPane().setLayout(new BorderLayout());
-      myImageContainer = new JLabel(new ImageIcon(myDragImage));
+      myImageContainer = new JLabel(IconUtil.createImageIcon(myDragImage));
       myImageContainer.setBorder(new LineBorder(Color.lightGray));
       myWindow.getContentPane().add(myImageContainer, BorderLayout.CENTER);
 
@@ -260,9 +250,10 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       Point showPoint = me.getPoint();
       SwingUtilities.convertPointToScreen(showPoint, me.getComponent());
 
-      showPoint.x -= myDragImage.getWidth(null) / 2;
-      showPoint.y += 10;
-      myWindow.setBounds(new Rectangle(showPoint, new Dimension(myDragImage.getWidth(null), myDragImage.getHeight(null))));
+      Dimension size = myImageContainer.getSize();
+      showPoint.x -= size.width / 2;
+      showPoint.y -= size.height / 2;
+      myWindow.setBounds(new Rectangle(showPoint, size));
     }
 
     @NotNull
@@ -308,7 +299,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
 
         if (img != myDragImage) {
           myDragImage = img;
-          myImageContainer.setIcon(new ImageIcon(myDragImage));
+          myImageContainer.setIcon(IconUtil.createImageIcon(myDragImage));
           myWindow.pack();
         }
 
@@ -435,10 +426,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
       setProject(project);
 
       if (!(container instanceof DockContainer.Dialog)) {
-        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          setStatusBar(statusBar.createChild());
-        }
+        setStatusBar(WindowManager.getInstance().getStatusBar(project).createChild());
       }
 
       myUiContainer = new NonOpaquePanel(new BorderLayout());
@@ -604,7 +592,7 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myLoadedState = state;
   }
 

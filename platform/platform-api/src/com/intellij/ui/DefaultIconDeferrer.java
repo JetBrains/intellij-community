@@ -34,8 +34,4 @@ public class DefaultIconDeferrer extends IconDeferrer {
   public <T> Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<T, Icon> f) {
     return f.fun(param);
   }
-
-  @Override
-  protected void evaluateDeferred(@NotNull Runnable runnable) {
-  }
 }

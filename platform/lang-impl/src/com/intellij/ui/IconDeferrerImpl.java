@@ -105,7 +105,7 @@ public class IconDeferrerImpl extends IconDeferrer {
 
   private static final ThreadLocal<Boolean> myEvaluationIsInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-  protected void evaluateDeferred(@NotNull Runnable runnable) {
+  static void evaluateDeferred(@NotNull Runnable runnable) {
     try {
       myEvaluationIsInProgress.set(Boolean.TRUE);
       runnable.run();

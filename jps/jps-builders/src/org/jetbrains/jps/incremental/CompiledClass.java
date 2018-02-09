@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,6 @@ import java.util.List;
  *
  * @see ModuleLevelBuilder.OutputConsumer#registerCompiledClass(BuildTarget, CompiledClass)
  * @author Eugene Zhuravlev
- *         Date: 11/18/12
  */
 public class CompiledClass extends UserDataHolderBase{
   private final static Logger LOG = Logger.getInstance(CompiledClass.class);

@@ -34,6 +34,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
-public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon<DeferredIconImpl<T>> implements DeferredIcon, RetrievableIcon {
+public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<T>> implements DeferredIcon, RetrievableIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.DeferredIconImpl");
   private static final int MIN_AUTO_UPDATE_MILLIS = 950;
   private static final RepaintScheduler ourRepaintScheduler = new RepaintScheduler();
@@ -66,7 +67,7 @@ public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon<DeferredIcon
   private static final Executor ourIconsCalculatingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("ourIconsCalculating pool",1);
 
   private final IconListener<T> myEvalListener;
-  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator", 200);
+  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator");
 
   private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
     super(icon);
@@ -90,11 +91,12 @@ public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon<DeferredIcon
   }
 
   @Override
-  public void setScale(float scale) {
+  public Icon scale(float scale) {
     if (getScale() != scale && myDelegateIcon instanceof ScalableIcon) {
       myScaledDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(scale);
-      super.setScale(scale);
+      super.scale(scale);
     }
+    return this;
   }
 
   private static class Holder {
@@ -155,40 +157,37 @@ public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon<DeferredIcon
       int oldWidth = myScaledDelegateIcon.getIconWidth();
       final Icon[] evaluated = new Icon[1];
 
-        final long startTime = System.currentTimeMillis();
-        if (myNeedReadAction) {
-          boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() ->{
-              IconDeferrer.getInstance().evaluateDeferred(() ->
-                  evaluated[0] = evaluate());
-                  if (myAutoUpdatable) {
-                myLastCalcTime = System.currentTimeMillis();
-                myLastTimeSpent = myLastCalcTime - startTime;
-              }
-            });
-
-          if (!result) {
-            myIsScheduled = false;
-            return;
-          }
-        }
-        else {
-          IconDeferrer.getInstance().evaluateDeferred(() ->
-              evaluated[0] = evaluate());
-
+      final long startTime = System.currentTimeMillis();
+      if (myNeedReadAction) {
+        boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+          IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
           if (myAutoUpdatable) {
             myLastCalcTime = System.currentTimeMillis();
             myLastTimeSpent = myLastCalcTime - startTime;
           }
+        });
+        if (!result) {
+          myIsScheduled = false;
+          return;
         }
-        final Icon result = evaluated[0];
-        myScaledDelegateIcon = result;
-        checkDelegationDepth();
+      }
+      else {
+        IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
+        if (myAutoUpdatable) {
+          myLastCalcTime = System.currentTimeMillis();
+          myLastTimeSpent = myLastCalcTime - startTime;
+        }
+      }
+      final Icon result = evaluated[0];
+      myScaledDelegateIcon = result;
+      checkDelegationDepth();
 
       final boolean shouldRevalidate =
         Registry.is("ide.tree.deferred.icon.invalidates.cache") && myScaledDelegateIcon.getIconWidth() != oldWidth;
 
       ourLaterInvocator.offer(() -> {
         setDone(result);
+        if (equalIcons(result, myDelegateIcon)) return;
 
         Component actualTarget = target;
         if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
@@ -341,12 +340,12 @@ public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon<DeferredIcon
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(() -> {
         for (RepaintRequest each : myQueue) {
-          Rectangle r = each.getRectangle();
+          Rectangle r = each.rectangle;
           if (r == null) {
-            each.getComponent().repaint();
+            each.component.repaint();
           }
           else {
-            each.getComponent().repaint(r.x, r.y, r.width, r.height);
+            each.component.repaint(r.x, r.y, r.width, r.height);
           }
         }
         myQueue.clear();
@@ -357,26 +356,37 @@ public class DeferredIconImpl<T> extends JBUI.CachingScalableJBIcon<DeferredIcon
   }
 
   private static class RepaintRequest {
-    private final Component myComponent;
-    private final Rectangle myRectangle;
+    final Component component;
+    final Rectangle rectangle;
 
-    private RepaintRequest(@NotNull Component component, Rectangle rectangle) {
-      myComponent = component;
-      myRectangle = rectangle;
+    private RepaintRequest(@NotNull Component component, @Nullable Rectangle rectangle) {
+      this.component = component;
+      this.rectangle = rectangle;
     }
 
-    @NotNull
-    public Component getComponent() {
-      return myComponent;
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      RepaintRequest request = (RepaintRequest)o;
+
+      if (!component.equals(request.component)) return false;
+      if (rectangle != null ? !rectangle.equals(request.rectangle) : request.rectangle != null) return false;
+
+      return true;
     }
 
-    public Rectangle getRectangle() {
-      return myRectangle;
+    @Override
+    public int hashCode() {
+      int result = component.hashCode();
+      result = 31 * result + (rectangle != null ? rectangle.hashCode() : 0);
+      return result;
     }
   }
 
   @FunctionalInterface
-  public interface IconListener<T> {
+  interface IconListener<T> {
     void evalDone(DeferredIconImpl<T> source, T key, @NotNull Icon result);
   }
 

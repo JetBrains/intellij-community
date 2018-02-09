@@ -123,7 +123,7 @@ public class PasteProcessor extends EventProcessor {
 
   private void doPaste(final ComponentDropLocation location) {
     if (location.canDrop(myPastedComponentList) && myEditor.ensureEditable()) {
-      final RadComponent[] componentsToPaste = myComponentsToPaste.toArray(new RadComponent[myComponentsToPaste.size()]);
+      final RadComponent[] componentsToPaste = myComponentsToPaste.toArray(RadComponent.EMPTY_ARRAY);
       CommandProcessor.getInstance().executeCommand(
         myEditor.getProject(),
         () -> {
@@ -148,17 +148,11 @@ public class PasteProcessor extends EventProcessor {
   private void endPaste() {
     myEditor.getMainProcessor().stopCurrentProcessor();
     myEditor.getActiveDecorationLayer().removeFeedback();
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
-    if (statusBar != null) {
-      statusBar.setInfo("");
-    }
+    WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
   }
 
   protected boolean cancelOperation() {
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
-    if (statusBar != null) {
-      statusBar.setInfo("");
-    }
+    WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo("");
     return true;
   }
 

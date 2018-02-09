@@ -60,7 +60,6 @@ public class EditSourceUtil {
     if (virtualFile == null || !virtualFile.isValid()) {
       return null;
     }
-
     OpenFileDescriptor desc = new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset);
     desc.setUseCurrentWindow(FileEditorManager.USE_CURRENT_WINDOW.isIn(navigationElement));
     return desc;

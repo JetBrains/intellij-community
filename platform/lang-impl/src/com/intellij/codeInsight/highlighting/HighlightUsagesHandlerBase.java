@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -73,10 +72,7 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
     HighlightUsagesHandler.highlightRanges(HighlightManager.getInstance(myEditor.getProject()),
                                            myEditor, writeAttributes, clearHighlights, myWriteUsages);
     if (!clearHighlights) {
-      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myEditor.getProject());
-      if (statusBar != null) {
-        statusBar.setInfo(myStatusText);
-      }
+      WindowManager.getInstance().getStatusBar(myEditor.getProject()).setInfo(myStatusText);
 
       HighlightHandlerBase.setupFindModel(myEditor.getProject()); // enable f3 navigation
     }

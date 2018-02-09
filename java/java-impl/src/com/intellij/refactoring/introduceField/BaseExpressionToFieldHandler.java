@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 29.05.2002
- * Time: 13:05:34
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -46,7 +38,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -135,7 +126,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
+      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
@@ -269,11 +260,11 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     while (child != null) {
       PsiElement prev = child.getPrevSibling();
       if (RefactoringUtil.isExpressionAnchorElement(prev)) break;
-      if (prev instanceof PsiJavaToken && ((PsiJavaToken)prev).getTokenType() == JavaTokenType.LBRACE) break;
+      if (PsiUtil.isJavaToken(prev, JavaTokenType.LBRACE)) break;
       child = prev;
     }
 
-    child = PsiTreeUtil.skipSiblingsForward(child, PsiWhiteSpace.class, PsiComment.class);
+    child = PsiTreeUtil.skipWhitespacesAndCommentsForward(child);
     PsiElement anchor;
     if (child != null) {
       anchor = child;
@@ -744,7 +735,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
         if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass() &&
-            PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
+            initializer != null && PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
           final String initialName = "Constants";
           String constantsClassName = initialName;
 
@@ -807,7 +798,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
             if (parent instanceof PsiClass) break;
             endElement = parent;
           }
-          PsiElement last = PsiTreeUtil.skipSiblingsBackward(endElement, PsiWhiteSpace.class);
+          PsiElement last = PsiTreeUtil.skipWhitespacesBackward(endElement);
           if (last.getTextRange().getStartOffset() < myElement.getTextRange().getStartOffset()) {
             last = myElement;
           }
@@ -835,11 +826,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
               PsiElement[] exprsToHighlight = PsiUtilCore.toPsiElementArray(array);
               HighlightManager highlightManager = HighlightManager.getInstance(myProject);
               highlightManager.addOccurrenceHighlights(myEditor, exprsToHighlight, highlightAttributes(), true, null);
-              final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-              if (statusBar != null) {
-                statusBar
-                  .setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-              }
+              WindowManager
+                .getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
             }
           }
         }

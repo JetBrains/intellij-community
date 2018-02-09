@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -140,10 +139,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       TextRange range = TextRange.create(marker);
       GroovyRefactoringUtil.highlightOccurrencesByRanges(project, editor, new TextRange[]{range});
 
-      final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-      if (statusBar != null) {
-        statusBar.setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-      }
+      WindowManager.getInstance().getStatusBar(project).setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
       if (editor != null) {
         editor.getCaretModel().moveToOffset(marker.getEndOffset());
       }
@@ -248,7 +244,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       while (element != null && element.getParent() != owner) {
         element = element.getParent();
       }
-      assert element != null && element instanceof GrStatement;
+      assert element instanceof GrStatement;
       GrStatement anchor = (GrStatement) element;
 
       if (!resultOfCallExplicitlyUsed) {

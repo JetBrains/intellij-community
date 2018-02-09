@@ -57,17 +57,16 @@
                     serviceImplementation="com.intellij.refactoring.openapi.impl.RefactoringFactoryImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
                     serviceImplementation="com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter"/>
-    <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
-                        serviceImplementation="com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder"/>
     <projectService serviceInterface="com.intellij.platform.ProjectBaseDirectory"
                         serviceImplementation="com.intellij.platform.ProjectBaseDirectory"/>
     <projectService serviceImplementation="com.intellij.ide.bookmarks.BookmarkManager"/>
-    
+
     <moduleRendererFactory implementation="com.intellij.ide.util.PlatformModuleRendererFactory" order="last"/>
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.PlatformModifiableModelsProvider"/>
+
 
     <refactoring.copyHandler implementation="com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler"/>
     <refactoring.moveHandler implementation="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler" id="moveFileOrDir"/>
@@ -76,9 +75,12 @@
 
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 
-    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" instance="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable" order="before preferences.intentionPowerPack"/>
+    <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl" order="before preferences.intentionPowerPack"/>
     <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
 
   </extensions>

@@ -1,7 +1,6 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
-import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
@@ -77,7 +76,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
         popup.rebuildList(true);
       }
     });
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("GoToTask", group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.updateActionsImmediately();
     actionToolbar.getComponent().setFocusable(false);
@@ -88,7 +87,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
 
     showNavigationPopup(new GotoActionCallback<Object>() {
       @Override
-      public void elementChosen(ChooseByNameViewModel popup, Object element) {
+      public void elementChosen(ChooseByNamePopup popup, Object element) {
         TaskManager taskManager = TaskManager.getManager(project);
         if (element instanceof TaskPsiElement) {
           Task task = ((TaskPsiElement)element).getTask();
@@ -115,7 +114,7 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   }
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel implements DumbAware {
-    private ListCellRenderer myListCellRenderer;
+    private final ListCellRenderer myListCellRenderer;
 
 
     protected GotoTaskPopupModel(@NotNull Project project) {

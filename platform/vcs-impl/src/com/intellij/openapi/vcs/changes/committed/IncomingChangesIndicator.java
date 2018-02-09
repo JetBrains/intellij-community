@@ -55,22 +55,13 @@ public class IncomingChangesIndicator {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new CommittedChangesAdapter() {
       public void incomingChangesUpdated(@Nullable final List<CommittedChangeList> receivedChanges) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            refreshIndicator();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> refreshIndicator());
       }
     });
     final VcsListener listener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            updateIndicatorVisibility();
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> updateIndicatorVisibility());
       }
     };
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, listener);
@@ -82,17 +73,13 @@ public class IncomingChangesIndicator {
     if (needIndicator()) {
       if (myIndicatorComponent == null) {
         myIndicatorComponent = new IndicatorComponent();
-        if (statusBar != null) {
-          statusBar.addWidget(myIndicatorComponent, myProject);
-        }
+        statusBar.addWidget(myIndicatorComponent, myProject);
         refreshIndicator();
       }
     }
     else {
       if (myIndicatorComponent != null) {
-        if (statusBar != null) {
-          statusBar.removeWidget(myIndicatorComponent.ID());
-        }
+        statusBar.removeWidget(myIndicatorComponent.ID());
         myIndicatorComponent = null;
       }
     }
@@ -161,20 +148,14 @@ public class IncomingChangesIndicator {
     }
 
     public Consumer<MouseEvent> getClickConsumer() {
-      return new Consumer<MouseEvent>() {
-        public void consume(final MouseEvent mouseEvent) {
-          if (myStatusBar != null) {
-          DataContext dataContext = DataManager.getInstance().getDataContext((Component) myStatusBar);
-          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-          if (project != null) {
-            ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-            changesView.show(new Runnable() {
-              public void run() {
-                ChangesViewContentManager.getInstance(project).selectContent("Incoming");
-              }
-            });
-          }
-          }
+      return mouseEvent -> {
+        if (myStatusBar != null) {
+        DataContext dataContext = DataManager.getInstance().getDataContext((Component) myStatusBar);
+        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        if (project != null) {
+          ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+          changesView.show(() -> ChangesViewContentManager.getInstance(project).selectContent("Incoming"));
+        }
         }
       };
     }

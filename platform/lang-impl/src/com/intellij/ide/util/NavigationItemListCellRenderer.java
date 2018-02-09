@@ -47,7 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer<Object> {
+public class NavigationItemListCellRenderer extends OpaquePanel implements ListCellRenderer {
 
   public NavigationItemListCellRenderer() {
     super(new BorderLayout());
@@ -65,7 +65,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     final boolean hasRightRenderer = UISettings.getInstance().getShowIconInQuickNavigation();
     final ModuleRendererFactory factory = ModuleRendererFactory.findInstance(value);
 
-    final ColoredListCellRenderer left = createColoredListCellRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
+    final LeftRenderer left = new LeftRenderer(!hasRightRenderer || !factory.rendersLocationString(), MatcherHolder.getAssociatedMatcher(list));
     final Component leftCellRendererComponent = left.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     final Color listBg = leftCellRendererComponent.getBackground();
     add(leftCellRendererComponent, BorderLayout.WEST);
@@ -88,11 +88,6 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       add(spacer, BorderLayout.CENTER);
     }
     return this;
-  }
-
-  @NotNull
-  public ColoredListCellRenderer createColoredListCellRenderer(boolean renderLocation, Matcher matcher) {
-    return new LeftRenderer(renderLocation, matcher);
   }
 
   protected static Color getBackgroundColor(@Nullable Object value) {

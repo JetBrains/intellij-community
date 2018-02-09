@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,11 +53,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 19.11.2007
- */
 @SuppressWarnings({ "ComponentNotRegistered" })
 public class ValidateAction extends AnAction {
   private static final String CONTENT_NAME = "Validate RELAX NG";

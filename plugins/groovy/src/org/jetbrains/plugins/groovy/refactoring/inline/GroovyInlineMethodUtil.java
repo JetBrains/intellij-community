@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -180,10 +179,8 @@ public class GroovyInlineMethodUtil {
       final InlineMethodDialog dialog = new InlineMethodDialog(project, method, invokedOnReference, checkMethodForRecursion(method));
 
       if (!dialog.showAndGet()) {
-        final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          statusBar.setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
-        }
+        WindowManager.getInstance().getStatusBar(project)
+          .setInfo(GroovyRefactoringBundle.message("press.escape.to.remove.the.highlighting"));
         return InlineHandler.Settings.CANNOT_INLINE_SETTINGS;
       }
       else {

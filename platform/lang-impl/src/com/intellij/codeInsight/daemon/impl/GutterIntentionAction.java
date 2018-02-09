@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.intention.AbstractIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,9 +60,8 @@ class GutterIntentionAction extends AbstractIntentionAction implements Comparabl
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final RelativePoint relativePoint = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-    MouseEvent mouseEvent = relativePoint.toMouseEvent();
     myAction.actionPerformed(
-      new AnActionEvent(mouseEvent, ((EditorEx)editor).getDataContext(), myText, new Presentation(),
+      new AnActionEvent(relativePoint.toMouseEvent(), ((EditorEx)editor).getDataContext(), myText, new Presentation(),
                         ActionManager.getInstance(), 0));
   }
 

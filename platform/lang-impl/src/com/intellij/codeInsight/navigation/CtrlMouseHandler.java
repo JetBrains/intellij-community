@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.navigation;
@@ -20,6 +8,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -33,7 +22,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -99,9 +87,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
+  private static final long DOC_GENERATION_TIMEOUT_MS = 5000;
+  private static final long DOC_GENERATION_RETRY_DELAY_MS = 100;
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
@@ -112,6 +103,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private final DocumentationManager myDocumentationManager;
   @Nullable private Point myPrevMouseLocation;
   private LightweightHint myHint;
+  private final AtomicReference<ProgressIndicator> myCurrentRequestProgress = new AtomicReference<>();
 
   public enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -250,7 +242,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
         eventMulticaster.addEditorMouseListener(myEditorMouseAdapter, project);
         eventMulticaster.addEditorMouseMotionListener(myEditorMouseMotionListener, project);
-        eventMulticaster.addCaretListener(new CaretAdapter() {
+        eventMulticaster.addCaretListener(new CaretListener() {
           @Override
           public void caretPositionChanged(CaretEvent e) {
             if (myHint != null) {
@@ -366,7 +358,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return sb.toString();
   }
 
-  public abstract static class Info {
+  private abstract static class Info {
     @NotNull protected final PsiElement myElementAtPointer;
     @NotNull private final List<TextRange> myRanges;
 
@@ -404,11 +396,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @NotNull
-    public PsiElement getElementAtPointer() {
-      return myElementAtPointer;
-    }
-
-    @NotNull
     public abstract DocInfo getInfo();
 
     public abstract boolean isValid(@NotNull Document document);
@@ -431,7 +418,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     DumbService.getInstance(project).showDumbModeNotification("Element information is not available during index update");
   }
 
-  public static class InfoSingle extends Info {
+  private static class InfoSingle extends Info {
     @NotNull private final PsiElement myTargetElement;
 
     public InfoSingle(@NotNull PsiElement elementAtPointer, @NotNull PsiElement targetElement) {
@@ -442,11 +429,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     public InfoSingle(@NotNull PsiReference ref, @NotNull final PsiElement targetElement) {
       super(ref.getElement(), ReferenceRange.getAbsoluteRanges(ref));
       myTargetElement = targetElement;
-    }
-
-    @NotNull
-    public PsiElement getTargetElement() {
-      return myTargetElement;
     }
 
     @Override
@@ -476,7 +458,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  public static class InfoMultiple extends Info {
+  private static class InfoMultiple extends Info {
     public InfoMultiple(@NotNull final PsiElement elementAtPointer) {
       super(elementAtPointer);
     }
@@ -513,7 +495,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
   
   @Nullable
-  public static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset,
+  private static Info getInfoAt(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file, int offset, 
                                 @NotNull BrowseMode browseMode) {
     PsiElement targetElement = null;
 
@@ -659,11 +641,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                               @NotNull final Consumer<String> newTextConsumer,
                               @NotNull final LightweightHint hint)
   {
-    myDocAlarm.cancelAllRequests();
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    myCurrentRequestProgress.set(progress);
     myDocAlarm.addRequest(() -> {
       final Ref<String> fullTextRef = new Ref<>();
       final Ref<String> qualifiedNameRef = new Ref<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         if (anchorElement.isValid() && originalElement.isValid()) {
           try {
             fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
@@ -675,7 +658,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
           }
         }
-      });
+      }, DOC_GENERATION_TIMEOUT_MS, DOC_GENERATION_RETRY_DELAY_MS, progress);
+      myCurrentRequestProgress.compareAndSet(progress, null);
       String fullText = fullTextRef.get();
       if (fullText == null) {
         return;
@@ -805,9 +789,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     void execute(@NotNull BrowseMode browseMode) {
       myBrowseMode = browseMode;
 
-      Document document = myEditor.getDocument();
-      final PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-      if (file == null) return;
+      if (PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument()) == null) return;
 
       if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
         disposeHighlighter();
@@ -826,7 +808,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Nullable
           @Override
           public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-            return doExecute(file, offset);
+            return doExecute(offset);
           }
 
           @Override
@@ -837,7 +819,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @Nullable
-    private ReadTask.Continuation doExecute(@NotNull PsiFile file, int offset) {
+    private ReadTask.Continuation doExecute(int offset) {
+      if (isTaskOutdated()) return null;
+
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      if (file == null) return null;
+
       final Info info;
       final DocInfo docInfo;
       try {
@@ -852,9 +839,13 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
-        if (myDisposed || myEditor.isDisposed() || !myEditor.getComponent().isShowing()) return;
+        if (isTaskOutdated()) return;
         showHint(info, docInfo);
       });
+    }
+
+    private boolean isTaskOutdated() {
+      return myDisposed || myProject.isDisposed() || myEditor.isDisposed() || !myEditor.getComponent().isShowing();
     }
 
     private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {
@@ -930,6 +921,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       });
       myDocAlarm.cancelAllRequests();
+      ProgressIndicator currentIndicator = myCurrentRequestProgress.getAndSet(null);
+      if (currentIndicator != null) currentIndicator.cancel(); 
       if (newTextConsumer != null && docInfo.docProvider != null && docInfo.documentationAnchor != null) {
         fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer, hint);
       }
@@ -1014,7 +1007,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  public static class DocInfo {
+  private static class DocInfo {
     public static final DocInfo EMPTY = new DocInfo(null, null, null);
 
     @Nullable public final String text;
@@ -1048,7 +1041,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       for (AbstractDocumentationTooltipAction action : ourTooltipActions) {
         Icon icon = action.getTemplatePresentation().getIcon();
         Dimension minSize = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-        myButtons.add(new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize));
+        ActionButton actionButton =
+          new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize) {
+            @Override
+            protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+              return e.getButton() != MouseEvent.BUTTON1;
+            }
+          };
+        myButtons.add(actionButton);
         action.setDocInfo(documentationAnchor, elementUnderMouse);
       }
       Collections.reverse(myButtons);

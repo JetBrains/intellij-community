@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.actions.ChooseByNameItemProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,7 +44,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private ActionMap myActionMap;
   private InputMap myInputMap;
   private String myAdText;
-  private MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
+  private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList);
 
   protected ChooseByNamePopup(@Nullable final Project project,
                               @NotNull ChooseByNameModel model,
@@ -79,6 +64,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
                                            " to open in current window" : null;
   }
 
+  public String getEnteredText() {
+    return myTextField.getText();
+  }
+
+  public int getSelectedIndex() {
+    return myList.getSelectedIndex();
+  }
+
   @Override
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
@@ -91,7 +84,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (selEnd > selStart) {
         myTextField.select(selStart, selEnd);
       }
-      rebuildList(myInitialIndex, 0, ModalityState.current(), null);
+      rebuildList(SelectionPolicyKt.fromIndex(myInitialIndex), 0, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -133,17 +126,22 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   protected void showList() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
     Rectangle bounds = new Rectangle(layeredPane.getLocationOnScreen(), myTextField.getSize());
     bounds.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
-    int lastVisibleRow = Math.min(myList.getVisibleRowCount(), myList.getModel().getSize()) - 1;
-    Rectangle visibleBounds = lastVisibleRow < 0 ? null : myList.getCellBounds(0, lastVisibleRow);
-    preferredScrollPaneSize.height = visibleBounds != null ? visibleBounds.height : UIManager.getFont("Label.font").getSize();
-
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
+
+    // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
+    if (myDropdownPopup != null && !isCloseByFocusLost()) {
+      Dimension currentSize = myDropdownPopup.getSize();
+      if (preferredScrollPaneSize.width < currentSize.width) preferredScrollPaneSize.width = currentSize.width;
+      if (preferredScrollPaneSize.height < currentSize.height) preferredScrollPaneSize.height = currentSize.height;
+    }
 
     Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
     Rectangle original = new Rectangle(preferredBounds);
@@ -183,13 +181,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
     else {
       myDropdownPopup.setLocation(preferredBounds.getLocation());
-
-      // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
-      final Dimension currentSize = myDropdownPopup.getSize();
-      if (UISettings.getInstance().getHideNavigationOnFocusLoss() ||
-          preferredBounds.width > currentSize.width || preferredBounds.height > currentSize.height) {
-        myDropdownPopup.setSize(preferredBounds.getSize());
-      }
+      myDropdownPopup.setSize(preferredBounds.getSize());
     }
   }
 
@@ -285,18 +277,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context) {
-    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), null);
+    return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), null);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText) {
-    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), predefinedText, false, 0);
+    return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, false, 0);
   }
 
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
-    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), predefinedText, mayRequestOpenInCurrentWindow,
+    return createPopup(project, model, ChooseByNameModelEx.getItemProvider(model, context), predefinedText, mayRequestOpenInCurrentWindow,
                        initialIndex);
   }
 
@@ -331,6 +323,14 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(\\d+)(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "[)\\]]?" // possible closing paren/brace
+  );
+  public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
+  private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+
   @Override
   public String transformPattern(String pattern) {
     final ChooseByNameModel model = getModel();
@@ -339,11 +339,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
-    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ")) { // quick test if reg exp should be used
+    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
     }
 
-    if (model instanceof GotoClassModel2) {
+    if (model instanceof GotoClassModel2 || model instanceof GotoSymbolModel2) {
       if (pattern.indexOf('#') != -1) {
         regex = patternToDetectMembers;
       }
@@ -363,6 +363,61 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return pattern;
   }
 
+  public int getLinePosition() {
+    return getLineOrColumn(true);
+  }
+
+  private int getLineOrColumn(final boolean line) {
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(getTrimmedText());
+    if (matcher.matches()) {
+      final int groupNumber = line ? 2 : 3;
+      try {
+        if (groupNumber <= matcher.groupCount()) {
+          final String group = matcher.group(groupNumber);
+          if (group != null) return Integer.parseInt(group) - 1;
+        }
+        if (!line && getLineOrColumn(true) != -1) return 0;
+      }
+      catch (NumberFormatException ignored) {
+      }
+    }
+
+    return -1;
+  }
+
+  @Nullable
+  public String getPathToAnonymous() {
+    final Matcher matcher = patternToDetectAnonymousClasses.matcher(getTrimmedText());
+    if (matcher.matches()) {
+      String path = matcher.group(2);
+      if (path != null) {
+        path = path.trim();
+        if (path.endsWith("$") && path.length() >= 2) {
+          path = path.substring(0, path.length() - 2);
+        }
+        if (!path.isEmpty()) return path;
+      }
+    }
+
+    return null;
+  }
+
+  public int getColumnPosition() {
+    return getLineOrColumn(false);
+  }
+
+  @Nullable
+  public String getMemberPattern() {
+    final String enteredText = getTrimmedText();
+    final int index = enteredText.lastIndexOf('#');
+    if (index == -1) {
+      return null;
+    }
+
+    String name = enteredText.substring(index + 1).trim();
+    return StringUtil.isEmpty(name) ? null : name;
+  }
+
   public void registerAction(@NonNls String aActionName, KeyStroke keyStroke, Action aAction) {
     if (myInputMap == null) myInputMap = new InputMap();
     if (myActionMap == null) myActionMap = new ActionMap();
@@ -370,12 +425,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
-  @Override
   public String getAdText() {
     return myAdText;
   }
 
-  @Override
   public void setAdText(final String adText) {
     myAdText = adText;
   }

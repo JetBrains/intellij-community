@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -28,7 +14,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -41,8 +27,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +42,7 @@ public class HighlightManagerImpl extends HighlightManager {
     myProject = project;
     ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), myProject);
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         Document document = event.getDocument();
@@ -102,22 +88,16 @@ public class HighlightManagerImpl extends HighlightManager {
       HighlightInfo info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
     }
-    return set.toArray(new RangeHighlighter[set.size()]);
+    return set.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {
-    final MarkupModel markupModel = editor.getMarkupModel();
-    RangeHighlighter highlighter = markupModel
+    RangeHighlighter highlighter = editor.getMarkupModel()
       .addRangeHighlighter(startOffset, endOffset, HighlighterLayer.SELECTION - 1, attributes, HighlighterTargetArea.EXACT_RANGE);
     HighlightInfo info = new HighlightInfo(editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor, flags);
     Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, true);
     map.put(highlighter, info);
     return highlighter;
-  }
-
-  @NotNull
-  protected MarkupModel getMarkupModel(@NotNull Editor editor) {
-    return editor.getMarkupModel();
   }
 
   @Override
@@ -126,7 +106,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (map == null) return false;
     HighlightInfo info = map.get(highlighter);
     if (info == null) return false;
-    MarkupModel markupModel = getMarkupModel(info.editor);
+    MarkupModel markupModel = info.editor.getMarkupModel();
     if (((MarkupModelEx)markupModel).containsHighlighter(highlighter)) {
       highlighter.dispose();
     }
@@ -145,7 +125,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = getScrollMarkColor(attributes);
+    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
 
     int oldOffset = editor.getCaretModel().getOffset();
     int horizontalScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
@@ -187,6 +167,7 @@ public class HighlightManagerImpl extends HighlightManager {
                                      Collection<RangeHighlighter> outHighlighters,
                                      Color scrollmarkColor) {
     RangeHighlighter highlighter = addSegmentHighlighter(editor, start, end, attributes, flags);
+    highlighter.putUserData(RangeHighlighter.VISIBLE_IF_FOLDED, Boolean.TRUE);
     if (outHighlighters != null) {
       outHighlighters.add(highlighter);
     }
@@ -221,7 +202,7 @@ public class HighlightManagerImpl extends HighlightManager {
       flags |= HIDE_BY_ANY_KEY;
     }
 
-    Color scrollmarkColor = getScrollMarkColor(attributes);
+    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
 
     addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
   }
@@ -238,7 +219,7 @@ public class HighlightManagerImpl extends HighlightManager {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
 
-    Color scrollmarkColor = getScrollMarkColor(attributes);
+    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
@@ -260,9 +241,12 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   @Nullable
-  private static Color getScrollMarkColor(@NotNull TextAttributes attributes) {
+  private static Color getScrollMarkColor(@NotNull TextAttributes attributes, @NotNull EditorColorsScheme colorScheme) {
     if (attributes.getErrorStripeColor() != null) return attributes.getErrorStripeColor();
-    if (attributes.getBackgroundColor() != null) return attributes.getBackgroundColor().darker();
+    if (attributes.getBackgroundColor() != null) {
+      boolean isDark = ColorUtil.isDark(colorScheme.getDefaultBackground());
+      return isDark ? attributes.getBackgroundColor().brighter() : attributes.getBackgroundColor().darker();
+    }
     return null;
   }
 
@@ -294,10 +278,6 @@ public class HighlightManagerImpl extends HighlightManager {
       requestHideHighlights(dataContext);
     }
 
-
-    @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
-    }
 
     @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {

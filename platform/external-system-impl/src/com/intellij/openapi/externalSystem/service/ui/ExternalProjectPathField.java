@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.externalSystem.service.ui;
 
@@ -44,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.TextFieldCompletionProvider;
@@ -52,6 +39,7 @@ import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,7 +96,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       public void actionPerformed(ActionEvent e) {
         final Ref<JBPopup> popupRef = new Ref<>();
         final Tree tree = buildRegisteredProjectsTree(project, externalSystemId);
-        tree.setBorder(IdeBorderFactory.createEmptyBorder(8));
+        tree.setBorder(JBUI.Borders.empty(8));
         Runnable treeSelectionCallback = () -> {
           TreePath path = tree.getSelectionPath();
           if (path != null) {
@@ -144,11 +132,11 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   @NotNull
   private static Tree buildRegisteredProjectsTree(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
     ExternalSystemTasksTreeModel model = new ExternalSystemTasksTreeModel(externalSystemId);
-    ExternalSystemTasksTree result = new ExternalSystemTasksTree(model, ContainerUtilRt.<String, Boolean>newHashMap(), project, externalSystemId);
+    ExternalSystemTasksTree result = new ExternalSystemTasksTree(model, ContainerUtilRt.newHashMap(), project, externalSystemId);
     
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    AbstractExternalSystemLocalSettings<?> settings = manager.getLocalSettingsProvider().fun(project);
     Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects = settings.getAvailableProjects();
     List<ExternalProjectPojo> rootProjects = ContainerUtilRt.newArrayList(projects.keySet());
     ContainerUtil.sort(rootProjects);
@@ -162,7 +150,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   private static EditorTextField createTextField(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    final AbstractExternalSystemLocalSettings<?> settings = manager.getLocalSettingsProvider().fun(project);
     final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
     TextFieldCompletionProvider provider = new TextFieldCompletionProviderDumbAware() {
       @Override
@@ -212,7 +200,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    final AbstractExternalSystemLocalSettings<?> settings = manager.getLocalSettingsProvider().fun(project);
     final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
 
     String rawText = editor.getDocument().getText();
@@ -303,7 +291,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       myTextField = textField;
       myRegisteredProjectsButton = registeredProjectsButton;
       add(myTextField, new GridBag().weightx(1).fillCellHorizontally());
-      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 0));
+      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 1));
     }
 
     @NotNull

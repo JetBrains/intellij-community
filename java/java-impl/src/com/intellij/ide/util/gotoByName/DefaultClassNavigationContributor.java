@@ -66,7 +66,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
     return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY :
-           result.toArray(new NavigationItem[result.size()]);
+           result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @Override
@@ -102,7 +102,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     String namePattern = StringUtil.getShortName(parameters.getCompletePattern());
     boolean hasDollar = namePattern.contains("$");
     if (hasDollar) {
-      Matcher matcher = ChooseByNameBase.patternToDetectAnonymousClasses.matcher(namePattern);
+      Matcher matcher = ChooseByNamePopup.patternToDetectAnonymousClasses.matcher(namePattern);
       if (matcher.matches()) {
         namePattern = matcher.group(1);
         hasDollar = namePattern.contains("$");

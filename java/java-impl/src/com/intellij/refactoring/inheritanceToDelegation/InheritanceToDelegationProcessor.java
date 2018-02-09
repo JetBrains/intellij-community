@@ -24,7 +24,6 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -52,7 +51,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,7 +173,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       processClass(inheritor, usages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private FieldAccessibility getFieldAccessibility(PsiElement element) {
@@ -216,7 +215,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
     }
     ArrayList<UsageInfo> filteredUsages = filterUsages(oldUsages);
-    refUsages.set(filteredUsages.toArray(new UsageInfo[filteredUsages.size()]));
+    refUsages.set(filteredUsages.toArray(UsageInfo.EMPTY_ARRAY));
     prepareSuccessful();
     return true;
   }
@@ -293,7 +292,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         result.add(((ObjectUpcastedUsageInfo)usage));
       }
     }
-    return result.toArray(new ObjectUpcastedUsageInfo[result.size()]);
+    return result.toArray(new ObjectUpcastedUsageInfo[0]);
   }
 
   private ArrayList<UsageInfo> filterUsages(ArrayList<UsageInfo> usages) {
@@ -844,10 +843,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       presentation
     );
 
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null) {
-      statusBar.setInfo(RefactoringBundle.message("instances.upcasted.to.java.lang.object.found"));
-    }
+    WindowManager.getInstance().getStatusBar(myProject).setInfo(RefactoringBundle.message("instances.upcasted.to.java.lang.object.found"));
   }
 
   /**
@@ -896,6 +892,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("replace.inheritance.with.delegation.command", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
