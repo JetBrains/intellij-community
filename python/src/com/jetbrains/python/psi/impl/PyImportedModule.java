@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
@@ -123,8 +124,7 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
                        .forEach(res -> resList.poke(res, RatedResolveResult.RATE_NORMAL));
       results = resList;
     }
-    return StreamEx.of(results).map(this::tryReplaceDirWithPackage)
-                   .toList();
+    return ContainerUtil.map(results, this::tryReplaceDirWithPackage);
   }
 
   private RatedResolveResult tryReplaceDirWithPackage(RatedResolveResult el) {

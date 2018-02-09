@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyImportedNameDefiner;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -45,10 +46,10 @@ public class ResolveResultList extends ArrayList<RatedResolveResult> {
 
   public static List<? extends RatedResolveResult> asImportedResults(@Nullable List<? extends RatedResolveResult> from,
                                                                      @Nullable PyImportedNameDefiner nameDefiner) {
-    if (from == null || from.isEmpty()) {
+    if (ContainerUtil.isEmpty(from)) {
       return Collections.emptyList();
     }
-    return StreamEx.of(from).map(res -> new ImportedResolveResult(res.getElement(), res.getRate(), nameDefiner)).toList();
+    return ContainerUtil.map(from, res -> new ImportedResolveResult(res.getElement(), res.getRate(), nameDefiner));
   }
 
 
