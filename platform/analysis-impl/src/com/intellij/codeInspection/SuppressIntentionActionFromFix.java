@@ -87,7 +87,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction impl
   }
 
   @Override
-  public int getPriorityModifier(@NotNull Project project) {
+  public int getPriorityModifier() {
     return isShouldBeAppliedToInjectionHost() == ThreeState.NO ? -1 : 0;
   }
 }
