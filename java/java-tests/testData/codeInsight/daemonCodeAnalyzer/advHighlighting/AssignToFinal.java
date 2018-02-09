@@ -131,3 +131,15 @@ class T29a {
     } while (b == 1);
   }
 }
+class TX {
+  private final int i;
+  private final int j;
+  private final int k;
+  TX() {
+    (i) = 1;
+    (<error descr="Variable 'i' might already have been assigned to">i</error>) = 1;
+    (j) = 1;
+    (<error descr="Variable 'j' might already have been assigned to">j</error>)++;
+    (<error descr="Variable 'k' might not have been initialized">k</error>)++;
+  }
+}

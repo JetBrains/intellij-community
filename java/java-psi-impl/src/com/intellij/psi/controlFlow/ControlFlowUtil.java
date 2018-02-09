@@ -1949,11 +1949,13 @@ public class ControlFlowUtil {
 
     @Nullable
     private static PsiElement getExpression(@NotNull PsiElement element) {
-      if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getLExpression() instanceof PsiReferenceExpression) {
-        return ((PsiAssignmentExpression)element).getLExpression();
+      if (element instanceof PsiAssignmentExpression) {
+        PsiExpression target = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)element).getLExpression());
+        return ObjectUtils.tryCast(target, PsiReferenceExpression.class);
       }
       else if (element instanceof PsiUnaryExpression) {
-        return ((PsiUnaryExpression)element).getOperand();
+        PsiExpression target = PsiUtil.skipParenthesizedExprDown(((PsiUnaryExpression)element).getOperand());
+        return ObjectUtils.tryCast(target, PsiReferenceExpression.class);
       }
       else if (element instanceof PsiDeclarationStatement) {
         //should not happen
