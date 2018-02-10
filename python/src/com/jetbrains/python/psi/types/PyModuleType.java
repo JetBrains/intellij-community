@@ -420,7 +420,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       return Collections.emptyList();
     }
 
-    final List<QualifiedName> myQnames = QualifiedNameFinder.findImportableQNames(pyPackage, pyPackage.getVirtualFile());
+    final List<QualifiedName> myQnames = QualifiedNameFinder.findImportableQNames(location, pyPackage.getVirtualFile());
     final List<PsiElement> result = new ArrayList<>();
     final Set<String> seen = Sets.newHashSet();
     for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
