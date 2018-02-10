@@ -1102,19 +1102,8 @@
       <descriptionDirectoryName>EditContractIntention</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNullableAnnotationIntention</className>
+      <className>com.intellij.codeInsight.intention.impl.AnnotateIntentionAction</className>
       <category>Java/Annotations</category>
-      <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddDeprecationAnnotationIntention</className>
-      <category>Java/Annotations</category>
-      <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.AddNotNullAnnotationIntention</className>
-      <category>Java/Annotations</category>
-      <descriptionDirectoryName>AddAnnotationFix</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ExtractIfConditionAction</className>
