@@ -166,16 +166,16 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                                  @NotNull String name,
                                                                                  @NotNull List<PyImportElement> importElements) {
     final VirtualFile moduleFile = moduleOrPackage.getVirtualFile();
-    final PsiElement anchor = location != null ? location.getContainingFile() : moduleOrPackage;
+    final PsiElement footHold = location != null ? location.getContainingFile() : moduleOrPackage;
     if (moduleFile != null) {
-      for (QualifiedName packageQName : QualifiedNameFinder.findImportableQNames(anchor, moduleOrPackage.getVirtualFile())) {
+      for (QualifiedName packageQName : QualifiedNameFinder.findImportableQNames(footHold, moduleOrPackage.getVirtualFile())) {
         final QualifiedName resolvingQName = packageQName.append(name);
         for (PyImportElement importElement : importElements) {
           for (QualifiedName qName : getImportedQNames(importElement)) {
             if (qName.matchesPrefix(resolvingQName)) {
               final List<RatedResolveResult> submodules =
                 ResolveImportUtil
-                  .resolveChildren(moduleOrPackage, name, PyUtil.as(anchor, PyFile.class), false, true, false, false);
+                  .resolveChildren(moduleOrPackage, name, PyUtil.as(footHold, PyFile.class), false, true, false, false);
               if (!submodules.isEmpty()) {
                 return ResolveResultList.asImportedResults(submodules, importElement);
               }
