@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.tree.project;
+package com.intellij.ui.tree;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -46,7 +45,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
     connection.subscribe(PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        invoker.invokeLaterIfNeeded(() -> {
+        onValidThread(() -> {
           root.valid = false; // need to reload content roots
           treeStructureChanged(null, null, null);
         });
@@ -55,7 +54,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
     connection.subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        invoker.invokeLaterIfNeeded(() -> {
+        onValidThread(() -> {
           for (VFileEvent event : events) {
             if (event instanceof VFileCreateEvent) {
               VFileCreateEvent create = (VFileCreateEvent)event;
@@ -93,6 +92,14 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
     return invoker;
   }
 
+  public boolean isValidThread() {
+    return invoker.isValidThread();
+  }
+
+  public void onValidThread(@NotNull Runnable task) {
+    invoker.invokeLaterIfNeeded(task);
+  }
+
   @Override
   public Object getRoot() {
     return root;
@@ -112,7 +119,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
   @NotNull
   @Override
   public List<Object> getChildren(Object object) {
-    Node node = object instanceof Node && invoker.isValidThread() ? (Node)object : null;
+    Node node = object instanceof Node && isValidThread() ? (Node)object : null;
     if (node == null) return emptyList();
     List<?> children = node.getChildren();
     return unmodifiableList(children);
@@ -120,18 +127,18 @@ public final class ProjectFileTreeModel extends BaseTreeModel<Object> implements
 
   @Nullable
   public Object getContentRoot(@Nullable Object object) {
-    FileNode node = object instanceof FileNode && invoker.isValidThread() ? (FileNode)object : null;
+    FileNode node = object instanceof FileNode && isValidThread() ? (FileNode)object : null;
     return node == null ? null : node.findParent(RootNode.class);
   }
 
   @Nullable
   public Pair<VirtualFile, Module> getContent(@Nullable Object object) {
-    FileNode node = object instanceof FileNode && invoker.isValidThread() ? (FileNode)object : null;
+    FileNode node = object instanceof FileNode ? (FileNode)object : null;
     return node == null ? null : Pair.create(node.file, node.module);
   }
 
   public void invalidate(VirtualFile file) {
-    invoker.invokeLaterIfNeeded(() -> {
+    onValidThread(() -> {
       if (root.project.isDisposed()) return;
       ProjectRootManager manager = ProjectRootManager.getInstance(root.project);
       if (manager == null) return;
