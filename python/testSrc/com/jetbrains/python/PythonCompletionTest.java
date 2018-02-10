@@ -8,7 +8,6 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -818,7 +817,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testExcludedTopLevelPackage() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
-    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir("pkg1"));
+    addExcludedRoot("pkg1");
+
     final LookupElement[] variants = myFixture.completeBasic();
     assertNotNull(variants);
     assertEmpty(variants);
@@ -828,7 +828,7 @@ public class PythonCompletionTest extends PyTestCase {
   public void testExcludedSubPackage() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile("a.py");
-    PsiTestUtil.addExcludedRoot(myFixture.getModule(), myFixture.findFileInTempDir("pkg1/subpkg1"));
+    addExcludedRoot("pkg1/subpkg1");
     final LookupElement[] variants = myFixture.completeBasic();
     assertNotNull(variants);
     assertEmpty(variants);
