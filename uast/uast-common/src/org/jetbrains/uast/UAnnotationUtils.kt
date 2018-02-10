@@ -93,7 +93,11 @@ fun getAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
         else
           tryConvertToEntry(uElement, parent, name)
       is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
-      else -> null
+      else ->
+        // KtCollectionLiteralExpression are not supported by UAST until 1.2.30-eap-2
+        if (parent.sourcePsi?.javaClass?.name == "org.jetbrains.kotlin.psi.KtCollectionLiteralExpression")
+          retrievePsiAnnotationEntry(parent, null)
+        else null
     }
   }
 
