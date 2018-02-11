@@ -701,7 +701,11 @@ public class BuilderHandler {
   }
 
   private boolean isBuilderDefaultAnnotated(@NotNull PsiField psiField) {
-    for(PsiAnnotation psiAnnotation: psiField.getAnnotations()) {
+    if (psiField.getModifierList() == null) {
+      return false;
+    }
+    PsiAnnotation[] annotations = psiField.getModifierList().getAnnotations();
+    for(PsiAnnotation psiAnnotation: annotations) {
       if (psiAnnotation.getQualifiedName() != null &&
         psiAnnotation.getQualifiedName().equals(Builder.Default.class.getCanonicalName())) {
         return true;
