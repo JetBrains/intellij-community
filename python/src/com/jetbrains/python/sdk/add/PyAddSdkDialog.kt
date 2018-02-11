@@ -125,12 +125,6 @@ class PyAddSdkDialog private constructor(private val project: Project?,
 
   private val previousButton = lazy { createJButtonForAction(previousAction) }
 
-/*
-  private fun createAnotherCancelAction(): Action = object : DialogWrapperAction("Cancel") {
-    override fun doAction(e: ActionEvent) = doCancelAction(e)
-  }
-*/
-
   private val cancelButton = lazy { createJButtonForAction(cancelAction) }
 
   override fun postponeValidation() = false
