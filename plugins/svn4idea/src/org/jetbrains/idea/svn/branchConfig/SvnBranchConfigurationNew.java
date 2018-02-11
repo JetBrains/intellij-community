@@ -17,6 +17,8 @@ import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.sorted;
+import static java.util.Comparator.comparingInt;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
@@ -112,7 +114,7 @@ public class SvnBranchConfigurationNew {
         return cutEndSlash(myTrunkUrl);
       }
     }
-    for(String branchUrl: myBranchMap.keySet()) {
+    for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
       if (Url.isAncestor(branchUrl, url)) {
         String relativePath = Url.getRelative(branchUrl, url);
         int secondSlash = relativePath.indexOf("/");
@@ -149,8 +151,7 @@ public class SvnBranchConfigurationNew {
       return;
     }
 
-    for (String branchUrl : myBranchMap.keySet()) {
-      // use more exact comparison first (paths longer)
+    for (String branchUrl : sortBranchLocations(myBranchMap.keySet())) {
       final List<SvnBranchItem> children = myBranchMap.get(branchUrl).getValue();
       for (SvnBranchItem child : children) {
         if (listener.accept(child.getUrl())) {
@@ -180,6 +181,14 @@ public class SvnBranchConfigurationNew {
   public void removeBranch(String url) {
     url = ensureEndSlash(url);
     myBranchMap.remove(url);
+  }
+
+  /**
+   * Sorts branch locations by length descending as there could be cases when one branch location is under another.
+   */
+  @NotNull
+  private static Collection<String> sortBranchLocations(@NotNull Collection<String> branchLocations) {
+    return sorted(branchLocations, comparingInt(String::length).reversed());
   }
 
   private static class BranchRootSearcher implements UrlListener {
