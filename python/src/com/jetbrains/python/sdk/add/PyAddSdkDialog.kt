@@ -231,13 +231,6 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
   }
 
-  private fun onSelected() {
-    // clean `mainPanel` from old wizards
-    for (component in mainPanel.components.copyOf()) {
-      mainPanel.remove(component)
-    }
-  }
-
   /**
    * Navigates to the next step of the current wizard view.
    */
