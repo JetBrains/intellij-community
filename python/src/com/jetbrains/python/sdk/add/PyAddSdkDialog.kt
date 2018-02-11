@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk.add
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
@@ -263,7 +264,14 @@ class PyAddSdkDialog private constructor(private val project: Project?,
   }
 
   private fun onFinish() {
-    // TODO should we perform some validation here?
+    try {
+      selectedPanel?.finish()
+    }
+    catch (e: Exception) {
+      Messages.showErrorDialog(e.localizedMessage, "Error")
+      return
+    }
+
     doOKAction()
   }
 
