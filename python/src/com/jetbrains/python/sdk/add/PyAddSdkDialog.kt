@@ -72,7 +72,7 @@ class PyAddSdkDialog private constructor(private val project: Project?,
                                            createAnacondaPanel(project),
                                            PyAddSystemWideInterpreterPanel(existingSdks))
     val extendedPanels = PyAddSdkProvider.EP_NAME.extensions
-      .map { it.createView(project = project, existingSdks = existingSdks) }
+      .map { it.createView(project = project, newProjectPath = newProjectPath, existingSdks = existingSdks) }
       .mapNotNull { it }
     panels.addAll(extendedPanels)
     mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
