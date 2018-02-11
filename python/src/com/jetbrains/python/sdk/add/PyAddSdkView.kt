@@ -42,7 +42,8 @@ interface PyAddSdkView {
   fun next()
 
   /**
-   * Creates SDK and returns it.
+   * Creates SDK and returns it. The returned SDK could be later obtained by
+   * [getOrCreateSdk] method.
    *
    * If some error occurs an [Exception] is thrown.
    *

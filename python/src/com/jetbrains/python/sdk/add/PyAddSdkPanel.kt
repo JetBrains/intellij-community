@@ -48,8 +48,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   override fun next() = throw UnsupportedOperationException()
 
-  // TODO could we return `null`?
-  override fun finish(): Sdk = getOrCreateSdk() ?: throw IllegalStateException()
+  override fun finish(): Sdk = getOrCreateSdk() ?: throw IllegalStateException("Failed to create Python interpreter")
 
   override abstract val panelName: String
   override val icon: Icon = PythonIcons.Python.Python
