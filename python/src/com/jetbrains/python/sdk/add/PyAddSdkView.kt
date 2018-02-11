@@ -3,9 +3,6 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
-import com.jetbrains.python.sdk.add.wizard.WizardControlAction
-import com.jetbrains.python.sdk.add.wizard.WizardControlsListener
-import com.jetbrains.python.sdk.add.wizard.WizardStateListener
 import java.awt.Component
 import javax.swing.Icon
 
@@ -23,9 +20,10 @@ interface PyAddSdkView {
   fun onSelected()
 
   /**
-   * [WizardControlsListener.onStateChanged] is called right after these changes.
+   * [PyAddSdkStateListener.onActionsStateChanged] is called after changes in
+   * [actions].
    */
-  val actions: Map<WizardControlAction, Boolean>
+  val actions: Map<PyAddSdkDialogFlowAction, Boolean>
 
   /**
    * The [component] *might* return the new [Component] after [next] or
@@ -60,7 +58,5 @@ interface PyAddSdkView {
    */
   fun validateAll(): List<ValidationInfo>
 
-  fun addStateListener(stateListener: WizardStateListener)
-
-  fun addControlListener(listener: WizardControlsListener)
+  fun addStateListener(stateListener: PyAddSdkStateListener)
 }
