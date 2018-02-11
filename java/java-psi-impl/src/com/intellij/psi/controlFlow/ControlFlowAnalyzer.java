@@ -1553,10 +1553,14 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     startElement(expression);
 
-    final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+    PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    startElement(methodExpression);
+    PsiExpression qualifier = methodExpression.getQualifierExpression();
     if (qualifier != null) {
       qualifier.accept(this);
     }
+    finishElement(methodExpression);
+
     final PsiExpressionList argumentList = expression.getArgumentList();
     argumentList.accept(this);
     // just to increase counter - there is some executable code here
