@@ -87,7 +87,7 @@ public class ControlFlowTest extends LightCodeInsightTestCase {
   }
 
   public void testHugeMethodChainControlFlow() throws Exception {
-    int size = 3000;
+    int size = 2500;
     String source = StreamEx.constant(".toString()", size).joining("", "\"\"", "");
     PsiExpression expression = JavaPsiFacade.getElementFactory(getProject()).createExpressionFromText(source, null);
     ControlFlow flow = ControlFlowFactory.getInstance(getProject()).getControlFlow(expression, new LocalsControlFlowPolicy(expression), false);
