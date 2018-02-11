@@ -29,6 +29,13 @@ interface WizardView<out T> {
    */
   fun next()
 
+  /**
+   * Creates SDK and returns it.
+   *
+   * If some error occurs an [Exception] is thrown.
+   *
+   * @throws Exception if SDK creation failed for some reason
+   */
   fun finish(): T
 
   /**
