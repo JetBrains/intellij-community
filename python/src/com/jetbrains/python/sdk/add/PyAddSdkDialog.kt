@@ -31,8 +31,7 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.create
-import com.jetbrains.python.sdk.add.wizard.*
-import com.jetbrains.python.sdk.add.wizard.WizardControlAction.*
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.*
 import com.jetbrains.python.sdk.detectVirtualEnvs
 import com.jetbrains.python.sdk.isAssociatedWithProject
 import icons.PythonIcons
@@ -104,7 +103,9 @@ class PyAddSdkDialog private constructor(private val project: Project?,
     assert(value = style != DialogStyle.COMPACT,
            lazyMessage = { "${PyAddSdkDialog::class.java} is not ready for ${DialogStyle.COMPACT} dialog style" })
 
-    return doCreateSouthPanel(leftButtons = listOf(), rightButtons = listOf(previousButton.value, nextButton.value, cancelButton.value))
+    return doCreateSouthPanel(leftButtons = listOf(),
+                                                           rightButtons = listOf(previousButton.value, nextButton.value,
+                                                                                 cancelButton.value))
   }
 
   private val nextAction: Action = object : DialogWrapperAction("Next") {
@@ -143,16 +144,14 @@ class PyAddSdkDialog private constructor(private val project: Project?,
         for (panel in panels) {
           add(panel.component, panel.panelName)
 
-          panel.addStateListener(object : WizardStateListener {
-            override fun onStateChanged() {
+          panel.addStateListener(object : PyAddSdkStateListener {
+            override fun onComponentChanged() {
               show(mainPanel, panel.component)
 
               selectedPanel?.let { updateWizardActionButtons(it) }
             }
-          })
 
-          panel.addControlListener(object : WizardControlsListener {
-            override fun onStateChanged() {
+            override fun onActionsStateChanged() {
               selectedPanel?.let { updateWizardActionButtons(it) }
             }
           })

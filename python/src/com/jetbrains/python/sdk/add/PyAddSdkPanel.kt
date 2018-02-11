@@ -19,11 +19,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
-import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.sdk.add.wizard.WizardControlAction
-import com.jetbrains.python.sdk.add.wizard.WizardControlAction.OK
-import com.jetbrains.python.sdk.add.wizard.WizardControlsListener
-import com.jetbrains.python.sdk.add.wizard.WizardStateListener
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
 import java.awt.Component
@@ -36,19 +32,17 @@ import javax.swing.JPanel
  * @author vlan
  */
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
-  override val actions: Map<WizardControlAction, Boolean>
+  override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
     get() = mapOf(OK.enabled())
 
   override val component: Component
     get() = this
 
   /**
-   * [component] is permanent. [StateListener.onStateChanged] won't be called
-   * anyway.
+   * [component] is permanent. [PyAddSdkStateListener.onComponentChanged] won't
+   * be called anyway.
    */
-  override fun addStateListener(stateListener: WizardStateListener) = Unit
-
-  override fun addControlListener(listener: WizardControlsListener) = Unit
+  override fun addStateListener(stateListener: PyAddSdkStateListener) = Unit
 
   override fun previous() = throw UnsupportedOperationException()
 
