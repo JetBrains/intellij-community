@@ -1,72 +1,57 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package com.intellij.openapi.vcs.changes.ui;
+package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
+import com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy.Companion.DIRECTORY_POLICY
 import java.util.*
 import javax.swing.tree.DefaultTreeModel
 
-com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy.DIRECTORY_POLICY;
+class ChangesModuleGroupingPolicy(val myProject: Project, val myModel: DefaultTreeModel) : ChangesGroupingPolicy {
+  private val myModuleCache = HashMap<Module?, ChangesBrowserNode<*>>()
+  private val myIndex = ProjectFileIndex.getInstance(myProject)
 
-public class ChangesModuleGroupingPolicy implements ChangesGroupingPolicy {
-  @NotNull private final Project myProject;
-  @NotNull private final DefaultTreeModel myModel;
-  @NotNull private final HashMap<Module, ChangesBrowserNode> myModuleCache = new HashMap<>();
-  @NotNull private final ProjectFileIndex myIndex;
+  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
+    if (myProject.isDefault) return null
 
-  public static final String PROJECT_ROOT_TAG = "<Project Root>";
-
-  public ChangesModuleGroupingPolicy(@NotNull Project project, @NotNull DefaultTreeModel model) {
-    myProject = project;
-    myModel = model;
-    myIndex = ProjectFileIndex.getInstance(myProject);
-  }
-
-  @Override
-  @Nullable
-  public ChangesBrowserNode getParentNodeFor(@NotNull StaticFilePath nodePath, @NotNull ChangesBrowserNode subtreeRoot) {
-    if (myProject.isDefault()) return null;
-
-    VirtualFile vFile = nodePath.resolve();
+    val vFile = nodePath.resolve()
     if (vFile != null && Comparing.equal(vFile, myIndex.getContentRootForFile(vFile, hideExcludedFiles()))) {
-      Module module = myIndex.getModuleForFile(vFile, hideExcludedFiles());
-      return getNodeForModule(module, nodePath, subtreeRoot);
+      val module = myIndex.getModuleForFile(vFile, hideExcludedFiles())
+      return getNodeForModule(module, nodePath, subtreeRoot)
     }
-    return null;
+    return null
   }
 
-  @NotNull
-  private ChangesBrowserNode getNodeForModule(@Nullable Module module,
-                                              @NotNull StaticFilePath nodePath,
-                                              @NotNull ChangesBrowserNode subtreeRoot) {
-    ChangesBrowserNode node = myModuleCache.get(module);
+  private fun getNodeForModule(module: Module?, nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
+    var node: ChangesBrowserNode<*>? = myModuleCache[module]
     if (node == null) {
-      DirectoryChangesGroupingPolicy policy = DIRECTORY_POLICY.get(subtreeRoot);
-      ChangesBrowserNode<?> parent =
-        policy != null && !isTopLevel(nodePath) ? policy.getParentNodeInternal(nodePath, subtreeRoot) : subtreeRoot;
+      val policy = DIRECTORY_POLICY.get(subtreeRoot)
+      val parent = if (policy != null && !isTopLevel(nodePath)) policy.getParentNodeInternal(nodePath, subtreeRoot) else subtreeRoot
 
-      node = module == null ? ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG) : new ChangesBrowserModuleNode(module);
-      myModel.insertNodeInto(node, parent, parent.getChildCount());
-      myModuleCache.put(module, node);
+      node = if (module == null) ChangesBrowserNode.create(myProject, PROJECT_ROOT_TAG) else ChangesBrowserModuleNode(module)
+      myModel.insertNodeInto(node, parent, parent.childCount)
+      myModuleCache[module] = node
     }
-    return node;
+    return node
   }
 
-  private boolean isTopLevel(@NotNull StaticFilePath nodePath) {
-    StaticFilePath parentPath = nodePath.getParent();
-    VirtualFile parentFile = parentPath != null ? parentPath.resolve() : null;
+  private fun isTopLevel(nodePath: StaticFilePath): Boolean {
+    val parentPath = nodePath.parent
+    val parentFile = parentPath?.resolve()
 
-    return parentFile == null || myIndex.getContentRootForFile(parentFile, hideExcludedFiles()) == null;
+    return parentFile == null || myIndex.getContentRootForFile(parentFile, hideExcludedFiles()) == null
   }
 
-  private static boolean hideExcludedFiles() {
-    return Registry.is("ide.hide.excluded.files");
+  companion object {
+
+    const val PROJECT_ROOT_TAG = "<Project Root>"
+
+    private fun hideExcludedFiles(): Boolean {
+      return Registry.`is`("ide.hide.excluded.files")
+    }
   }
 }
