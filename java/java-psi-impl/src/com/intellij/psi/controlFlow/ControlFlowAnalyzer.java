@@ -268,7 +268,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void generateCheckedExceptionJumps(@NotNull PsiElement element) {
     //generate jumps to all handled exception handlers
-    Collection<PsiClassType> unhandledExceptions = ExceptionUtil.collectUnhandledExceptions(element, element.getParent());
+    generateExceptionJumps(element, ExceptionUtil.collectUnhandledExceptions(element, element.getParent()));
+  }
+
+  private void generateExceptionJumps(@NotNull PsiElement element, Collection<PsiClassType> unhandledExceptions) {
     for (PsiClassType unhandledException : unhandledExceptions) {
       ProgressManager.checkCanceled();
       generateThrow(unhandledException, element);
@@ -1550,14 +1553,17 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     startElement(expression);
 
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    methodExpression.accept(this);
+    final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+    if (qualifier != null) {
+      qualifier.accept(this);
+    }
     final PsiExpressionList argumentList = expression.getArgumentList();
     argumentList.accept(this);
     // just to increase counter - there is some executable code here
     emitEmptyInstruction();
 
-    generateCheckedExceptionJumps(expression);
+    //generate jumps to all handled exception handlers
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
 
     finishElement(expression);
   }
@@ -1572,7 +1578,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       child.accept(this);
     }
-    generateCheckedExceptionJumps(expression);
+    //generate jumps to all handled exception handlers
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
 
     if (pc == myCurrentFlow.getSize()) {
       // generate at least one instruction for constructor call
