@@ -6,8 +6,6 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
@@ -16,8 +14,6 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.EditorTestUtil;
-
-import java.util.stream.Stream;
 
 public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   private boolean myStoredSettingValue;
@@ -898,10 +894,6 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
-  private void checkResult(String text) {
-    myFixture.checkResult(text);
-  }
-
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
@@ -948,15 +940,5 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
   private void escape() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ESCAPE);
-  }
-
-  private void complete(String partOfItemText) {
-    LookupElement[] elements = myFixture.completeBasic();
-    LookupElement element = Stream.of(elements).filter(e -> {
-      LookupElementPresentation p = new LookupElementPresentation();
-      e.renderElement(p);
-      return (p.getItemText() + p.getTailText()).contains(partOfItemText);
-    }).findAny().get();
-    selectItem(element);
   }
 }

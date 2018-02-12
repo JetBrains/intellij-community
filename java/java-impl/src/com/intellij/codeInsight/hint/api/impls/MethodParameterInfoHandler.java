@@ -336,7 +336,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
 
-    context.setHighlightedParameter(ObjectUtils.coalesce(chosenInfo, completeMatch));
+    context.setHighlightedParameter(ObjectUtils.coalesce(completeMatch, chosenInfo));
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
