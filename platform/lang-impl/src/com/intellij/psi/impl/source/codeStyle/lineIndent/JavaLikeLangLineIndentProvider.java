@@ -19,7 +19,9 @@ import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
@@ -214,7 +216,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     moveBeforeEndLineComments(position);
     position.moveBeforeOptional(BlockOpeningBrace);
     if (position.isAt(Whitespace)) {
-      if (position.isAtMultiline() && !position.after().isAtEnd()) {
+      if (position.isAtMultiline()) {
         return position.after().getStartOffset();
       }
       position.moveBefore();
@@ -310,9 +312,16 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
   }
 
   protected SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
-    return new SemanticEditorPosition((EditorEx)editor, offset, tokenType -> mapType(tokenType));
+    return SemanticEditorPosition.createEditorPosition(Pair.create((EditorEx)editor, offset),
+                                                       offsetInEditor -> getIteratorAtPosition(offsetInEditor.first, offsetInEditor.second),
+                                                       tokenType -> mapType(tokenType));
   }
-  
+
+  @NotNull
+  protected HighlighterIterator getIteratorAtPosition(@NotNull EditorEx editor, int offset) {
+    return editor.getHighlighter().createIterator(offset);
+  }
+
   @Nullable
   protected abstract SyntaxElement mapType(@NotNull IElementType tokenType);
   
