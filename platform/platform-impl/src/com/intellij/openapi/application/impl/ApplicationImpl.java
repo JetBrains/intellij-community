@@ -129,6 +129,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     getPicoContainer().registerComponentInstance(Application.class, this);
     getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
@@ -166,6 +167,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }));
 
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
       WindowsCommandLineProcessor.LISTENER = (currentDirectory, commandLine) -> {
         LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
         invokeLater(() -> {
@@ -175,6 +177,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         });
       };
     }
+
     if (isUnitTestMode && IdeaApplication.getInstance() == null) {
       String[] args = {"inspect", "", "", ""};
       Main.setFlags(args); // set both isHeadless and isCommandLine to true
@@ -345,13 +348,13 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   /**
-   * Can be called from inside {@link #executeSuspendingWriteAction}. 
+   * Can be called from inside {@link #executeSuspendingWriteAction}.
    * The returned access token allows to start read action on another thread.
    */
   @ApiStatus.Experimental
   public Supplier<AccessToken> transferReadPrivilege() {
     ReadMostlyRWLock.SuspensionId suspensionId = myLock.currentReadPrivilege();
-    return () -> myLock.applyReadPrivilege(suspensionId); 
+    return () -> myLock.applyReadPrivilege(suspensionId);
   }
 
   @Override
@@ -952,25 +955,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
+                                                                          @Nullable Project project,
+                                                                          @Nullable JComponent parentComponent,
+                                                                          @NotNull Consumer<ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithCancellableProgressInDispatchThread(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
+                                                                       @Nullable Project project,
+                                                                       @Nullable JComponent parentComponent,
+                                                                       @NotNull Consumer<ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
-  private boolean runEdtProgressWriteAction(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  private boolean runEdtProgressWriteAction(@NotNull String title,
+                                            @Nullable Project project,
+                                            @Nullable JComponent parentComponent,
+                                            @Nullable String cancelText,
+                                            @NotNull Consumer<ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
@@ -984,10 +988,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithProgressInBackgroundThread(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  public boolean runWriteActionWithProgressInBackgroundThread(@NotNull String title,
+                                                              @Nullable Project project,
+                                                              @Nullable JComponent parentComponent,
+                                                              @Nullable String cancelText,
+                                                              @NotNull Consumer<ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
