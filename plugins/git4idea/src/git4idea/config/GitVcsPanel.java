@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
+import java.awt.*;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
@@ -85,6 +86,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JFormattedTextField myBranchUpdateTimeField;
   private JPanel myBranchTimePanel;
   private JBLabel mySupportedBranchUpLabel;
+  private JPanel myIncomingOutgoingSettingPanel;
 
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
@@ -314,11 +316,12 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
         setText(StringUtil.capitalize(StringUtil.toLowerCase(value.name().replace('_', ' '))));
       }
     });
+    myIncomingOutgoingSettingPanel = new JPanel(new BorderLayout());
     NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
     numberFormatter.setMinimum(1);
     numberFormatter.setAllowsInvalid(true);
     myBranchUpdateTimeField = new JFormattedTextField(numberFormatter);
     mySupportedBranchUpLabel = new JBLabel("Supported from Git 2.9+");
-    mySupportedBranchUpLabel.setBorder(JBUI.Borders.emptyLeft(1));
+    mySupportedBranchUpLabel.setBorder(JBUI.Borders.emptyLeft(2));
   }
 }

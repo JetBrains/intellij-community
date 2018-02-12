@@ -183,7 +183,7 @@
             </constraints>
             <properties/>
           </component>
-          <grid id="c3345" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+          <grid id="c3345" binding="myIncomingOutgoingSettingPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -201,8 +201,8 @@
                   <component id="8e765" class="javax.swing.JCheckBox" binding="myUpdateBranchInfoCheckBox">
                     <constraints border-constraint="West"/>
                     <properties>
-                      <selected value="true"/>
-                      <text value="Mark branches that have incoming/outgoing commits in the Branches popup."/>
+                      <selected value="false"/>
+                      <text value="Mark branches that have incoming/outgoing commits in the Branches popup. "/>
                     </properties>
                   </component>
                   <grid id="69871" binding="myBranchTimePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
@@ -238,7 +238,7 @@
               </grid>
               <component id="e7882" class="com.intellij.ui.components.JBLabel" binding="mySupportedBranchUpLabel" custom-create="true">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="3" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="2" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <alignmentX value="0.0"/>
@@ -246,7 +246,7 @@
                   <foreground color="-8355712"/>
                   <horizontalAlignment value="2"/>
                   <horizontalTextPosition value="2"/>
-                  <text value="Supported for Git 2.9+"/>
+                  <text value=" Supported for Git 2.9+"/>
                 </properties>
               </component>
             </children>
