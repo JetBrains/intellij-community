@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.actions.ChangeModuleNamesAction;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureDaemonAnalyzer;
@@ -137,6 +138,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   protected ArrayList<AnAction> getAdditionalActions() {
     final ArrayList<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction(IdeActions.GROUP_MOVE_MODULE_TO_GROUP));
+    result.add(new ChangeModuleNamesAction());
     return result;
   }
 
@@ -736,7 +738,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       if (LangDataKeys.MODULE_CONTEXT_ARRAY.is(dataId)) {
         final TreePath[] paths = myTree.getSelectionPaths();
         if (paths != null) {
-          ArrayList<Module> modules = new ArrayList<>();
+          Set<Module> modules = new LinkedHashSet<>();
           for (TreePath path : paths) {
             MyNode node = (MyNode)path.getLastPathComponent();
             final NamedConfigurable configurable = node.getConfigurable();
@@ -744,6 +746,16 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
             final Object o = configurable.getEditableObject();
             if (o instanceof Module) {
               modules.add((Module)o);
+            }
+            else if (node instanceof ModuleGroupNode && ((ModuleGroupNode)node).getModuleGroup() != null) {
+              TreeUtil.treeNodeTraverser(node).forEach(descendant -> {
+                if (descendant instanceof MyNode) {
+                  Object object = ((MyNode)descendant).getConfigurable().getEditableObject();
+                  if (object instanceof Module) {
+                    modules.add((Module)object);
+                  }
+                }
+              });
             }
           }
           return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
