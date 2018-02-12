@@ -9,8 +9,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.Parame
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleGetterPrototype
 import com.intellij.codeInsight.generation.GenerateMembersUtil.generateSimpleSetterPrototype
-import com.intellij.codeInsight.template.*
-import com.intellij.codeInsight.template.impl.TemplateState
+import com.intellij.codeInsight.template.TemplateBuilder
+import com.intellij.codeInsight.template.TemplateBuilderImpl
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.VariableNode
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.java.beans.PropertyKind.*
@@ -20,8 +21,6 @@ import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreatePropertyActionGroup
 import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -30,8 +29,6 @@ import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
 import com.intellij.psi.util.PropertyUtilBase.getPropertyNameAndKind
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil.setModifierProperty
 import com.intellij.util.component1
 import com.intellij.util.component2
 import com.intellij.util.toNotNull
@@ -45,7 +42,6 @@ internal class CreatePropertyAction(
 ) : CreateMemberAction(target, request), JvmGroupIntentionAction {
 
   companion object {
-    private const val FIELD_VARIABLE = "FIELD_NAME_VARIABLE"
     private const val SETTER_PARAM_NAME = "SETTER_PARAM_NAME"
   }
 
@@ -232,35 +228,7 @@ internal class CreatePropertyAction(
     val template = builder.buildInlineTemplate().apply {
       isToShortenLongNames = true
     }
-    val listener = object : TemplateEditingAdapter() {
-      override fun beforeTemplateFinished(state: TemplateState, template: Template, brokenOff: Boolean) {
-        if (brokenOff) return
-        CommandProcessor.getInstance().runUndoTransparentAction {
-          runWriteAction {
-            insertMissingField(state)
-          }
-        }
-      }
-
-      fun insertMissingField(state: TemplateState) {
-        val userFieldName = state.getVariableValue(FIELD_VARIABLE)?.text ?: return
-        if (!PsiNameHelper.getInstance(project).isIdentifier(userFieldName)) return
-
-        val element = targetFile.findElementAt(state.editor.caretModel.offset)
-        val aClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: return
-        if (aClass.findFieldByName(userFieldName, false) != null) return
-
-        // we want to create a field if there is no field with the name entered by the user
-        val userType = factory.createTypeFromText(typeExpression.text, aClass)
-        val userField = factory.createField(userFieldName, userType).setStatic(isStatic)
-        aClass.add(userField)
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(state.editor.document)
-      }
-    }
+    val listener = InsertMissingFieldTemplateListener(project, target, typeExpression, isStatic)
     TemplateManager.getInstance(project).startTemplate(targetEditor, template, listener)
-  }
-
-  private fun <T : PsiModifierListOwner> T.setStatic(isStatic: Boolean) = apply {
-    setModifierProperty(this, PsiModifier.STATIC, isStatic)
   }
 }
