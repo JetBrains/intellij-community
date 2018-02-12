@@ -32,7 +32,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    return SyntheticLibrary.contains(getLibrary(), file);
+    return getLibrary().contains(file);
   }
 
   @NotNull
@@ -41,7 +41,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
     SyntheticLibrary library = getLibrary();
     Project project = Objects.requireNonNull(getProject());
     Set<VirtualFile> excludedRoots = library.getExcludedRoots();
-    List<VirtualFile> children = ContainerUtil.filter(SyntheticLibrary.rootsOf(library), file -> file.isValid() && !excludedRoots.contains(file));
+    List<VirtualFile> children = ContainerUtil.filter(library.getAllRoots(), file -> file.isValid() && !excludedRoots.contains(file));
     return ProjectViewDirectoryHelper.getInstance(project).createFileAndDirectoryNodes(children, getSettings());
   }
 

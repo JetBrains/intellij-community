@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
@@ -170,31 +170,27 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  public static Set<VirtualFile> rootsOf(@NotNull SyntheticLibrary library) {
-    return rootsOf(library, true, true);
+  public final Set<VirtualFile> getAllRoots() {
+    return getRoots(true, true);
   }
 
   @NotNull
-  public static Set<VirtualFile> rootsOf(@NotNull SyntheticLibrary library, boolean includeSources, boolean includeBinaries) {
+  private Set<VirtualFile> getRoots(boolean includeSources, boolean includeBinaries) {
     THashSet<VirtualFile> roots = newTroveSet();
     if (includeSources) {
-      roots.addAll(library.getSourceRoots());
+      roots.addAll(getSourceRoots());
     }
     if (includeBinaries) {
-      roots.addAll(library.getBinaryRoots());
+      roots.addAll(getBinaryRoots());
     }
     return roots;
   }
 
-  public static boolean contains(
-    @NotNull SyntheticLibrary library,
-    @NotNull VirtualFile file,
-    boolean includeSources,
-    boolean includeBinaries) {
-    return VfsUtilCore.isUnder(file, rootsOf(library, includeSources, includeBinaries)) && !VfsUtilCore.isUnder(file, library.getExcludedRoots());
+  public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
+    return VfsUtilCore.isUnder(file, getRoots(includeSources, includeBinaries)) && !VfsUtilCore.isUnder(file, getExcludedRoots());
   }
 
-  public static boolean contains(@NotNull SyntheticLibrary library, @NotNull VirtualFile file) {
-    return contains(library, file, true, true);
+  public final boolean contains(@NotNull VirtualFile file) {
+    return contains(file, true, true);
   }
 }
