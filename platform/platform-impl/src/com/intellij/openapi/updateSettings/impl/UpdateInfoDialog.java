@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -186,7 +187,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       return;  // update cancelled
     }
 
-    new Task.Modal(null, IdeBundle.message("update.notifications.title"), true) {
+    new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
@@ -217,7 +218,19 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         ApplicationEx app = ApplicationManagerEx.getApplicationEx();
         if (ApplicationManager.getApplication().isRestartCapable()) {
-          app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
+          if (indicator.isShowing()) {
+            app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
+          }
+          else {
+            String title = IdeBundle.message("update.notifications.title");
+            String message = IdeBundle.message("update.ready.message");
+            UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
+              @Override
+              protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+                app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
+              }
+            }).notify(null);
+          }
         }
         else {
           showPatchInstructions(command);
