@@ -111,6 +111,7 @@
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInspection.streamMigration.SimplifyForEachInspection$ForEachNonFinalFix"/>
     <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.UastJvmElementFactory"/>
     <lang.jvm.actions.jvmElementActionsFactory implementation="com.intellij.codeInsight.intention.impl.JavaElementActionsFactory"/>
+    <lang.jvm.actions.jvmElementActionsFactory implementation="org.jetbrains.plugins.groovy.annotator.intentions.elements.GroovyElementActionsFactory"/>
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
