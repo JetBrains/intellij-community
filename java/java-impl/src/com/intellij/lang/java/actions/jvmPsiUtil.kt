@@ -86,3 +86,10 @@ internal inline fun extractNames(suggestedNames: SuggestedNameInfo?, defaultName
 }
 
 internal fun PsiType.toExpectedType() = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailType.NONE)
+
+internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
+  if (isEmpty() || get(0).type == PsiType.VOID) {
+    return listOf(PsiType.getJavaLangObject(context.manager, context.resolveScope).toExpectedType())
+  }
+  return this
+}

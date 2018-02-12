@@ -38,3 +38,15 @@ object CreatePropertyActionGroup : JvmActionGroup {
     return message("create.property.from.usage.text", requireNotNull(data?.entityName))
   }
 }
+
+object CreateReadOnlyPropertyActionGroup : JvmActionGroup {
+  override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
+    return message("create.getter")
+  }
+}
+
+object CreateWriteOnlyPropertyActionGroup : JvmActionGroup {
+  override fun getDisplayText(data: JvmActionGroup.RenderData?): String {
+    return message("create.setter")
+  }
+}

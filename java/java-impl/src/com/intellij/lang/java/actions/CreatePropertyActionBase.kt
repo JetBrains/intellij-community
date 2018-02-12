@@ -8,7 +8,6 @@ import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameHelper
@@ -47,4 +46,10 @@ internal abstract class CreatePropertyActionBase(
   protected val propertyInfo: Pair<String, PropertyKind> get() = requireNotNull(doGetPropertyInfo()).toNotNull()
 
   override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
+
+  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+    createRenderer(project).doRender()
+  }
+
+  abstract fun createRenderer(project: Project): PropertyRenderer
 }
