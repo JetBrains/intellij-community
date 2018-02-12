@@ -24,6 +24,7 @@ object FeatureUsageEventLogger {
   private val eventLogger = if (Registry.`is`("feature.usage.event.log.collect.and.upload")) createLogger() else null
 
   private var lastEvent: LogEvent? = null
+  private var lastEventTime: Long = 0
   private var count: Int = 1
 
   init {
@@ -51,8 +52,8 @@ object FeatureUsageEventLogger {
   }
 
   private fun log(logger: Logger, event: LogEvent) {
-    if (lastEvent != null && lastEvent!!.shouldMerge(event)) {
-      lastEvent!!.endTimestamp = event.endTimestamp
+    if (lastEvent != null && event.timestamp - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
+      lastEventTime = event.timestamp
       count++
     }
     else {
