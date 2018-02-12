@@ -114,9 +114,10 @@ envs {
  * Kills any process named "python" using windows powershell.
  * Works on Win7+.
  */
-task killPythonWindows(type:Exec) {
-    commandLine 'powershell', '"Get-Process | where {$_.Name -ieq \\"python\\"} | Stop-Process"'
+task killPythonWindows(type: Exec) {
+  commandLine 'powershell', '"Get-Process | where {$_.Name -ieq \\"python\\"} | Stop-Process"'
 }
+killPythonWindows.onlyIf { Os.isFamily(Os.FAMILY_WINDOWS)}
 
 task prepare(type: Delete) {
   doFirst {
@@ -138,17 +139,10 @@ task prepare(type: Delete) {
     }
   }
 }
-prepare.dependsOn {
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-    // Python leaked from previous test may prevent this script from
-    // deleting folder because you can't delete file opened by process on Windows
-    killPythonWindows
-  }
-}
-
 
 task build {
   mustRunAfter prepare
-
-  dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
+  // Python leaked from previous test may prevent this script from
+  // deleting folder because you can't delete file opened by process on Windows
+  dependsOn killPythonWindows, prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
 }
