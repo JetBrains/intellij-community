@@ -11,7 +11,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
@@ -133,13 +132,13 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
 
   @Nullable
   @Override
-  public PostfixTemplateEditor createEditor(@Nullable Project project, @Nullable PostfixTemplate templateToEdit) {
+  public PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
     if (templateToEdit == null ||
         templateToEdit instanceof JavaEditablePostfixTemplate &&
         // cannot be editable until there is no UI for editing template variables    
         !(templateToEdit instanceof ForIndexedPostfixTemplate) &&
         !(templateToEdit instanceof OptionalPostfixTemplate)) {
-      return new JavaPostfixTemplateEditor(this, project, templateToEdit);
+      return new JavaPostfixTemplateEditor(this, templateToEdit);
     }
     return null;
   }

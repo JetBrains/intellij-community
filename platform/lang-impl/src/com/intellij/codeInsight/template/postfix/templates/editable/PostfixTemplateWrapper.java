@@ -72,6 +72,7 @@ public class PostfixTemplateWrapper extends PostfixTemplate {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PostfixTemplateWrapper)) return false;
+    if (!super.equals(o)) return false;
     PostfixTemplateWrapper wrapper = (PostfixTemplateWrapper)o;
     return Objects.equals(myDelegate, wrapper.myDelegate);
   }

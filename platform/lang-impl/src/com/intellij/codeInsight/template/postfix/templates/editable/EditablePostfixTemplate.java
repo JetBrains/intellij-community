@@ -83,9 +83,9 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof EditablePostfixTemplate)) return false;
+    if (!super.equals(o)) return false;
     EditablePostfixTemplate template = (EditablePostfixTemplate)o;
-    return Objects.equals(getKey(), template.getKey()) &&
-           Objects.equals(myLiveTemplate, template.myLiveTemplate);
+    return Objects.equals(myLiveTemplate, template.myLiveTemplate);
   }
 
   @Override

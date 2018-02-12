@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +24,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ListUtil;
@@ -45,7 +43,6 @@ import java.util.Set;
 
 public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
   @NotNull private final PostfixTemplateProvider myProvider;
-  @Nullable private final Project myProject;
   @NotNull private final Editor myTemplateEditor;
   @NotNull private final JBList<JavaPostfixTemplateExpressionCondition> myExpressionTypesList;
   @NotNull private final DefaultListModel<JavaPostfixTemplateExpressionCondition> myExpressionTypesListModel;
@@ -57,12 +54,10 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
   private JPanel myExpressionTypesPanel;
   private JPanel myTemplateEditorPanel;
 
-  public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider,
-                                   @Nullable Project project,
-                                   @Nullable PostfixTemplate template) {
+  public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider, @Nullable PostfixTemplate template) {
     myProvider = provider;
-    myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
-    myTemplateEditor = TemplateEditorUtil.createEditor(false, createDocument(myProject), myProject);
+    Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+    myTemplateEditor = TemplateEditorUtil.createEditor(false, createDocument(defaultProject), defaultProject);
 
     myExpressionTypesListModel = JBList.createDefaultListModel();
     myExpressionTypesList = new JBList<>(myExpressionTypesListModel);
@@ -157,7 +152,11 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition()));
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition()));
     group.add(new AddConditionAction(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition()));
-    group.add(new ChooseClassAction());
+    Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    for (Project project : projects) {
+      group.add(new ChooseClassAction(project));
+    }
+    group.add(new ChooseClassAction(null));
     DataContext context = DataManager.getInstance().getDataContext(button.getContextComponent());
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
                                                                           JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
@@ -180,19 +179,16 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
   }
 
   private class ChooseClassAction extends DumbAwareAction {
-    private final ClassFilter FILTER = new ClassFilter() {
-      public boolean isAccepted(PsiClass aClass) {
-        return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
-      }
-    };
+    @Nullable
+    private final Project myProject;
 
-    protected ChooseClassAction() {
-      super("choose class...");
+    protected ChooseClassAction(@Nullable Project project) {
+      super((project != null && !project.isDefault() ? "choose class in " + project.getName() + "..." : "enter class name..."));
+      myProject = project;
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-
       String fqn = getFqn();
       if (fqn != null) {
         myExpressionTypesListModel.addElement(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(fqn));
@@ -204,9 +200,7 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
       if (myProject == null || myProject.isDefault()) {
         return Messages.showInputDialog(myPanel, title, title, null);
       }
-      GlobalSearchScope scope = GlobalSearchScope.projectScope(myProject);
-      TreeClassChooser chooser =
-        TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(title, scope, FILTER, null);
+      TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createAllProjectScopeChooser(title);
       chooser.showDialog();
       PsiClass selectedClass = chooser.getSelected();
       return selectedClass != null ? selectedClass.getQualifiedName() : null;
