@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
     SyntheticLibrary library = getLibrary();
     Project project = Objects.requireNonNull(getProject());
     Set<VirtualFile> excludedRoots = library.getExcludedRoots();
-    List<VirtualFile> children = ContainerUtil.filter(library.getSourceRoots(), file -> file.isValid() && !excludedRoots.contains(file));
+    List<VirtualFile> children = ContainerUtil.filter(SyntheticLibrary.rootsOf(library), file -> file.isValid() && !excludedRoots.contains(file));
     return ProjectViewDirectoryHelper.getInstance(project).createFileAndDirectoryNodes(children, getSettings());
   }
 
