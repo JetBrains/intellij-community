@@ -38,6 +38,7 @@ import org.apache.http.client.utils.URIBuilder
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
+import java.lang.IllegalStateException
 import java.util.*
 
 /**
@@ -506,6 +507,35 @@ object UpdateChecker {
           updateAndShowResult()
         }
       }
+    }
+  }
+
+  /** A helper method for manually testing platform updates (see [com.intellij.internal.ShowUpdateInfoDialogAction]). */
+  fun testPlatformUpdate(updateInfoText: String, patchFilePath: String?) {
+    if (!ApplicationManager.getApplication().isInternal) {
+      throw IllegalStateException()
+    }
+
+    val updateInfo: UpdatesInfo
+    try {
+      updateInfo = UpdatesInfo(loadElement(updateInfoText))
+    }
+    catch (e: JDOMException) {
+      LOG.error(e)
+      return
+    }
+
+    val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+    val checkForUpdateResult = strategy.checkForUpdates()
+    val updatedChannel = checkForUpdateResult.updatedChannel
+    val newBuild = checkForUpdateResult.newBuild
+    if (updatedChannel != null && newBuild != null) {
+      val patch = checkForUpdateResult.findPatchForBuild(ApplicationInfo.getInstance().build)
+      val patchFile = if (patchFilePath != null) File(FileUtil.toSystemDependentName(patchFilePath)) else null
+      UpdateInfoDialog(updatedChannel, newBuild, patch, patchFile).show()
+    }
+    else {
+      NoUpdatesDialog(true).show()
     }
   }
 }

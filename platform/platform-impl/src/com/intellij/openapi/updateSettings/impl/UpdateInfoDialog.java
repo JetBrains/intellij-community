@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.CommandLineUtil;
@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,13 +39,14 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 /**
  * @author pti
@@ -57,14 +59,15 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final PatchInfo myPatch;
   private final boolean myWriteProtected;
   private final Pair<String, Color> myLicenseInfo;
+  private final File myTestPatch;
 
   UpdateInfoDialog(@NotNull UpdateChannel channel,
                    @NotNull BuildInfo newBuild,
                    @Nullable PatchInfo patch,
                    boolean enableLink,
                    boolean forceHttps,
-                   Collection<PluginDownloader> updatedPlugins,
-                   Collection<IdeaPluginDescriptor> incompatiblePlugins) {
+                   @Nullable Collection<PluginDownloader> updatedPlugins,
+                   @Nullable Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;
@@ -74,12 +77,27 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     myWriteProtected = myPatch != null && !SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()));
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
+    myTestPatch = null;
     init();
 
-    if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
+    if (!ContainerUtil.isEmpty(incompatiblePlugins)) {
       String list = StringUtil.join(incompatiblePlugins, IdeaPluginDescriptor::getName, "<br/>");
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
+  }
+
+  UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, PatchInfo patch, @Nullable File patchFile) {
+    super(true);
+    myUpdatedChannel = channel;
+    myForceHttps = true;
+    myUpdatedPlugins = null;
+    myNewBuild = newBuild;
+    myPatch = patch;
+    myWriteProtected = false;
+    myLicenseInfo = null;
+    myTestPatch = patchFile;
+    init();
+    setTitle("[TEST] " + getTitle());
   }
 
   private static Pair<String, Color> initLicensingInfo(UpdateChannel channel, BuildInfo build) {
@@ -173,7 +191,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          File file = doDownloadPatch(indicator);
+          File file = myTestPatch != null ? myTestPatch : UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
           indicator.setText(IdeBundle.message("update.preparing.patch.progress"));
           command = UpdateInstaller.preparePatchCommand(file);
         }
@@ -206,11 +224,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
       }
     }.queue();
-  }
-
-  @NotNull
-  File doDownloadPatch(@NotNull ProgressIndicator indicator) throws IOException {
-    return UpdateInstaller.downloadPatchFile(myPatch, myNewBuild.getNumber(), myForceHttps, indicator);
   }
 
   private void openDownloadPage() {
@@ -283,13 +296,8 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
-      myCurrentVersion.setText(
-        formatVersion(
-          appInfo.getFullVersion(),
-          appInfo.getBuild().asStringWithoutProductCode()
-        )
-      );
-      myNewVersion.setText(formatVersion(myNewBuild.getVersion(), myNewBuild.getNumber().asStringWithoutProductCode()));
+      myCurrentVersion.setText(formatVersion(appInfo.getFullVersion(), appInfo.getBuild()));
+      myNewVersion.setText(formatVersion(myNewBuild.getVersion(), myNewBuild.getNumber()));
 
       if (myPatch != null && !StringUtil.isEmptyOrSpaces(myPatch.getSize())) {
         myPatchInfo.setText(myPatch.getSize() + " MB");
@@ -321,15 +329,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
           return size;
         }
       };
-      myScrollPane = new JBScrollPane(myUpdateMessage,
-                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      myScrollPane = new JBScrollPane(myUpdateMessage, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
       myScrollPane.setBorder(JBUI.Borders.empty());
     }
   }
 
-  protected static String formatVersion(String versionString, String build) {
-    return IdeBundle.message("updates.version.info", versionString, build);
+  private static String formatVersion(String versionString, BuildNumber build) {
+    return IdeBundle.message("updates.version.info", versionString, build.asStringWithoutProductCode());
   }
 
   private static String augmentUrl(String url) {
