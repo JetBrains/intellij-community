@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -326,6 +327,9 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
         lines.add(commit);
       }
       return new GitFileAnnotation(myProject, file, revision, lines);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Exception e) {
       LOG.error("Couldn't parse annotation: " + e, new Attachment("output.txt", output));
