@@ -288,7 +288,7 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
       PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, providerName, templateToEdit);
       if (dialog.showAndGet()) {
         PostfixTemplate newTemplate = editor.createTemplate(template.getId(), dialog.getTemplateName());
-        if (templateToEdit.isBuiltin()) {
+        if (template.isBuiltin()) {
           PostfixTemplate builtin = template instanceof PostfixChangedBuiltinTemplate
                                     ? ((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate()
                                     : templateToEdit;
