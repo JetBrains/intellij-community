@@ -3,10 +3,9 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateEditor;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.postfix.templates.editable.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -19,11 +18,13 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.LazyKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -143,7 +144,7 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     return null;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
     boolean useTopmostExpression = Boolean.parseBoolean(template.getAttributeValue(TOPMOST_ATTR));
@@ -157,8 +158,12 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         ContainerUtil.addIfNotNull(conditions, readExternal(conditionElement));
       }
     }
-    String templateText = StringUtil.notNullize(template.getChildText(TEMPLATE_TAG));
-    return new JavaEditablePostfixTemplate(id, name, templateText, "", conditions, languageLevel, useTopmostExpression, this);
+    Element templateChild = template.getChild(TemplateSettings.TEMPLATE);
+    if (templateChild == null) {
+      return null;
+    }
+    TemplateImpl liveTemplate = TemplateSettings.readTemplateFromElement("", templateChild, getClass().getClassLoader());
+    return new JavaEditablePostfixTemplate(id, name, liveTemplate, "", conditions, languageLevel, useTopmostExpression, this);
   }
 
   @Override
@@ -172,8 +177,9 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
       for (JavaPostfixTemplateExpressionCondition condition : ((JavaEditablePostfixTemplate)template).getExpressionConditions()) {
         writeExternal(condition, conditionsTag);
       }
-      Element templateTag = new Element(TEMPLATE_TAG);
-      templateTag.setText(((JavaEditablePostfixTemplate)template).getTemplateText());
+
+      Element templateTag = TemplateSettings.serializeTemplate(((EditablePostfixTemplate)template).getLiveTemplate(), null,
+                                                               LazyKt.lazyOf(Collections.emptyMap()));
       parentElement.addContent(conditionsTag).addContent(templateTag);
     }
   }

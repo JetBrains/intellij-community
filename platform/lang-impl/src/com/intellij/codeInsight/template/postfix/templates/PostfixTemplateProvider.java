@@ -88,7 +88,6 @@ public interface PostfixTemplateProvider {
    * Instantiates the template that was serialized by the provider to XML.
    */
   @Nullable
-
   default PostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
     return null;
   }

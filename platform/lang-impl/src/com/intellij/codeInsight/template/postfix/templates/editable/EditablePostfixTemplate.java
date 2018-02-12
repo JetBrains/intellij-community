@@ -3,6 +3,7 @@ package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -15,6 +16,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.util.Function;
@@ -27,20 +29,21 @@ import java.util.Objects;
 
 @ApiStatus.Experimental
 public abstract class EditablePostfixTemplate extends PostfixTemplate {
-  @NotNull private final String myTemplateText;
+  @NotNull private final TemplateImpl myLiveTemplate;
 
   public EditablePostfixTemplate(@NotNull String templateId,
                                  @NotNull String templateName,
-                                 @NotNull String templateText,
+                                 @NotNull TemplateImpl liveTemplate,
                                  @NotNull String example,
                                  @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, example, provider);
-    myTemplateText = templateText;
+    assert StringUtil.isNotEmpty(liveTemplate.getKey());
+    myLiveTemplate = liveTemplate;
   }
 
   @NotNull
-  public String getTemplateText() {
-    return myTemplateText;
+  public TemplateImpl getLiveTemplate() {
+    return myLiveTemplate;
   }
 
   @Override
@@ -82,12 +85,12 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     if (!(o instanceof EditablePostfixTemplate)) return false;
     EditablePostfixTemplate template = (EditablePostfixTemplate)o;
     return Objects.equals(getKey(), template.getKey()) &&
-           Objects.equals(myTemplateText, template.myTemplateText);
+           Objects.equals(myLiveTemplate, template.myLiveTemplate);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(getKey(), myTemplateText);
+    return Objects.hash(getKey(), myLiveTemplate);
   }
 
   protected abstract List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset);
@@ -111,9 +114,10 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
   }
 
   private void prepareAndExpandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance()
-      .executeCommand(element.getProject(), () -> expandForChooseExpression(element, editor), "Expand postfix template",
-                      PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
+    ApplicationManager.getApplication().runWriteAction(
+      () -> CommandProcessor.getInstance().executeCommand(
+        element.getProject(), () -> expandForChooseExpression(element, editor), "Expand postfix template",
+        PostfixLiveTemplate.POSTFIX_TEMPLATE_ID));
   }
 
   private void expandForChooseExpression(@NotNull PsiElement element, @NotNull Editor editor) {
@@ -123,15 +127,9 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
     document.deleteString(elementToRemove.getTextRange().getStartOffset(), elementToRemove.getTextRange().getEndOffset());
     TemplateManager manager = TemplateManager.getInstance(project);
 
-    Template template = createTemplate(manager, myTemplateText);
+    TemplateImpl template = myLiveTemplate.copy();
     template.addVariable("EXPR", new TextExpression(element.getText()), false);
     addTemplateVariables(element, template);
     manager.startTemplate(editor, template);
-  }
-
-  private static Template createTemplate(@NotNull TemplateManager manager, @NotNull String templateString) {
-    Template template = manager.createTemplate("", "", templateString);
-    template.setToReformat(true);
-    return template;
   }
 }

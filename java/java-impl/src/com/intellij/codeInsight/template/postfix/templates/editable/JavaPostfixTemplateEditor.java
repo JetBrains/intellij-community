@@ -128,7 +128,8 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
     }
     myLanguageLevelCombo.setSelectedItem(template.getMinimumLanguageLevel());
     myApplyToTheTopmostJBCheckBox.setSelected(template.isUseTopmostExpression());
-    ApplicationManager.getApplication().runWriteAction(() -> myTemplateEditor.getDocument().setText(template.getTemplateText()));
+    ApplicationManager.getApplication()
+                      .runWriteAction(() -> myTemplateEditor.getDocument().setText(template.getLiveTemplate().getString()));
   }
 
   @NotNull
