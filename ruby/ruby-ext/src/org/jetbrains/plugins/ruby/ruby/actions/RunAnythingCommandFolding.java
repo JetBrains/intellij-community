@@ -14,7 +14,7 @@ import java.util.List;
 public class RunAnythingCommandFolding extends ConsoleFolding {
   @Override
   public synchronized boolean shouldFoldLine(@NotNull Project project, @NotNull String line) {
-    return RunAnythingCommandItem.getOrCreateWrappedCommands(project).stream().anyMatch(pair -> pair.first.equals(StringUtil.trim(line)));
+    return RunAnythingUtil.getOrCreateWrappedCommands(project).stream().anyMatch(pair -> pair.first.equals(StringUtil.trim(line)));
   }
 
   @Nullable
@@ -22,7 +22,7 @@ public class RunAnythingCommandFolding extends ConsoleFolding {
   public synchronized String getPlaceholderText(@NotNull Project project, @NotNull List<String> lines) {
     if (lines.isEmpty()) return null;
 
-    Collection<Pair<String, String>> commands = RunAnythingCommandItem.getOrCreateWrappedCommands(project);
+    Collection<Pair<String, String>> commands = RunAnythingUtil.getOrCreateWrappedCommands(project);
     for (Pair<String, String> pair : commands) {
       if (pair.first.equals(StringUtil.trim(ContainerUtil.getFirstItem(lines)))) {
         commands.remove(pair);

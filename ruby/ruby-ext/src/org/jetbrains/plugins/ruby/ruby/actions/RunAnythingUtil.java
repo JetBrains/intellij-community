@@ -19,9 +19,7 @@ import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -42,6 +40,7 @@ import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfigur
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
@@ -51,6 +50,7 @@ import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
 public class RunAnythingUtil {
+  private static final Key<Collection<Pair<String, String>>> RUN_ANYTHING_WRAPPED_COMMANDS = Key.create("RUN_ANYTHING_WRAPPED_COMMANDS");
   private static final Border RENDERER_TITLE_BORDER = JBUI.Borders.emptyTop(3);
   private static final String DEBUGGER_FEATURE_USAGE = RunAnythingAction.RUN_ANYTHING + " - " + "DEBUGGER";
 
@@ -410,5 +410,15 @@ public class RunAnythingUtil {
 
   static void triggerMoreStatistics(@NotNull RunAnythingGroup group) {
     UsageTrigger.trigger(RunAnythingAction.RUN_ANYTHING + " - more - " + group.getTitle());
+  }
+
+  @NotNull
+  public static Collection<Pair<String, String>> getOrCreateWrappedCommands(@NotNull Project project) {
+    Collection<Pair<String, String>> list = project.getUserData(RUN_ANYTHING_WRAPPED_COMMANDS);
+    if (list == null) {
+      list = ContainerUtil.newArrayList();
+      project.putUserData(RUN_ANYTHING_WRAPPED_COMMANDS, list);
+    }
+    return list;
   }
 }
