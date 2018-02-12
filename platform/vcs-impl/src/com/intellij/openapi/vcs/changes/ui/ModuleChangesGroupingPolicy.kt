@@ -2,18 +2,38 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicy.Companion.HIDE_EXCLUDED_FILES
+import com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicy.Companion.MODULE_CACHE
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.*
 import javax.swing.tree.DefaultTreeModel
 
-class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : ChangesGroupingPolicy {
-  private val innerPolicy = ChangesModuleGroupingPolicy(project, model)
+class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
+  private val myIndex = ProjectFileIndex.getInstance(project)
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    generateSequence(nodePath) { it.parent }.forEach { path ->
-      innerPolicy.getParentNodeFor(path, subtreeRoot)?.let {
+    val file = resolveVirtualFile(nodePath)
+
+    file?.let { myIndex.getModuleForFile(file, HIDE_EXCLUDED_FILES) }?.let { module ->
+      val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
+      val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
+
+      MODULE_CACHE.getValue(cachingRoot)[module]?.let { return it }
+
+      ChangesBrowserModuleNode(module).let {
         it.markAsHelperNode()
+
+        model.insertNodeInto(it, grandParent, grandParent.childCount)
+
+        MODULE_CACHE.getValue(cachingRoot)[module] = it
+        DIRECTORY_CACHE.getValue(cachingRoot)[staticFrom(it.moduleRoot).key] = it
+        IS_CACHING_ROOT.set(it, true)
+        MODULE_CACHE.getValue(it)[module] = it
+        DIRECTORY_CACHE.getValue(it)[staticFrom(it.moduleRoot).key] = it
         return it
       }
     }
+
     return null
   }
 

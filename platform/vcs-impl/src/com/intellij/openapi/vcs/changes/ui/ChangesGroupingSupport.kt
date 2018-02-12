@@ -6,26 +6,50 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionFactory
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
-import kotlin.properties.ObservableProperty
-import kotlin.reflect.KProperty
+import javax.swing.tree.DefaultTreeModel
+
+private val PREDEFINED_PRIORITIES = mapOf("directory" to 10, "module" to 20, "repository" to 30)
 
 class ChangesGroupingSupport(project: Project, source: Any) {
   private val changeSupport = PropertyChangeSupport(source)
   private val groupingFactories = collectFactories(project)
+  private val groupingConfig = groupingFactories.allKeys.associateBy({ it }, { false }).toMutableMap()
 
-  var groupingKey by object : ObservableProperty<String>(NONE_GROUPING) {
-    override fun beforeChange(property: KProperty<*>, oldValue: String, newValue: String) = if (isAvailable(newValue)) true
-    else throw IllegalArgumentException("Unknown grouping $newValue")
+  val groupingKeys get() = groupingConfig.filterValues { it }.keys
 
-    override fun afterChange(property: KProperty<*>, oldValue: String, newValue: String) = changeSupport.firePropertyChange(
-      PROP_GROUPING_KEY, oldValue, newValue)
+  operator fun get(groupingKey: String): Boolean {
+    if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey")
+
+    return groupingConfig[groupingKey]!!
   }
-  val grouping get() = groupingFactories.getByKey(groupingKey)!!
-  val isNone get() = groupingKey == NONE_GROUPING
-  val isDirectory get() = groupingKey == DIRECTORY_GROUPING
 
-  fun setGroupingKeyOrNone(groupingKey: String) {
-    this.groupingKey = if (isAvailable(groupingKey)) groupingKey else NONE_GROUPING
+  operator fun set(groupingKey: String, state: Boolean) {
+    if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey")
+
+    if (groupingConfig[groupingKey] != state) {
+      val oldGroupingKeys = groupingKeys
+
+      groupingConfig[groupingKey] = state
+      changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, groupingKeys)
+    }
+  }
+
+  val grouping
+    get() = object : ChangesGroupingPolicyFactory() {
+      override fun createGroupingPolicy(model: DefaultTreeModel): ChangesGroupingPolicy {
+        var result: ChangesGroupingPolicy = NoneChangesGroupingPolicy.Factory().createGroupingPolicy(model)
+        groupingConfig.filterValues { it }.keys.sortedByDescending { PREDEFINED_PRIORITIES[it] }.forEach {
+          result = groupingFactories.getByKey(it)!!.createGroupingPolicy(model).apply { setNextGroupingPolicy(result) }
+        }
+        return result
+      }
+    }
+
+  val isNone get() = groupingKeys.isEmpty()
+  val isDirectory get() = this[DIRECTORY_GROUPING]
+
+  fun setGroupingKeysOrSkip(groupingKeys: Set<String>) {
+    groupingConfig.entries.forEach { it.setValue(it.key in groupingKeys) }
   }
   fun isAvailable(groupingKey: String) = groupingFactories.getByKey(groupingKey) != null
 
@@ -34,8 +58,9 @@ class ChangesGroupingSupport(project: Project, source: Any) {
 
   companion object {
     @JvmField val KEY = DataKey.create<ChangesGroupingSupport>("ChangesTree.GroupingSupport")!!
-    const val PROP_GROUPING_KEY = "ChangesGroupingKey"
+    const val PROP_GROUPING_KEYS = "ChangesGroupingKeys"
     const val DIRECTORY_GROUPING = "directory"
+    const val MODULE_GROUPING = "module"
     const val NONE_GROUPING = "none"
 
     @JvmStatic

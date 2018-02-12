@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -26,7 +25,6 @@ import java.io.File;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -36,14 +34,16 @@ import static java.util.Comparator.comparingInt;
 
 @SuppressWarnings("UnusedReturnValue")
 public class TreeModelBuilder {
-  private static final Logger LOG = Logger.getInstance(TreeModelBuilder.class);
-
   private static final int UNVERSIONED_MAX_SIZE = 50;
 
   public static final Key<Function<StaticFilePath, ChangesBrowserNode<?>>> PATH_NODE_BUILDER = Key.create("ChangesTree.PathNodeBuilder");
   public static final NotNullLazyKey<Map<String, ChangesBrowserNode<?>>, ChangesBrowserNode<?>> DIRECTORY_CACHE =
     NotNullLazyKey.create("ChangesTree.DirectoryCache", node -> newHashMap());
   public static final Key<ChangesGroupingPolicy> GROUPING_POLICY = Key.create("ChangesTree.GroupingPolicy");
+  // This is used in particular for the case when module contains files from different repositories. So there could be several nodes for
+  // the same module in one subtree (for change list), but under different repository nodes. And we should perform node caching not just
+  // in subtree root, but further down the tree.
+  public static final Key<Boolean> IS_CACHING_ROOT = Key.create("ChangesTree.IsCachingRoot");
 
   @NotNull protected final Project myProject;
   @NotNull protected final DefaultTreeModel myModel;
@@ -342,24 +342,20 @@ public class TreeModelBuilder {
                                   @NotNull ChangesBrowserNode subtreeRoot,
                                   @NotNull ChangesBrowserNode node,
                                   @NotNull Function<StaticFilePath, ChangesBrowserNode<?>> nodeBuilder) {
-    StaticFilePath pathKey = getKey(change);
-
-    if (DIRECTORY_CACHE.getValue(subtreeRoot).get(pathKey.getKey()) == null) {
-      PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
-      if (!GROUPING_POLICY.isIn(subtreeRoot)) {
-        GROUPING_POLICY.set(subtreeRoot, myGroupingPolicyFactory.createGroupingPolicy(myModel));
-      }
-
-      ChangesBrowserNode parentNode = notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot);
-      myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
-
-      if (pathKey.isDirectory()) {
-        DIRECTORY_CACHE.getValue(subtreeRoot).put(pathKey.getKey(), node);
-      }
+    PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
+    if (!GROUPING_POLICY.isIn(subtreeRoot)) {
+      GROUPING_POLICY.set(subtreeRoot, myGroupingPolicyFactory.createGroupingPolicy(myModel));
     }
-    else {
-      // This should not occur as data should be sorted before nodes creation
-      LOG.warn("Node was already reported " + join(list(pathKey.getKey(), change), ","));
+
+    StaticFilePath pathKey = getKey(change);
+    ChangesBrowserNode<?> parentNode =
+      notNull(GROUPING_POLICY.getRequired(subtreeRoot).getParentNodeFor(pathKey, subtreeRoot), subtreeRoot);
+    ChangesBrowserNode<?> cachingRoot = BaseChangesGroupingPolicy.getCachingRoot(parentNode, subtreeRoot);
+
+    myModel.insertNodeInto(node, parentNode, myModel.getChildCount(parentNode));
+
+    if (pathKey.isDirectory()) {
+      DIRECTORY_CACHE.getValue(cachingRoot).put(pathKey.getKey(), node);
     }
   }
 
@@ -457,7 +453,7 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  private static StaticFilePath staticFrom(@NotNull FilePath fp) {
+  public static StaticFilePath staticFrom(@NotNull FilePath fp) {
     final String path = fp.getPath();
     if (fp.isNonLocal() && (! FileUtil.isAbsolute(path) || VcsUtil.isPathRemote(path))) {
       return new StaticFilePath(fp.isDirectory(), fp.getIOFile().getPath().replace('\\', '/'), fp.getVirtualFile());
@@ -466,7 +462,7 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  private static StaticFilePath staticFrom(@NotNull VirtualFile vf) {
+  public static StaticFilePath staticFrom(@NotNull VirtualFile vf) {
     return new StaticFilePath(vf.isDirectory(), vf.getPath(), vf);
   }
 

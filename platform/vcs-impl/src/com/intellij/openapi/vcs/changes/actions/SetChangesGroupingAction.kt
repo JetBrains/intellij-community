@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.NONE_GROUPING
 
 abstract class SetChangesGroupingAction : ToggleAction(), DumbAware {
   init {
@@ -17,10 +16,10 @@ abstract class SetChangesGroupingAction : ToggleAction(), DumbAware {
     e.presentation.isEnabledAndVisible = getGroupingSupport(e)?.isAvailable(groupingKey) ?: false
   }
 
-  override fun isSelected(e: AnActionEvent) = getGroupingSupport(e)?.groupingKey == groupingKey
+  override fun isSelected(e: AnActionEvent) = e.presentation.isEnabledAndVisible && getGroupingSupport(e)?.get(groupingKey) ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    getGroupingSupport(e)!!.groupingKey = if (state) groupingKey else NONE_GROUPING
+    getGroupingSupport(e)!![groupingKey] = state
   }
 
   protected fun getGroupingSupport(e: AnActionEvent) = e.getData(ChangesGroupingSupport.KEY)

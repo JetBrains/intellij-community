@@ -40,6 +40,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +57,13 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static com.intellij.util.containers.ContainerUtil.set;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -121,7 +124,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       }
     };
     myGroupingChangeListener = e -> {
-      myState.groupingKey = myView.getGroupingSupport().getGroupingKey();
+      myState.groupingKeys = myView.getGroupingSupport().getGroupingKeys();
       refreshView();
     };
   }
@@ -190,7 +193,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     toolbarPanel.add(visualActionsToolbar.getComponent(), BorderLayout.CENTER);
 
     myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-    myView.getGroupingSupport().setGroupingKeyOrNone(myState.groupingKey);
+    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
 
     myProgressLabel = new JPanel(new BorderLayout());
 
@@ -308,14 +311,14 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private void migrateShowFlattenSetting() {
     if (!myState.myShowFlatten) {
-      myState.groupingKey = DIRECTORY_GROUPING;
+      myState.groupingKeys = set(DEFAULT_GROUPING_KEYS);
       myState.myShowFlatten = true;
     }
   }
 
   @Override
   public void setGrouping(@NotNull String groupingKey) {
-    myView.getGroupingSupport().setGroupingKeyOrNone(groupingKey);
+    myView.getGroupingSupport().setGroupingKeysOrSkip(set(groupingKey));
   }
 
   @Override
@@ -395,8 +398,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Attribute("flattened_view")
     public boolean myShowFlatten = true;
 
-    @Attribute
-    public String groupingKey = NONE_GROUPING;
+    @XCollection
+    public Set<String> groupingKeys = newHashSet();
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;

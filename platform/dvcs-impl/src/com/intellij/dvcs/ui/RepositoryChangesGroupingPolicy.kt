@@ -5,26 +5,33 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyKey
+import com.intellij.openapi.vcs.changes.ui.BaseChangesGroupingPolicy
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicy
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.*
 import javax.swing.tree.DefaultTreeModel
 
-class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : ChangesGroupingPolicy {
+class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   private val repositoryManager = VcsRepositoryManager.getInstance(project)
 
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val file = generateSequence(nodePath) { it.parent }.mapNotNull { it.resolve() }.firstOrNull()
+    val file = resolveVirtualFile(nodePath)
 
-    file?.let(repositoryManager::getRepositoryForFile)?.let { repository ->
-      REPOSITORY_CACHE.getValue(subtreeRoot)[repository]?.let { return it }
+    file?.let { repositoryManager.getRepositoryForFile(it, true) }?.let { repository ->
+      val grandParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot) ?: subtreeRoot
+      val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
+
+      REPOSITORY_CACHE.getValue(cachingRoot)[repository]?.let { return it }
 
       RepositoryChangesBrowserNode(repository).let {
         it.markAsHelperNode()
 
-        model.insertNodeInto(it, subtreeRoot, subtreeRoot.childCount)
-        REPOSITORY_CACHE.getValue(subtreeRoot)[repository] = it
+        model.insertNodeInto(it, grandParent, grandParent.childCount)
+
+        REPOSITORY_CACHE.getValue(cachingRoot)[repository] = it
+        IS_CACHING_ROOT.set(it, true)
+        DIRECTORY_CACHE.getValue(it)[staticFrom(repository.root).key] = it
         return it
       }
     }

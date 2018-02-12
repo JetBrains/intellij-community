@@ -73,8 +73,6 @@
     <changesViewContent tabName="Incoming" className="com.intellij.openapi.vcs.changes.committed.IncomingChangesViewProvider"
                         predicateClassName="com.intellij.openapi.vcs.changes.committed.IncomingChangesVisibilityPredicate"/>
 
-    <changesGroupingPolicy key="none" id="none"
-                           implementationClass="com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingPolicy$Factory"/>
     <changesGroupingPolicy key="directory" id="directory"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
 
