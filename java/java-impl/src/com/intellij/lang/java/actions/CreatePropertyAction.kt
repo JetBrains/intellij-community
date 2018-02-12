@@ -20,7 +20,6 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.CreateMethodRequest
 import com.intellij.lang.jvm.actions.CreatePropertyActionGroup
 import com.intellij.lang.jvm.actions.JvmActionGroup
-import com.intellij.lang.jvm.actions.JvmGroupIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -28,18 +27,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PropertyUtilBase.getAccessorName
-import com.intellij.psi.util.PropertyUtilBase.getPropertyNameAndKind
 import com.intellij.util.component1
 import com.intellij.util.component2
-import com.intellij.util.toNotNull
 
 /**
  * This action renders a property (field + getter + setter) in Java class when getter or a setter is requested.
  */
-internal class CreatePropertyAction(
-  target: PsiClass,
-  override val request: CreateMethodRequest
-) : CreateMemberAction(target, request), JvmGroupIntentionAction {
+internal class CreatePropertyAction(target: PsiClass, request: CreateMethodRequest) : CreatePropertyActionBase(target, request) {
 
   companion object {
     private const val SETTER_PARAM_NAME = "SETTER_PARAM_NAME"
@@ -49,21 +43,7 @@ internal class CreatePropertyAction(
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
     if (!super.isAvailable(project, editor, file)) return false
-
-    val accessorName = request.methodName
-    if (!PsiNameHelper.getInstance(project).isIdentifier(accessorName)) return false
-
-    val (propertyName: String, propertyKind: PropertyKind) = doGetPropertyInfo() ?: return false
-    if (propertyName == null || propertyName.isEmpty() || propertyKind == null) return false
-
-    // check parameters count
-    when (propertyKind) {
-      GETTER, BOOLEAN_GETTER -> if (request.parameters.isNotEmpty()) return false
-      SETTER -> if (request.parameters.size != 1) return false
-    }
-
-    if (target.findMethodsByName(accessorName, false).isNotEmpty()) return false
-
+    val (propertyName, propertyKind) = propertyInfo
     val counterPart = when (propertyKind) {
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
@@ -78,14 +58,6 @@ internal class CreatePropertyAction(
     }
     return target.findMethodsByName(getAccessorName(propertyName, counterPart), false).isEmpty()
   }
-
-  private fun doGetPropertyInfo() = getPropertyNameAndKind(request.methodName)
-
-  private val propertyInfo: com.intellij.openapi.util.Pair<String, PropertyKind> get() = requireNotNull(doGetPropertyInfo()).toNotNull()
-
-  override fun getFamilyName(): String = message("create.property.from.usage.family")
-
-  override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
 
   override fun getText(): String = message("create.property.from.usage.full.text", propertyInfo.first, getNameForClass(target, false))
 
