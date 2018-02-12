@@ -48,7 +48,7 @@ fun openProjectWithSdk(projectPath: String,
 
     ModuleRootModificationUtil.setModuleSdk(module, sdk)
 
-    assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.size > 5)
+    assert(ModuleRootManager.getInstance(module).orderEntries().classesRoots.isNotEmpty())
 
     assert(ModuleManager.getInstance(project).modules.size == 1)
 
