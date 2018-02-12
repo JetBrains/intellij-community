@@ -73,7 +73,7 @@ class ContentTabLabel extends BaseLabel {
 
     fillIcons(additionalIcon);
 
-    behavior.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+    behavior.setActionTrigger(MouseEvent.MOUSE_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
 
     myContent.addPropertyChangeListener(new PropertyChangeListener() {
