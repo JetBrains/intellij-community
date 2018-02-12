@@ -103,17 +103,9 @@ public class RunAnythingCommandItem extends RunAnythingItem<String> {
     HashMap<String, Object> dataMap = new HashMap<>();
     dataMap.put(LangDataKeys.MODULE.getName(), module);
     dataMap.put(GemsDataKeys.SDK.getName(), sdk);
-    runInConsole(project, commandLine, commandString, executor, SimpleDataContext.getSimpleContext(dataMap, DataContext.EMPTY_CONTEXT));
-  }
-
-  private static void runInConsole(@NotNull Project project,
-                                   @NotNull GeneralCommandLine commandLine,
-                                   @NotNull String originalCommand,
-                                   @NotNull Executor executor,
-                                   @NotNull DataContext dataContext) {
     try {
-      ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(commandLine, originalCommand))
-                                 .dataContext(dataContext)
+      ExecutionEnvironmentBuilder.create(project, executor, new RunAnythingRunProfile(commandLine, commandString))
+                                 .dataContext(SimpleDataContext.getSimpleContext(dataMap, DataContext.EMPTY_CONTEXT))
                                  .buildAndExecute();
     }
     catch (ExecutionException e) {
