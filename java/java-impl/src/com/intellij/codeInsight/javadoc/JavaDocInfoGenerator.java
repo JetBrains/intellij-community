@@ -1699,6 +1699,9 @@ public class JavaDocInfoGenerator {
         buffer.append("<p>");
         headerGenerated = true;
       }
+      else {
+        buffer.append(BR_TAG);
+      }
 
       StringBuilder methodBuffer = new StringBuilder();
       generateLink(methodBuffer, superMethod, superMethod.getName(), false);
