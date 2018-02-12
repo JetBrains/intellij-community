@@ -903,7 +903,9 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (!myIsWritable) {
         return false;
       }
-      return !myModules.equals(myManager.myModuleModel.myModules) || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath);
+      return !myModules.equals(myManager.myModuleModel.myModules)
+             || !Comparing.equal(myManager.myModuleModel.myModuleGroupPath, myModuleGroupPath)
+             || !myModuleToNewName.isEmpty();
     }
 
     private void disposeModel() {
