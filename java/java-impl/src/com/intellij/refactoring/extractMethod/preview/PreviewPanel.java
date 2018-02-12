@@ -94,8 +94,8 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
     content.setDisposer(this);
   }
 
-  public void init() {
-    // todo init diff preview asynchronously
+  public void initLater() {
+    myDiffPanel.initLater(myTree.getAllDuplicates(), () -> myTree.onSelectionUpdate());
   }
 
   @Override
@@ -109,7 +109,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, DataProvider
   }
 
   private void doRefactor() {
-    myDiffPanel.doExtract();
+    myDiffPanel.doExtract(myTree.getEnabledDuplicates());
     close();
   }
 

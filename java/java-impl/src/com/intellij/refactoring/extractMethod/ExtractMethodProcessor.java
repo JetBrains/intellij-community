@@ -2079,6 +2079,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodName = methodName;
   }
 
+  public PsiElement getAnchor() {
+    return myAnchor;
+  }
+
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {

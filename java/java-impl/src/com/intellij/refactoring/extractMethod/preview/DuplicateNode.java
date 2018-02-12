@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.preview;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
@@ -35,6 +36,18 @@ public class DuplicateNode extends FragmentNode {
   @Nullable
   public PsiElement getEnd() {
     return myEnd.getElement();
+  }
+
+  public TextRange getTextRange() {
+    return getTextRange(getStart(), getEnd());
+  }
+
+  @Nullable
+  public static TextRange getTextRange(@Nullable PsiElement start, @Nullable PsiElement end) {
+    if (start != null && end != null) {
+      return new TextRange(start.getTextRange().getStartOffset(), end.getTextRange().getEndOffset());
+    }
+    return null;
   }
 
   @Override

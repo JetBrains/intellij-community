@@ -62,7 +62,7 @@ class PreviewTree implements Disposable {
     myTreeListeners.add(listener);
   }
 
-  private void onSelectionUpdate() {
+  void onSelectionUpdate() {
     if (myProject.isDisposed()) return;
 
     FragmentNode firstSelectedNode = ContainerUtil.getFirstItem(getSelectedNodes());
@@ -86,6 +86,14 @@ class PreviewTree implements Disposable {
                    .toList();
   }
 
+  public List<DuplicateNode> getAllDuplicates() {
+    return myModel.getAllDuplicates();
+  }
+
+  public List<DuplicateNode> getEnabledDuplicates() {
+    return myModel.getEnabledDuplicates();
+  }
+
   public JComponent getComponent() {
     return myTree;
   }
@@ -94,5 +102,4 @@ class PreviewTree implements Disposable {
   public void dispose() {
     myTreeListeners.clear();
   }
-
 }

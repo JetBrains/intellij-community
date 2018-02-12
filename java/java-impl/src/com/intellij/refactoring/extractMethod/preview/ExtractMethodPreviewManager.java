@@ -40,7 +40,7 @@ public class ExtractMethodPreviewManager {
     myContentManager.setSelectedContent(content);
     panel.setContent(content);
 
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.EXTRACT_METHOD).activate(panel::init);
+    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.EXTRACT_METHOD).activate(panel::initLater);
   }
 
   public void closeContent(Content content) {

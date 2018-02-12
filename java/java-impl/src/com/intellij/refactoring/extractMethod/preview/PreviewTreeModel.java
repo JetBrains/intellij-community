@@ -48,9 +48,24 @@ class PreviewTreeModel extends DefaultTreeModel {
       for (int i = 0; i < myDuplicatesGroup.getChildCount(); i++) {
         TreeNode node = myDuplicatesGroup.getChildAt(i);
         if (node instanceof DuplicateNode) {
-          if (!((DuplicateNode)node).isExcluded()) {
-            duplicates.add((DuplicateNode)node);
+          DuplicateNode duplicateNode = (DuplicateNode)node;
+          if (!duplicateNode.isExcluded() && duplicateNode.isValid()) {
+            duplicates.add(duplicateNode);
           }
+        }
+      }
+      return duplicates;
+    }
+    return Collections.emptyList();
+  }
+
+  public List<DuplicateNode> getAllDuplicates() {
+    if (myDuplicatesGroup != null && myDuplicatesGroup.getChildCount() != 0) {
+      List<DuplicateNode> duplicates = new ArrayList<>();
+      for (int i = 0; i < myDuplicatesGroup.getChildCount(); i++) {
+        TreeNode node = myDuplicatesGroup.getChildAt(i);
+        if (node instanceof DuplicateNode) {
+          duplicates.add((DuplicateNode)node);
         }
       }
       return duplicates;
