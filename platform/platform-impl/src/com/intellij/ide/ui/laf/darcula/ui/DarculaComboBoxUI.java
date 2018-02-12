@@ -49,6 +49,11 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
 
+  public DarculaComboBoxUI() {}
+
+  @Deprecated
+  public DarculaComboBoxUI(JComboBox unused) {}
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaComboBoxUI();
