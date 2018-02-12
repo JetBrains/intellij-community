@@ -47,9 +47,13 @@ import org.rubyforge.debugcommons.RubyDebuggerProxy;
 
 import java.util.Map;
 
+import static org.jetbrains.plugins.ruby.ruby.run.configuration.RubyCommandLineData.IDE_PROCESS_DISPATCHER;
+import static org.jetbrains.plugins.ruby.ruby.run.configuration.RubyCommandLineData.RUBYMINE_DEBUG_PORT;
+
 public class RunAnythingDebugRunner extends GenericProgramRunner {
   public static final String ID = "RunAnythingDebugRunner";
   private static final Logger LOG = Logger.getInstance(RunAnythingDebugRunner.class);
+  private static final String DEBUGGER_CLI_DEBUG = "DEBUGGER_CLI_DEBUG";
 
   @NotNull
   public String getRunnerId() {
@@ -162,9 +166,9 @@ public class RunAnythingDebugRunner extends GenericProgramRunner {
                                                         env.get(RakeRunnerConstants.RUBYLIB_ENVIRONMENT_VARIABLE),
                                                         mappingSettings.convertToRemote(gemsPath));
 
-    env.put("RUBYMINE_DEBUG_PORT", String.valueOf(debuggerPort));
-    env.put("DEBUGGER_CLI_DEBUG", String.valueOf(RubyDebuggerSettings.getInstance().getState().isVerboseOutput()));
-    env.put("IDE_PROCESS_DISPATCHER", String.valueOf(dispatcherPort));
+    env.put(RUBYMINE_DEBUG_PORT, String.valueOf(debuggerPort));
+    env.put(DEBUGGER_CLI_DEBUG, String.valueOf(RubyDebuggerSettings.getInstance().getState().isVerboseOutput()));
+    env.put(IDE_PROCESS_DISPATCHER, String.valueOf(dispatcherPort));
     env.put(
       RakeRunnerConstants.RUBYLIB_ENVIRONMENT_VARIABLE,
       debugGemHelper.updateRubyLib(rubyLib, data.getSdkSystemAccessor(), mappingSettings)
