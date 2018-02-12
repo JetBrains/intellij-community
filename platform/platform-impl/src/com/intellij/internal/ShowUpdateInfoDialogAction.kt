@@ -13,6 +13,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
@@ -53,7 +54,7 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     if (builder.showAndGet()) {
       val updateInfoText = StringUtil.trim(textArea.text)
       if (!StringUtil.isEmpty(updateInfoText)) {
-        val patchFilePath = fileField.selectedFile?.path
+        val patchFilePath = fileCombo.text.nullize(nullizeSpaces = true)
         UpdateChecker.testPlatformUpdate(updateInfoText, patchFilePath)
       }
     }
