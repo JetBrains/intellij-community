@@ -2992,7 +2992,7 @@ public class UIUtil {
     }
     else if (SystemInfo.isLinux) {
       Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
-      if (value instanceof Integer) {
+      if (value instanceof Integer) { // defined by JB JDK when the resource is available in the system
         // If the property is defined, then:
         // 1) it provides correct system scale
         // 2) the label font size is scaled
@@ -3001,8 +3001,8 @@ public class UIUtil {
         float scale = JBUI.discreteScale(dpi / 96f);
         DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
       }
-      else {
-        forcedScale = Float.valueOf(getScreenScale());
+      else if (!SystemInfo.isJetBrainsJvm){
+        forcedScale = Float.valueOf(getScreenScale()); // With Oracle JDK: derive scale from X server DPI
       }
     }
     else if (SystemInfo.isWindows) {
