@@ -2703,10 +2703,6 @@ public class UIUtil {
           @Override
           public void propertyChange(PropertyChangeEvent e) {
             Font font = getLabelFont();
-            assert font instanceof FontUIResource;
-            if (SystemInfo.isWindows) {
-              font = getFontWithFallback("Tahoma", font.getStyle(), font.getSize());
-            }
             // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
             // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
             pane.setFont(font);
