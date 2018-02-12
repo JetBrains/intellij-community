@@ -2,13 +2,14 @@
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   @NotNull
-  private final String myProviderId;
+  private final PostfixTemplateProvider myTemplateProvider;
   @NotNull
   private PostfixTemplate myTemplate;
 
@@ -22,13 +23,13 @@ public final class PostfixTemplateCheckedTreeNode extends CheckedTreeNode {
   }
 
   @NotNull
-  public String getProviderId() {
-    return myProviderId;
+  public PostfixTemplateProvider getTemplateProvider() {
+    return myTemplateProvider;
   }
 
-  PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull String providerId, boolean isNew) {
+  PostfixTemplateCheckedTreeNode(@NotNull PostfixTemplate template, @NotNull PostfixTemplateProvider templateProvider, boolean isNew) {
     super(template.getPresentableName());
-    myProviderId = providerId;
+    myTemplateProvider = templateProvider;
     myTemplate = template;
     myInitialTemplate = template;
     myNew = isNew;

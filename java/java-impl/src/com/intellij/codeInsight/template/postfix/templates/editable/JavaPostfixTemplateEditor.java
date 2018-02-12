@@ -3,6 +3,8 @@ package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -41,8 +43,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 
-public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEditablePostfixTemplate> {
-  @NotNull private final JavaEditablePostfixTemplateProvider myProvider;
+public class JavaPostfixTemplateEditor implements PostfixTemplateEditor {
+  @NotNull private final PostfixTemplateProvider myProvider;
   @Nullable private final Project myProject;
   @NotNull private final Editor myTemplateEditor;
   @NotNull private final JBList<JavaPostfixTemplateExpressionCondition> myExpressionTypesList;
@@ -55,7 +57,9 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
   private JPanel myExpressionTypesPanel;
   private JPanel myTemplateEditorPanel;
 
-  public JavaPostfixTemplateEditor(@NotNull JavaEditablePostfixTemplateProvider provider, @Nullable Project project) {
+  public JavaPostfixTemplateEditor(@NotNull PostfixTemplateProvider provider,
+                                   @Nullable Project project,
+                                   @Nullable PostfixTemplate template) {
     myProvider = provider;
     myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
     myTemplateEditor = TemplateEditorUtil.createEditor(false, createDocument(myProject), myProject);
@@ -83,6 +87,10 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
     myTemplateEditorPanel.add(myTemplateEditor.getComponent());
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myExpressionVariableHint);
     myExpressionVariableHint.setFontColor(UIUtil.FontColor.BRIGHTER);
+
+    if (template instanceof JavaEditablePostfixTemplate) {
+      setTemplate((JavaEditablePostfixTemplate)template);
+    }
   }
 
   private void createUIComponents() {
@@ -100,6 +108,7 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
     TemplateEditorUtil.disposeTemplateEditor(myTemplateEditor);
   }
 
+  @NotNull
   @Override
   public JavaEditablePostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName) {
     LanguageLevel selectedLanguageLevel = ObjectUtils.tryCast(myLanguageLevelCombo.getSelectedItem(), LanguageLevel.class);
@@ -112,8 +121,7 @@ public class JavaPostfixTemplateEditor implements PostfixTemplateEditor<JavaEdit
                                            myProvider);
   }
 
-  @Override
-  public void setTemplate(@NotNull JavaEditablePostfixTemplate template) {
+  private void setTemplate(@NotNull JavaEditablePostfixTemplate template) {
     myExpressionTypesListModel.clear();
     for (JavaPostfixTemplateExpressionCondition condition : template.getExpressionConditions()) {
       myExpressionTypesListModel.addElement(condition);

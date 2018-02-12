@@ -3,9 +3,9 @@ package com.intellij.java.codeInsight.template.postfix.editable;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
 import com.intellij.codeInsight.template.postfix.templates.AssertStatementPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
 import com.intellij.pom.java.LanguageLevel;
@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
-  private static final JavaEditablePostfixTemplateProvider PROVIDER = new JavaEditablePostfixTemplateProvider();
+  private static final JavaPostfixTemplateProvider PROVIDER = new JavaPostfixTemplateProvider();
 
   public void testId() {
     JavaEditablePostfixTemplate template = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),

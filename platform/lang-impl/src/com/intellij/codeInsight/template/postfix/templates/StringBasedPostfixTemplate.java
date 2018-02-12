@@ -4,7 +4,6 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TextExpression;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
   /**
-   * @deprecated use {@link #StringBasedPostfixTemplate(String, String, PostfixTemplateExpressionSelector, PostfixEditableTemplateProvider)}
+   * @deprecated use {@link #StringBasedPostfixTemplate(String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
   public StringBasedPostfixTemplate(@NotNull String name,
                                     @NotNull String example,
@@ -26,7 +25,7 @@ public abstract class StringBasedPostfixTemplate extends PostfixTemplateWithExpr
   public StringBasedPostfixTemplate(@NotNull String name,
                                     @NotNull String example,
                                     @NotNull PostfixTemplateExpressionSelector selector,
-                                    @Nullable PostfixEditableTemplateProvider provider) {
+                                    @Nullable PostfixTemplateProvider provider) {
     super(null, name, example, selector, provider);
   }
 

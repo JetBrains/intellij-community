@@ -144,7 +144,7 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   public void testDoNotShowDisabledTemplate() {
     PostfixTemplatesSettings settings = PostfixTemplatesSettings.getInstance();
     assertNotNull(settings);
-    settings.disableTemplate(new InstanceofExpressionPostfixTemplate(), new JavaPostfixTemplateProviderImpl().getId());
+    settings.disableTemplate(new InstanceofExpressionPostfixTemplate(), new JavaPostfixTemplateProvider().getId());
     doAutoPopupTest("instanceof", null);
   }
 

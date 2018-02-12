@@ -5,7 +5,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
-  public OptionalPostfixTemplate(@NotNull PostfixEditableTemplateProvider provider) {
+  public OptionalPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("opt",
           "java.util.$OPTIONAL_CLASS$.$OPTIONAL_METHOD$($EXPR$)",
           "Optional.ofNullable(expr)",
@@ -29,12 +28,6 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
   @Override
   public boolean isBuiltin() {
     return true;
-  }
-
-  @Override
-  public boolean isEditable() {
-    // cannot be editable until there is no UI for editing template variables
-    return false;
   }
 
   @Override

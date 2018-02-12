@@ -22,18 +22,15 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   private final PostfixTemplateEditor myEditor;
 
   public PostfixEditTemplateDialog(@NotNull Component parentComponent,
-                                   @NotNull PostfixTemplateEditor<PostfixTemplate> editor,
+                                   @NotNull PostfixTemplateEditor editor,
                                    @NotNull String templateType,
                                    @Nullable PostfixTemplate template) {
     super(null, parentComponent, false, IdeModalityType.IDE);
     myEditor = editor;
     Disposer.register(getDisposable(), editor);
-    if (template != null) {
-      editor.setTemplate(template);
-    }
-    String initialKey = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
-    myTemplateNameTextField = new JBTextField(initialKey);
-    setTitle(template != null ? "Edit '" + initialKey + "' template" : "Create new " + templateType + " template");
+    String initialName = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
+    myTemplateNameTextField = new JBTextField(initialName);
+    setTitle(template != null ? "Edit '" + initialName + "' template" : "Create new " + templateType + " template");
     init();
   }
 
@@ -54,7 +51,7 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   }
 
   @NotNull
-  public String getTemplateKey() {
+  public String getTemplateName() {
     return myTemplateNameTextField.getText();
   }
 

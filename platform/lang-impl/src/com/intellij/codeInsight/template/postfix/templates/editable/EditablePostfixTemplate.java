@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.postfix.templates.PostfixLiveTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +33,7 @@ public abstract class EditablePostfixTemplate extends PostfixTemplate {
                                  @NotNull String templateName,
                                  @NotNull String templateText,
                                  @NotNull String example,
-                                 @NotNull PostfixEditableTemplateProvider provider) {
+                                 @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, example, provider);
     myTemplateText = templateText;
   }

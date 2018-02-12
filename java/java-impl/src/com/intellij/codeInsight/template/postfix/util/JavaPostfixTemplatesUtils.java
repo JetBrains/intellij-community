@@ -66,9 +66,6 @@ public abstract class JavaPostfixTemplatesUtils {
     return selectorTopmost(Conditions.alwaysTrue());
   }
 
-  /**
-   * @deprecated
-   */
   public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override

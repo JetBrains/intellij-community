@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class FormatPostfixTemplate extends JavaEditablePostfixTemplate {
-  public FormatPostfixTemplate(@NotNull JavaEditablePostfixTemplateProvider provider) {
+  public FormatPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("format",
           "String.format($EXPR$, $END$)",
           "String.format(expr)",

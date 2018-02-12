@@ -3,7 +3,6 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
@@ -18,6 +17,8 @@ import java.util.Objects;
  * <p>
  * EDITABLE TEMPLATES
  * ==================
+ * Editable postfix template MUST know the provider that created it.
+ * <p>
  * Editable postfix templates MUST provide proper equals/hashCode implementation.
  * Equal postfix templates produces by the very same provider will overwrite each other.
  */
@@ -131,10 +132,10 @@ public abstract class PostfixTemplate {
   }
 
   /**
-   * Template can be edit. Only templates whose key starts with . can be edited.
+   * Template can be edit. Template can be editable if its provider is not null and its key starts with . can be edited.
    */
   public boolean isEditable() {
-    return getProvider() instanceof PostfixEditableTemplateProvider;
+    return true;
   }
 
   @Override

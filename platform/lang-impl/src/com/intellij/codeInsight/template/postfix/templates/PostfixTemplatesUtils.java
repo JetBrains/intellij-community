@@ -3,7 +3,6 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -28,13 +27,11 @@ public abstract class PostfixTemplatesUtils {
   @NotNull
   public static Set<PostfixTemplate> getAvailableTemplates(@NotNull PostfixTemplateProvider provider) {
     Set<PostfixTemplate> result = ContainerUtil.newHashSet(provider.getTemplates());
-    if (provider instanceof PostfixEditableTemplateProvider) {
-      for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates((PostfixEditableTemplateProvider)provider)) {
-        if (template instanceof PostfixChangedBuiltinTemplate) {
-          result.remove(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());
-        }
-        result.add(template);
+    for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
+      if (template instanceof PostfixChangedBuiltinTemplate) {
+        result.remove(((PostfixChangedBuiltinTemplate)template).getBuiltinTemplate());
       }
+      result.add(template);
     }
     return result;
   }
@@ -64,10 +61,8 @@ public abstract class PostfixTemplatesUtils {
     for (PostfixTemplate builtinTemplate : provider.getTemplates()) {
       usedIds.add(builtinTemplate.getId());
     }
-    if (provider instanceof PostfixEditableTemplateProvider) {
-      for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates((PostfixEditableTemplateProvider)provider)) {
-        usedIds.add(template.getId());
-      }
+    for (PostfixTemplate template : PostfixTemplateStorage.getInstance().getTemplates(provider)) {
+      usedIds.add(template.getId());
     }
     return UniqueNameGenerator.generateUniqueName(templateKey + "@userDefined", usedIds);
   }

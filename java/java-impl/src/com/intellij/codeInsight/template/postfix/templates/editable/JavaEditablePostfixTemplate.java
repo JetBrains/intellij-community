@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbService;
@@ -36,7 +37,7 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
                                      @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
-                                     @NotNull PostfixEditableTemplateProvider provider) {
+                                     @NotNull PostfixTemplateProvider provider) {
     this(templateName, templateName, templateText, example, expressionConditions, minimumLanguageLevel, useTopmostExpression, provider);
   }
 
@@ -47,7 +48,7 @@ public class JavaEditablePostfixTemplate extends EditablePostfixTemplate {
                                      @NotNull Set<JavaPostfixTemplateExpressionCondition> expressionConditions,
                                      @NotNull LanguageLevel minimumLanguageLevel,
                                      boolean useTopmostExpression,
-                                     @NotNull PostfixEditableTemplateProvider provider) {
+                                     @NotNull PostfixTemplateProvider provider) {
     super(templateId, templateName, templateText, example, provider);
     myExpressionConditions = expressionConditions;
     myMinimumLanguageLevel = minimumLanguageLevel;
