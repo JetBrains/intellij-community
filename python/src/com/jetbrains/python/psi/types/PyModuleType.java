@@ -43,19 +43,14 @@ import static com.jetbrains.python.psi.PyUtil.inSameFile;
  */
 public class PyModuleType implements PyType { // Modules don't descend from object
   @NotNull private final PyFile myModule;
-  @Nullable private final PyImportedModule myImportedModule;
 
   public static final ImmutableSet<String> MODULE_MEMBERS = ImmutableSet.of(
     "__name__", "__file__", "__path__", "__doc__", "__dict__", "__package__");
 
   public PyModuleType(@NotNull PyFile source) {
-    this(source, null);
+    myModule = source;
   }
 
-  public PyModuleType(@NotNull PyFile source, @Nullable PyImportedModule importedModule) {
-    myModule = source;
-    myImportedModule = importedModule;
-  }
 
   @NotNull
   public PyFile getModule() {
@@ -68,7 +63,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    return resolveMemberInPackageOrModule(myImportedModule, myModule, name, location, resolveContext);
+    return resolveMemberInPackageOrModule(null, myModule, name, location, resolveContext);
   }
 
   @Nullable
