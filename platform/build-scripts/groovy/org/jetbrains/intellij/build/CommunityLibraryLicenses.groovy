@@ -34,6 +34,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Android Archive Patcher", libraryName: "archive-patcher", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Aia Manifest Proto", libraryName: "aia-manifest-proto-1.0-jarjar.jar", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Layout Library", libraryName: "layoutlib", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Lint Checks", libraryName: "com.android.tools.lint:lint-checks:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Android Lint Api", libraryName: "com.android.tools.lint:lint-api:26.0.0", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android DEX library", libraryName: "dexlib2", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Sherpa library", libraryName: "sherpa-solver", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Android Jimfs library", libraryName: "jimfs", license: "Apache 2.0", url: "https://github.com/google/jimfs"),
