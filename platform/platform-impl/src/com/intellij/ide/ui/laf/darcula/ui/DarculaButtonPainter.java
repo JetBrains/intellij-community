@@ -84,7 +84,7 @@ public class DarculaButtonPainter implements Border, UIResource {
   }
 
   public Color getBorderColor(Component button) {
-    return button.isEnabled() && DarculaButtonUI.isDefaultButton(button) ?
+    return button.isEnabled() && DarculaButtonUI.isDefaultButton((JComponent)button) ?
            new ColorUIResource(0x3B608A) : new ColorUIResource(0x5E6060);
   }
 

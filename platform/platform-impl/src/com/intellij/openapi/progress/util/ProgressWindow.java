@@ -54,7 +54,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private boolean myStoppedAlready;
   private boolean myStarted;
   protected boolean myBackgrounded;
-  private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
   protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
@@ -176,16 +175,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
-  @NotNull
-  public String getProcessId() {
-    return myProcessId;
-  }
-
-  public void setProcessId(@NotNull String processId) {
-    myProcessId = processId;
-  }
-
-  public void showDialog() {
+  protected void showDialog() {
     if (!isRunning() || isCanceled()) {
       return;
     }

@@ -365,7 +365,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       String text = initializer == null || ExpressionUtils.isLiteral(initializer, "") ? "" : ct.text(initializer);
       String stringBuilderText = "new " + myTargetType + "(" + text + ")";
       if (myNullables.contains(initializer)) {
-        if (ExpressionUtils.isSimpleExpression(initializer)) {
+        if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
           return initializer.getText() + "==null?null:" + stringBuilderText;
         }
         if (PsiUtil.isLanguageLevel8OrHigher(initializer)) {
@@ -697,7 +697,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           break;
         case AT_WANTED_PLACE:
           // Copy original initializer to the StringBuilder constructor if possible
-          if (ExpressionUtils.isSimpleExpression(initializer)) {
+          if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
             javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
           }
           break;

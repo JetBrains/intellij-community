@@ -1123,11 +1123,24 @@ public class Messages {
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
+    return showInputDialog(project, message, title, icon, initialValue, validator, selection, null);
+
+  }
+
+  @Nullable
+  public static String showInputDialog(Project project,
+                                       @Nls String message,
+                                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                       @Nullable Icon icon,
+                                       @Nullable String initialValue,
+                                       @Nullable InputValidator validator,
+                                       @Nullable TextRange selection,
+                                       @Nullable String comment) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message, validator);
     }
     else {
-      return MessagesService.SERVICE.getInstance().showInputDialog2(project, message, title, icon, initialValue, validator, selection);
+      return MessagesService.SERVICE.getInstance().showInputDialog2(project, message, title, icon, initialValue, validator, selection, comment);
     }
   }
 

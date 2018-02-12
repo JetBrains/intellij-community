@@ -74,7 +74,7 @@ public interface MessagesService {
                           Icon icon,
                           String initialValue,
                           InputValidator validator,
-                          TextRange selection);
+                          TextRange selection, String comment);
 
   String showInputDialog3(Component parent, String message, String title, Icon icon, String initialValue, InputValidator validator);
 

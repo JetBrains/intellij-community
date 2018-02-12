@@ -201,8 +201,11 @@ public class MessagesServiceImpl implements MessagesService {
                                  Icon icon,
                                  String initialValue,
                                  InputValidator validator,
-                                 TextRange selection) {
-    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator);
+                                 TextRange selection,
+                                 String comment) {
+    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
+                                         new String[]{OK_BUTTON, CANCEL_BUTTON},
+                                         0, comment);
 
     final JTextComponent field = dialog.getTextField();
     if (selection != null) {

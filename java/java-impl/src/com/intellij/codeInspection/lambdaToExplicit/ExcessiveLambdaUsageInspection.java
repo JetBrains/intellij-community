@@ -35,7 +35,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
         if (call == null) return;
         if (!(lambda.getBody() instanceof PsiExpression)) return;
         PsiExpression expr = (PsiExpression)lambda.getBody();
-        if (!ExpressionUtils.isSimpleExpression(expr)) return;
+        if (!ExpressionUtils.isSafelyRecomputableExpression(expr)) return;
         if (Stream.of(lambda.getParameterList().getParameters()).anyMatch(param -> ExpressionUtils.isReferenceTo(expr, param))) return;
 
         for (LambdaAndExplicitMethodPair info : LambdaAndExplicitMethodPair.INFOS) {

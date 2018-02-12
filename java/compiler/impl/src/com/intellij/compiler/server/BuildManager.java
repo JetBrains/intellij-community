@@ -7,6 +7,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.concurrency.JobScheduler;
@@ -297,15 +298,15 @@ public class BuildManager implements Disposable {
 
     });
 
-    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
       @Override
-      public void batchChangeStarted(Project project) {
+      public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
         myFileChangeCounter++;
         cancelAutoMakeTasks(project);
       }
 
       @Override
-      public void batchChangeCompleted(Project project) {
+      public void batchChangeCompleted(@NotNull Project project) {
         myFileChangeCounter--;
       }
     });
@@ -1195,7 +1196,28 @@ public class BuildManager implements Disposable {
     if (compilerPath != null) {   // can be null in case of jdk9
       launcherCp.add(compilerPath);
     }
-    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, shouldIncludeEclipseCompiler(projectConfig));
+
+    boolean includeBundledEcj = shouldIncludeEclipseCompiler(projectConfig);
+    File customEcjPath = null;
+    if (includeBundledEcj) {
+      final String path = EclipseCompilerConfiguration.getOptions(project, EclipseCompilerConfiguration.class).ECJ_TOOL_PATH;
+      if (!StringUtil.isEmptyOrSpaces(path)) {
+        customEcjPath = new File(path);
+        if (customEcjPath.exists()) {
+          includeBundledEcj = false;
+        }
+        else {
+          throw new ExecutionException("Path to eclipse ecj compiler does not exist: " + customEcjPath.getAbsolutePath());
+          //customEcjPath = null;
+        }
+      }
+    }
+
+    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, includeBundledEcj);
+    if (customEcjPath != null) {
+      launcherCp.add(customEcjPath.getAbsolutePath());
+    }
+
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
 

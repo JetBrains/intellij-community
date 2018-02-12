@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,24 @@ import static com.intellij.openapi.ui.Messages.OK_BUTTON;
 public class InputDialog extends MessageDialog {
   protected JTextComponent myField;
   private final InputValidator myValidator;
+  private final String myComment;
+
+  public InputDialog(@Nullable Project project,
+                     String message,
+                     @Nls(capitalization = Nls.Capitalization.Title) String title,
+                     @Nullable Icon icon,
+                     @Nullable String initialValue,
+                     @Nullable InputValidator validator,
+                     @NotNull String[] options,
+                     int defaultOption,
+                     @Nullable String comment) {
+    super(project, true);
+    myComment = comment;
+    _init(title, message, options, defaultOption, -1, icon, null);
+    myValidator = validator;
+    myField.setText(initialValue);
+    enableOkAction();
+  }
 
   public InputDialog(@Nullable Project project,
                      String message,
@@ -43,10 +62,7 @@ public class InputDialog extends MessageDialog {
                      @Nullable InputValidator validator,
                      @NotNull String[] options,
                      int defaultOption) {
-    super(project, message, title, options, defaultOption, icon, true);
-    myValidator = validator;
-    myField.setText(initialValue);
-    enableOkAction();
+    this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
   }
 
   public InputDialog(@Nullable Project project,
@@ -66,6 +82,7 @@ public class InputDialog extends MessageDialog {
                      @Nullable InputValidator validator) {
     super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
     myValidator = validator;
+    myComment = null;
     myField.setText(initialValue);
     enableOkAction();
   }
@@ -77,6 +94,7 @@ public class InputDialog extends MessageDialog {
                      @Nullable InputValidator validator) {
     super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
     myValidator = validator;
+    myComment = null;
     myField.setText(initialValue);
     enableOkAction();
   }
@@ -136,8 +154,12 @@ public class InputDialog extends MessageDialog {
     JPanel panel = createIconPanel();
     JPanel messagePanel = createMessagePanel();
     panel.add(messagePanel, BorderLayout.CENTER);
-
-    return panel;
+    if (myComment != null) {
+      return UI.PanelFactory.panel(panel).withComment(myComment).createPanel();
+    }
+    else {
+      return panel;
+    }
   }
 
   protected JPanel createMessagePanel() {

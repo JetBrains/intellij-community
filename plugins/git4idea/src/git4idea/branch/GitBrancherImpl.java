@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -183,7 +182,7 @@ class GitBrancherImpl implements GitBrancher {
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      DumbService.getInstance(myProject).suspendIndexingAndRun(getTitle(), () -> execute(indicator));
+      execute(indicator);
       if (myCallInAwtAfterExecution != null) {
         Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode()) {

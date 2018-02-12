@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -29,6 +30,7 @@ import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -302,6 +304,31 @@ public class PyPackageRequirementsInspection extends PyInspection {
     return value != null && value;
   }
 
+  private static boolean checkAdminPermissionsAndConfigureInterpreter(@NotNull Project project,
+                                                                      @NotNull ProblemDescriptor descriptor,
+                                                                      @NotNull Sdk sdk) {
+    if (!PythonSdkType.isRemote(sdk) && PySdkExtKt.adminPermissionsNeeded(sdk)) {
+      final int answer = askToConfigureInterpreter(project, sdk);
+      switch (answer) {
+        case Messages.YES:
+          new PyInterpreterInspection.ConfigureInterpreterFix().applyFix(project, descriptor);
+          return true;
+        case Messages.CANCEL:
+          return true;
+      }
+    }
+    return false;
+  }
+
+  private static int askToConfigureInterpreter(@NotNull Project project, @NotNull Sdk sdk) {
+    final String sdkName = StringUtil.shortenTextWithEllipsis(sdk.getName(), 25, 0);
+    final String text = "Installing packages into '" + sdkName + "' requires administrator privileges.\n\n" +
+                        "Configure a per-project virtual environment as your project interpreter\n" +
+                        "to avoid installing packages to a protected area of the file system.";
+    final String[] options = {"Configure", "Install Anyway", "Cancel"};
+    return Messages.showIdeaMessageDialog(project, text, "Administrator Privileges Required", options, 0, Messages.getWarningIcon(), null);
+  }
+
   public static class PyInstallRequirementsFix implements LocalQuickFix {
     @NotNull private final String myName;
     @NotNull private final Module myModule;
@@ -329,25 +356,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
-      boolean installManagement = false;
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
+        installPackages(project);
+      }
+    }
+
+    private void installPackages(@NotNull final Project project) {
       final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
       final List<PyPackage> packages = manager.getPackages();
       if (packages == null) {
         return;
-      }
-      if (!PyPackageUtil.hasManagement(packages)) {
-        final int result = Messages.showYesNoDialog(project,
-                                                    "Python packaging tools are required for installing packages. Do you want to " +
-                                                    "install 'pip' and 'setuptools' for your interpreter?",
-                                                    "Install Python Packaging Tools",
-                                                    Messages.getQuestionIcon());
-        if (result == Messages.YES) {
-          installManagement = true;
-        }
-        else {
-          return;
-        }
       }
       final List<PyRequirement> chosen;
       if (myUnsatisfied.size() > 1) {
@@ -365,7 +384,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      if (installManagement) {
+      if (!PyPackageUtil.hasManagement(packages)) {
         final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
           @Override
           public void finished(List<ExecutionException> exceptions) {
@@ -389,10 +408,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class InstallAndImportQuickFix implements LocalQuickFix {
-
-    private final Sdk mySdk;
-    private final Module myModule;
-    private final String myPackageName;
+    @Nullable private final Sdk mySdk;
+    @Nullable private final Module myModule;
+    @NotNull private final String myPackageName;
     @Nullable private final String myAsName;
     @NotNull private final SmartPsiElementPointer<PyElement> myNode;
 
@@ -426,6 +444,13 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+      if (mySdk == null || !checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
+        installAndImportPackage(project);
+      }
+    }
+
+    private void installAndImportPackage(@NotNull Project project) {
+      if (mySdk == null) return;
       final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
         @Override
         public void finished(List<ExecutionException> exceptions) {

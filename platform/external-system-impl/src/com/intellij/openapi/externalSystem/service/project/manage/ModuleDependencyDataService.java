@@ -67,10 +67,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
     String moduleName = orderEntry.getModuleName();
     final Module orderEntryModule = orderEntry.getModule();
     if(orderEntryModule != null) {
-      final String newName = modelsProvider.getModifiableModuleModel().getNewName(orderEntryModule);
-      if (newName != null) {
-        moduleName = newName;
-      }
+      moduleName = modelsProvider.getModifiableModuleModel().getActualName(orderEntryModule);
     }
     return moduleName;
   }

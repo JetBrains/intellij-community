@@ -93,3 +93,53 @@ class T1 {
     (<error descr="Expression expected">)</error>++;
   }
 }
+class T3 {
+  private final boolean b;
+  {
+    assert false : "" + (b = true); // if assignment reachable, assert will not complete normally
+    b = true; // compiles
+    System.out.println(b);
+  }
+}
+class T3a {
+  private final boolean b;
+  {
+    try {
+      assert false : "" + (b = true);
+    }
+    catch(IllegalArgumentException t) {}
+    <error descr="Variable 'b' might already have been assigned to">b</error> = true; // red
+    System.out.println(b);
+  }
+}
+class T29 {
+  // IDEA-186306
+  private final int j;
+  T29 (int b) {
+    do {
+      j = 34; // guaranteed to only be executed once
+      if (true) break;
+    } while (b == 1);
+  }
+}
+class T29a {
+  private final int j;
+  T29a (int b) {
+    do {
+      <error descr="Variable 'j' might be assigned in loop">j</error> = 34; // not guaranteed by JLS to only be executed once
+      if (j > 0) break;
+    } while (b == 1);
+  }
+}
+class TX {
+  private final int i;
+  private final int j;
+  private final int k;
+  TX() {
+    (i) = 1;
+    (<error descr="Variable 'i' might already have been assigned to">i</error>) = 1;
+    (j) = 1;
+    (<error descr="Variable 'j' might already have been assigned to">j</error>)++;
+    (<error descr="Variable 'k' might not have been initialized">k</error>)++;
+  }
+}

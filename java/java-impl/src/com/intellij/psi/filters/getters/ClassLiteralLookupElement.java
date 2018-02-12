@@ -24,8 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -56,6 +58,12 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
     if (StringUtil.isNotEmpty(pkg)) {
       presentation.setTailText(" (" + pkg + ")", true);
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
+    return PsiUtil.resolveClassInType(getType());
   }
 
   @NotNull

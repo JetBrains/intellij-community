@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -879,13 +880,14 @@ public class PsiTreeUtil {
   }
 
   public static void mark(@NotNull PsiElement element, @NotNull Object marker) {
-    element.putCopyableUserData(MARKER, marker);
+    element.getNode().putCopyableUserData(MARKER, marker);
   }
 
   @Nullable
   public static PsiElement releaseMark(@NotNull PsiElement root, @NotNull Object marker) {
-    if (marker.equals(root.getCopyableUserData(MARKER))) {
-      root.putCopyableUserData(MARKER, null);
+    ASTNode node = root.getNode();
+    if (marker.equals(node.getCopyableUserData(MARKER))) {
+      node.putCopyableUserData(MARKER, null);
       return root;
     }
     else {

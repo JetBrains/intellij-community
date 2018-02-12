@@ -2,9 +2,6 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.FileContent;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +24,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -47,6 +43,7 @@ public class FileContentQueue {
 
   private final AtomicLong myLoadedBytesInQueue = new AtomicLong();
   private static final Object ourProceedWithLoadingLock = new Object();
+  @NotNull private final Project myProject;
 
   private volatile long myBytesBeingProcessed;
   private volatile boolean myLargeSizeRequested;
@@ -54,15 +51,16 @@ public class FileContentQueue {
   private final BlockingQueue<VirtualFile> myFilesQueue;
   private final ProgressIndicator myProgressIndicator;
   private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
-  private final Supplier<AccessToken> myPrivilege;
 
-  public FileContentQueue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  FileContentQueue(@NotNull Project project,
+                   @NotNull Collection<VirtualFile> files,
+                   @NotNull final ProgressIndicator indicator) {
+    myProject = project;
     int numberOfFiles = files.size();
     myContentsToLoad.set(numberOfFiles);
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
     myFilesQueue = numberOfFiles > 0 ? new ArrayBlockingQueue<>(numberOfFiles, false, files) : null;
     myProgressIndicator = indicator;
-    myPrivilege = ((ApplicationImpl)ApplicationManager.getApplication()).transferReadPrivilege();
   }
 
   public void startLoading() {
@@ -109,9 +107,7 @@ public class FileContentQueue {
     }
 
     if (myProgressIndicator.isCanceled()) return PreloadState.CANCELLED_OR_FINISHED;
-    try (AccessToken ignored = myPrivilege.get()) {
-      return loadNextContent() ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
-    }
+    return loadNextContent() ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
   }
   
   private boolean loadNextContent() { 
@@ -143,7 +139,9 @@ public class FileContentQueue {
     try {
       myLoadedBytesInQueue.addAndGet(contentLength);
 
-      content.getBytes(); // Reads the content bytes and caches them.
+      // Reads the content bytes and caches them.
+      // hint at the current project to avoid expensive read action in ProjectLocatorImpl
+      ProjectLocator.computeWithPreferredProject(content.getVirtualFile(), myProject, ()-> content.getBytes());
 
       return true;
     }

@@ -155,6 +155,10 @@ class MessageDialog extends DialogWrapper {
     super(project, false);
   }
 
+  public MessageDialog(Project project, boolean canBeParent) {
+    super(project, canBeParent);
+  }
+
   protected void _init(@Nls(capitalization = Nls.Capitalization.Title) String title,
                        String message,
                        @NotNull String[] options,

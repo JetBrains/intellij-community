@@ -125,7 +125,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameter[] parameters, PsiElement body) {
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, true) {
+      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {

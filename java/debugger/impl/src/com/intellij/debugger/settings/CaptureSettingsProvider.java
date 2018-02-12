@@ -153,6 +153,11 @@ public class CaptureSettingsProvider {
     }
 
     public abstract boolean isCapture();
+
+    @Override
+    public String toString() {
+      return myClassName + "." + myMethodName + " " + myKey.asString();
+    }
   }
 
   public static class AgentCapturePoint extends AgentPoint {

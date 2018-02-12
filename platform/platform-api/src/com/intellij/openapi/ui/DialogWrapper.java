@@ -634,7 +634,9 @@ public abstract class DialogWrapper {
       helpButton = createHelpButton(insets);
     }
 
-    if (helpButton != null || doNotAskCheckbox != null) {
+    JPanel eastPanel = createSouthAdditionalPanel();
+
+    if (helpButton != null || doNotAskCheckbox != null || eastPanel != null) {
       JPanel leftPanel = new JPanel(new BorderLayout());
 
       if (helpButton != null) leftPanel.add(helpButton, BorderLayout.WEST);
@@ -642,6 +644,11 @@ public abstract class DialogWrapper {
       if (doNotAskCheckbox != null) {
         doNotAskCheckbox.setBorder(JBUI.Borders.emptyRight(20));
         leftPanel.add(doNotAskCheckbox, BorderLayout.CENTER);
+      }
+
+
+      if(eastPanel != null) {
+        leftPanel.add(eastPanel, BorderLayout.EAST);
       }
 
       panel.add(leftPanel, BorderLayout.WEST);
@@ -666,13 +673,23 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
     JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
     for (final JButton button : buttons) {
       buttonsPanel.add(button);
     }
     return buttonsPanel;
+  }
+
+  /**
+   * Additional panel in the lower left part of dialog to the left from additional buttons
+   *
+   * @return panel to be shown or null if it's not required
+   */
+  @Nullable
+  protected JPanel createSouthAdditionalPanel() {
+    return null;
   }
 
   /**
@@ -1345,7 +1362,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  void startTrackingValidation() {
+  protected void startTrackingValidation() {
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;

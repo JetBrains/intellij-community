@@ -201,6 +201,10 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testForwardReferenceInAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> doTest());
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

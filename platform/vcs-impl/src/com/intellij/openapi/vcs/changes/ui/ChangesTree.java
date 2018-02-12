@@ -28,6 +28,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -455,12 +456,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
     private final ChangesBrowserNodeRenderer myTextRenderer;
-    private final JCheckBox myCheckBox;
+    private final ThreeStateCheckBox myCheckBox;
 
 
     public MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
       super(new BorderLayout());
-      myCheckBox = new JCheckBox();
+      myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;
 
       if (myShowCheckboxes) {
@@ -496,7 +497,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       if (myShowCheckboxes) {
         @SuppressWarnings("unchecked")
         State state = getNodeStatus((ChangesBrowserNode)value);
-        myCheckBox.setSelected(state != State.NOT_SELECTED);
+        myCheckBox.setState(state);
 
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
@@ -534,7 +535,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
-    return getNodeStatus(node) != State.DONT_CARE;
+    return true;
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {

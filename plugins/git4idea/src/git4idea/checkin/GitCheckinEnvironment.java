@@ -388,8 +388,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             return null; // commit failure
           }
 
-          helpers.add(tracker.handlePartialCommit(Side.LEFT, changelistId));
-          partialChanges.add(change);
+          if (tracker.getAffectedChangeListsIds().size() > 1) {
+            helpers.add(tracker.handlePartialCommit(Side.LEFT, changelistId));
+            partialChanges.add(change);
+          }
         }
       }
 

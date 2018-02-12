@@ -526,7 +526,7 @@ public class UsageViewImpl implements UsageView {
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
-    if (getUsageViewSettings().isPreviewUsages()) {
+    if (isPreviewUsages()) {
       myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
       treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
@@ -588,6 +588,18 @@ public class UsageViewImpl implements UsageView {
       saveSplitterProportions();
       Disposer.dispose(myCurrentUsageContextPanel);
       myCurrentUsageContextPanel = null;
+    }
+  }
+
+  public boolean isPreviewUsages() {
+    return myPresentation.isReplaceMode() ? getUsageViewSettings().isReplacePreviewUsages() : getUsageViewSettings().isPreviewUsages();
+  }
+
+  public void setPreviewUsages(boolean state) {
+    if (myPresentation.isReplaceMode()) {
+      getUsageViewSettings().setReplacePreviewUsages(state);
+    } else {
+      getUsageViewSettings().setPreviewUsages(state);
     }
   }
 

@@ -202,23 +202,24 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         myCommandProcessor.execute(commands, myProject.getDisposed());
       })
       .handleWindowed(toolWindowId -> {})
-      .handleDeactivatingShortcut(toolWindowId -> {
-        JComponent defaultFocusedComponentInEditor = null;
-        EditorsSplitters splittersToFocus = getSplittersToFocus();
-        if (splittersToFocus != null) {
-        final EditorWindow window = splittersToFocus.getCurrentWindow();
-          if (window != null) {
-            final EditorWithProviderComposite editor = window.getSelectedEditor();
-            if (editor != null) {
-              defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
-              if (defaultFocusedComponentInEditor != null) {
-                defaultFocusedComponentInEditor.requestFocus();
-              }
-            }
+      .bind(myProject);
+  }
+
+  private void focusDefaultElementInSelectedEditor() {
+    JComponent defaultFocusedComponentInEditor = null;
+    EditorsSplitters splittersToFocus = getSplittersToFocus();
+    if (splittersToFocus != null) {
+    final EditorWindow window = splittersToFocus.getCurrentWindow();
+      if (window != null) {
+        final EditorWithProviderComposite editor = window.getSelectedEditor();
+        if (editor != null) {
+          defaultFocusedComponentInEditor = editor.getPreferredFocusedComponent();
+          if (defaultFocusedComponentInEditor != null) {
+            defaultFocusedComponentInEditor.requestFocus();
           }
         }
-      })
-      .bind(myProject);
+      }
+    }
   }
 
   private void updateToolWindowHeaders() {
@@ -589,7 +590,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   @Override
-  public void activateEditorComponent() {}
+  public void activateEditorComponent() {
+    focusDefaultElementInSelectedEditor();
+  }
 
   private void deactivateWindows(@Nullable String idToIgnore, @NotNull List<FinalizableCommand> commandList) {
     final WindowInfoImpl[] infos = myLayout.getInfos();

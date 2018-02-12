@@ -152,8 +152,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
-    if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
-
     invokeAfterUpdate(() -> {
       LocalChangeList actualList = getChangeList(oldList.getId());
       if (actualList == null || actualList.isDefault() || !actualList.getChanges().isEmpty()) {
@@ -514,12 +512,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         updateIgnoredFiles(dataHolder.getComposite());
       }
 
-      clearCurrentRevisionsCache(invalidated);
       // for the case of project being closed we need a read action here -> to be more consistent
       ApplicationManager.getApplication().runReadAction(() -> {
         if (myProject.isDisposed()) {
           return;
         }
+        clearCurrentRevisionsCache(invalidated);
+
         synchronized (myDataLock) {
           // do same modifications to change lists as was done during update + do delayed notifications
           dataHolder.notifyEnd();

@@ -123,7 +123,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
         doApplyFix(getSelectedElements(view), view);
       }
 
-      view.removeSelectedNodes();
+      view.getTree().removeSelectedProblems();
     } finally {
       view.setApplyingFix(false);
     }

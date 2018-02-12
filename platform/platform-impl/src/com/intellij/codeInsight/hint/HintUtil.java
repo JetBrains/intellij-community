@@ -82,23 +82,7 @@ public class HintUtil {
                                                   @Nullable Ref<Consumer<String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
     HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
-
-    if (hyperlinkListener != null) {
-      label.myPane.addHyperlinkListener(hyperlinkListener);
-    }
-    if (mouseListener != null) {
-      label.myPane.addMouseListener(mouseListener);
-    }
-    if (updatedTextConsumer != null) {
-      updatedTextConsumer.set(s -> {
-        label.myPane.setText(s);
-
-        // Force preferred size recalculation.
-        label.setPreferredSize(null);
-        label.myPane.setPreferredSize(null);
-      });
-    }
-
+    configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
     return label;
   }
 
@@ -156,14 +140,24 @@ public class HintUtil {
     return new HintLabel(component);
   }
 
-  public static JComponent createErrorLabel(String text) {
+  public static JComponent createErrorLabel(@NotNull String text,
+                                            @Nullable HyperlinkListener hyperlinkListener,
+                                            @Nullable MouseListener mouseListener,
+                                            @Nullable Ref<Consumer<String>> updatedTextConsumer) {
     Color bg = getErrorColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
-      .setTextFg(JBColor.foreground())
-      .setFont(getBoldFont())
-      .setAwtTooltip(true);
+                                      .setTextFg(JBColor.foreground())
+                                      .setFont(getBoldFont())
+                                      .setAwtTooltip(true);
 
-    return createLabel(text, null, bg, hintHint);
+    HintLabel label = createLabel(text, null, bg, hintHint);
+    configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
+    return label;
+  }
+
+  @NotNull
+  public static JComponent createErrorLabel(@NotNull String text) {
+    return createErrorLabel(text, null, null, null);
   }
 
   @NotNull
@@ -211,11 +205,30 @@ public class HintUtil {
     );
   }
 
-  public static class HintLabel extends JPanel {
+  private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,
+                                     @Nullable MouseListener mouseListener,
+                                     @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+    if (hyperlinkListener != null) {
+      label.myPane.addHyperlinkListener(hyperlinkListener);
+    }
+    if (mouseListener != null) {
+      label.myPane.addMouseListener(mouseListener);
+    }
+    if (updatedTextConsumer != null) {
+      updatedTextConsumer.set(s -> {
+        label.myPane.setText(s);
+
+        // Force preferred size recalculation.
+        label.setPreferredSize(null);
+        label.myPane.setPreferredSize(null);
+      });
+    }
+  }
+
+  private static class HintLabel extends JPanel {
     private JEditorPane myPane;
     private SimpleColoredComponent myColored;
     private JLabel myIcon;
-    private String plainText;
 
     private HintLabel() {
       setLayout(new BorderLayout());
@@ -254,7 +267,6 @@ public class HintUtil {
     }
 
     public void setText(String s, HintHint hintHint) {
-      plainText = s;
       clearText();
 
       if (s != null) {
@@ -293,10 +305,6 @@ public class HintUtil {
 
       revalidate();
       repaint();
-    }
-
-    public String getPlainText() {
-      return plainText;
     }
 
     @Override

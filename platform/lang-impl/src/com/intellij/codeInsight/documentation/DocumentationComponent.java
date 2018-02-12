@@ -38,6 +38,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.FontSize;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -226,6 +227,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         IdeFocusManager.getGlobalInstance().requestFocus(myScrollPane, true);
       }
     });
+  }
+
+  public static DocumentationComponent createAndFetch(Project project, PsiElement element, Disposable disposable) {
+    DocumentationManager manager = DocumentationManager.getInstance(project);
+    DocumentationComponent component = new DocumentationComponent(manager);
+    Disposer.register(disposable, component);
+    manager.fetchDocInfo(element, component);
+    return component;
   }
 
   public DocumentationComponent(final DocumentationManager manager) {
@@ -504,6 +513,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     gearActions.add(new ShowAsToolwindowAction());
     gearActions.add(new MyShowSettingsAction());
     gearActions.add(new ShowToolbarAction());
+    gearActions.add(new RestoreDefaultSizeAction());
     gearActions.addSeparator();
     gearActions.addAll(actions);
     Presentation presentation = new Presentation();
@@ -708,7 +718,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myBackStack.push(saveContext());
       myForwardStack.clear();
     }
-    updateControlState();
     setData(element, text, clearHistory, null);
     if (clean) {
       myIsEmpty = false;
@@ -778,7 +787,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         myEditorPane.setCaretPosition(0);
       }});
   }
-
   private void showHint() {
     Editor editor = myManager.getEditor();
     Component popupAnchor = getPopupAnchor(editor);
@@ -789,9 +797,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         Dimension preferredSize = myEditorPane.getPreferredSize();
         int width = definitionPreferredWidth();
         width = width < 0 ? preferredSize.width : width;
+        width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
+        myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
+        myEditorPane.setText(myEditorPane.getText());
+        preferredSize = myEditorPane.getPreferredSize();
+
         int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-        hintSize = new Dimension(Math.min(maxWidth, Math.max(JBUI.scale(300), width)),
-                                 Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height)));
+        height = Math.min(MAX_DEFAULT.height, Math.max(MIN_DEFAULT.height, height));
+        hintSize = new Dimension(width, height);
       } else {
         hintSize = DimensionService.getInstance().getSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, myManager.myProject);
         hintSize = hintSize != null ? hintSize : MIN_DEFAULT;
@@ -883,7 +896,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         myIsShown = true;
         if (myHint.getDimensionServiceKey() == null) {
-          SwingUtilities.invokeLater(() -> registerSizeTracker());
+          SwingUtilities.invokeLater(this::registerSizeTracker);
         }
       }
     }
@@ -1444,7 +1457,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class MyShowSettingsButton extends ActionButton {
 
     public MyShowSettingsButton() {
-      this(new MyGearActionGroup(new ShowAsToolwindowAction(), new MyShowSettingsAction(), new ShowToolbarAction()), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      this(new MyGearActionGroup(new ShowAsToolwindowAction(), new MyShowSettingsAction(), new ShowToolbarAction(), new RestoreDefaultSizeAction()),
+           new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
@@ -1637,6 +1651,24 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void actionPerformed(AnActionEvent e) {
       myToolwindowCallback.run();
+    }
+  }
+
+  private class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    public RestoreDefaultSizeAction() {
+      super("Restore Size");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(myHint != null && myHint.getDimensionServiceKey() != null);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      DimensionService.getInstance().setSize(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE, null, myManager.myProject);
+      myHint.setDimensionServiceKey(null);
+      showHint();
     }
   }
 }

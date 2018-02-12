@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.completion.StaticallyImportable;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
@@ -17,6 +18,7 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -439,6 +441,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testArrayIndexTailType() { doTest(); }
 
   public void testPrivateOverloads() { doTest(); }
+  public void testInaccessibleMethodArgument() { doTest(); }
 
   public void testPolyadicExpression() { doTest(); }
 
@@ -813,12 +816,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doActionTest();
     assertStringItems("String.class");
 
-    LookupElementPresentation p = new LookupElementPresentation();
-    myFixture.getLookupElements()[0].renderElement(p);
+    LookupElement item = myFixture.getLookupElements()[0];
+    LookupElementPresentation p = LookupElementPresentation.renderElement(item);
     assertEquals("String.class", p.getItemText());
     assertEquals(" (java.lang)", p.getTailText());
     assertNull(p.getTypeText());
+
+    assertInstanceOf(item.getPsiElement(), PsiClass.class);
   }
+  
   public void testNoClassLiteral() {
     doActionTest();
     assertStringItems("Object.class", "getClass", "forName", "forName");

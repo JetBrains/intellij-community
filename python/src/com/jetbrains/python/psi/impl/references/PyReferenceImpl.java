@@ -218,11 +218,11 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return resolveResult;
   }
 
-  private boolean isInOwnScopeComprehension(PsiElement uexpr) {
-    if (!myContext.getTypeEvalContext().maySwitchToAST(uexpr)) {
+  private boolean isInOwnScopeComprehension(@Nullable PsiElement uexpr) {
+    if (uexpr == null || !myContext.getTypeEvalContext().maySwitchToAST(uexpr)) {
       return false;
     }
-    PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
+    final PyComprehensionElement comprehensionElement = PsiTreeUtil.getParentOfType(uexpr, PyComprehensionElement.class);
     return comprehensionElement != null && PyUtil.isOwnScopeComprehension(comprehensionElement);
   }
 

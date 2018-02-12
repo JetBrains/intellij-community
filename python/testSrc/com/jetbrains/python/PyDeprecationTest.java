@@ -78,12 +78,12 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, false);
   }
 
-  public void testAbsAbstractProperty() {
+  public void testAbcDeprecatedAbstracts() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON34,
       () -> {
         myFixture.enableInspections(PyDeprecationInspection.class);
-        myFixture.configureByFile("deprecation/abcAbstractProperty.py");
+        myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
         myFixture.checkHighlighting(true, false, false);
       }
     );

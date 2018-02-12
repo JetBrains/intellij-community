@@ -84,7 +84,7 @@ class LineStatusTrackerManager(
   private val trackers = HashMap<Document, TrackerData>()
   private val forcedDocuments = HashMap<Document, Multiset<Any>>()
 
-  private val partialChangeListsEnabled = Registry.`is`("vcs.enable.partial.changelists")
+  private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
@@ -115,14 +115,14 @@ class LineStatusTrackerManager(
 
       val editorFactory = EditorFactory.getInstance()
       editorFactory.addEditorFactoryListener(MyEditorFactoryListener(), disposable)
-      if (partialChangeListsEnabled) editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), disposable)
+      editorFactory.eventMulticaster.addDocumentListener(MyDocumentListener(), disposable)
 
       changeListManager.addChangeListListener(MyChangeListListener())
 
       val virtualFileManager = VirtualFileManager.getInstance()
       virtualFileManager.addVirtualFileListener(MyVirtualFileListener(), disposable)
 
-      if (partialChangeListsEnabled) CommandProcessor.getInstance().addCommandListener(MyCommandListener(), disposable)
+      CommandProcessor.getInstance().addCommandListener(MyCommandListener(), disposable)
     }
   }
 
@@ -376,6 +376,29 @@ class LineStatusTrackerManager(
     }
   }
 
+  private fun updateTrackingModes() {
+    synchronized(LOCK) {
+      if (isDisposed) return
+      val mode = getTrackingMode()
+      val trackers = trackers.values.map { it.tracker }
+      for (tracker in trackers) {
+        val document = tracker.document
+        val virtualFile = tracker.virtualFile
+
+        val isPartialTrackerExpected = canCreatePartialTrackerFor(virtualFile)
+        val isPartialTracker = tracker is PartialLocalLineStatusTracker
+
+        if (isPartialTrackerExpected == isPartialTracker) {
+          tracker.mode = mode
+        }
+        else {
+          releaseTracker(document)
+          installTracker(virtualFile, document)
+        }
+      }
+    }
+  }
+
   private fun getTrackingMode(): LineStatusTracker.Mode {
     val settings = VcsApplicationSettings.getInstance()
     if (!settings.SHOW_LST_GUTTER_MARKERS) return LineStatusTracker.Mode.SILENT
@@ -590,6 +613,8 @@ class LineStatusTrackerManager(
 
   private inner class MyDocumentListener : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
+      if (!partialChangeListsEnabled) return
+
       val document = event.document
       if (documentsInDefaultChangeList.contains(document)) return
 
@@ -599,6 +624,8 @@ class LineStatusTrackerManager(
 
       val changeList = changeListManager.getChangeList(virtualFile)
       if (changeList != null && !changeList.isDefault) {
+        log("Tracker install from DocumentListener: ", virtualFile)
+
         installTracker(virtualFile, document, changeList.id, listOf(event))
         return
       }
@@ -622,27 +649,9 @@ class LineStatusTrackerManager(
 
   private inner class MyLineStatusTrackerSettingListener : LineStatusTrackerSettingListener {
     override fun settingsUpdated() {
-      synchronized(LOCK) {
-        val mode = getTrackingMode()
-        for (data in trackers.values) {
-          val tracker = data.tracker
-          val document = tracker.document
-          val virtualFile = tracker.virtualFile
+      partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
 
-          if (tracker.mode == mode) continue
-
-          val isPartialTrackerExpected = canCreatePartialTrackerFor(virtualFile)
-          val isPartialTracker = tracker is PartialLocalLineStatusTracker
-
-          if (isPartialTrackerExpected == isPartialTracker) {
-            tracker.mode = mode
-          }
-          else {
-            releaseTracker(document)
-            installTracker(virtualFile, document)
-          }
-        }
-      }
+      updateTrackingModes()
     }
   }
 
@@ -662,6 +671,8 @@ class LineStatusTrackerManager(
 
   private inner class MyCommandListener : CommandListener {
     override fun commandFinished(event: CommandEvent?) {
+      if (!partialChangeListsEnabled) return
+
       if (CommandProcessor.getInstance().currentCommand == null &&
           !filesWithDamagedInactiveRanges.isEmpty()) {
         showInactiveRangesDamagedNotification()

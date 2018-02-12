@@ -1249,12 +1249,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     PsiElement resolved = result.getElement();
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
-      if (!myHolder.hasErrorResults()) {
-        try {
-          myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems,myFile));
-        }
-        catch (IndexNotReadyException ignored) { }
-      }
       PsiVariable variable = (PsiVariable)resolved;
       boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
       if (isFinal && !variable.hasInitializer()) {
@@ -1262,6 +1256,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, myFinalVarProblems));
         }
         if (!myHolder.hasErrorResults()) myHolder.add(HighlightControlFlowUtil.checkFinalVariableInitializedInLoop(expression, resolved));
+      }
+      if (!myHolder.hasErrorResults()) {
+        try {
+          myHolder.add(HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(expression, (PsiVariable)resolved, myUninitializedVarProblems,myFile));
+        }
+        catch (IndexNotReadyException ignored) { }
       }
     }
 
@@ -1745,6 +1745,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref, container));
+      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+        myHolder.addAll(ModuleHighlightUtil.checkModifiers(statement));
+      }
     }
   }
 

@@ -1,8 +1,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
+import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -10,18 +9,12 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.util.IconUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -169,10 +162,9 @@ public class ActionStepBuilder extends PresentationFactory {
           icon =  AllIcons.Actions.QuickList;
         }
         else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-          boolean darcula = UIUtil.isUnderDarcula();
-          icon = MacIntelliJIconCache.getIcon("checkmark", false, false, true);
-          selectedIcon = MacIntelliJIconCache.getIcon("checkmark", true, false, true);
-          disabledIcon = MacIntelliJIconCache.getIcon("checkmark", false, false, false);
+          icon = IconCache.getIcon("checkmark", false, false, true);
+          selectedIcon = IconCache.getIcon("checkmark", true, false, true);
+          disabledIcon = IconCache.getIcon("checkmark", false, false, false);
         }
       }
       if (!enabled) {

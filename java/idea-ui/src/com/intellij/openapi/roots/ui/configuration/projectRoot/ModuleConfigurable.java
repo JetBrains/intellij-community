@@ -15,7 +15,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.navigation.Place;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +35,7 @@ public class ModuleConfigurable extends ProjectStructureElementConfigurable<Modu
     myModule = module;
     myModuleGrouper = moduleGrouper;
     myConfigurator = modulesConfigurator;
-    myModuleName = ObjectUtils.notNull(myConfigurator.getModuleModel().getNewName(myModule), myModule.getName());
+    myModuleName = myConfigurator.getModuleModel().getActualName(myModule);
     myContext = ModuleStructureConfigurable.getInstance(myModule.getProject()).getContext();
     myProjectStructureElement = new ModuleProjectStructureElement(myContext, myModule);
   }

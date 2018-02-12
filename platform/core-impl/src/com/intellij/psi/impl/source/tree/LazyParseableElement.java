@@ -187,8 +187,7 @@ public class LazyParseableElement extends CompositeElement {
 
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    DebugUtil.startPsiModification("lazy-parsing");
-    try {
+    DebugUtil.performPsiModification("lazy-parsing", () -> {
       TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
       assertTextLengthIntact(text, parsedNode);
 
@@ -205,10 +204,7 @@ public class LazyParseableElement extends CompositeElement {
         myParsed = true;
         myText = new SoftReference<>(text);
       }
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    });
   }
 
   private void assertTextLengthIntact(CharSequence text, TreeElement child) {

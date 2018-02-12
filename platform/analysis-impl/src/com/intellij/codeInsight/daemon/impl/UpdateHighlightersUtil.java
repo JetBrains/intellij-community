@@ -365,7 +365,7 @@ public class UpdateHighlightersUtil {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(infoStartOffset, infoEndOffset, layer, null,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
       if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
-        highlighter.putUserData(RangeHighlighter.VISIBLE_IF_FOLDED, Boolean.TRUE);
+        highlighter.setVisibleIfFolded(true);
       }
     }
     else {

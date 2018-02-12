@@ -35,10 +35,10 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CharTable;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class ChangeUtil {
@@ -48,13 +48,7 @@ public class ChangeUtil {
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original) {
-    DebugUtil.startPsiModification(null);
-    try {
-      encodeInformation(element, original, new HashMap<>());
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    DebugUtil.performPsiModification(null, () -> encodeInformation(element, original, new HashMap<>()));
   }
 
   private static void encodeInformation(TreeElement element, ASTNode original, Map<Object, Object> state) {
@@ -74,13 +68,7 @@ public class ChangeUtil {
   }
 
   public static TreeElement decodeInformation(TreeElement element) {
-    DebugUtil.startPsiModification(null);
-    try {
-      return decodeInformation(element, new HashMap<>());
-    }
-    finally {
-      DebugUtil.finishPsiModification();
-    }
+    return DebugUtil.performPsiModification(null, () -> decodeInformation(element, new HashMap<>()));
   }
 
   private static TreeElement decodeInformation(TreeElement element, Map<Object, Object> state) {

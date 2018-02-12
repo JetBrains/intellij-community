@@ -4,6 +4,7 @@
 
 package org.jetbrains.uast
 
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -67,6 +68,42 @@ fun getUParentForAnnotationIdentifier(identifier: PsiElement): UElement? {
   }
   return null
 }
+
+/**
+ * @param uElement a element that occurs in annotation
+ * @return the annotation in which this element occurs and a corresponding parameter name if available
+ */
+fun getAnnotationEntry(uElement: UElement?): Pair<PsiAnnotation, String?>? {
+
+  fun tryConvertToEntry(uElement: UElement, parent: UElement, name: String?): Pair<PsiAnnotation, String?>? {
+    val uAnnotation = parent.sourcePsi.toUElementOfType<UAnnotation>() ?: return null
+    val javaPsi = uAnnotation.javaPsi ?: return null
+    return javaPsi to (name ?: uAnnotation.attributeValues.find { it.expression.sourcePsi === uElement.sourcePsi }?.name)
+  }
+
+  tailrec fun retrievePsiAnnotationEntry(uElement: UElement?, name: String?): Pair<PsiAnnotation, String?>? {
+    if (uElement == null) return null
+    val parent = uElement.uastParent ?: return null
+    return when (parent) {
+      is UAnnotation -> parent.javaPsi?.let { it to name }
+      is UReferenceExpression -> tryConvertToEntry(uElement, parent, name)
+      is UCallExpression ->
+        if (parent.kind == UastCallKind.NESTED_ARRAY_INITIALIZER)
+          retrievePsiAnnotationEntry(parent, null)
+        else
+          tryConvertToEntry(uElement, parent, name)
+      is UNamedExpression -> retrievePsiAnnotationEntry(parent, parent.name)
+      else ->
+        // KtCollectionLiteralExpression are not supported by UAST until 1.2.30-eap-2
+        if (parent.sourcePsi?.javaClass?.name == "org.jetbrains.kotlin.psi.KtCollectionLiteralExpression")
+          retrievePsiAnnotationEntry(parent, null)
+        else null
+    }
+  }
+
+  return retrievePsiAnnotationEntry(uElement, null)
+}
+
 
 private fun isResolvedToAnnotation(reference: UReferenceExpression?) = (reference?.resolve() as? PsiClass)?.isAnnotationType == true
 

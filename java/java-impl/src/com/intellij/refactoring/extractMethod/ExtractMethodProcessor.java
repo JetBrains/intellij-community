@@ -1296,7 +1296,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myDuplicates;
   }
 
-  ParametrizedDuplicates getParametrizedDuplicates() {
+  public ParametrizedDuplicates getParametrizedDuplicates() {
     return myParametrizedDuplicates;
   }
 
@@ -2079,6 +2079,10 @@ public class ExtractMethodProcessor implements MatchProvider {
     myMethodName = methodName;
   }
 
+  public PsiElement getAnchor() {
+    return myAnchor;
+  }
+
   public Boolean hasDuplicates() {
     List<Match> duplicates = getDuplicates();
     if (duplicates != null && !duplicates.isEmpty()) {
@@ -2089,7 +2093,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return false;
   }
 
-  boolean initParametrizedDuplicates(boolean showDialog) {
+  public boolean initParametrizedDuplicates(boolean showDialog) {
     if (myExtractedMethod != null && myParametrizedDuplicates != null) {
       if (!showDialog ||
           ApplicationManager.getApplication().isUnitTestMode() ||

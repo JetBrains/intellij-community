@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -45,15 +45,21 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     myText = calcText(modifierListOwner, myAnnotation);
   }
 
-  public static String calcText(PsiModifierListOwner modifierListOwner, @NotNull String annotation) {
-    final String shortName = annotation.substring(annotation.lastIndexOf('.') + 1);
+  public static String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
+    final String shortName = annotation == null ? null : annotation.substring(annotation.lastIndexOf('.') + 1);
     if (modifierListOwner instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)modifierListOwner).getName();
       if (name != null) {
         FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(modifierListOwner.getLanguage());
+        if (shortName == null) {
+          return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element", provider.getType(modifierListOwner), name);
+        }
         return CodeInsightBundle
           .message("inspection.i18n.quickfix.annotate.element.as", provider.getType(modifierListOwner), name, shortName);
       }
+    }
+    if (shortName == null) {
+      return CodeInsightBundle.message("inspection.i18n.quickfix.annotate");
     }
     return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
   }

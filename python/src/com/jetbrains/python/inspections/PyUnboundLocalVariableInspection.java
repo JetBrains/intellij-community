@@ -39,6 +39,7 @@ import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,8 +69,13 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
+
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
+      if (PyResolveUtil.allowForwardReferences(node)) {
+        return;
+      }
+
       if (node.getContainingFile() instanceof PyExpressionCodeFragment) {
         return;
       }
@@ -127,9 +133,6 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         final PsiPolyVariantReference ref = node.getReference(getResolveContext());
-        if (ref == null) {
-          return;
-        }
         final PsiElement resolved = ref.resolve();
         final boolean isBuiltin = PyBuiltinCache.getInstance(node).isBuiltin(resolved);
         if (owner instanceof PyClass) {

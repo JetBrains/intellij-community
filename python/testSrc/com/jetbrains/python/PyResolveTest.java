@@ -1,10 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -14,6 +11,8 @@ import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 public class PyResolveTest extends PyResolveTestCase {
@@ -1246,5 +1245,39 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testImportedTypingListInheritor() {
     myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
     assertResolvesTo(PyFunction.class, "append");
+  }
+
+  // PY-27863
+  public void testAttributeClassLevelAnnotation() {
+    myFixture.copyDirectoryToProject("resolve/" + getTestName(false), "");
+
+    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "some_attr");
+
+    final PsiFile file = myFixture.getFile();
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(myFixture.getProject(), file);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+    // It's like an attempt to find type annotation for attribute on the class level.
+    final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);
+    assertEmpty(classType.resolveMember(target.getReferencedName(), target, AccessDirection.READ, resolveContext, true));
+
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
+  }
+
+  // PY-28228
+  public void testReturnAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  // PY-28228
+  public void testParameterAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
   }
 }

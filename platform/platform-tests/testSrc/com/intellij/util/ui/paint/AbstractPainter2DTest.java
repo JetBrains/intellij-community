@@ -7,20 +7,18 @@ import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.paint.ImageComparator.GreyscaleAASmoother;
 import org.junit.After;
 import org.junit.Before;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.net.MalformedURLException;
-import java.util.Arrays;
 import java.util.function.Function;
 
 import static com.intellij.util.ui.JBUI.scale;
 import static java.lang.Math.ceil;
-import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 /**
@@ -29,44 +27,57 @@ import static junit.framework.TestCase.assertTrue;
  * @author tav
  */
 public abstract class AbstractPainter2DTest {
-  private float originalUserScale;
-  private boolean originalJreHiDPIEnabled;
+  public static class ScaleState {
+    private static float originalUserScale;
+    private static boolean originalJreHiDPIEnabled;
+
+    public static void set() {
+      originalUserScale = scale(1f);
+      originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
+    }
+
+    public static void restore() {
+      JBUI.setUserScaleFactor(originalUserScale);
+      PaintUtilTest.overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
+    }
+  }
 
   @Before
   public void setState() {
-    originalUserScale = scale(1f);
-    originalJreHiDPIEnabled = UIUtil.isJreHiDPIEnabled();
+    ScaleState.set();
   }
 
   @After
   public void restoreState() {
-    JBUI.setUserScaleFactor(originalUserScale);
-    PaintUtilTest.overrideJreHiDPIEnabled(originalJreHiDPIEnabled);
+    ScaleState.restore();
   }
 
   public void testGoldenImages() {
+    ImageComparator comparator = new ImageComparator(
+      new GreyscaleAASmoother(0.15f, 0.5f));
+
     // 1) IDE-HiDPI
-    for (int scale : getScales()) testGolden(scale, false);
+    for (int scale : getScales()) testGolden(comparator, scale, false);
 
     // 2) JRE-HiDPI
-    for (int scale : getScales()) testGolden(scale, true);
+    for (int scale : getScales()) testGolden(comparator, scale, true);
 
     // 3) Boundary values
-    paintImage(2, 10, 10, this::testBoundaries);
+    supplyGraphics(2, 10, 10, this::testBoundaries);
   }
 
-  private void testGolden(int scale, boolean jreHiDPIEnabled) {
+  private void testGolden(ImageComparator comparator, int scale, boolean jreHiDPIEnabled) {
     PaintUtilTest.overrideJreHiDPIEnabled(jreHiDPIEnabled);
     JBUI.setUserScaleFactor(jreHiDPIEnabled ? 1 : scale);
 
-    BufferedImage image = paintImage(scale, getImageSize().width, getImageSize().height, this::paint);
+    BufferedImage image = supplyGraphics(scale, getImageSize().width, getImageSize().height, this::paint);
 
     //save(image, scale); // uncomment to recreate golden image
 
-    compare(image, load(scale), scale, true);
+    compare(image, load(scale), comparator, scale);
   }
 
-  protected BufferedImage paintImage(double scale, int width, int height, Function<Graphics2D, Void> paint) {
+  protected BufferedImage supplyGraphics(double scale, int width, int height, Function<Graphics2D, Void> consumeGraphics) {
     @SuppressWarnings("UndesirableClassUsage")
     BufferedImage image = new BufferedImage((int)ceil(width * scale), (int)ceil(height * scale), BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
@@ -77,7 +88,7 @@ public abstract class AbstractPainter2DTest {
       g.fillRect(0, 0, image.getWidth(), image.getHeight());
       g.setColor(Color.black);
 
-      paint.apply(g);
+      consumeGraphics.apply(g);
 
       return image;
     }
@@ -116,21 +127,10 @@ public abstract class AbstractPainter2DTest {
     }
   }
 
-  protected static void compare(BufferedImage img1, BufferedImage img2, double scale, boolean alpha) {
-    int[] d1 = ((DataBufferInt)img1.getRaster().getDataBuffer()).getData();
-    int[] d2 = ((DataBufferInt)img2.getRaster().getDataBuffer()).getData();
-    String msg = "the painting is incorrect (JreHiDPIEnabled: " + UIUtil.isJreHiDPIEnabled() + "; scale: " + scale + ")";
-    if (alpha) {
-      assertEquals(msg, d1.length, d2.length);
-      for (int i = 0; i < d1.length; i++) {
-        boolean pix1 = d1[i] != 0xffffffff;
-        boolean pix2 = d2[i] != 0xffffffff;
-        assertTrue(msg, pix1 == pix2);
-      }
-    }
-    else {
-      assertTrue(msg, Arrays.equals(d1, d2));
-    }
+  protected static void compare(BufferedImage img1, BufferedImage img2, ImageComparator comparator, double scale) {
+    StringBuilder sb = new StringBuilder("images mismatch: JreHiDPIEnabled=" + UIUtil.isJreHiDPIEnabled() + "; scale=" + scale + "; ");
+    boolean comparable = comparator.compare(img1, img2, sb);
+    assertTrue(sb.toString(), comparable);
   }
 
   private String getGoldenImagePath(int scale) {
