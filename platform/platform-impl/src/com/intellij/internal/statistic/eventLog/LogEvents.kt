@@ -12,8 +12,8 @@ open class LogEvent(val session: String, val bucket: String,
                     recorderVersion: String,
                     type: String) {
   val time = System.currentTimeMillis()
-  val recorder: LogEventRecorder = LogEventRecorder(recorderId, recorderVersion)
-  val action: LogEventAction = LogEventAction(type)
+  val recorder: LogEventRecorder = LogEventRecorder(removeTabsOrSpaces(recorderId), recorderVersion)
+  val action: LogEventAction = LogEventAction(removeTabsOrSpaces(type))
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false
@@ -23,6 +23,10 @@ open class LogEvent(val session: String, val bucket: String,
     if (action.id != next.action.id) return false
     if (action.data != next.action.data) return false
     return true
+  }
+
+  private fun removeTabsOrSpaces(str : String) : String {
+    return str.replace(" ", "_").replace("\t", "_")
   }
 }
 
