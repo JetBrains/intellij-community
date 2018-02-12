@@ -538,11 +538,11 @@ public class CreateTestDialog extends DialogWrapper {
       }
 
       if (roots.size() == 1) {
-        return (roots.get(0));
+        return roots.get(0);
       }
       else {
         PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
-        return (MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
+        return MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
       }
     });
 
