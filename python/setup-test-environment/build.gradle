@@ -138,11 +138,13 @@ task prepare(type: Delete) {
       delete envs.bootstrapDirectory
     }
   }
+
+  // Python leaked from previous test may prevent this script from
+  // deleting folder because you can't delete file opened by process on Windows
+  dependsOn killPythonWindows
 }
 
 task build {
   mustRunAfter prepare
-  // Python leaked from previous test may prevent this script from
-  // deleting folder because you can't delete file opened by process on Windows
-  dependsOn killPythonWindows, prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
+  dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
 }
