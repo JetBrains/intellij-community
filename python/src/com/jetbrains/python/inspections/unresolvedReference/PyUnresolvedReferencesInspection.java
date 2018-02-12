@@ -733,6 +733,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 }
               }
             }
+            else if (type instanceof PyFunctionType) {
+              final PyCallable callable = ((PyFunctionType)type).getCallable();
+              final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(callable, element);
+              if (path != null) {
+                result.add(path.append(QualifiedName.fromComponents(callable.getName(), exprName)));
+              }
+            }
             else if (type instanceof PyUnionType) {
               for (PyType memberType : ((PyUnionType)type).getMembers()) {
                 if (memberType instanceof PyClassType) {
