@@ -27,7 +27,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
+import static com.intellij.util.containers.ContainerUtil.set;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
@@ -110,7 +111,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     myPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
-    myView.getGroupingSupport().setGroupingKey(DIRECTORY_GROUPING);
+    myView.getGroupingSupport().setGroupingKeysOrSkip(set(DEFAULT_GROUPING_KEYS));
   }
 
   protected void addCustomActions(@NotNull DefaultActionGroup group) {

@@ -4,7 +4,7 @@ package com.intellij.openapi.vcs.changes.ui
 import javax.swing.tree.DefaultTreeModel
 
 class NoneChangesGroupingPolicy : ChangesGroupingPolicy {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>) = subtreeRoot
+  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? = null
 
   class Factory : ChangesGroupingPolicyFactory() {
     override fun createGroupingPolicy(model: DefaultTreeModel) = NoneChangesGroupingPolicy()

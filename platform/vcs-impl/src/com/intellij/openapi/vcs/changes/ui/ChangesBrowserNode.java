@@ -107,6 +107,11 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     return new ChangesBrowserNode(userObject);
   }
 
+  @Override
+  public ChangesBrowserNode<?> getParent() {
+    return (ChangesBrowserNode<?>)super.getParent();
+  }
+
   @Nullable
   @Override
   public <V> V getUserData(@NotNull Key<V> key) {

@@ -48,8 +48,12 @@ import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
-import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.NONE_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
+import static com.intellij.util.ArrayUtil.toStringArray;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
@@ -64,7 +68,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private boolean myKeepTreeState = false;
 
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
-  @NonNls private final static String GROUPING_KEY = "ChangesTree.GroupingKey";
+  @NonNls private static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
+
+  public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
@@ -155,8 +161,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     SmartExpander.installOn(this);
 
     migrateShowFlattenSetting();
-    myGroupingSupport.setGroupingKeyOrNone(notNull(PropertiesComponent.getInstance(myProject).getValue(GROUPING_KEY), DIRECTORY_GROUPING));
-    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping((String)e.getOldValue(), (String)e.getNewValue()));
+    myGroupingSupport
+      .setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
+    //noinspection unchecked
+    myGroupingSupport.addPropertyChangeListener(e -> changeGrouping((Set<String>)e.getOldValue(), (Set<String>)e.getNewValue()));
 
     String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
     setEmptyText(emptyText);
@@ -166,8 +174,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private void migrateShowFlattenSetting() {
     PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
-    if (properties.isTrueValue(FLATTEN_OPTION_KEY)) {
-      properties.setValue(GROUPING_KEY, NONE_GROUPING);
+
+    if (properties.isValueSet(FLATTEN_OPTION_KEY)) {
+      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? EMPTY_STRING_ARRAY : DEFAULT_GROUPING_KEYS);
       properties.unsetValue(FLATTEN_OPTION_KEY);
     }
   }
@@ -219,17 +228,17 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return myShowCheckboxes;
   }
 
-  private void changeGrouping(@NotNull String oldGrouping, @NotNull String newGrouping) {
-    PropertiesComponent.getInstance(myProject).setValue(GROUPING_KEY, newGrouping);
+  private void changeGrouping(@NotNull Set<String> oldGrouping, @NotNull Set<String> newGrouping) {
+    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(newGrouping));
 
     final List<Object> oldSelection = getSelectedUserObjects();
-    if (myKeepTreeState && DIRECTORY_GROUPING.equals(oldGrouping)) {
+    if (myKeepTreeState && oldGrouping.contains(DIRECTORY_GROUPING)) {
       myDirectoryTreeState = TreeState.createOn(this, getRoot());
     }
 
     rebuildTree();
 
-    if (myKeepTreeState && DIRECTORY_GROUPING.equals(newGrouping) && myDirectoryTreeState != null) {
+    if (myKeepTreeState && newGrouping.contains(DIRECTORY_GROUPING) && myDirectoryTreeState != null) {
       myDirectoryTreeState.applyTo(this, getRoot());
     }
     setSelectedChanges(oldSelection);
