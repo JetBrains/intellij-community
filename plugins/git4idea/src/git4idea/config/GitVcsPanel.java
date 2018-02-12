@@ -317,6 +317,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
       }
     });
     myIncomingOutgoingSettingPanel = new JPanel(new BorderLayout());
+    myIncomingOutgoingSettingPanel.setVisible(false);
     NumberFormatter numberFormatter = new NumberFormatter(NumberFormat.getIntegerInstance());
     numberFormatter.setMinimum(1);
     numberFormatter.setAllowsInvalid(true);
