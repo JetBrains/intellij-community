@@ -894,6 +894,13 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     }
   }
 
+  public void testOverloadWithNoParameters() throws Exception {
+    configureJava("class C { void m() { System.out.pr<caret> } }");
+    complete("println(long x)");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>long</b>&nbsp;&nbsp;<i>a The <code>long</code> to be printed.</i></html>");
+  }
+
   private void checkResultWithInlays(String text) {
     myFixture.checkResultWithInlays(text);
   }
