@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
@@ -82,11 +83,11 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
         final JBList<String> dictList = new JBList<>(dictionaryList);
         JBPopupFactory.getInstance()
           .createListPopupBuilder(dictList)
-          .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
-          .setItemChoosenCallback(
-            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, getLevelByName(dictList.getSelectedValue())))
-          .createPopup()
-          .showInBestPositionFor(context);
+                      .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
+                      .setItemChoosenCallback(() -> CommandProcessor.getInstance().executeCommand(project, () -> spellCheckerManager
+                        .acceptWordAsCorrect(wordToSave, file, project, getLevelByName(dictList.getSelectedValue())), getName(), null))
+                      .createPopup()
+                      .showInBestPositionFor(context);
       }
       else {
         spellCheckerManager.acceptWordAsCorrect(wordToSave, file, project, myLevel);

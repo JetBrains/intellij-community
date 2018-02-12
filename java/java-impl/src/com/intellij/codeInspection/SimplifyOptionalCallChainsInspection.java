@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -119,7 +119,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiParameter parameter = parameters[0];
       String proposed = OptionalUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
       String canonicalOrElse;
-      if (useOrElseGet && !ExpressionUtils.isSimpleExpression(falseArg)) {
+      if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseArg)) {
         canonicalOrElse = ".orElseGet(() -> " + falseArg.getText() + ")";
       }
       else {
@@ -373,7 +373,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
           tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
         if (nextStatement == null) return null;
         PsiExpression defaultValue = extractConditionalDefaultValue(nextStatement, returnVar);
-        boolean isSimple = ExpressionUtils.isSimpleExpression(defaultValue);
+        boolean isSimple = ExpressionUtils.isSafelyRecomputableExpression(defaultValue);
         if (defaultValue == null || (!isSimple && !LambdaGenerationUtil.canBeUncheckedLambda(defaultValue))) return null;
         PsiType type = defaultValue.getType();
         PsiType methodCallReturnValue = call.getMethodExpression().getType();

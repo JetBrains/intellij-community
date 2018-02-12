@@ -2,9 +2,11 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -19,6 +21,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.ContainingBranchesGetter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
@@ -35,6 +38,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.wm.impl.IdeBackgroundUtil.EDITOR_PROP;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;
@@ -114,7 +118,8 @@ public class CommitPanel extends JBPanel {
     if (myTagsPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, 0, SIDE_BORDER));
       myTagsPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
-    } else if (myBranchesPanel.isVisible()) {
+    }
+    else if (myBranchesPanel.isVisible()) {
       myBranchesPanel.setBorder(JBUI.Borders.empty(0, SIDE_BORDER - ReferencesPanel.H_GAP, INTERNAL_BORDER, SIDE_BORDER));
     }
   }
@@ -130,8 +135,8 @@ public class CommitPanel extends JBPanel {
 
   public void updateBranches() {
     if (myCommit != null) {
-      myContainingBranchesPanel
-        .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
+      ContainingBranchesGetter getter = myLogData.getContainingBranchesGetter();
+      myContainingBranchesPanel.setBranches(getter.getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
     }
     else {
       myContainingBranchesPanel.setBranches(null);
@@ -157,10 +162,6 @@ public class CommitPanel extends JBPanel {
   }
 
   private class MessagePanel extends HtmlPanel {
-    MessagePanel() {
-      setOpaque(true);
-    }
-
     @Override
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
@@ -180,7 +181,7 @@ public class CommitPanel extends JBPanel {
 
     @Override
     public Color getBackground() {
-      if (UIUtil.isUnderDarcula()) {
+      if (hasPanelBackground()) {
         return getCommitDetailsBackground();
       }
       return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
@@ -189,7 +190,17 @@ public class CommitPanel extends JBPanel {
     @Override
     public void update() {
       setVisible(myPresentation != null); // looks weird when empty
+      setOpaque(!hasPanelBackground());
       super.update();
+    }
+
+    protected boolean hasPanelBackground() {
+      return UIUtil.isUnderDarcula() || hasBackgroundImage();
+    }
+
+    private boolean hasBackgroundImage() {
+      return !StringUtil.isEmpty(PropertiesComponent.getInstance().getValue(EDITOR_PROP)) ||
+             !StringUtil.isEmpty(PropertiesComponent.getInstance(myLogData.getProject()).getValue(EDITOR_PROP));
     }
   }
 

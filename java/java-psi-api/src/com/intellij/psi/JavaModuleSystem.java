@@ -2,6 +2,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,9 +14,9 @@ public interface JavaModuleSystem {
   @NotNull String getName();
 
   default boolean isAccessible(@NotNull PsiClass target, @NotNull PsiElement place) {
-    PsiFile file = target.getContainingFile();
-    return !(file instanceof PsiClassOwner) || isAccessible(((PsiClassOwner)file).getPackageName(), (PsiClassOwner)file, place);
+    String packageName = PsiUtil.getPackageName(target);
+    return packageName == null || isAccessible(packageName, target.getContainingFile(), place);
   }
 
-  boolean isAccessible(@NotNull String targetPackageName, @Nullable PsiClassOwner targetFile, @NotNull PsiElement place);
+  boolean isAccessible(@NotNull String targetPackageName, @Nullable PsiFile targetFile, @NotNull PsiElement place);
 }

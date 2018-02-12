@@ -16,7 +16,7 @@ import javax.swing.JList
 class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture) {
 
   private val EDIT_CONFIGURATIONS: String = "Edit Configurations..."
-  var button = JButtonFixture(myRobot, getRunConfigurationListButton())
+  var entryButton = JButtonFixture(myRobot, getRunConfigurationListButton())
 
   companion object {
     fun createRCListFixture(robot: Robot, ideFrame: IdeFrameFixture): RunConfigurationListFixture {
@@ -30,14 +30,14 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    * except for "Edit configuration" and "save configuration"
    */
   fun getRunConfigurationList(): List<String> {
-    button.click()
+    entryButton.click()
     val list = myRobot.finder()
       .find(myIde.target()) { it is JList<*> } as JList<*>
     val returnList: MutableList<String> = mutableListOf()
     for (i in 0 until list.model.size) {
       returnList.add(i, list.model.getElementAt(i).toString())
     }
-    button.click()
+    entryButton.click()
     return returnList.filter { it != EDIT_CONFIGURATIONS && !it.contains("Save ") }
   }
 
@@ -47,20 +47,20 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    * @param name
    */
   fun configuration(name: String): RunAction {
-    button.click()
+    entryButton.click()
     JBListPopupFixture.clickPopupMenuItem(name, false, null, myRobot, GuiTestUtil.SHORT_TIMEOUT)
     setConfigurationButton()
     return RunAction()
   }
 
-  fun editConfigurations() {
-    while (true) {
-      button.click()
+  fun editConfigurations(attempts: Int = 5) {
+    for (i in 0 until attempts) {
+      entryButton.click()
       Pause.pause(1000)
-      if (getConfigurationState()) {
+      if (getEditConfigurationsState()) {
         break
       }
-      button.click()
+      entryButton.click()
     }
     JBListPopupFixture.clickPopupMenuItem(EDIT_CONFIGURATIONS, false, null, myRobot, GuiTestUtil.THIRTY_SEC_TIMEOUT)
   }
@@ -93,11 +93,11 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
   }
 
   private fun setConfigurationButton() {
-    button = JButtonFixture(myRobot, getRunConfigurationListButton())
+    entryButton = JButtonFixture(myRobot, getRunConfigurationListButton())
   }
 
 
-  private fun getConfigurationState(): Boolean {
+  private fun getEditConfigurationsState(): Boolean {
     val list = myRobot.finder()
       .find(myIde.target()) { it is JList<*> } as JList<*>
     val actionItem = list.model.getElementAt(0) as PopupFactoryImpl.ActionItem

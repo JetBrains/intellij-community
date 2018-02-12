@@ -30,6 +30,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.*;
 import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
@@ -279,7 +280,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
         SimpleColoredComponent label = myLabel;
 
         //add more space between the label and the button
-        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+        label.setBorder(JBUI.Borders.emptyRight(5));
 
         label.addMouseListener(new MouseAdapter() {
 

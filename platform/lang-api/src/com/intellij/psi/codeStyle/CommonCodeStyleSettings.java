@@ -143,6 +143,17 @@ public class CommonCodeStyleSettings {
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
 
+  public void copyFrom(@NotNull CommonCodeStyleSettings source) {
+    copyPublicFields(source, this);
+    if (myIndentOptions != null) {
+      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
+      if (sourceIndentOptions != null) {
+        myIndentOptions.copyFrom(sourceIndentOptions);
+      }
+    }
+    setSoftMargins(source.getSoftMargins());
+  }
+
   @Nullable
   private CommonCodeStyleSettings getDefaultSettings() {
     return LanguageCodeStyleSettingsProvider.getDefaultCommonSettings(myLanguage);
